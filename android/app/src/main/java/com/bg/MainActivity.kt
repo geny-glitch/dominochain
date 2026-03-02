@@ -36,12 +36,25 @@ class MainActivity : AppCompatActivity() {
                 binding.copyButton.setOnClickListener {
                     copyToClipboard(response.web_url)
                 }
+                binding.refreshButton.setOnClickListener {
+                    syncWallpaper()
+                    Toast.makeText(this@MainActivity, "Checking for new wallpaper...", Toast.LENGTH_SHORT).show()
+                }
             }.onFailure {
                 binding.webUrlText.text = "Failed to register: ${it.message}"
             }
         }
 
         WallpaperWorker.schedule(this)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        syncWallpaper()
+    }
+
+    private fun syncWallpaper() {
+        WallpaperWorker.syncNow(this)
     }
 
     private fun getOrCreateDeviceId(): String {

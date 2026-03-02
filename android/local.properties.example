@@ -2,5 +2,6 @@
 # SDK path - Android Studio sets this automatically
 sdk.dir=/path/to/Android/sdk
 
-# API base URL for the backend (optional, defaults to http://10.0.2.2:3000 for emulator)
-# API_BASE_URL=http://10.0.2.2:3000
+# API base URL (optional, defaults to https://bg-backend.fly.dev)
+# Pour backend local: API_BASE_URL=http://10.0.2.2:3000 (émulateur) ou http://VOTRE_IP:3000 (appareil physique)
+# API_BASE_URL=https://bg-backend.fly.dev

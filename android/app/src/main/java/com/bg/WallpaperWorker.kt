@@ -2,6 +2,7 @@ package com.bg
 
 import android.app.WallpaperManager
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.Log
 import androidx.work.CoroutineWorker
@@ -9,6 +10,7 @@ import androidx.work.WorkerParameters
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.net.URL
+import java.util.concurrent.TimeUnit
 
 class WallpaperWorker(
     context: Context,
@@ -28,9 +30,10 @@ class WallpaperWorker(
             if (lastUpdated == wallpaper.updated_at) return@withContext Result.success()
 
             val bitmap = downloadImage(wallpaper.url) ?: return@withContext Result.retry()
+            val scaledBitmap = scaleBitmapForWallpaper(bitmap) ?: bitmap
 
             val wallpaperManager = WallpaperManager.getInstance(applicationContext)
-            wallpaperManager.setBitmap(bitmap)
+            wallpaperManager.setBitmap(scaledBitmap)
 
             prefs.edit().putString(KEY_LAST_WALLPAPER_UPDATED_AT, wallpaper.updated_at).apply()
 
@@ -41,7 +44,23 @@ class WallpaperWorker(
         }
     }
 
-    private fun downloadImage(urlString: String): android.graphics.Bitmap? {
+    private fun scaleBitmapForWallpaper(bitmap: Bitmap): Bitmap? {
+        return try {
+            val maxSize = 2048
+            val width = bitmap.width
+            val height = bitmap.height
+            if (width <= maxSize && height <= maxSize) return bitmap
+            val scale = maxSize.toFloat() / maxOf(width, height)
+            val newWidth = (width * scale).toInt()
+            val newHeight = (height * scale).toInt()
+            Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to scale bitmap", e)
+            null
+        }
+    }
+
+    private fun downloadImage(urlString: String): Bitmap? {
         return try {
             val url = URL(urlString)
             val connection = url.openConnection() as java.net.HttpURLConnection
@@ -67,16 +86,25 @@ class WallpaperWorker(
         private const val KEY_DEVICE_ID = "device_id"
         private const val KEY_LAST_WALLPAPER_UPDATED_AT = "last_wallpaper_updated_at"
 
-        private const val POLL_INTERVAL_MINUTES = 5L
+        private const val POLL_INTERVAL_MINUTES = 1L
 
         fun schedule(context: Context) {
             val request = androidx.work.PeriodicWorkRequestBuilder<WallpaperWorker>(
-                java.util.concurrent.TimeUnit.MINUTES,
-                POLL_INTERVAL_MINUTES
+                POLL_INTERVAL_MINUTES,
+                TimeUnit.MINUTES
             ).build()
             androidx.work.WorkManager.getInstance(context).enqueueUniquePeriodicWork(
                 "wallpaper_sync",
                 androidx.work.ExistingPeriodicWorkPolicy.KEEP,
+                request
+            )
+        }
+
+        fun syncNow(context: Context) {
+            val request = androidx.work.OneTimeWorkRequestBuilder<WallpaperWorker>().build()
+            androidx.work.WorkManager.getInstance(context).enqueueUniqueWork(
+                "wallpaper_sync_now",
+                androidx.work.ExistingWorkPolicy.REPLACE,
                 request
             )
         }

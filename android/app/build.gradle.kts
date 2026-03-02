@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -14,12 +16,12 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        val localProperties = java.util.Properties()
+        val localProperties = Properties()
         val localPropertiesFile = rootProject.file("local.properties")
         if (localPropertiesFile.exists()) {
             localProperties.load(localPropertiesFile.inputStream())
         }
-        val apiBaseUrl = localProperties.getProperty("API_BASE_URL", "http://10.0.2.2:3000")
+        val apiBaseUrl = localProperties.getProperty("API_BASE_URL", "https://bg-backend.fly.dev")
         buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
     }
 

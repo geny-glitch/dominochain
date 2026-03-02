@@ -8,9 +8,9 @@ import com.bg.api.WallpaperResponse
 class DeviceRepository {
     private val api = RetrofitClient.api
 
-    suspend fun register(deviceId: String): Result<RegisterResponse> {
+    suspend fun register(deviceId: String, screenWidth: Int? = null, screenHeight: Int? = null): Result<RegisterResponse> {
         return try {
-            val response = api.register(RegisterRequest(device_id = deviceId))
+            val response = api.register(RegisterRequest(device_id = deviceId, screen_width = screenWidth, screen_height = screenHeight))
             if (response.isSuccessful) {
                 response.body()?.let { Result.success(it) }
                     ?: Result.failure(Exception("Empty response"))

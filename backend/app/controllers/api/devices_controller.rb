@@ -7,6 +7,10 @@ module Api
     def create
       device_id = params.require(:device_id)
       device = Device.find_or_create_by!(device_id: device_id)
+      device.update!(
+        screen_width: params[:screen_width]&.to_i,
+        screen_height: params[:screen_height]&.to_i
+      ) if params[:screen_width].present? && params[:screen_height].present?
       render json: {
         id: device.id,
         device_id: device.device_id,
@@ -19,8 +23,11 @@ module Api
       wallpaper = device.wallpapers.order(created_at: :desc).first
 
       if wallpaper&.image&.attached?
+        wallpaper.update_column(:first_downloaded_at, Time.current) if wallpaper.first_downloaded_at.nil?
+        image_url = device.screen_width.present? && device.screen_height.present? ?
+          polymorphic_url(wallpaper.variant_for(device)) : polymorphic_url(wallpaper.image)
         render json: {
-          url: polymorphic_url(wallpaper.image),
+          url: image_url,
           updated_at: wallpaper.updated_at.iso8601
         }
       else
@@ -31,11 +38,35 @@ module Api
     def upload_wallpaper
       device = Device.find_by!(device_id: params[:id])
       wallpaper = device.wallpapers.create!(image: params[:image])
+      url = device.screen_width.present? && device.screen_height.present? ?
+        polymorphic_url(wallpaper.variant_for(device)) : polymorphic_url(wallpaper.image)
       render json: {
         id: wallpaper.id,
-        url: polymorphic_url(wallpaper.image),
+        url: url,
         updated_at: wallpaper.updated_at.iso8601
       }
+    end
+
+    def wallpapers
+      device = Device.find_by!(device_id: params[:id])
+      wallpapers = device.wallpapers.order(created_at: :desc)
+      render json: wallpapers.map { |w|
+        next unless w.image.attached?
+        {
+          id: w.id,
+          url: device.screen_width.present? && device.screen_height.present? ?
+            polymorphic_url(w.variant_for(device)) : polymorphic_url(w.image),
+          created_at: w.created_at.iso8601,
+          first_downloaded_at: w.first_downloaded_at&.iso8601
+        }
+      }.compact
+    end
+
+    def destroy_wallpaper
+      device = Device.find_by!(device_id: params[:id])
+      wallpaper = device.wallpapers.find(params[:wallpaper_id])
+      wallpaper.destroy!
+      head :no_content
     end
 
     private

@@ -6,7 +6,11 @@ import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
 
-data class RegisterRequest(val device_id: String)
+data class RegisterRequest(
+    val device_id: String,
+    val screen_width: Int? = null,
+    val screen_height: Int? = null
+)
 
 data class RegisterResponse(
     val id: Long,

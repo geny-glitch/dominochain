@@ -27,7 +27,10 @@ class MainActivity : AppCompatActivity() {
         binding.deviceIdText.text = deviceId
 
         lifecycleScope.launch {
-            val result = repository.register(deviceId)
+            val displayMetrics = resources.displayMetrics
+            val screenWidth = displayMetrics.widthPixels
+            val screenHeight = displayMetrics.heightPixels
+            val result = repository.register(deviceId, screenWidth, screenHeight)
             result.onSuccess { response ->
                 binding.webUrlText.text = response.web_url
                 binding.webUrlText.setOnClickListener {

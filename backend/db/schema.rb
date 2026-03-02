@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_03_02_154134) do
+ActiveRecord::Schema[7.2].define(version: 2026_03_02_160001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -47,6 +47,8 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_02_154134) do
     t.string "fcm_token"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "screen_width"
+    t.integer "screen_height"
     t.index ["device_id"], name: "index_devices_on_device_id", unique: true
   end
 
@@ -54,6 +56,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_02_154134) do
     t.bigint "device_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "first_downloaded_at"
     t.index ["device_id"], name: "index_wallpapers_on_device_id"
   end
 

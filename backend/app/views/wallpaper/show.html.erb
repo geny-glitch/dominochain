@@ -13,13 +13,40 @@
   <% if @device %>
     <p style="font-size: 0.875rem; color: #888; margin-bottom: 1rem;">
       Device: <code><%= @device_id %></code>
+      <% if @device.screen_width.present? && @device.screen_height.present? %>
+        · Écran: <%= @device.screen_width %>×<%= @device.screen_height %>
+      <% end %>
     </p>
 
-    <%= form_with url: wallpaper_upload_submit_path(@device_id), method: :post, local: true, multipart: true do |f| %>
+    <%= form_with url: wallpaper_upload_submit_path(@device_id), method: :post, local: true, multipart: true, id: "upload-form" do |f| %>
       <div style="margin-bottom: 1rem;">
-        <%= f.file_field :image, accept: "image/*", required: true, style: "display: block; margin-bottom: 0.5rem;" %>
+        <%= f.file_field :image, accept: "image/*", required: true, style: "display: block; margin-bottom: 0.5rem;", id: "image-input" %>
+        <div id="preview-container" style="display: none; margin-top: 0.5rem;">
+          <p style="font-size: 0.75rem; color: #666; margin-bottom: 0.25rem;">Aperçu (dimensions écran):</p>
+          <img id="preview-img" src="" alt="Preview" style="max-width: 100%; max-height: 200px; border-radius: 4px; border: 1px solid #ddd;" />
+        </div>
       </div>
       <%= f.submit "Upload", style: "padding: 0.5rem 1rem; background: #000; color: #fff; border: none; border-radius: 4px; cursor: pointer;" %>
+    <% end %>
+
+    <% if @wallpapers.any? %>
+      <h2 style="font-size: 1.1rem; margin: 2rem 0 1rem;">Historique des wallpapers</h2>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 0.75rem;">
+        <% @wallpapers.each do |wallpaper| %>
+          <% next unless wallpaper.image.attached? %>
+          <div style="border: 1px solid #ddd; border-radius: 4px; overflow: hidden;">
+            <% variant = @device.screen_width.present? && @device.screen_height.present? ? wallpaper.variant_for(@device) : wallpaper.image %>
+            <%= image_tag variant, style: "width: 100%; height: 80px; object-fit: cover; display: block;" %>
+            <div style="padding: 0.25rem 0.5rem; font-size: 0.7rem; color: #666;">
+              <%= wallpaper.created_at.strftime("%d/%m %H:%M") %>
+              <% if wallpaper.first_downloaded_at %>
+                <br><span style="color: #28a745;">✓ Téléchargé</span>
+              <% end %>
+            </div>
+            <%= button_to "Supprimer", wallpaper_destroy_path(@device_id, wallpaper.id), method: :delete, form: { data: { turbo_confirm: "Supprimer ce wallpaper ?" } }, class: "delete-btn" %>
+          </div>
+        <% end %>
+      </div>
     <% end %>
   <% else %>
     <p style="color: #c00;">
@@ -27,3 +54,33 @@
     </p>
   <% end %>
 </div>
+
+<style>
+  .delete-btn { width: 100%; padding: 0.25rem; font-size: 0.7rem; background: #dc3545; color: white; border: none; cursor: pointer; }
+</style>
+<script>
+  (function() {
+    const screenW = <%= @device&.screen_width || 0 %>;
+    const screenH = <%= @device&.screen_height || 0 %>;
+    const input = document.getElementById('image-input');
+    const container = document.getElementById('preview-container');
+    const img = document.getElementById('preview-img');
+    if (!input) return;
+    input.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file || !file.type.startsWith('image/')) {
+        container.style.display = 'none';
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = function() {
+        img.src = reader.result;
+        if (screenW > 0 && screenH > 0) {
+          img.style.aspectRatio = screenW + ' / ' + screenH;
+        }
+        container.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    });
+  })();
+</script>

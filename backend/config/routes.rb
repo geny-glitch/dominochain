@@ -15,9 +15,12 @@ Rails.application.routes.draw do
     post "devices", to: "devices#create"
     get "devices/:id/wallpaper", to: "devices#wallpaper", as: :device_wallpaper
     post "devices/:id/wallpaper", to: "devices#upload_wallpaper", as: :upload_wallpaper
+    get "devices/:id/wallpapers", to: "devices#wallpapers", as: :device_wallpapers
+    delete "devices/:id/wallpapers/:wallpaper_id", to: "devices#destroy_wallpaper", as: :destroy_wallpaper
   end
 
   # Web upload UI
   get "w/:device_id", to: "wallpaper#show", as: :wallpaper_upload
   post "w/:device_id", to: "wallpaper#upload", as: :wallpaper_upload_submit
+  delete "w/:device_id/wallpapers/:wallpaper_id", to: "wallpaper#destroy", as: :wallpaper_destroy
 end

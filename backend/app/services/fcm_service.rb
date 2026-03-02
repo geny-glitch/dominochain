@@ -1,0 +1,77 @@
+# frozen_string_literal: true
+
+class FcmService
+  FCM_SCOPE = "https://www.googleapis.com/auth/firebase.messaging"
+  FCM_ENDPOINT = "https://fcm.googleapis.com/v1/projects/%<project_id>s/messages:send"
+
+  class << self
+    def send_new_wallpaper_notification(device:)
+      return unless device.fcm_token.present?
+      return unless credentials_configured?
+
+      payload = {
+        message: {
+          token: device.fcm_token,
+          data: { type: "new_wallpaper" },
+          android: {
+            priority: "high"
+          }
+        }
+      }
+
+      send_request(device, payload)
+    end
+
+    def credentials_configured?
+      project_id.present? && credentials_json.present?
+    end
+
+    private
+
+    def send_request(device, payload)
+      uri = URI(format(FCM_ENDPOINT, project_id: project_id))
+      http = Net::HTTP.new(uri.host, uri.port)
+      http.use_ssl = true
+
+      request = Net::HTTP::Post.new(uri)
+      request["Content-Type"] = "application/json"
+      request["Authorization"] = "Bearer #{access_token}"
+      request.body = payload.to_json
+
+      response = http.request(request)
+
+      if response.code.to_i >= 200 && response.code.to_i < 300
+        Rails.logger.info "[FCM] Push sent to device #{device.device_id}"
+      else
+        Rails.logger.error "[FCM] Failed to send push: #{response.code} #{response.body}"
+        handle_failed_token(device, response) if response.code.to_i == 404 || response.code.to_i == 400
+      end
+    rescue StandardError => e
+      Rails.logger.error "[FCM] Error sending push: #{e.message}"
+    end
+
+    def handle_failed_token(device, response)
+      body = JSON.parse(response.body) rescue {}
+      if body.dig("error", "details")&.any? { |d| d["errorCode"] == "UNREGISTERED" || d["errorCode"] == "INVALID_ARGUMENT" }
+        device.update_column(:fcm_token, nil)
+        Rails.logger.info "[FCM] Cleared invalid token for device #{device.device_id}"
+      end
+    end
+
+    def access_token
+      credentials = Google::Auth::ServiceAccountCredentials.make_creds(
+        json_key_io: StringIO.new(credentials_json),
+        scope: FCM_SCOPE
+      )
+      credentials.fetch_access_token!["access_token"]
+    end
+
+    def project_id
+      ENV["FIREBASE_PROJECT_ID"]
+    end
+
+    def credentials_json
+      ENV["FIREBASE_CREDENTIALS_JSON"] || (path = ENV["FIREBASE_CREDENTIALS_PATH"]) && File.read(path)
+    end
+  end
+end

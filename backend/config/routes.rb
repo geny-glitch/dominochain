@@ -13,6 +13,7 @@ Rails.application.routes.draw do
   # API
   namespace :api do
     post "devices", to: "devices#create"
+    patch "devices/:id/fcm_token", to: "devices#update_fcm_token", as: :device_fcm_token
     get "devices/:id/wallpaper", to: "devices#wallpaper", as: :device_wallpaper
     post "devices/:id/wallpaper", to: "devices#upload_wallpaper", as: :upload_wallpaper
     get "devices/:id/wallpapers", to: "devices#wallpapers", as: :device_wallpapers

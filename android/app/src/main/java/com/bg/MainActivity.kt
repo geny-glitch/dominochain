@@ -1,16 +1,22 @@
 package com.bg
 
+import android.Manifest
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.PermissionChecker.PERMISSION_GRANTED
+import androidx.core.content.PermissionChecker.checkSelfPermission
 import androidx.lifecycle.lifecycleScope
 import com.bg.databinding.ActivityMainBinding
+import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 class MainActivity : AppCompatActivity() {
 
@@ -23,6 +29,8 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        requestNotificationPermission()
+
         val deviceId = getOrCreateDeviceId()
         binding.deviceIdText.text = deviceId
 
@@ -30,7 +38,8 @@ class MainActivity : AppCompatActivity() {
             val displayMetrics = resources.displayMetrics
             val screenWidth = displayMetrics.widthPixels
             val screenHeight = displayMetrics.heightPixels
-            val result = repository.register(deviceId, screenWidth, screenHeight)
+            val fcmToken = getFcmToken()
+            val result = repository.register(deviceId, screenWidth, screenHeight, fcmToken)
             result.onSuccess { response ->
                 binding.webUrlText.text = response.web_url
                 binding.webUrlText.setOnClickListener {
@@ -83,8 +92,25 @@ class MainActivity : AppCompatActivity() {
         Toast.makeText(this, "Copied to clipboard", Toast.LENGTH_SHORT).show()
     }
 
+    private fun requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PERMISSION_GRANTED) {
+                requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), REQUEST_NOTIFICATION)
+            }
+        }
+    }
+
+    private suspend fun getFcmToken(): String? = runCatching {
+        FirebaseMessaging.getInstance().token.await()
+    }.getOrNull()
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+    }
+
     companion object {
         private const val PREFS_NAME = "bg_prefs"
         private const val KEY_DEVICE_ID = "device_id"
+        private const val REQUEST_NOTIFICATION = 1001
     }
 }

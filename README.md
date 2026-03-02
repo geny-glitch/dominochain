@@ -59,13 +59,21 @@ Pour trouver `sdk.dir` : **Android Studio → Settings → Appearance & Behavior
 2. Clique sur ▶ **Run** (ou `Ctrl+R` / `Cmd+R`)
 3. L’app s’installe et se lance
 
-### 6. Tester le flux
+### 6. Configurer Firebase (pour les push notifications)
+
+1. Va sur [Firebase Console](https://console.firebase.google.com/)
+2. Crée un projet (ou utilise un existant)
+3. **Ajoute une app Android** : package name `com.bg`
+4. Télécharge `google-services.json` et remplace `android/app/google-services.json`
+5. (Optionnel) Pour le backend : Project Settings → Service accounts → Generate new private key → enregistre le JSON
+
+### 7. Tester le flux
 
 1. L’app affiche un lien (ex. `https://bg-backend.fly.dev/w/xxx`)
 2. Clique dessus ou copie-le dans un navigateur
 3. Ouvre la page sur ton téléphone ou ton Mac
 4. Envoie une image
-5. L’app met à jour le fond d’écran après 5 min (polling) ou au prochain lancement
+5. L’app met à jour le fond d’écran **immédiatement** (push) ou au prochain polling/lancement
 
 ---
 
@@ -90,4 +98,5 @@ Puis dans `local.properties` :
 2. Create volume: `fly volumes create storage_volume --size 1 --region <region>`
 3. Set secrets: `fly secrets set RAILS_MASTER_KEY=$(cat backend/config/master.key)`
 4. Set DATABASE_URL from Postgres connection string
-5. Deploy: `cd backend && fly deploy`
+5. Pour les push FCM : `fly secrets set FIREBASE_PROJECT_ID=ton-project-id FIREBASE_CREDENTIALS_JSON="$(cat path/to/service-account.json)"`
+6. Deploy: `cd backend && fly deploy`

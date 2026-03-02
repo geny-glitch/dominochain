@@ -82,8 +82,8 @@ class WallpaperWorker(
 
     companion object {
         private const val TAG = "WallpaperWorker"
-        private const val PREFS_NAME = "bg_prefs"
-        private const val KEY_DEVICE_ID = "device_id"
+        internal const val PREFS_NAME = "bg_prefs"
+        internal const val KEY_DEVICE_ID = "device_id"
         private const val KEY_LAST_WALLPAPER_UPDATED_AT = "last_wallpaper_updated_at"
 
         private const val POLL_INTERVAL_MINUTES = 1L

@@ -7,10 +7,11 @@ module Api
     def create
       device_id = params.require(:device_id)
       device = Device.find_or_create_by!(device_id: device_id)
-      device.update!(
-        screen_width: params[:screen_width]&.to_i,
-        screen_height: params[:screen_height]&.to_i
-      ) if params[:screen_width].present? && params[:screen_height].present?
+      updates = {}
+      updates[:screen_width] = params[:screen_width]&.to_i if params[:screen_width].present?
+      updates[:screen_height] = params[:screen_height]&.to_i if params[:screen_height].present?
+      updates[:fcm_token] = params[:fcm_token] if params[:fcm_token].present?
+      device.update!(updates) if updates.any?
       render json: {
         id: device.id,
         device_id: device.device_id,
@@ -66,6 +67,12 @@ module Api
       device = Device.find_by!(device_id: params[:id])
       wallpaper = device.wallpapers.find(params[:wallpaper_id])
       wallpaper.destroy!
+      head :no_content
+    end
+
+    def update_fcm_token
+      device = Device.find_by!(device_id: params[:id])
+      device.update!(fcm_token: params.require(:fcm_token))
       head :no_content
     end
 

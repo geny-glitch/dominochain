@@ -1,0 +1,6 @@
+# Copy to local.properties and set your paths
+# SDK path - Android Studio sets this automatically
+sdk.dir=/path/to/Android/sdk
+
+# API base URL for the backend (optional, defaults to http://10.0.2.2:3000 for emulator)
+# API_BASE_URL=http://10.0.2.2:3000

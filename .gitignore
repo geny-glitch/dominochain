@@ -1,0 +1,29 @@
+# Android
+android/local.properties
+android/.gradle/
+android/build/
+android/app/build/
+android/captures/
+*.apk
+*.ap_
+*.aab
+
+# Rails / Ruby
+backend/.bundle
+backend/log/*
+backend/tmp/*
+backend/storage/*
+!backend/storage/.keep
+backend/config/master.key
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+*.swp
+*~
+
+# Open source release

@@ -1,0 +1,29 @@
+<div style="max-width: 480px; margin: 2rem auto; padding: 2rem; font-family: system-ui, sans-serif;">
+  <% if flash[:notice] %>
+    <p style="padding: 0.75rem; background: #d4edda; color: #155724; border-radius: 4px; margin-bottom: 1rem;"><%= flash[:notice] %></p>
+  <% end %>
+  <% if flash[:alert] %>
+    <p style="padding: 0.75rem; background: #f8d7da; color: #721c24; border-radius: 4px; margin-bottom: 1rem;"><%= flash[:alert] %></p>
+  <% end %>
+  <h1 style="font-size: 1.5rem; margin-bottom: 0.5rem;">Set Wallpaper</h1>
+  <p style="color: #666; margin-bottom: 1.5rem;">
+    Upload an image to set it as your device wallpaper.
+  </p>
+
+  <% if @device %>
+    <p style="font-size: 0.875rem; color: #888; margin-bottom: 1rem;">
+      Device: <code><%= @device_id %></code>
+    </p>
+
+    <%= form_with url: wallpaper_upload_submit_path(@device_id), method: :post, local: true, multipart: true do |f| %>
+      <div style="margin-bottom: 1rem;">
+        <%= f.file_field :image, accept: "image/*", required: true, style: "display: block; margin-bottom: 0.5rem;" %>
+      </div>
+      <%= f.submit "Upload", style: "padding: 0.5rem 1rem; background: #000; color: #fff; border: none; border-radius: 4px; cursor: pointer;" %>
+    <% end %>
+  <% else %>
+    <p style="color: #c00;">
+      Device not found. Please open the app first to register your device.
+    </p>
+  <% end %>
+</div>

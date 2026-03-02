@@ -25,13 +25,20 @@
 
     <%= form_with url: wallpaper_upload_submit_path(@device_id), method: :post, local: true, multipart: true, id: "upload-form" do |f| %>
       <div style="margin-bottom: 1rem;">
-        <%= f.file_field :image, accept: "image/*", required: true, style: "display: block; margin-bottom: 0.5rem;", id: "image-input" %>
-        <div id="preview-container" style="display: none; margin-top: 0.5rem;">
-          <p style="font-size: 0.75rem; color: #666; margin-bottom: 0.25rem;">Aperçu (dimensions écran):</p>
-          <img id="preview-img" src="" alt="Preview" style="max-width: 100%; max-height: 200px; border-radius: 4px; border: 1px solid #ddd;" />
+        <div id="file-input-wrapper" style="margin-bottom: 0.5rem;">
+          <%= f.file_field :image, accept: "image/*", style: "display: block;", id: "image-input" %>
+        </div>
+        <div id="crop-container" style="display: none; margin-top: 0.5rem;">
+          <p style="font-size: 0.75rem; color: #666; margin-bottom: 0.25rem;">Recadrez l'image (ratio écran)</p>
+          <div id="crop-wrapper" style="max-height: 400px; background: #000;">
+            <img id="crop-img" src="" alt="Crop" style="max-width: 100%; display: block;" />
+          </div>
+          <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem;">
+            <button type="button" id="change-image-btn" style="padding: 0.5rem 1rem; background: #666; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem;">Changer d'image</button>
+            <%= f.submit "Upload", id: "upload-btn", style: "padding: 0.5rem 1rem; background: #000; color: #fff; border: none; border-radius: 4px; cursor: pointer;" %>
+          </div>
         </div>
       </div>
-      <%= f.submit "Upload", style: "padding: 0.5rem 1rem; background: #000; color: #fff; border: none; border-radius: 4px; cursor: pointer;" %>
     <% end %>
 
     <% if @wallpapers.any? %>
@@ -88,30 +95,117 @@
   }
   .download-icon:hover { background: rgba(0,0,0,0.85); color: #fff; }
 </style>
+<link rel="stylesheet" href="https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.css" />
+<script src="https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.js"></script>
 <script>
   (function() {
     const screenW = <%= @device&.screen_width || 0 %>;
     const screenH = <%= @device&.screen_height || 0 %>;
+    const aspectRatio = (screenW > 0 && screenH > 0) ? screenW / screenH : 9 / 16;
+    const uploadUrl = '<%= wallpaper_upload_submit_path(@device_id) %>';
+
     const input = document.getElementById('image-input');
-    const container = document.getElementById('preview-container');
-    const img = document.getElementById('preview-img');
-    if (!input) return;
-    input.addEventListener('change', function(e) {
-      const file = e.target.files[0];
-      if (!file || !file.type.startsWith('image/')) {
-        container.style.display = 'none';
-        return;
-      }
+    const fileWrapper = document.getElementById('file-input-wrapper');
+    const cropContainer = document.getElementById('crop-container');
+    const cropImg = document.getElementById('crop-img');
+    const cropWrapper = document.getElementById('crop-wrapper');
+    const changeImageBtn = document.getElementById('change-image-btn');
+    const uploadBtn = document.getElementById('upload-btn');
+    const form = document.getElementById('upload-form');
+
+    let cropper = null;
+    let currentFile = null;
+
+    function initCropper() {
+      if (cropper) cropper.destroy();
+      cropper = new Cropper(cropImg, {
+        aspectRatio: aspectRatio,
+        viewMode: 1,
+        dragMode: 'move',
+        autoCropArea: 1,
+        responsive: true,
+        restore: false
+      });
+    }
+
+    function showCrop(file) {
+      currentFile = file;
       const reader = new FileReader();
       reader.onload = function() {
-        img.src = reader.result;
-        if (screenW > 0 && screenH > 0) {
-          img.style.aspectRatio = screenW + ' / ' + screenH;
-        }
-        container.style.display = 'block';
+        cropImg.src = reader.result;
+        fileWrapper.style.display = 'none';
+        cropContainer.style.display = 'block';
+        cropImg.onload = function() {
+          initCropper();
+        };
       };
       reader.readAsDataURL(file);
-    });
+    }
+
+    function resetCrop() {
+      if (cropper) {
+        cropper.destroy();
+        cropper = null;
+      }
+      currentFile = null;
+      cropImg.src = '';
+      cropContainer.style.display = 'none';
+      fileWrapper.style.display = 'block';
+      input.value = '';
+    }
+
+    if (input) {
+      input.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file || !file.type.startsWith('image/')) return;
+        showCrop(file);
+      });
+    }
+
+    if (changeImageBtn) {
+      changeImageBtn.addEventListener('click', resetCrop);
+    }
+
+    if (form) {
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        if (!cropper || !currentFile) return;
+
+        const canvas = cropper.getCroppedCanvas();
+        canvas.toBlob(function(blob) {
+          const formData = new FormData();
+          formData.append('image', blob, 'wallpaper.jpg');
+          const token = form.querySelector('input[name="authenticity_token"]')?.value;
+          if (token) formData.append('authenticity_token', token);
+
+          uploadBtn.disabled = true;
+          uploadBtn.value = 'Envoi...';
+
+          fetch(uploadUrl, {
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin',
+            headers: {
+              'X-CSRF-Token': token || '',
+              'Accept': 'text/html'
+            },
+            redirect: 'follow'
+          }).then(function(res) {
+            if (res.ok || res.redirected) {
+              window.location.href = res.url;
+            } else {
+              uploadBtn.disabled = false;
+              uploadBtn.value = 'Upload';
+              alert('Erreur lors de l\'upload.');
+            }
+          }).catch(function() {
+            uploadBtn.disabled = false;
+            uploadBtn.value = 'Upload';
+            alert('Erreur lors de l\'upload.');
+          });
+        }, 'image/jpeg', 0.9);
+      });
+    }
 
     const downloadAllBtn = document.getElementById('download-all-btn');
     if (downloadAllBtn) {

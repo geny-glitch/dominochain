@@ -1,31 +1,45 @@
-# Fly.io configuration for Bg backend
-# Run: fly launch (first time) or fly deploy
-# Requires: fly postgres create (or attach existing), fly secrets set RAILS_MASTER_KEY=...
+# fly.toml app configuration file generated for bg-backend on 2026-03-02T17:04:53+01:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
 
-app = "bg-backend"
+app = 'bg-backend'
+primary_region = 'cdg'
+console_command = '/rails/bin/rails console'
 
 [build]
 
 [env]
-  RAILS_ENV = "production"
-  RAILS_LOG_TO_STDOUT = "1"
+  RAILS_ENV = 'production'
+  RAILS_LOG_TO_STDOUT = '1'
+
+[[mounts]]
+  source = 'storage_volume'
+  destination = '/rails/storage'
+  initial_size = '1gb'
 
 [http_service]
   internal_port = 3000
   force_https = true
-  auto_stop_machines = true
+  auto_stop_machines = 'stop'
   auto_start_machines = true
   min_machines_running = 0
-  processes = ["app"]
+  processes = ['app']
+
+  [[http_service.checks]]
+    interval = '10s'
+    timeout = '2s'
+    grace_period = '5s'
+    method = 'GET'
+    path = '/up'
+    protocol = 'http'
+    tls_skip_verify = false
+
+    [http_service.checks.headers]
+      X-Forwarded-Proto = 'https'
 
 [[vm]]
-  memory = "256mb"
-  cpu_kind = "shared"
+  memory = '256mb'
+  cpu_kind = 'shared'
   cpus = 1
-
-# Mount volume for Active Storage (images persist across deploys)
-# Volume is created automatically on first deploy with initial_size
-[mounts]
-  source = "storage_volume"
-  destination = "/rails/storage"
-  initial_size = "1gb"
+  memory_mb = 256

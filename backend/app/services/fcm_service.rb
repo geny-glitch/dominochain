@@ -6,8 +6,14 @@ class FcmService
 
   class << self
     def send_new_wallpaper_notification(device:)
-      return unless device.fcm_token.present?
-      return unless credentials_configured?
+      unless device.fcm_token.present?
+        Rails.logger.info "[FCM] Skipped: no fcm_token for device #{device.device_id}"
+        return
+      end
+      unless credentials_configured?
+        Rails.logger.warn "[FCM] Skipped: credentials not configured. Set FIREBASE_PROJECT_ID and FIREBASE_CREDENTIALS_JSON on Fly.io."
+        return
+      end
 
       payload = {
         message: {

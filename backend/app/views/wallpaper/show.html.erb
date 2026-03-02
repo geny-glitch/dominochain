@@ -16,6 +16,11 @@
       <% if @device.screen_width.present? && @device.screen_height.present? %>
         · Écran: <%= @device.screen_width %>×<%= @device.screen_height %>
       <% end %>
+      <% if @device.fcm_token.present? %>
+        · <span style="color: #28a745;">Push activé</span>
+      <% else %>
+        · <span style="color: #dc3545;">Push non configuré</span> (ouvre l’app pour enregistrer le token)
+      <% end %>
     </p>
 
     <%= form_with url: wallpaper_upload_submit_path(@device_id), method: :post, local: true, multipart: true, id: "upload-form" do |f| %>
@@ -31,12 +36,24 @@
 
     <% if @wallpapers.any? %>
       <h2 style="font-size: 1.1rem; margin: 2rem 0 1rem;">Historique des wallpapers</h2>
-      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 0.75rem;">
-        <% @wallpapers.each do |wallpaper| %>
+      <div style="margin-bottom: 0.75rem;">
+        <button type="button" id="download-all-btn" class="download-all-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Télécharger tout
+        </button>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 0.75rem;" id="wallpapers-grid">
+        <% @wallpapers.each_with_index do |wallpaper, i| %>
           <% next unless wallpaper.image.attached? %>
-          <div style="border: 1px solid #ddd; border-radius: 4px; overflow: hidden;">
-            <% variant = @device.screen_width.present? && @device.screen_height.present? ? wallpaper.variant_for(@device) : wallpaper.image %>
-            <%= image_tag variant, style: "width: 100%; height: 80px; object-fit: cover; display: block;" %>
+          <% variant = @device.screen_width.present? && @device.screen_height.present? ? wallpaper.variant_for(@device) : wallpaper.image %>
+          <% download_url = url_for(variant) %>
+          <div style="border: 1px solid #ddd; border-radius: 4px; overflow: hidden;" class="wallpaper-card" data-download-url="<%= download_url %>" data-filename="wallpaper-<%= wallpaper.created_at.strftime('%Y%m%d-%H%M') %>-<%= wallpaper.id %>.jpg">
+            <div style="position: relative;">
+              <%= image_tag variant, style: "width: 100%; height: 80px; object-fit: cover; display: block;" %>
+              <a href="<%= download_url %>" download="wallpaper-<%= wallpaper.created_at.strftime('%Y%m%d-%H%M') %>-<%= wallpaper.id %>.jpg" class="download-icon" title="Télécharger">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              </a>
+            </div>
             <div style="padding: 0.25rem 0.5rem; font-size: 0.7rem; color: #666;">
               <%= wallpaper.created_at.strftime("%d/%m %H:%M") %>
               <% if wallpaper.first_downloaded_at %>
@@ -57,6 +74,19 @@
 
 <style>
   .delete-btn { width: 100%; padding: 0.25rem; font-size: 0.7rem; background: #dc3545; color: white; border: none; cursor: pointer; }
+  .download-all-btn {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    padding: 0.5rem 1rem; background: #000; color: #fff; border: none; border-radius: 4px;
+    font-size: 0.875rem; cursor: pointer; font-family: inherit;
+  }
+  .download-all-btn:hover { background: #333; }
+  .download-icon {
+    position: absolute; top: 4px; right: 4px;
+    display: flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px; background: rgba(0,0,0,0.6); color: #fff;
+    border-radius: 4px; text-decoration: none; transition: background 0.2s;
+  }
+  .download-icon:hover { background: rgba(0,0,0,0.85); color: #fff; }
 </style>
 <script>
   (function() {
@@ -82,5 +112,25 @@
       };
       reader.readAsDataURL(file);
     });
+
+    const downloadAllBtn = document.getElementById('download-all-btn');
+    if (downloadAllBtn) {
+      downloadAllBtn.addEventListener('click', function() {
+        const cards = document.querySelectorAll('.wallpaper-card');
+        cards.forEach(function(card, i) {
+          setTimeout(function() {
+            const url = card.dataset.downloadUrl;
+            const filename = card.dataset.filename || 'wallpaper.jpg';
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.style.display = 'none';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+          }, i * 300);
+        });
+      });
+    }
   })();
 </script>

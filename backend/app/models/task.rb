@@ -35,6 +35,6 @@ class Task < ApplicationRecord
   private
 
   def send_new_task_notification
-    FcmService.send_new_task_notification(device: device, task: self, trigger_alarm: trigger_alarm)
+    FcmService.send_new_task_notification(device: device, task: self, trigger_alarm: trigger_alarm, alarm_sound: alarm_sound.presence || "urgent")
   end
 end

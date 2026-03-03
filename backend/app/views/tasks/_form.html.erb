@@ -40,9 +40,16 @@
 
   <div class="ds-form-group">
     <label class="ds-checkbox-label">
-      <input type="checkbox" name="task[trigger_alarm]" value="1">
+      <input type="checkbox" name="task[trigger_alarm]" value="1" id="task_trigger_alarm">
       <span>Déclencher une alarme sur le téléphone</span>
     </label>
+    <div id="alarm-sound-options" class="ds-alarm-sound-options" style="display: none;">
+      <span class="ds-form-label">Son d'alarme</span>
+      <select name="task[alarm_sound]" class="ds-select">
+        <option value="urgent">Alerte forte (recommandé)</option>
+        <option value="default">Alarme réveil (système)</option>
+      </select>
+    </div>
   </div>
 
   <button type="submit" class="ds-btn ds-btn--primary">Créer la tâche</button>
@@ -71,5 +78,15 @@
   if (durationRadio) durationRadio.addEventListener('change', toggleDatetime);
   if (datetimeRadio) datetimeRadio.addEventListener('change', toggleDatetime);
   toggleDatetime();
+
+  const triggerAlarmCheckbox = document.getElementById('task_trigger_alarm');
+  const alarmSoundOptions = document.getElementById('alarm-sound-options');
+  if (triggerAlarmCheckbox && alarmSoundOptions) {
+    function toggleAlarmSound() {
+      alarmSoundOptions.style.display = triggerAlarmCheckbox.checked ? 'block' : 'none';
+    }
+    triggerAlarmCheckbox.addEventListener('change', toggleAlarmSound);
+    toggleAlarmSound();
+  }
 })();
 </script>

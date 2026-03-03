@@ -64,10 +64,11 @@
             android:textSize="14sp"
             android:layout_marginBottom="24dp" />
 
-        <View
+        <LinearLayout
             android:id="@+id/proof_form_section"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:orientation="vertical"
             android:visibility="gone">
 
             <TextView
@@ -110,12 +111,13 @@
                 android:layout_height="wrap_content"
                 android:text="Envoyer la preuve" />
 
-        </View>
+        </LinearLayout>
 
-        <View
+        <LinearLayout
             android:id="@+id/proof_submitted_section"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:orientation="vertical"
             android:visibility="gone">
 
             <TextView
@@ -140,7 +142,7 @@
                 android:textSize="12sp"
                 android:layout_marginBottom="8dp" />
 
-        </View>
+        </LinearLayout>
 
     </LinearLayout>
 </ScrollView>

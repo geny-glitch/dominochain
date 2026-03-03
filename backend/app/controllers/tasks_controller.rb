@@ -52,7 +52,7 @@ class TasksController < ApplicationController
   end
 
   def task_params
-    params.require(:task).permit(:name, :description, :expected_proof, :trigger_alarm)
+    params.require(:task).permit(:name, :description, :expected_proof, :trigger_alarm, :alarm_sound)
   end
 
   def compute_deadline

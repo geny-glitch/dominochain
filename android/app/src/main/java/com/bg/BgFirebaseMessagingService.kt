@@ -30,7 +30,8 @@ class BgFirebaseMessagingService : FirebaseMessagingService() {
                 val body = message.data["body"] ?: message.notification?.body ?: "Nouvelle tâche"
                 val taskId = message.data["task_id"] ?: ""
                 val triggerAlarm = message.data["trigger_alarm"] == "true"
-                NotificationHelper.showTaskNotification(applicationContext, title, body, taskId, triggerAlarm)
+                val alarmSound = message.data["alarm_sound"] ?: "urgent"
+                NotificationHelper.showTaskNotification(applicationContext, title, body, taskId, triggerAlarm, alarmSound)
             }
             "proof_reviewed" -> {
                 val title = message.notification?.title ?: "OTB"

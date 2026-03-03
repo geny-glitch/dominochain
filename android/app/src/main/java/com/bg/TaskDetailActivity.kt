@@ -7,7 +7,6 @@ import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.net.toUri
 import androidx.lifecycle.lifecycleScope
 import com.bg.api.TaskDetailResponse
 import com.bg.databinding.ActivityTaskDetailBinding
@@ -89,11 +88,14 @@ class TaskDetailActivity : AppCompatActivity() {
     private fun loadTaskDetail() {
         lifecycleScope.launch {
             val result = repository.getTaskDetail(deviceId, taskId)
+            if (isDestroyed) return@launch
             result.onSuccess { task ->
-                displayTask(task)
+                if (!isDestroyed) displayTask(task)
             }.onFailure {
-                Toast.makeText(this@TaskDetailActivity, "Erreur: ${it.message}", Toast.LENGTH_SHORT).show()
-                finish()
+                if (!isDestroyed) {
+                    Toast.makeText(this@TaskDetailActivity, "Erreur: ${it.message}", Toast.LENGTH_SHORT).show()
+                    finish()
+                }
             }
         }
     }
@@ -148,12 +150,15 @@ class TaskDetailActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             val result = repository.submitProof(deviceId, taskId, text.ifEmpty { null }, mediaFile)
-            binding.proofSubmitButton.isEnabled = true
+            if (!isDestroyed) binding.proofSubmitButton.isEnabled = true
+            if (isDestroyed) return@launch
             result.onSuccess {
-                Toast.makeText(this@TaskDetailActivity, "Preuve envoyée", Toast.LENGTH_SHORT).show()
-                loadTaskDetail()
+                if (!isDestroyed) {
+                    Toast.makeText(this@TaskDetailActivity, "Preuve envoyée", Toast.LENGTH_SHORT).show()
+                    loadTaskDetail()
+                }
             }.onFailure {
-                Toast.makeText(this@TaskDetailActivity, "Erreur: ${it.message}", Toast.LENGTH_LONG).show()
+                if (!isDestroyed) Toast.makeText(this@TaskDetailActivity, "Erreur: ${it.message}", Toast.LENGTH_LONG).show()
             }
         }
     }

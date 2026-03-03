@@ -65,7 +65,7 @@ interface ApiService {
         @Path("deviceId") deviceId: String,
         @Path("taskId") taskId: Long,
         @Part("text") text: RequestBody?,
-        @Part("media") media: MultipartBody.Part?
+        @Part media: MultipartBody.Part?
     ): Response<ProofResponse>
 }
 

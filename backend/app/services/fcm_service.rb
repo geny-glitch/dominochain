@@ -69,7 +69,7 @@ class FcmService
       send_teaser_notification(device: device)
     end
 
-    def send_new_task_notification(device:, task:, trigger_alarm:)
+    def send_new_task_notification(device:, task:, trigger_alarm:, alarm_sound: "urgent")
       unless device.fcm_token.present?
         Rails.logger.info "[FCM] Skipped new_task: no fcm_token for device #{device.device_id}"
         return
@@ -88,6 +88,7 @@ class FcmService
         type: "new_task",
         task_id: task.id.to_s,
         trigger_alarm: trigger_alarm ? "true" : "false",
+        alarm_sound: alarm_sound.presence || "urgent",
         title: title,
         body: body
       }

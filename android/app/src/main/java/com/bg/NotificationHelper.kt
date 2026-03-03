@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.media.AudioAttributes
 import android.media.RingtoneManager
+import android.net.Uri
 import android.os.Build
 import androidx.core.app.NotificationCompat
 
@@ -49,17 +50,23 @@ object NotificationHelper {
         notificationManager.notify(TEASER_NOTIFICATION_ID, notification)
     }
 
-    fun showTaskNotification(context: Context, title: String, body: String, taskId: String, triggerAlarm: Boolean) {
+    fun showTaskNotification(context: Context, title: String, body: String, taskId: String, triggerAlarm: Boolean, alarmSound: String = "urgent") {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val channelId = if (triggerAlarm) CHANNEL_TASKS_URGENT else CHANNEL_TASKS
+
+        val soundUri: Uri? = when {
+            !triggerAlarm -> null
+            alarmSound == "default" -> RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+            else -> Uri.parse("android.resource://${context.packageName}/${R.raw.urgent_alarm}")
+        }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val importance = NotificationManager.IMPORTANCE_HIGH
             val channel = NotificationChannel(channelId, if (triggerAlarm) "OTB Tâches urgentes" else "OTB Tâches", importance).apply {
                 enableVibration(true)
-                if (triggerAlarm) {
+                if (triggerAlarm && soundUri != null) {
                     setSound(
-                        RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM),
+                        soundUri,
                         AudioAttributes.Builder()
                             .setUsage(AudioAttributes.USAGE_ALARM)
                             .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
@@ -91,9 +98,8 @@ object NotificationHelper {
             .setAutoCancel(true)
             .setCategory(if (triggerAlarm) NotificationCompat.CATEGORY_ALARM else NotificationCompat.CATEGORY_REMINDER)
 
-        if (triggerAlarm) {
-            builder.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM))
-                .setDefaults(NotificationCompat.DEFAULT_ALL)
+        if (triggerAlarm && soundUri != null) {
+            builder.setSound(soundUri).setDefaults(NotificationCompat.DEFAULT_ALL)
         }
 
         notificationManager.notify(TASK_NOTIFICATION_ID_BASE + taskId.hashCode().and(0x7F), builder.build())

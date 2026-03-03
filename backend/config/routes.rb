@@ -1,4 +1,21 @@
 Rails.application.routes.draw do
+  devise_for :users, path: "", path_names: {
+    sign_in: "login", sign_out: "logout", sign_up: "signup"
+  }, controllers: { registrations: "registrations" }
+
+  devise_scope :user do
+    get "signup/boss", to: "boss_registrations#new", as: :new_boss_registration
+    post "signup/boss", to: "boss_registrations#create", as: :boss_registration
+  end
+
+  get "dashboard", to: "dashboard#show", as: :dashboard
+  get "beta", to: "beta_dashboard#show", as: :beta_dashboard
+  get "beta/tasks/:id", to: "beta_dashboard#task", as: :beta_task
+  post "beta/tasks/:id/proof", to: "beta_dashboard#submit_proof", as: :beta_task_proof
+  post "control/release", to: "controls#release", as: :control_release
+  post "control/accept_request", to: "controls#accept_request", as: :control_accept_request
+  post "control/reject_request", to: "controls#reject_request", as: :control_reject_request
+
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
   root "home#index"
@@ -7,6 +24,7 @@ Rails.application.routes.draw do
   get "admin", to: "admin#index", as: :admin
   get "admin/settings", to: "admin#settings", as: :admin_settings
   patch "admin/settings", to: "admin#update_settings", as: :admin_update_settings
+  post "admin/controls/:control_id/release", to: "admin#release_control", as: :admin_release_control
   get "admin/review", to: "admin#review", as: :admin_review
   get "admin/review/images", to: "admin#review_images", as: :admin_review_images
   post "admin/review/images/:id/like", to: "admin#review_like", as: :admin_review_like
@@ -19,8 +37,14 @@ Rails.application.routes.draw do
   get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
   get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
 
-  # API
+  # APIR
   namespace :api do
+    post "auth/login", to: "auth#login"
+    post "auth/register", to: "auth#register"
+    post "auth/logout", to: "auth#logout"
+
+    post "control_requests", to: "control_requests#create"
+
     post "devices", to: "devices#create"
     patch "devices/:id/fcm_token", to: "devices#update_fcm_token", as: :device_fcm_token
     patch "devices/:id/name", to: "devices#update_name", as: :device_name
@@ -33,15 +57,17 @@ Rails.application.routes.draw do
     post "devices/:id/tasks/:task_id/proof", to: "devices#submit_proof", as: :device_task_proof
   end
 
-  # Web upload UI
-  get "w/:device_id", to: "wallpaper#show", as: :wallpaper_upload
-  post "w/:device_id", to: "wallpaper#upload", as: :wallpaper_upload_submit
-  post "w/:device_id/wallpapers/:wallpaper_id/set_current", to: "wallpaper#set_current", as: :wallpaper_set_current
-  delete "w/:device_id/wallpapers/:wallpaper_id", to: "wallpaper#destroy", as: :wallpaper_destroy
+  # Web upload UI (nickname = beta's nickname)
+  get "w/:nickname", to: "wallpaper#show", as: :wallpaper_upload
+  get "w/:nickname/control/accept", to: "controls#accept_from_link", as: :control_accept_from_link
+  post "w/:nickname/control/accept", to: "controls#accept_from_link_submit", as: :control_accept_from_link_submit
+  post "w/:nickname", to: "wallpaper#upload", as: :wallpaper_upload_submit
+  post "w/:nickname/wallpapers/:wallpaper_id/set_current", to: "wallpaper#set_current", as: :wallpaper_set_current
+  delete "w/:nickname/wallpapers/:wallpaper_id", to: "wallpaper#destroy", as: :wallpaper_destroy
 
   # Tasks
-  post "w/:device_id/tasks", to: "tasks#create", as: :wallpaper_tasks
-  get "w/:device_id/tasks/:id", to: "tasks#show", as: :wallpaper_task
-  post "w/:device_id/tasks/:id/review_proof", to: "tasks#review_proof", as: :wallpaper_task_review_proof
-  delete "w/:device_id/tasks/:id", to: "tasks#destroy", as: :wallpaper_task_destroy
+  post "w/:nickname/tasks", to: "tasks#create", as: :wallpaper_tasks
+  get "w/:nickname/tasks/:id", to: "tasks#show", as: :wallpaper_task
+  post "w/:nickname/tasks/:id/review_proof", to: "tasks#review_proof", as: :wallpaper_task_review_proof
+  delete "w/:nickname/tasks/:id", to: "tasks#destroy", as: :wallpaper_task_destroy
 end

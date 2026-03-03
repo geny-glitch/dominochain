@@ -1,0 +1,9 @@
+<% if resource.errors.any? %>
+  <div id="error_explanation" class="ds-flash ds-flash--error" data-turbo-temporary>
+    <ul style="margin: 0; padding-left: 1.25rem;">
+      <% resource.errors.full_messages.each do |message| %>
+        <li><%= message %></li>
+      <% end %>
+    </ul>
+  </div>
+<% end %>

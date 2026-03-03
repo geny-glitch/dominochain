@@ -84,6 +84,31 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Tâches"
+        android:layout_marginBottom="16dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Demander à être contrôlé par un boss"
+        android:textSize="12sp"
+        android:textColor="#666666"
+        android:layout_marginBottom="4dp" />
+
+    <EditText
+        android:id="@+id/boss_nickname_input"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Pseudo du boss"
+        android:inputType="text"
+        android:maxLines="1"
+        android:padding="12dp"
+        android:layout_marginBottom="8dp" />
+
+    <Button
+        android:id="@+id/send_control_request_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Envoyer la demande"
         android:layout_marginBottom="24dp" />
 
     <TextView

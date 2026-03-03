@@ -10,13 +10,13 @@
     <% end %>
 
     <header class="ds-header" style="flex-direction: column; align-items: flex-start;">
-      <%= link_to "← Retour", wallpaper_upload_path(@device_id), class: "ds-back-link" %>
+      <%= link_to "← Retour", wallpaper_upload_path(@nickname, device_id: @device_id), class: "ds-back-link" %>
       <div class="ds-task-header-row">
         <div>
           <h1 class="ds-title"><%= @task.name %></h1>
           <p class="ds-subtitle">Deadline: <%= @task.deadline_at.strftime("%d/%m/%Y %H:%M") %></p>
         </div>
-        <%= button_to "Supprimer", wallpaper_task_destroy_path(@device_id, @task), method: :delete, form: { data: { turbo_confirm: "Supprimer cette tâche ?" } }, class: "ds-btn ds-btn--ghost ds-btn--sm ds-delete-btn" %>
+        <%= button_to "Supprimer", wallpaper_task_destroy_path(@nickname, @task, device_id: @device_id), method: :delete, form: { data: { turbo_confirm: "Supprimer cette tâche ?" } }, class: "ds-btn ds-btn--ghost ds-btn--sm ds-delete-btn" %>
       </div>
     </header>
 
@@ -63,7 +63,7 @@
           <p class="ds-proof-meta">Soumis le <%= proof.created_at.strftime("%d/%m %H:%M") %></p>
 
           <% if proof.pending? %>
-            <%= form_with url: wallpaper_task_review_proof_path(@device_id, @task), method: :post, local: true, class: "ds-proof-review" do |f| %>
+            <%= form_with url: wallpaper_task_review_proof_path(@nickname, @task, device_id: @device_id), method: :post, local: true, class: "ds-proof-review" do |f| %>
               <label for="proof_review_comment" class="ds-form-label">Commentaire (optionnel)</label>
               <%= f.text_area :review_comment, id: "proof_review_comment", class: "ds-input ds-textarea ds-proof-review__comment", rows: 2, placeholder: "Ex: Bien vu, ou précise pourquoi tu refuses..." %>
               <div class="ds-proof-actions">

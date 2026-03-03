@@ -132,3 +132,11 @@
   margin: $ds-space-sm 0 0;
   text-shadow: 0 1px 10px rgba(0, 0, 0, 0.4);
 }
+
+.ds-home__auth {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $ds-space-sm;
+  justify-content: center;
+  margin-top: $ds-space-xl;
+}

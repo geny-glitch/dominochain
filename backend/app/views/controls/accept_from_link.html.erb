@@ -1,0 +1,8 @@
+<div class="ds-page">
+  <div class="ds-container">
+    <h1>Accepter de contrôler <%= @beta.nickname %> ?</h1>
+    <p>En acceptant, vous pourrez gérer les wallpapers et tâches de ce beta.</p>
+    <%= button_to "Accepter", control_accept_from_link_submit_path(@nickname), method: :post, class: "ds-btn ds-btn--primary" %>
+    <%= link_to "Annuler", dashboard_path, class: "ds-btn ds-btn--ghost" %>
+  </div>
+</div>

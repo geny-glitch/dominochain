@@ -22,8 +22,39 @@ data class RegisterRequest(
 data class RegisterResponse(
     val id: Long,
     val device_id: String,
+    val token: String?,
     val web_url: String
 )
+
+data class LoginRequest(
+    val nickname: String,
+    val password: String,
+    val device_id: String,
+    val screen_width: Int? = null,
+    val screen_height: Int? = null,
+    val fcm_token: String? = null,
+    val name: String? = null
+)
+
+data class RegisterAuthRequest(
+    val nickname: String,
+    val password: String,
+    val password_confirmation: String,
+    val device_id: String,
+    val screen_width: Int? = null,
+    val screen_height: Int? = null,
+    val fcm_token: String? = null,
+    val name: String? = null
+)
+
+data class AuthResponse(
+    val token: String?,
+    val user: UserInfo,
+    val device_id: String?,
+    val web_url: String?
+)
+
+data class UserInfo(val nickname: String)
 
 data class WallpaperResponse(
     val url: String,
@@ -35,8 +66,20 @@ data class FcmTokenRequest(val fcm_token: String)
 data class NameRequest(val name: String?)
 
 interface ApiService {
+    @POST("api/auth/login")
+    suspend fun login(@Body request: LoginRequest): Response<AuthResponse>
+
+    @POST("api/auth/register")
+    suspend fun registerAuth(@Body request: RegisterAuthRequest): Response<AuthResponse>
+
     @POST("api/devices")
     suspend fun register(@Body request: RegisterRequest): Response<RegisterResponse>
+
+    @POST("api/control_requests")
+    suspend fun sendControlRequest(@Body body: ControlRequestBody): Response<ControlRequestResponse>
+
+    data class ControlRequestBody(val boss_nickname: String)
+    data class ControlRequestResponse(val message: String?)
 
     @PATCH("api/devices/{deviceId}/fcm_token")
     suspend fun updateFcmToken(

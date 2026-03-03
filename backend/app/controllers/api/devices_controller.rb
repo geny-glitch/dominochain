@@ -2,21 +2,24 @@
 
 module Api
   class DevicesController < ApplicationController
-    skip_before_action :verify_authenticity_token
+    include ApiAuthenticatable
 
     def create
       device_id = params.require(:device_id)
-      device = Device.find_or_create_by!(device_id: device_id)
+      device = current_user.devices.find_or_initialize_by(device_id: device_id)
+      device.auth_token = SecureRandom.hex(32)
       updates = {}
       updates[:screen_width] = params[:screen_width]&.to_i if params[:screen_width].present?
       updates[:screen_height] = params[:screen_height]&.to_i if params[:screen_height].present?
       updates[:fcm_token] = params[:fcm_token] if params[:fcm_token].present?
       updates[:name] = params[:name].presence if params.key?(:name)
-      device.update!(updates) if updates.any?
+      device.assign_attributes(updates)
+      device.save!
       render json: {
         id: device.id,
         device_id: device.device_id,
-        web_url: wallpaper_upload_url(device.device_id)
+        token: device.auth_token,
+        web_url: wallpaper_upload_url(current_user.nickname)
       }
     end
 
@@ -155,8 +158,8 @@ module Api
       json
     end
 
-    def wallpaper_upload_url(device_id)
-      "#{request.base_url}/w/#{device_id}"
+    def wallpaper_upload_url(nickname)
+      "#{request.base_url}/w/#{nickname}"
     end
   end
 end

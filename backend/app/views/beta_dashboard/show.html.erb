@@ -1,0 +1,136 @@
+<% content_for :title, "Dashboard Beta - #{current_user.nickname}" %>
+
+<div class="ds-page">
+  <div class="ds-container">
+    <% if flash[:notice] %>
+      <div class="ds-flash ds-flash--success"><%= flash[:notice] %></div>
+    <% end %>
+    <% if flash[:alert] %>
+      <div class="ds-flash ds-flash--error"><%= flash[:alert] %></div>
+    <% end %>
+
+    <header class="ds-header">
+      <%= image_tag "otb-logo.png", alt: "OTB", class: "ds-header-logo", width: 48, height: 48 %>
+      <div>
+        <h1 class="ds-title">Dashboard Beta</h1>
+        <p class="ds-subtitle"><%= current_user.nickname %></p>
+      </div>
+    </header>
+
+    <%# Contrôle — qui contrôle ou lien d'invitation %>
+    <section class="ds-beta-section">
+      <h2 class="ds-section-title">Contrôle</h2>
+      <% if @control&.accepted? %>
+        <div class="ds-beta-control-card">
+          <p class="ds-beta-control-text">Contrôlé par <strong><%= @control.boss.nickname %></strong></p>
+          <p class="ds-beta-control-hint">Le boss peut gérer tes wallpapers et tâches via le lien partagé.</p>
+        </div>
+      <% else %>
+        <div class="ds-beta-control-card ds-beta-control-card--invite">
+          <p class="ds-beta-control-text">Personne ne te contrôle pour le moment.</p>
+          <p class="ds-beta-control-hint">Partage ce lien pour inviter quelqu'un à te contrôler :</p>
+          <div class="ds-beta-invite-link">
+            <code id="invite-url"><%= @invite_url %></code>
+            <button type="button" class="ds-btn ds-btn--secondary ds-btn--sm" data-copy-target="invite-url" title="Copier">
+              Copier
+            </button>
+          </div>
+          <p class="ds-beta-control-hint ds-beta-control-hint--small">Tu peux aussi envoyer une demande depuis l'app en entrant le pseudo du boss.</p>
+        </div>
+      <% end %>
+    </section>
+
+    <%# Tâches en cours %>
+    <section class="ds-beta-section">
+      <h2 class="ds-section-title">Tâches en cours</h2>
+      <% if @tasks.any? %>
+        <ul class="ds-task-list">
+          <% @tasks.each do |task| %>
+            <li class="ds-task-card">
+              <div class="ds-task-card-info">
+                <span class="ds-task-card-name"><%= task.name %></span>
+                <div class="ds-task-card-meta">
+                  <%= task.device.display_name %> · Deadline: <%= task.deadline_at.strftime("%d/%m %H:%M") %>
+                  · <span class="ds-task-status ds-task-status--<%= task.effective_status %>"><%= task.effective_status %></span>
+                  <% if task.proof_pending? %>
+                    · <span class="ds-task-status ds-task-status--pending">Preuve en attente</span>
+                  <% elsif task.proof_accepted? %>
+                    · <span class="ds-task-status ds-task-status--completed">Preuve acceptée</span>
+                  <% end %>
+                </div>
+              </div>
+              <div class="ds-task-card-actions">
+                <% if task.can_submit_proof? %>
+                  <%= link_to "Soumettre preuve", beta_task_path(task), class: "ds-btn ds-btn--primary ds-btn--sm" %>
+                <% elsif task.proof_pending? %>
+                  <span class="ds-btn ds-btn--ghost ds-btn--sm" disabled>En attente de validation</span>
+                <% elsif task.proof_accepted? %>
+                  <span class="ds-btn ds-btn--ghost ds-btn--sm" disabled>✓ Validé</span>
+                <% else %>
+                  <span class="ds-btn ds-btn--ghost ds-btn--sm" disabled><%= task.effective_status %></span>
+                <% end %>
+              </div>
+            </li>
+          <% end %>
+        </ul>
+      <% else %>
+        <p class="ds-text-muted">Aucune tâche pour le moment.</p>
+      <% end %>
+    </section>
+
+    <%# Devices — liste seule, pas de suppression %>
+    <section class="ds-beta-section">
+      <h2 class="ds-section-title">Devices</h2>
+      <% if @devices.any? %>
+        <ul class="ds-beta-device-list">
+          <% @devices.each do |device| %>
+            <li class="ds-beta-device-card">
+              <div class="ds-device-info">
+                <span class="ds-device-name"><%= device.display_name %></span>
+                <% if device.name.present? %>
+                  <span class="ds-sep">·</span>
+                  <span class="ds-device-id"><%= device.device_id %></span>
+                <% end %>
+                <% if device.screen_width.present? && device.screen_height.present? %>
+                  <span class="ds-sep">·</span>
+                  <span><%= device.screen_width %>×<%= device.screen_height %></span>
+                <% end %>
+                <% if device.fcm_token.present? %>
+                  <span class="ds-sep">·</span>
+                  <span class="ds-status ds-status--on">Push</span>
+                <% else %>
+                  <span class="ds-sep">·</span>
+                  <span class="ds-status ds-status--off">Push off</span>
+                <% end %>
+              </div>
+            </li>
+          <% end %>
+        </ul>
+      <% else %>
+        <p class="ds-text-muted">Aucun device. Ouvre l'app pour t'enregistrer.</p>
+      <% end %>
+    </section>
+
+    <p class="ds-beta-footer">
+      <%= button_to "Déconnexion", destroy_user_session_path, method: :delete, class: "ds-btn ds-btn--ghost" %>
+    </p>
+  </div>
+</div>
+
+<script>
+(function() {
+  document.querySelectorAll('[data-copy-target]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      const id = btn.dataset.copyTarget;
+      const el = document.getElementById(id);
+      if (!el) return;
+      const text = el.textContent;
+      navigator.clipboard.writeText(text).then(function() {
+        var orig = btn.textContent;
+        btn.textContent = 'Copié !';
+        setTimeout(function() { btn.textContent = orig; }, 1500);
+      });
+    });
+  });
+})();
+</script>

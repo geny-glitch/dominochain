@@ -1,4 +1,6 @@
 class Device < ApplicationRecord
+  belongs_to :user, optional: true
+
   has_many :wallpapers, dependent: :destroy
   has_many :wallpaper_applications, dependent: :destroy
   has_many :tasks, dependent: :destroy

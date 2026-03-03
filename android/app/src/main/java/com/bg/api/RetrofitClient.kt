@@ -1,13 +1,32 @@
 package com.bg.api
 
 import com.bg.BuildConfig
+import com.bg.SessionManager
+import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
 object RetrofitClient {
+    var sessionManager: SessionManager? = null
+
+    private val authInterceptor = Interceptor { chain ->
+        val token = sessionManager?.token
+        val deviceId = sessionManager?.deviceId
+        val request = chain.request()
+        val newBuilder = request.newBuilder()
+        if (!token.isNullOrBlank()) {
+            newBuilder.addHeader("Authorization", "Bearer $token")
+        }
+        if (!deviceId.isNullOrBlank()) {
+            newBuilder.addHeader("X-Device-Id", deviceId)
+        }
+        chain.proceed(newBuilder.build())
+    }
+
     private val okHttpClient = OkHttpClient.Builder()
+        .addInterceptor(authInterceptor)
         .connectTimeout(30, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
         .build()

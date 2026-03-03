@@ -1,5 +1,7 @@
 package com.bg
 
+import android.app.Application
+import com.bg.api.RetrofitClient
 import android.app.WallpaperManager
 import android.content.Context
 import android.graphics.Bitmap
@@ -19,13 +21,16 @@ class WallpaperWorker(
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         try {
-            val prefs = applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            val deviceId = prefs.getString(KEY_DEVICE_ID, null) ?: return@withContext Result.success()
+            val app = applicationContext as? BgApplication ?: return@withContext Result.success()
+            RetrofitClient.sessionManager = app.sessionManager
+            val deviceId = app.sessionManager.deviceId ?: return@withContext Result.success()
+            if (app.sessionManager.token == null) return@withContext Result.success()
 
             val repository = DeviceRepository()
             val result = repository.getWallpaper(deviceId)
             val wallpaper = result.getOrNull() ?: return@withContext Result.success()
 
+            val prefs = applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             val lastUpdated = prefs.getString(KEY_LAST_WALLPAPER_UPDATED_AT, null)
             if (lastUpdated == wallpaper.updated_at) return@withContext Result.success()
 

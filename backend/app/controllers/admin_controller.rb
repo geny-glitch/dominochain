@@ -1,8 +1,27 @@
 # frozen_string_literal: true
 
 class AdminController < ApplicationController
+  before_action :authenticate_user!
+  before_action :require_admin!
+
   def index
-    @devices = Device.order(created_at: :desc)
+    @devices = Device.includes(:user).order(created_at: :desc)
+    @controls = Control.where(status: :accepted).includes(:boss, :beta)
+  end
+
+  def release_control
+    control = Control.find(params[:control_id])
+    control.destroy!
+    redirect_to admin_path, notice: "Beta #{control.beta.nickname} libéré."
+  rescue ActiveRecord::RecordNotFound
+    redirect_to admin_path, alert: "Control non trouvé."
+  end
+
+  private
+
+  def require_admin!
+    # TODO: add admin role to User when needed
+    # redirect_to root_path, alert: "Accès refusé." unless current_user.admin?
   end
 
   def settings

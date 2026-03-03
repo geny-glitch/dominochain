@@ -1,0 +1,36 @@
+---
+description: Toujours utiliser le design system OTB pour les pages et vues
+globs: backend/app/views/**/*.erb
+alwaysApply: false
+---
+
+# Design System OTB
+
+Toujours utiliser les classes du design system pour les pages web. Ne pas écrire de HTML/CSS custom sans passer par le design system.
+
+## Structure de page
+
+```erb
+<div class="ds-page">
+  <div class="ds-container">
+    <header class="ds-header">
+      <%= image_tag "otb-logo.png", alt: "OTB", class: "ds-header-logo", width: 48, height: 48 %>
+      <h1 class="ds-title">Titre</h1>
+      <p class="ds-subtitle">Sous-titre</p>
+    </header>
+    <!-- contenu -->
+  </div>
+</div>
+```
+
+## Composants
+
+- **Boutons** : `ds-btn ds-btn--primary` | `ds-btn--secondary` | `ds-btn--ghost` (+ `ds-btn--sm` pour petit)
+- **Formulaires** : `ds-form`, `ds-form-group`, `ds-form-label`, `ds-input`, `ds-textarea`
+- **Flash** : `ds-flash ds-flash--success` | `ds-flash--error`
+- **Sections** : `ds-section-title` pour les titres de section
+- **Liens** : utiliser `ds-btn` pour les liens d’action
+
+## Référence
+
+Voir `backend/app/assets/stylesheets/design_system/` pour les styles disponibles.

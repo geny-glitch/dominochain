@@ -1,0 +1,53 @@
+<% content_for :title, "Soumettre preuve - #{@task.name}" %>
+
+<div class="ds-page">
+  <div class="ds-container">
+    <% if flash[:alert] %>
+      <div class="ds-flash ds-flash--error"><%= flash[:alert] %></div>
+    <% end %>
+
+    <header class="ds-header" style="flex-direction: column; align-items: flex-start;">
+      <%= link_to "← Retour au dashboard", beta_dashboard_path, class: "ds-back-link" %>
+      <h1 class="ds-title"><%= @task.name %></h1>
+      <p class="ds-subtitle">
+        <%= @task.device.display_name %> · Deadline: <%= @task.deadline_at.strftime("%d/%m/%Y %H:%M") %>
+      </p>
+    </header>
+
+    <section class="ds-task-detail">
+      <% if @task.description.present? %>
+        <div class="ds-form-group">
+          <span class="ds-form-label">Description</span>
+          <p class="ds-task-body"><%= simple_format(@task.description) %></p>
+        </div>
+      <% end %>
+
+      <% if @task.expected_proof.present? %>
+        <div class="ds-form-group">
+          <span class="ds-form-label">Preuve attendue</span>
+          <p class="ds-task-body"><%= simple_format(@task.expected_proof) %></p>
+        </div>
+      <% end %>
+
+      <div class="ds-proof-section">
+        <h2 class="ds-section-title">Soumettre ta preuve</h2>
+        <p class="ds-form-hint">Texte ou image/vidéo obligatoire.</p>
+
+        <%= form_with url: beta_task_proof_path(@task), method: :post, local: true, multipart: true, class: "ds-form" do |f| %>
+          <div class="ds-form-group">
+            <label for="proof_text" class="ds-form-label">Texte (optionnel si tu envoies une image/vidéo)</label>
+            <%= f.text_area :text, id: "proof_text", class: "ds-input ds-textarea", rows: 4, placeholder: "Décris ta preuve ou ajoute un lien..." %>
+          </div>
+          <div class="ds-form-group">
+            <label for="proof_media" class="ds-form-label">Image ou vidéo (optionnel si tu as du texte)</label>
+            <input type="file" name="media" id="proof_media" class="ds-input" accept="image/*,video/*">
+          </div>
+          <div class="ds-proof-actions">
+            <%= f.submit "Envoyer la preuve", class: "ds-btn ds-btn--primary" %>
+            <%= link_to "Annuler", beta_dashboard_path, class: "ds-btn ds-btn--ghost" %>
+          </div>
+        <% end %>
+      </div>
+    </section>
+  </div>
+</div>

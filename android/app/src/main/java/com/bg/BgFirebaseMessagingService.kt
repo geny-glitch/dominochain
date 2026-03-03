@@ -1,6 +1,7 @@
 package com.bg
 
 import android.util.Log
+import com.bg.api.RetrofitClient
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import kotlinx.coroutines.CoroutineScope
@@ -46,9 +47,10 @@ class BgFirebaseMessagingService : FirebaseMessagingService() {
 
     override fun onNewToken(token: String) {
         Log.d(TAG, "FCM token refreshed")
-        val prefs = getSharedPreferences(WallpaperWorker.PREFS_NAME, MODE_PRIVATE)
-        val deviceId = prefs.getString(WallpaperWorker.KEY_DEVICE_ID, null)
-        if (deviceId != null) {
+        val app = applicationContext as? BgApplication ?: return
+        RetrofitClient.sessionManager = app.sessionManager
+        val deviceId = app.sessionManager.deviceId ?: return
+        if (app.sessionManager.token != null) {
             serviceScope.launch {
                 DeviceRepository().updateFcmToken(deviceId, token)
             }

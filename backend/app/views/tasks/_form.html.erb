@@ -1,4 +1,4 @@
-<%= form_with url: wallpaper_tasks_path(@device_id), method: :post, local: true, class: "ds-form ds-task-form" do |f| %>
+<%= form_with url: wallpaper_tasks_path(@nickname, device_id: @device_id), method: :post, local: true, class: "ds-form ds-task-form" do |f| %>
   <div class="ds-form-group">
     <label for="task_name" class="ds-form-label">Nom</label>
     <input type="text" name="task[name]" id="task_name" class="ds-input" required placeholder='Ex: Ecrire 100 fois "je serai obéissant"'>

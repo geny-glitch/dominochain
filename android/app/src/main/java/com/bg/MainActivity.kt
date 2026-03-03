@@ -1,6 +1,7 @@
 package com.bg
 
 import android.Manifest
+import com.bg.api.RetrofitClient
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -23,16 +24,32 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private val prefs by lazy { getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE) }
+    private val sessionManager by lazy { (application as BgApplication).sessionManager }
     private val repository = DeviceRepository()
+    private val authRepository = AuthRepository()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        RetrofitClient.sessionManager = sessionManager
+
+        val deviceId = sessionManager.deviceId ?: run {
+            val id = java.util.UUID.randomUUID().toString()
+            sessionManager.deviceId = id
+            id
+        }
+
+        if (!sessionManager.isLoggedIn) {
+            startActivity(Intent(this, LoginActivity::class.java))
+            finish()
+            return
+        }
+
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         requestNotificationPermission()
 
-        val deviceId = getOrCreateDeviceId()
         binding.deviceIdText.text = deviceId
 
         binding.deviceNameInput.setText(getDeviceName() ?: "")
@@ -57,19 +74,20 @@ class MainActivity : AppCompatActivity() {
             val deviceName = getDeviceName()
             val result = repository.register(deviceId, screenWidth, screenHeight, fcmToken, deviceName)
             result.onSuccess { response ->
-                binding.webUrlText.text = response.web_url
+                val webUrl = response.web_url
+                binding.webUrlText.text = webUrl
                 binding.webUrlText.setOnClickListener {
-                    openUrl(response.web_url)
+                    openUrl(webUrl)
                 }
                 binding.copyButton.setOnClickListener {
-                    copyToClipboard(response.web_url)
+                    copyToClipboard(webUrl)
                 }
                 binding.refreshButton.setOnClickListener {
                     syncWallpaper()
                     Toast.makeText(this@MainActivity, "Checking for new wallpaper...", Toast.LENGTH_SHORT).show()
                 }
             }.onFailure {
-                binding.webUrlText.text = "Failed to register: ${it.message}"
+                binding.webUrlText.text = "Erreur: ${it.message}"
             }
         }
 
@@ -77,6 +95,23 @@ class MainActivity : AppCompatActivity() {
 
         findViewById<View>(R.id.tasks_button)?.setOnClickListener {
             startActivity(Intent(this, TasksActivity::class.java))
+        }
+
+        findViewById<View>(R.id.send_control_request_button)?.setOnClickListener {
+            val bossNickname = findViewById<android.widget.EditText>(R.id.boss_nickname_input).text.toString().trim()
+            if (bossNickname.isBlank()) {
+                Toast.makeText(this, "Entrez le pseudo du boss", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            lifecycleScope.launch {
+                authRepository.sendControlRequest(bossNickname)
+                    .onSuccess { msg ->
+                        Toast.makeText(this@MainActivity, msg, Toast.LENGTH_SHORT).show()
+                    }
+                    .onFailure {
+                        Toast.makeText(this@MainActivity, it.message, Toast.LENGTH_SHORT).show()
+                    }
+            }
         }
 
         handleTasksIntent(intent)
@@ -104,15 +139,6 @@ class MainActivity : AppCompatActivity() {
 
     private fun syncWallpaper() {
         WallpaperWorker.syncNow(this)
-    }
-
-    private fun getOrCreateDeviceId(): String {
-        var deviceId = prefs.getString(KEY_DEVICE_ID, null)
-        if (deviceId == null) {
-            deviceId = java.util.UUID.randomUUID().toString()
-            prefs.edit().putString(KEY_DEVICE_ID, deviceId).apply()
-        }
-        return deviceId
     }
 
     private fun getDeviceName(): String? {

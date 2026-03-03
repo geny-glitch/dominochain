@@ -19,6 +19,16 @@
     </div>
     <h1 class="ds-home__title">OTB</h1>
     <p class="ds-home__tagline">Own their backgrounds</p>
+    <nav class="ds-home__auth">
+      <% if user_signed_in? %>
+        <%= link_to current_user.beta? ? "Mon dashboard" : "Dashboard", current_user.beta? ? beta_dashboard_path : dashboard_path, class: "ds-btn ds-btn--primary ds-btn--sm" %>
+        <%= link_to "Déconnexion", destroy_user_session_path, data: { turbo_method: :delete }, class: "ds-btn ds-btn--ghost ds-btn--sm" %>
+      <% else %>
+        <%= link_to "Connexion", new_user_session_path, class: "ds-btn ds-btn--primary ds-btn--sm" %>
+        <%= link_to "Inscription Beta", new_user_registration_path, class: "ds-btn ds-btn--secondary ds-btn--sm" %>
+        <%= link_to "Inscription Boss", new_boss_registration_path, class: "ds-btn ds-btn--secondary ds-btn--sm" %>
+      <% end %>
+    </nav>
   </div>
 </div>
 

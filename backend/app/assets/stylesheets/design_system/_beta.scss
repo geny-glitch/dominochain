@@ -1,0 +1,74 @@
+// Beta dashboard
+
+@import "variables";
+
+.ds-beta-section {
+  margin-top: $ds-space-2xl;
+}
+
+.ds-beta-control-card {
+  padding: $ds-space-lg;
+  background: $ds-surface;
+  border: 1px solid $ds-border;
+  border-radius: $ds-radius-md;
+}
+
+.ds-beta-control-card--invite {
+  border-color: rgba($ds-teal, 0.3);
+}
+
+.ds-beta-control-text {
+  margin: 0;
+  font-size: $ds-body-size;
+  color: $ds-text;
+}
+
+.ds-beta-control-hint {
+  margin: $ds-space-sm 0 0;
+  font-size: $ds-small-size;
+  color: $ds-text-muted;
+
+  &--small {
+    margin-top: $ds-space-md;
+    font-size: $ds-tiny-size;
+  }
+}
+
+.ds-beta-invite-link {
+  display: flex;
+  align-items: center;
+  gap: $ds-space-sm;
+  margin-top: $ds-space-md;
+  padding: $ds-space-sm $ds-space-md;
+  background: $ds-bg;
+  border-radius: $ds-radius-sm;
+  border: 1px solid $ds-border;
+
+  code {
+    flex: 1;
+    font-family: $ds-font-mono;
+    font-size: $ds-tiny-size;
+    color: $ds-teal;
+    word-break: break-all;
+  }
+}
+
+.ds-beta-device-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.ds-beta-device-card {
+  padding: $ds-space-md $ds-space-lg;
+  background: $ds-surface;
+  border: 1px solid $ds-border;
+  border-radius: $ds-radius-md;
+  margin-bottom: $ds-space-sm;
+}
+
+.ds-beta-footer {
+  margin-top: $ds-space-2xl;
+  padding-top: $ds-space-xl;
+  border-top: 1px solid $ds-border;
+}

@@ -253,6 +253,30 @@
   font-size: $ds-body-size;
 }
 
+// Auth forms (login, registration)
+.ds-auth-form {
+  margin-top: $ds-space-xl;
+  padding: $ds-space-xl;
+  background: $ds-surface;
+  border: 1px solid $ds-border;
+  border-radius: $ds-radius-md;
+}
+
+.ds-auth-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $ds-space-sm;
+  justify-content: center;
+  margin-top: $ds-space-xl;
+}
+
+.ds-form-hint {
+  display: block;
+  font-size: $ds-small-size;
+  color: $ds-text-muted;
+  margin-bottom: $ds-space-xs;
+}
+
 // Task form
 .ds-task-form {
   margin-top: $ds-space-xl;

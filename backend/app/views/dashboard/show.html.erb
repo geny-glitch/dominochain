@@ -1,0 +1,41 @@
+<div class="ds-page">
+  <div class="ds-container">
+    <h1>Dashboard Boss</h1>
+
+    <% if @controlled_betas.any? %>
+      <section>
+        <h2>Betas contrôlés</h2>
+        <ul>
+          <% @controlled_betas.each do |control| %>
+            <li>
+              <%= control.beta.nickname %>
+              <%= link_to "Gérer", wallpaper_upload_path(control.beta.nickname), class: "ds-btn ds-btn--primary ds-btn--sm" %>
+              <%= button_to "Libérer", control_release_path(control_id: control.id), method: :post, form: { data: { turbo_confirm: "Libérer ce beta ?" } }, class: "ds-btn ds-btn--ghost ds-btn--sm" %>
+            </li>
+          <% end %>
+        </ul>
+      </section>
+    <% end %>
+
+    <% if @pending_control_requests.any? %>
+      <section>
+        <h2>Demandes en attente</h2>
+        <ul>
+          <% @pending_control_requests.each do |request| %>
+            <li>
+              <%= request.beta.nickname %> demande à être contrôlé
+              <%= button_to "Accepter", control_accept_request_path(request_id: request.id), method: :post, class: "ds-btn ds-btn--primary ds-btn--sm" %>
+              <%= button_to "Refuser", control_reject_request_path(request_id: request.id), method: :post, class: "ds-btn ds-btn--ghost ds-btn--sm" %>
+            </li>
+          <% end %>
+        </ul>
+      </section>
+    <% end %>
+
+    <% if @controlled_betas.empty? && @pending_control_requests.empty? %>
+      <p>Aucun beta contrôlé. Demandez à un beta de partager son lien ou d'envoyer une demande.</p>
+    <% end %>
+
+    <p><%= button_to "Déconnexion", destroy_user_session_path, method: :delete, class: "ds-btn ds-btn--ghost" %></p>
+  </div>
+</div>

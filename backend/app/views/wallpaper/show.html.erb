@@ -20,6 +20,15 @@
       <p class="ds-subtitle">Own their backgrounds</p>
     </header>
 
+    <% if @devices&.many? %>
+      <div class="ds-device-picker">
+        <span class="ds-form-label">Device :</span>
+        <% @devices.each do |d| %>
+          <%= link_to d.display_name, wallpaper_upload_path(@nickname, device_id: d.device_id), class: "ds-btn ds-btn--sm #{@device_id == d.device_id ? 'ds-btn--primary' : 'ds-btn--ghost'}" %>
+        <% end %>
+      </div>
+    <% end %>
+
     <% if @device %>
       <div class="ds-device-info">
         <span class="ds-device-name"><%= @device.display_name %></span>
@@ -40,7 +49,7 @@
         <% end %>
       </div>
 
-      <%= form_with url: wallpaper_upload_submit_path(@device_id), method: :post, local: true, multipart: true, id: "upload-form", class: "ds-form" do |f| %>
+      <%= form_with url: wallpaper_upload_submit_path(@nickname, device_id: @device_id), method: :post, local: true, multipart: true, id: "upload-form", class: "ds-form" do |f| %>
         <div class="ds-upload">
           <div id="file-input-wrapper" class="ds-file-wrapper">
             <label class="ds-file-label">
@@ -79,8 +88,8 @@
                   </div>
                 </div>
                 <div class="ds-task-card-actions">
-                  <%= link_to "Voir", wallpaper_task_path(@device_id, task), class: "ds-btn ds-btn--secondary ds-btn--sm" %>
-                  <%= button_to "Supprimer", wallpaper_task_destroy_path(@device_id, task), method: :delete, form: { data: { turbo_confirm: "Supprimer cette tâche ?" } }, class: "ds-btn ds-btn--ghost ds-btn--sm ds-delete-btn" %>
+                  <%= link_to "Voir", wallpaper_task_path(@nickname, task, device_id: @device_id), class: "ds-btn ds-btn--secondary ds-btn--sm" %>
+                  <%= button_to "Supprimer", wallpaper_task_destroy_path(@nickname, task, device_id: @device_id), method: :delete, form: { data: { turbo_confirm: "Supprimer cette tâche ?" } }, class: "ds-btn ds-btn--ghost ds-btn--sm ds-delete-btn" %>
                 </div>
               </li>
             <% end %>
@@ -131,9 +140,9 @@
                 </div>
                 <div class="ds-wallpaper-actions">
                   <% unless is_current %>
-                    <%= button_to "Définir comme actuel", wallpaper_set_current_path(@device_id, wallpaper.id), method: :post, class: "ds-btn ds-btn--secondary ds-btn--sm" %>
+                    <%= button_to "Définir comme actuel", wallpaper_set_current_path(@nickname, wallpaper.id, device_id: @device_id), method: :post, class: "ds-btn ds-btn--secondary ds-btn--sm" %>
                   <% end %>
-                  <%= button_to "Supprimer", wallpaper_destroy_path(@device_id, wallpaper.id), method: :delete, form: { data: { turbo_confirm: "Supprimer ce wallpaper ?" } }, class: "ds-delete-btn" %>
+                  <%= button_to "Supprimer", wallpaper_destroy_path(@nickname, wallpaper.id, device_id: @device_id), method: :delete, form: { data: { turbo_confirm: "Supprimer ce wallpaper ?" } }, class: "ds-delete-btn" %>
                 </div>
               </div>
             <% end %>
@@ -151,7 +160,7 @@
     const screenW = <%= @device&.screen_width || 0 %>;
     const screenH = <%= @device&.screen_height || 0 %>;
     const aspectRatio = (screenW > 0 && screenH > 0) ? screenW / screenH : 9 / 16;
-    const uploadUrl = '<%= wallpaper_upload_submit_path(@device_id) %>';
+    const uploadUrl = '<%= wallpaper_upload_submit_path(@nickname, device_id: @device_id) %>';
 
     const input = document.getElementById('image-input');
     const fileWrapper = document.getElementById('file-input-wrapper');

@@ -1,40 +1,39 @@
 # frozen_string_literal: true
 
 class WallpaperController < ApplicationController
+  include BetaAccessControl
+
   def show
-    @device_id = params[:device_id]
-    @device = Device.find_by(device_id: @device_id)
-    @applications = @device&.wallpaper_applications&.includes(:wallpaper)&.recent || []
-    @tasks = @device&.tasks&.recent || []
+    @device_id = @device.device_id
+    @applications = @device.wallpaper_applications.includes(:wallpaper).recent
+    @tasks = @device.tasks.recent
   end
 
   def upload
-    device = Device.find_by!(device_id: params[:device_id])
+    device = @device
     @wallpaper = device.wallpapers.create!(image: params.require(:image))
     device.wallpaper_applications.create!(wallpaper: @wallpaper, applied_at: Time.current)
-    redirect_to wallpaper_upload_path(params[:device_id]), notice: "Wallpaper uploaded! It will appear on your device shortly."
-  rescue ActiveRecord::RecordNotFound
-    redirect_to wallpaper_upload_path(params[:device_id]), alert: "Device not found. Please open the app first to register."
+    redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), notice: "Wallpaper uploaded! It will appear on your device shortly."
   rescue ActionController::ParameterMissing
-    redirect_to wallpaper_upload_path(params[:device_id]), alert: "Please select an image to upload."
+    redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), alert: "Please select an image to upload."
   end
 
   def destroy
-    device = Device.find_by!(device_id: params[:device_id])
+    device = @device
     wallpaper = device.wallpapers.find(params[:wallpaper_id])
     wallpaper.destroy!
-    redirect_to wallpaper_upload_path(params[:device_id]), notice: "Wallpaper deleted."
+    redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), notice: "Wallpaper deleted."
   rescue ActiveRecord::RecordNotFound
-    redirect_to wallpaper_upload_path(params[:device_id]), alert: "Wallpaper not found."
+    redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), alert: "Wallpaper not found."
   end
 
   def set_current
-    device = Device.find_by!(device_id: params[:device_id])
+    device = @device
     wallpaper = device.wallpapers.find(params[:wallpaper_id])
     device.wallpaper_applications.create!(wallpaper: wallpaper, applied_at: Time.current)
     FcmService.send_background_changed_notifications(device: device)
-    redirect_to wallpaper_upload_path(params[:device_id]), notice: "Wallpaper défini comme fond actuel."
+    redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), notice: "Wallpaper défini comme fond actuel."
   rescue ActiveRecord::RecordNotFound
-    redirect_to wallpaper_upload_path(params[:device_id]), alert: "Wallpaper not found."
+    redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), alert: "Wallpaper not found."
   end
 end

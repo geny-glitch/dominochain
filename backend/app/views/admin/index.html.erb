@@ -14,6 +14,20 @@
       </div>
     </header>
 
+    <% if @controls&.any? %>
+      <section class="ds-admin-list">
+        <h2>Controls actifs</h2>
+        <ul class="ds-device-list">
+          <% @controls.each do |control| %>
+            <li class="ds-device-list-item">
+              <span><%= control.boss.nickname %> → <%= control.beta.nickname %></span>
+              <%= button_to "Libérer", admin_release_control_path(control.id), method: :post, form: { data: { turbo_confirm: "Libérer ce beta ?" } }, class: "ds-btn ds-btn--ghost ds-btn--sm" %>
+            </li>
+          <% end %>
+        </ul>
+      </section>
+    <% end %>
+
     <section class="ds-admin-list">
       <% if @devices.any? %>
         <ul class="ds-device-list">
@@ -21,7 +35,10 @@
             <li class="ds-device-list-item">
               <div class="ds-device-list-info">
                 <span class="ds-device-name"><%= device.display_name %></span>
-                <% if device.name.present? %>
+                <% if device.user %>
+                  <span class="ds-sep">·</span>
+                  <span class="ds-device-id"><%= device.user.nickname %></span>
+                <% elsif device.name.present? %>
                   <span class="ds-sep">·</span>
                   <span class="ds-device-id"><%= device.device_id %></span>
                 <% end %>
@@ -37,7 +54,11 @@
                   <span class="ds-status ds-status--off">Push off</span>
                 <% end %>
               </div>
-              <%= link_to "Ouvrir", wallpaper_upload_path(device.device_id), class: "ds-btn ds-btn--primary ds-btn--sm" %>
+              <% if device.user %>
+                <%= link_to "Ouvrir", wallpaper_upload_path(device.user.nickname), class: "ds-btn ds-btn--primary ds-btn--sm" %>
+              <% else %>
+                <span class="ds-text-muted">(pas de compte lié)</span>
+              <% end %>
             </li>
           <% end %>
         </ul>

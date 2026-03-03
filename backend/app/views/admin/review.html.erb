@@ -1,0 +1,104 @@
+<% content_for :title, "Review - Admin OTB" %>
+
+<div class="ds-review">
+  <div class="ds-review__bg" aria-hidden="true"></div>
+
+  <div class="ds-review__content">
+    <header class="ds-review__header">
+      <%= link_to "← Admin", admin_path, class: "ds-btn ds-btn--ghost ds-btn--sm" %>
+      <h1 class="ds-review__title">Review</h1>
+    </header>
+
+    <div id="review-grid" class="ds-review__grid">
+      <% if @images.any? %>
+        <%= render partial: "admin/review_image", collection: @images, as: :image %>
+      <% else %>
+        <p class="ds-review__empty">Aucune image. Lance <code>rails wikimedia:fetch_images</code> ou enregistre la liste dans Paramètres.</p>
+      <% end %>
+    </div>
+
+    <div id="review-sentinel" class="ds-review__sentinel"></div>
+    <div id="review-loading" class="ds-review__loading" style="display: none;">Chargement...</div>
+  </div>
+</div>
+
+<%= javascript_tag do %>
+(function() {
+  const grid = document.getElementById('review-grid');
+  const sentinel = document.getElementById('review-sentinel');
+  const loading = document.getElementById('review-loading');
+  if (!grid || !sentinel) return;
+
+  let nextPage = 2;
+  let loadingMore = false;
+
+  function loadMore() {
+    if (loadingMore) return;
+    loadingMore = true;
+    loading.style.display = 'block';
+
+    fetch('/admin/review/images?page=' + nextPage, {
+      headers: { 'Accept': 'application/json' }
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.html) {
+        const beforeCount = grid.children.length;
+        grid.insertAdjacentHTML('beforeend', data.html);
+        const newCards = Array.from(grid.children).slice(beforeCount);
+        bindButtons(newCards);
+      }
+      nextPage = data.next_page || null;
+      loadingMore = false;
+      loading.style.display = 'none';
+    })
+    .catch(() => {
+      loadingMore = false;
+      loading.style.display = 'none';
+    });
+  }
+
+  function bindButtons(cards) {
+    cards.forEach(card => {
+      if (card.dataset.bound) return;
+      card.dataset.bound = '1';
+      if (!card.dataset.id) return;
+
+      const likeBtn = card.querySelector('[data-action="like"]');
+      const hideBtn = card.querySelector('[data-action="hide"]');
+
+      if (likeBtn) {
+        likeBtn.addEventListener('click', function() {
+          const id = card.dataset.id;
+          fetch('/admin/review/images/' + id + '/like', { method: 'POST', headers: { 'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '', 'Accept': 'application/json' } })
+            .then(r => r.json())
+            .then(data => {
+              const countEl = likeBtn.querySelector('.ds-review-card__like-count');
+              if (countEl) countEl.textContent = data.likes_count;
+            });
+        });
+      }
+
+      if (hideBtn) {
+        hideBtn.addEventListener('click', function() {
+          const id = card.dataset.id;
+          fetch('/admin/review/images/' + id + '/hide', { method: 'POST', headers: { 'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '', 'Accept': 'application/json' } })
+            .then(r => r.json())
+            .then(() => {
+              card.style.opacity = '0';
+              card.style.transform = 'scale(0.9)';
+              setTimeout(() => card.remove(), 300);
+            });
+        });
+      }
+    });
+  }
+
+  const observer = new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting && nextPage) loadMore();
+  }, { rootMargin: '200px' });
+  observer.observe(sentinel);
+
+  bindButtons(grid.querySelectorAll('[data-id]'));
+})();
+<% end %>

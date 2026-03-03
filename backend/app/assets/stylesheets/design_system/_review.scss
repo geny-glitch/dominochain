@@ -1,0 +1,168 @@
+// Admin review page — same vibe as home, Pinterest-style masonry
+
+@import "variables";
+
+.ds-review {
+  position: relative;
+  min-height: 100vh;
+  background: $ds-bg;
+}
+
+.ds-review__bg {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba($ds-bg, 0.5) 0%,
+    rgba($ds-bg, 0.75) 50%,
+    rgba($ds-bg, 0.9) 100%
+  );
+  pointer-events: none;
+}
+
+.ds-review__content {
+  position: relative;
+  z-index: 1;
+  padding: $ds-space-lg;
+  padding-top: $ds-space-xl;
+}
+
+.ds-review__header {
+  margin-bottom: $ds-space-lg;
+  display: flex;
+  align-items: center;
+  gap: $ds-space-md;
+}
+
+.ds-review__title {
+  font-size: $ds-title-size;
+  font-weight: $ds-title-weight;
+  margin: 0;
+  color: $ds-text;
+}
+
+// Pinterest-style masonry grid — same 8 cols + 2px gap as home
+.ds-review__grid {
+  column-count: 8;
+  column-gap: 2px;
+  padding: 2px;
+
+  @media (max-width: 1200px) {
+    column-count: 6;
+  }
+  @media (max-width: 900px) {
+    column-count: 4;
+  }
+  @media (max-width: 600px) {
+    column-count: 2;
+  }
+}
+
+.ds-review__empty {
+  column-span: all;
+  color: $ds-text-muted;
+  font-size: $ds-body-size;
+  padding: $ds-space-2xl;
+  text-align: center;
+
+  code {
+    font-family: $ds-font-mono;
+    background: $ds-surface;
+    padding: 0.2em 0.4em;
+    border-radius: $ds-radius-sm;
+  }
+}
+
+// Card — same tile style as home collage
+.ds-review-card {
+  break-inside: avoid;
+  margin-bottom: 2px;
+  position: relative;
+  overflow: hidden;
+  border-radius: 2px;
+  transition: opacity 0.3s, transform 0.3s;
+
+  &:hover .ds-review-card__actions {
+    opacity: 1;
+  }
+}
+
+.ds-review-card__img {
+  display: block;
+  line-height: 0;
+
+  img {
+    width: 100%;
+    height: auto;
+    display: block;
+    vertical-align: bottom;
+    filter: saturate(0.85) brightness(0.6);
+  }
+}
+
+.ds-review-card__actions {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $ds-space-md;
+  background: rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.ds-review-card__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.2s;
+
+  &:hover {
+    transform: scale(1.1);
+  }
+
+  &--like {
+    background: rgba(74, 157, 122, 0.9);
+    color: $ds-bg;
+  }
+
+  &--hide {
+    background: rgba(199, 92, 92, 0.9);
+    color: $ds-bg;
+  }
+}
+
+.ds-review-card__like-count {
+  margin-left: 2px;
+  font-size: $ds-tiny-size;
+}
+
+.ds-review-card__name {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: $ds-space-xs $ds-space-sm;
+  font-size: $ds-tiny-size;
+  color: $ds-text;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.85));
+}
+
+.ds-review__sentinel {
+  height: 1px;
+  visibility: hidden;
+  margin-top: $ds-space-xl;
+}
+
+.ds-review__loading {
+  text-align: center;
+  color: $ds-text-muted;
+  font-size: $ds-small-size;
+  padding: $ds-space-lg;
+}

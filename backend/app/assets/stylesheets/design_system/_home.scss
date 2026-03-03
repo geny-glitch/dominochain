@@ -15,10 +15,29 @@
   position: absolute;
   inset: 0;
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  grid-template-rows: repeat(4, 1fr);
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(6, 1fr);
   gap: 2px;
   padding: 2px;
+}
+
+.ds-home__empty {
+  grid-column: 1 / -1;
+  grid-row: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: $ds-text-muted;
+  font-size: $ds-small-size;
+  text-align: center;
+  padding: $ds-space-xl;
+
+  code {
+    font-family: $ds-font-mono;
+    background: $ds-surface;
+    padding: 0.2em 0.4em;
+    border-radius: $ds-radius-sm;
+  }
 }
 
 .ds-home__collage-tile {
@@ -31,6 +50,22 @@
     height: 100%;
     object-fit: cover;
     filter: saturate(0.85) brightness(0.6);
+  }
+
+  &--refreshing {
+    animation: ds-collage-pop 0.5s ease-out;
+  }
+}
+
+@keyframes ds-collage-pop {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.12);
+  }
+  100% {
+    transform: scale(1);
   }
 }
 

@@ -100,3 +100,13 @@ Puis dans `local.properties` :
 4. Set DATABASE_URL from Postgres connection string
 5. Pour les push FCM : `fly secrets set FIREBASE_PROJECT_ID=ton-project-id FIREBASE_CREDENTIALS_JSON="$(cat path/to/service-account.json)"`
 6. Deploy: `cd backend && fly deploy`
+
+### Home page (collage influenceurs)
+
+La home affiche un collage d'images stockées en DB. Configure la liste dans Admin > Paramètres (un nom par ligne), puis :
+
+```bash
+cd backend && bin/rails wikimedia:fetch_images
+```
+
+Ou enregistre la liste dans l'admin : les images sont récupérées automatiquement (10 par star).

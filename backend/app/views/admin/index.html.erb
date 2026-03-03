@@ -8,6 +8,10 @@
         <h1 class="ds-title">Admin</h1>
         <p class="ds-subtitle">Devices actifs</p>
       </div>
+      <div class="ds-header-actions">
+        <%= link_to "Review", admin_review_path, class: "ds-btn ds-btn--ghost ds-btn--sm" %>
+        <%= link_to "Paramètres", admin_settings_path, class: "ds-btn ds-btn--ghost ds-btn--sm" %>
+      </div>
     </header>
 
     <section class="ds-admin-list">

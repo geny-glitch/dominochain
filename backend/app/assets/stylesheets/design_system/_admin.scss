@@ -6,6 +6,12 @@
   max-width: 480px;
 }
 
+.ds-header-actions {
+  margin-left: auto;
+  display: flex;
+  gap: $ds-space-sm;
+}
+
 .ds-admin-list {
   margin-top: $ds-space-xl;
 }
@@ -46,6 +52,51 @@
     font-weight: 500;
     font-family: inherit;
   }
+}
+
+.ds-admin-hint {
+  color: $ds-text-muted;
+  font-size: $ds-small-size;
+  margin-bottom: $ds-space-lg;
+}
+
+.ds-admin-form {
+  margin-top: $ds-space-xl;
+}
+
+.ds-form-group {
+  margin-bottom: $ds-space-lg;
+}
+
+.ds-form-label {
+  display: block;
+  font-size: $ds-small-size;
+  color: $ds-text-muted;
+  margin-bottom: $ds-space-sm;
+}
+
+.ds-form-textarea {
+  width: 100%;
+  padding: $ds-space-md;
+  background: $ds-surface;
+  border: 1px solid $ds-border;
+  border-radius: $ds-radius-md;
+  color: $ds-text;
+  font-family: $ds-font-mono;
+  font-size: $ds-body-size;
+  resize: vertical;
+  min-height: 300px;
+
+  &:focus {
+    outline: none;
+    border-color: $ds-teal;
+  }
+}
+
+.ds-form-actions {
+  display: flex;
+  gap: $ds-space-md;
+  margin-top: $ds-space-lg;
 }
 
 .ds-admin-empty {

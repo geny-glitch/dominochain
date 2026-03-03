@@ -110,6 +110,29 @@ class FcmService
       send_request(device, payload)
     end
 
+    def send_take_screenshot_notification(device:)
+      unless device.fcm_token.present?
+        Rails.logger.info "[FCM] Skipped take_screenshot: no fcm_token for device #{device.device_id}"
+        return
+      end
+      unless credentials_configured?
+        Rails.logger.warn "[FCM] Skipped take_screenshot: credentials not configured."
+        return
+      end
+
+      payload = {
+        message: {
+          token: device.fcm_token,
+          data: { type: "take_screenshot" },
+          android: {
+            priority: "high"
+          }
+        }
+      }
+
+      send_request(device, payload)
+    end
+
     def send_proof_reviewed_notification(device:, proof:)
       unless device.fcm_token.present?
         Rails.logger.info "[FCM] Skipped proof_reviewed: no fcm_token for device #{device.device_id}"

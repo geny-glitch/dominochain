@@ -103,6 +103,13 @@ interface ApiService {
     suspend fun getTaskDetail(@Path("deviceId") deviceId: String, @Path("taskId") taskId: Long): Response<TaskDetailResponse>
 
     @Multipart
+    @POST("api/devices/{deviceId}/screenshots")
+    suspend fun uploadScreenshot(
+        @Path("deviceId") deviceId: String,
+        @Part image: MultipartBody.Part
+    ): Response<ScreenshotResponse>
+
+    @Multipart
     @POST("api/devices/{deviceId}/tasks/{taskId}/proof")
     suspend fun submitProof(
         @Path("deviceId") deviceId: String,
@@ -133,6 +140,12 @@ data class TaskDetailResponse(
     val can_submit_proof: Boolean,
     val proof_status: String?,
     val proof: ProofResponse?
+)
+
+data class ScreenshotResponse(
+    val id: Long,
+    val url: String,
+    val captured_at: String
 )
 
 data class ProofResponse(

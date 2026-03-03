@@ -5,6 +5,7 @@ import com.bg.api.RetrofitClient
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.Context.MEDIA_PROJECTION_SERVICE
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -98,6 +99,8 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, TasksActivity::class.java))
         }
 
+        setupScreenshotSwitch()
+
         findViewById<View>(R.id.send_control_request_button)?.setOnClickListener {
             val bossNickname = findViewById<android.widget.EditText>(R.id.boss_nickname_input).text.toString().trim()
             if (bossNickname.isBlank()) {
@@ -140,6 +143,45 @@ class MainActivity : AppCompatActivity() {
 
     private fun syncWallpaper() {
         WallpaperWorker.syncNow(this)
+    }
+
+    private fun setupScreenshotSwitch() {
+        val switch = findViewById<androidx.appcompat.widget.SwitchCompat>(R.id.screenshot_switch) ?: return
+        switch.isChecked = prefs.getBoolean(ScreenshotCaptureService.KEY_SCREENSHOT_ENABLED, false)
+        switch.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) {
+                val projectionManager = getSystemService(MEDIA_PROJECTION_SERVICE) as android.media.projection.MediaProjectionManager
+                startActivityForResult(
+                    projectionManager.createScreenCaptureIntent(),
+                    REQUEST_MEDIA_PROJECTION
+                )
+            } else {
+                prefs.edit().putBoolean(ScreenshotCaptureService.KEY_SCREENSHOT_ENABLED, false).apply()
+                stopService(Intent(this, ScreenshotCaptureService::class.java))
+            }
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQUEST_MEDIA_PROJECTION) {
+            val switch = findViewById<androidx.appcompat.widget.SwitchCompat>(R.id.screenshot_switch) ?: return
+            if (resultCode == RESULT_OK && data != null) {
+                prefs.edit().putBoolean(ScreenshotCaptureService.KEY_SCREENSHOT_ENABLED, true).apply()
+                val serviceIntent = Intent(this, ScreenshotCaptureService::class.java).apply {
+                    action = ScreenshotCaptureService.ACTION_START
+                    putExtra(ScreenshotCaptureService.EXTRA_RESULT_CODE, resultCode)
+                    putExtra(ScreenshotCaptureService.EXTRA_RESULT_DATA, data)
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    startForegroundService(serviceIntent)
+                } else {
+                    startService(serviceIntent)
+                }
+            } else {
+                switch.isChecked = false
+            }
+        }
     }
 
     private fun getDeviceName(): String? {
@@ -185,5 +227,6 @@ class MainActivity : AppCompatActivity() {
         private const val KEY_DEVICE_ID = "device_id"
         private const val KEY_DEVICE_NAME = "device_name"
         private const val REQUEST_NOTIFICATION = 1001
+        private const val REQUEST_MEDIA_PROJECTION = 1002
     }
 }

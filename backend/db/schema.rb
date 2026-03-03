@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_03_03_160102) do
+ActiveRecord::Schema[7.2].define(version: 2026_03_04_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -67,6 +67,15 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_03_160102) do
     t.datetime "updated_at", null: false
     t.index ["beta_id"], name: "index_controls_on_beta_id", unique: true
     t.index ["boss_id"], name: "index_controls_on_boss_id"
+  end
+
+  create_table "device_screenshots", force: :cascade do |t|
+    t.bigint "device_id", null: false
+    t.datetime "captured_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["device_id", "captured_at"], name: "index_device_screenshots_on_device_id_and_captured_at"
+    t.index ["device_id"], name: "index_device_screenshots_on_device_id"
   end
 
   create_table "devices", force: :cascade do |t|
@@ -170,6 +179,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_03_160102) do
   add_foreign_key "control_requests", "users", column: "boss_id"
   add_foreign_key "controls", "users", column: "beta_id"
   add_foreign_key "controls", "users", column: "boss_id"
+  add_foreign_key "device_screenshots", "devices"
   add_foreign_key "devices", "users"
   add_foreign_key "proof_of_completions", "tasks"
   add_foreign_key "tasks", "devices"

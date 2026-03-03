@@ -12,6 +12,7 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 
 object NotificationHelper {
+    const val CHANNEL_ID_DEFAULT = "otb_default"
     private const val CHANNEL_ID = "otb_teaser"
     private const val CHANNEL_NAME = "OTB"
     private const val CHANNEL_TASKS = "otb_tasks"

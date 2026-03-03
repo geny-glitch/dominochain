@@ -92,6 +92,16 @@ class DeviceRepository {
         }
     }
 
+    suspend fun uploadScreenshot(deviceId: String, imageFile: File): Result<Unit> {
+        return try {
+            val part = MultipartBody.Part.createFormData("image", imageFile.name, imageFile.asRequestBody("image/jpeg".toMediaType()))
+            val response = api.uploadScreenshot(deviceId, part)
+            if (response.isSuccessful) Result.success(Unit) else Result.failure(Exception("Upload failed: ${response.code()}"))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun submitProof(deviceId: String, taskId: Long, text: String?, mediaFile: File?): Result<ProofResponse> {
         return try {
             val textBody = (text ?: "").toRequestBody("text/plain".toMediaType())

@@ -99,6 +99,36 @@ module Api
       render json: task_detail_json(task)
     end
 
+    def screenshots
+      device = current_device
+      screenshots = device.device_screenshots.order(captured_at: :desc)
+      render json: screenshots.map { |s|
+        next unless s.image.attached?
+        {
+          id: s.id,
+          url: url_for(s.image),
+          captured_at: s.captured_at.iso8601
+        }
+      }.compact
+    end
+
+    def create_screenshot
+      device = current_device
+      return render json: { error: "Image requise" }, status: :unprocessable_entity if params[:image].blank?
+
+      screenshot = device.device_screenshots.new(captured_at: Time.current)
+      screenshot.image.attach(params[:image])
+      screenshot.save!
+
+      render json: {
+        id: screenshot.id,
+        url: url_for(screenshot.image),
+        captured_at: screenshot.captured_at.iso8601
+      }, status: :created
+    rescue ActiveRecord::RecordInvalid => e
+      render json: { error: e.record.errors.full_messages.join(", ") }, status: :unprocessable_entity
+    end
+
     def submit_proof
       device = Device.find_by!(device_id: params[:id])
       task = device.tasks.find(params[:task_id])

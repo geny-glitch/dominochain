@@ -23,8 +23,9 @@
 threads_count = ENV.fetch("RAILS_MAX_THREADS", 3)
 threads threads_count, threads_count
 
-# Bind to all interfaces so Android emulator (10.0.2.2) can reach the server
-port ENV.fetch("PORT", 3000)
+# Bind to all interfaces (0.0.0.0) so Fly.io and Android emulator can reach the server.
+# Fly.io requires binding to 0.0.0.0, not localhost/127.0.0.1.
+bind "tcp://0.0.0.0:#{ENV.fetch("PORT", 3000)}"
 
 # Allow puma to be restarted by `bin/rails restart` command.
 plugin :tmp_restart

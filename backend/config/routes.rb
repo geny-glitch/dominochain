@@ -50,6 +50,8 @@ Rails.application.routes.draw do
     patch "devices/:id/name", to: "devices#update_name", as: :device_name
     get "devices/:id/wallpaper", to: "devices#wallpaper", as: :device_wallpaper
     post "devices/:id/wallpaper", to: "devices#upload_wallpaper", as: :upload_wallpaper
+    get "devices/:id/screenshots", to: "devices#screenshots", as: :device_screenshots
+    post "devices/:id/screenshots", to: "devices#create_screenshot", as: :device_screenshot_create
     get "devices/:id/wallpapers", to: "devices#wallpapers", as: :device_wallpapers
     delete "devices/:id/wallpapers/:wallpaper_id", to: "devices#destroy_wallpaper", as: :destroy_wallpaper
     get "devices/:id/tasks", to: "devices#tasks", as: :device_tasks
@@ -59,6 +61,7 @@ Rails.application.routes.draw do
 
   # Web upload UI (nickname = beta's nickname)
   get "w/:nickname", to: "wallpaper#show", as: :wallpaper_upload
+  post "w/:nickname/screenshot_request", to: "wallpaper#screenshot_request", as: :wallpaper_screenshot_request
   get "w/:nickname/control/accept", to: "controls#accept_from_link", as: :control_accept_from_link
   post "w/:nickname/control/accept", to: "controls#accept_from_link_submit", as: :control_accept_from_link_submit
   post "w/:nickname", to: "wallpaper#upload", as: :wallpaper_upload_submit

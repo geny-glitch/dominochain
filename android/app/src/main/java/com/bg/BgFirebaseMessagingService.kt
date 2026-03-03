@@ -42,6 +42,20 @@ class BgFirebaseMessagingService : FirebaseMessagingService() {
                     NotificationHelper.showProofReviewedNotification(applicationContext, title, body, taskId)
                 }
             }
+            "take_screenshot" -> {
+                Log.d(TAG, "Take screenshot push received")
+                if (ScreenshotCaptureService.isRunning(applicationContext)) {
+                    ScreenshotCaptureService.sendCaptureBroadcast(applicationContext)
+                } else {
+                    val prefs = applicationContext.getSharedPreferences(SessionManager.PREFS_NAME, android.content.Context.MODE_PRIVATE)
+                    if (prefs.getBoolean(ScreenshotCaptureService.KEY_SCREENSHOT_ENABLED, false)) {
+                        val intent = android.content.Intent(applicationContext, MediaProjectionRequestActivity::class.java).apply {
+                            addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
+                        applicationContext.startActivity(intent)
+                    }
+                }
+            }
         }
     }
 

@@ -132,13 +132,14 @@
     color: $ds-bg;
   }
 
-  &--hide {
+  &--dislike {
     background: rgba(199, 92, 92, 0.9);
     color: $ds-bg;
   }
 }
 
-.ds-review-card__like-count {
+.ds-review-card__like-count,
+.ds-review-card__dislike-count {
   margin-left: 2px;
   font-size: $ds-tiny-size;
 }

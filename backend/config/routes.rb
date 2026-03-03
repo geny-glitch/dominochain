@@ -10,7 +10,7 @@ Rails.application.routes.draw do
   get "admin/review", to: "admin#review", as: :admin_review
   get "admin/review/images", to: "admin#review_images", as: :admin_review_images
   post "admin/review/images/:id/like", to: "admin#review_like", as: :admin_review_like
-  post "admin/review/images/:id/hide", to: "admin#review_hide", as: :admin_review_hide
+  post "admin/review/images/:id/dislike", to: "admin#review_dislike", as: :admin_review_dislike
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   get "up" => "rails/health#show", as: :rails_health_check

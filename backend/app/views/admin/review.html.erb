@@ -65,7 +65,7 @@
       if (!card.dataset.id) return;
 
       const likeBtn = card.querySelector('[data-action="like"]');
-      const hideBtn = card.querySelector('[data-action="hide"]');
+      const dislikeBtn = card.querySelector('[data-action="dislike"]');
 
       if (likeBtn) {
         likeBtn.addEventListener('click', function() {
@@ -79,15 +79,14 @@
         });
       }
 
-      if (hideBtn) {
-        hideBtn.addEventListener('click', function() {
+      if (dislikeBtn) {
+        dislikeBtn.addEventListener('click', function() {
           const id = card.dataset.id;
-          fetch('/admin/review/images/' + id + '/hide', { method: 'POST', headers: { 'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '', 'Accept': 'application/json' } })
+          fetch('/admin/review/images/' + id + '/dislike', { method: 'POST', headers: { 'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '', 'Accept': 'application/json' } })
             .then(r => r.json())
-            .then(() => {
-              card.style.opacity = '0';
-              card.style.transform = 'scale(0.9)';
-              setTimeout(() => card.remove(), 300);
+            .then(data => {
+              const countEl = dislikeBtn.querySelector('.ds-review-card__dislike-count');
+              if (countEl) countEl.textContent = data.dislikes_count;
             });
         });
       }

@@ -43,9 +43,9 @@ class AdminController < ApplicationController
     render json: { likes_count: image.likes_count }
   end
 
-  def review_hide
-    image = InfluencerImage.find(params[:id])
-    image.hide!
-    render json: { success: true }
+  def review_dislike
+    image = InfluencerImage.visible.find(params[:id])
+    image.dislike!
+    render json: { dislikes_count: image.dislikes_count }
   end
 end

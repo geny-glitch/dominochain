@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_03_02_170000) do
+ActiveRecord::Schema[7.2].define(version: 2026_03_02_180000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -49,6 +49,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_02_170000) do
     t.datetime "updated_at", null: false
     t.integer "screen_width"
     t.integer "screen_height"
+    t.string "name"
     t.index ["device_id"], name: "index_devices_on_device_id", unique: true
   end
 

@@ -5,4 +5,8 @@ class Device < ApplicationRecord
   def current_wallpaper
     wallpaper_applications.recent.first&.wallpaper || wallpapers.order(created_at: :desc).first
   end
+
+  def display_name
+    name.presence || device_id
+  end
 end

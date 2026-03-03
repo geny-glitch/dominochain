@@ -22,7 +22,11 @@
 
     <% if @device %>
       <div class="ds-device-info">
-        <span class="ds-device-id"><%= @device_id %></span>
+        <span class="ds-device-name"><%= @device.display_name %></span>
+        <% if @device.name.present? %>
+          <span class="ds-sep">·</span>
+          <span class="ds-device-id"><%= @device_id %></span>
+        <% end %>
         <% if @device.screen_width.present? && @device.screen_height.present? %>
           <span class="ds-sep">·</span>
           <span><%= @device.screen_width %>×<%= @device.screen_height %></span>

@@ -11,6 +11,7 @@ module Api
       updates[:screen_width] = params[:screen_width]&.to_i if params[:screen_width].present?
       updates[:screen_height] = params[:screen_height]&.to_i if params[:screen_height].present?
       updates[:fcm_token] = params[:fcm_token] if params[:fcm_token].present?
+      updates[:name] = params[:name].presence if params.key?(:name)
       device.update!(updates) if updates.any?
       render json: {
         id: device.id,
@@ -74,6 +75,12 @@ module Api
     def update_fcm_token
       device = Device.find_by!(device_id: params[:id])
       device.update!(fcm_token: params.require(:fcm_token))
+      head :no_content
+    end
+
+    def update_name
+      device = Device.find_by!(device_id: params[:id])
+      device.update!(name: params[:name].presence)
       head :no_content
     end
 

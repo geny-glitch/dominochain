@@ -11,7 +11,8 @@ data class RegisterRequest(
     val device_id: String,
     val screen_width: Int? = null,
     val screen_height: Int? = null,
-    val fcm_token: String? = null
+    val fcm_token: String? = null,
+    val name: String? = null
 )
 
 data class RegisterResponse(
@@ -27,6 +28,8 @@ data class WallpaperResponse(
 
 data class FcmTokenRequest(val fcm_token: String)
 
+data class NameRequest(val name: String?)
+
 interface ApiService {
     @POST("api/devices")
     suspend fun register(@Body request: RegisterRequest): Response<RegisterResponse>
@@ -35,6 +38,12 @@ interface ApiService {
     suspend fun updateFcmToken(
         @Path("deviceId") deviceId: String,
         @Body body: FcmTokenRequest
+    ): Response<Unit>
+
+    @PATCH("api/devices/{deviceId}/name")
+    suspend fun updateName(
+        @Path("deviceId") deviceId: String,
+        @Body body: NameRequest
     ): Response<Unit>
 
     @GET("api/devices/{deviceId}/wallpaper")

@@ -46,6 +46,11 @@
   font-family: $ds-font-mono;
 }
 
+.ds-device-name {
+  color: $ds-text;
+  font-weight: 500;
+}
+
 .ds-device-id {
   color: $ds-teal;
 }

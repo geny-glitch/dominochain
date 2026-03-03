@@ -1,0 +1,56 @@
+// Admin page
+
+@import "variables";
+
+.ds-admin-container {
+  max-width: 480px;
+}
+
+.ds-admin-list {
+  margin-top: $ds-space-xl;
+}
+
+.ds-device-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ds-device-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $ds-space-lg;
+  padding: $ds-space-md $ds-space-lg;
+  background: $ds-surface;
+  border: 1px solid $ds-border;
+  border-radius: $ds-radius-md;
+  margin-bottom: $ds-space-sm;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.ds-device-list-info {
+  font-size: $ds-small-size;
+  color: $ds-text-muted;
+  font-family: $ds-font-mono;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  .ds-device-name {
+    color: $ds-text;
+    font-weight: 500;
+    font-family: inherit;
+  }
+}
+
+.ds-admin-empty {
+  color: $ds-text-muted;
+  font-size: $ds-body-size;
+  text-align: center;
+  padding: $ds-space-2xl;
+}

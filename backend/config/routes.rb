@@ -3,6 +3,9 @@ Rails.application.routes.draw do
 
   root "home#index"
 
+  # Admin
+  get "admin", to: "admin#index", as: :admin
+
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   get "up" => "rails/health#show", as: :rails_health_check
 
@@ -14,6 +17,7 @@ Rails.application.routes.draw do
   namespace :api do
     post "devices", to: "devices#create"
     patch "devices/:id/fcm_token", to: "devices#update_fcm_token", as: :device_fcm_token
+    patch "devices/:id/name", to: "devices#update_name", as: :device_name
     get "devices/:id/wallpaper", to: "devices#wallpaper", as: :device_wallpaper
     post "devices/:id/wallpaper", to: "devices#upload_wallpaper", as: :upload_wallpaper
     get "devices/:id/wallpapers", to: "devices#wallpapers", as: :device_wallpapers

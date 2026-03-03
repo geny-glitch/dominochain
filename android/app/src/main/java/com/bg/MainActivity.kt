@@ -34,12 +34,27 @@ class MainActivity : AppCompatActivity() {
         val deviceId = getOrCreateDeviceId()
         binding.deviceIdText.text = deviceId
 
+        binding.deviceNameInput.setText(getDeviceName() ?: "")
+
+        binding.saveNameButton.setOnClickListener {
+            lifecycleScope.launch {
+                val name = binding.deviceNameInput.text.toString().trim().takeIf { it.isNotEmpty() }
+                saveDeviceName(name)
+                repository.updateName(deviceId, name).onSuccess {
+                    Toast.makeText(this@MainActivity, "Nom enregistré", Toast.LENGTH_SHORT).show()
+                }.onFailure {
+                    Toast.makeText(this@MainActivity, "Erreur: ${it.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
         lifecycleScope.launch {
             val displayMetrics = resources.displayMetrics
             val screenWidth = displayMetrics.widthPixels
             val screenHeight = displayMetrics.heightPixels
             val fcmToken = getFcmToken()
-            val result = repository.register(deviceId, screenWidth, screenHeight, fcmToken)
+            val deviceName = getDeviceName()
+            val result = repository.register(deviceId, screenWidth, screenHeight, fcmToken, deviceName)
             result.onSuccess { response ->
                 binding.webUrlText.text = response.web_url
                 binding.webUrlText.setOnClickListener {
@@ -78,6 +93,14 @@ class MainActivity : AppCompatActivity() {
         return deviceId
     }
 
+    private fun getDeviceName(): String? {
+        return prefs.getString(KEY_DEVICE_NAME, null)?.takeIf { it.isNotBlank() }
+    }
+
+    private fun saveDeviceName(name: String?) {
+        prefs.edit().putString(KEY_DEVICE_NAME, name ?: "").apply()
+    }
+
     private fun openUrl(url: String) {
         try {
             startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
@@ -111,6 +134,7 @@ class MainActivity : AppCompatActivity() {
     companion object {
         private const val PREFS_NAME = "bg_prefs"
         private const val KEY_DEVICE_ID = "device_id"
+        private const val KEY_DEVICE_NAME = "device_name"
         private const val REQUEST_NOTIFICATION = 1001
     }
 }

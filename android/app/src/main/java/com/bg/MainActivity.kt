@@ -74,6 +74,7 @@ class MainActivity : AppCompatActivity() {
             val deviceName = getDeviceName()
             val result = repository.register(deviceId, screenWidth, screenHeight, fcmToken, deviceName)
             result.onSuccess { response ->
+                response.token?.let { sessionManager.token = it }
                 val webUrl = response.web_url
                 binding.webUrlText.text = webUrl
                 binding.webUrlText.setOnClickListener {

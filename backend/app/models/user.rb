@@ -5,7 +5,7 @@ class User < ApplicationRecord
          :rememberable, :validatable,
          authentication_keys: [:nickname]
 
-  enum role: { beta: 0, boss: 1 }
+  enum role: { beta: 0, boss: 1, admin: 2 }
 
   has_many :devices, dependent: :nullify
   has_one :control, foreign_key: :beta_id, dependent: :destroy

@@ -21,4 +21,10 @@ Things you may want to cover:
 
 * Deployment instructions
 
+## Console Rails sur Fly.io
+
+```bash
+fly ssh console --pty -C "/rails/bin/rails console"
+```
+
 * ...

@@ -5,7 +5,7 @@ class AdminController < ApplicationController
   before_action :require_admin!
 
   def index
-    @devices = Device.includes(:user).order(created_at: :desc)
+    @users = User.includes(controls: :beta).order(:nickname)
     @controls = Control.where(status: :accepted).includes(:boss, :beta)
   end
 
@@ -20,8 +20,7 @@ class AdminController < ApplicationController
   private
 
   def require_admin!
-    # TODO: add admin role to User when needed
-    # redirect_to root_path, alert: "Accès refusé." unless current_user.admin?
+    redirect_to root_path, alert: "Accès refusé." unless current_user.admin?
   end
 
   def settings

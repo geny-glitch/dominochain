@@ -44,6 +44,13 @@ gem "sassc-rails", "~> 2.1"
 # Firebase Cloud Messaging
 gem "googleauth", "~> 1.8"
 
+# Error tracking
+gem "sentry-ruby"
+gem "sentry-rails"
+
+# Load .env in development
+gem "dotenv-rails", groups: [:development, :test]
+
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
@@ -53,6 +60,10 @@ group :development, :test do
 
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
+
+  # Testing
+  gem "rspec-rails", "~> 7.0"
+  gem "factory_bot_rails"
 end
 
 group :development do

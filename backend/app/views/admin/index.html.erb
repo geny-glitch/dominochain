@@ -6,7 +6,7 @@
       <%= image_tag "otb-logo.png", alt: "OTB", class: "ds-header-logo", width: 48, height: 48 %>
       <div>
         <h1 class="ds-title">Admin</h1>
-        <p class="ds-subtitle">Devices actifs</p>
+        <p class="ds-subtitle">Utilisateurs</p>
       </div>
       <div class="ds-header-actions">
         <%= link_to "Review", admin_review_path, class: "ds-btn ds-btn--ghost ds-btn--sm" %>
@@ -29,41 +29,35 @@
     <% end %>
 
     <section class="ds-admin-list">
-      <% if @devices.any? %>
+      <h2>Utilisateurs</h2>
+      <% if @users.any? %>
         <ul class="ds-device-list">
-          <% @devices.each do |device| %>
+          <% @users.each do |user| %>
             <li class="ds-device-list-item">
               <div class="ds-device-list-info">
-                <span class="ds-device-name"><%= device.display_name %></span>
-                <% if device.user %>
-                  <span class="ds-sep">·</span>
-                  <span class="ds-device-id"><%= device.user.nickname %></span>
-                <% elsif device.name.present? %>
-                  <span class="ds-sep">·</span>
-                  <span class="ds-device-id"><%= device.device_id %></span>
-                <% end %>
-                <% if device.screen_width.present? && device.screen_height.present? %>
-                  <span class="ds-sep">·</span>
-                  <span><%= device.screen_width %>×<%= device.screen_height %></span>
-                <% end %>
-                <% if device.fcm_token.present? %>
-                  <span class="ds-sep">·</span>
-                  <span class="ds-status ds-status--on">Push</span>
-                <% else %>
-                  <span class="ds-sep">·</span>
-                  <span class="ds-status ds-status--off">Push off</span>
-                <% end %>
+                <span class="ds-device-name"><%= user.nickname %></span>
+                <span class="ds-sep">·</span>
+                <span class="ds-device-id"><%= user.role %></span>
               </div>
-              <% if device.user %>
-                <%= link_to "Ouvrir", wallpaper_upload_path(device.user.nickname), class: "ds-btn ds-btn--primary ds-btn--sm" %>
+              <% if user.beta? %>
+                <%= link_to "Voir la page", wallpaper_upload_path(user.nickname), class: "ds-btn ds-btn--primary ds-btn--sm" %>
+              <% elsif user.boss? %>
+                <% controlled = user.controls.accepted %>
+                <% if controlled.any? %>
+                  <% controlled.each do |c| %>
+                    <%= link_to c.beta.nickname, wallpaper_upload_path(c.beta.nickname), class: "ds-btn ds-btn--primary ds-btn--sm" %>
+                  <% end %>
+                <% else %>
+                  <span class="ds-text-muted">Aucun beta</span>
+                <% end %>
               <% else %>
-                <span class="ds-text-muted">(pas de compte lié)</span>
+                <span class="ds-text-muted">—</span>
               <% end %>
             </li>
           <% end %>
         </ul>
       <% else %>
-        <p class="ds-admin-empty">Aucun device enregistré. Ouvre l'app pour t'enregistrer.</p>
+        <p class="ds-admin-empty">Aucun utilisateur.</p>
       <% end %>
     </section>
   </div>

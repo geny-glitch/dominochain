@@ -4,6 +4,7 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("com.google.gms.google-services")
+    id("io.sentry.android.gradle") version "4.9.0"
 }
 
 android {
@@ -24,6 +25,8 @@ android {
         }
         val apiBaseUrl = localProperties.getProperty("API_BASE_URL", "https://bg-backend.fly.dev")
         buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
+        val sentryDsn = localProperties.getProperty("SENTRY_DSN", "")
+        buildConfigField("String", "SENTRY_DSN", "\"$sentryDsn\"")
     }
 
     buildTypes {
@@ -42,6 +45,10 @@ android {
         buildConfig = true
         viewBinding = true
     }
+}
+
+configurations.configureEach {
+    exclude(group = "io.sentry", module = "sentry-android-ndk")
 }
 
 dependencies {
@@ -67,4 +74,7 @@ dependencies {
     // Firebase Cloud Messaging
     implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
     implementation("com.google.firebase:firebase-messaging-ktx")
+
+    // Sentry - sentry-android-core sans NDK (pas de libs natives = pas de pb 16 KB)
+    implementation("io.sentry:sentry-android-core:7.18.0")
 }

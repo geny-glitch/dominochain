@@ -19,7 +19,7 @@
 
       <div class="ds-form-group">
         <%= label_tag :influencer_names, "Noms (un par ligne)", class: "ds-form-label" %>
-        <%= text_area_tag :influencer_names, @app_setting.influencer_names, rows: 25, class: "ds-form-textarea", placeholder: "Selena Gomez\nKylie Jenner\n..." %>
+        <%= text_area_tag :influencer_names, @app_setting&.influencer_names, rows: 25, class: "ds-form-textarea", placeholder: "Selena Gomez\nKylie Jenner\n..." %>
       </div>
 
       <div class="ds-form-actions">

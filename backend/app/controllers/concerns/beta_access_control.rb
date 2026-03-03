@@ -21,7 +21,7 @@ module BetaAccessControl
     end
 
     boss_control = Control.find_by(beta: @beta, boss: current_user, status: :accepted)
-    is_admin = false # TODO: add admin check when we implement admin auth
+    is_admin = current_user.admin?
 
     unless boss_control || is_admin
       redirect_to control_accept_from_link_path(@nickname)
@@ -41,8 +41,9 @@ module BetaAccessControl
       return redirect_to wallpaper_upload_path(@nickname), alert: "Sélectionnez un device."
     end
     if @device.nil?
-      # Boss a le contrôle mais le beta n'a pas de device : éviter la boucle avec control_accept_from_link
-      return redirect_to dashboard_path, alert: "Aucun device enregistré. Le beta #{@beta.nickname} doit ouvrir l'app d'abord."
+      # Boss/Admin a le contrôle mais le beta n'a pas de device : éviter la boucle avec control_accept_from_link
+      redirect_target = current_user.admin? ? admin_path : dashboard_path
+      return redirect_to redirect_target, alert: "Aucun device enregistré. Le beta #{@beta.nickname} doit ouvrir l'app d'abord."
     end
   end
 end

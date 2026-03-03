@@ -1,5 +1,6 @@
 package com.bg
 
+import com.bg.api.RetrofitClient
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
@@ -14,17 +15,19 @@ import kotlinx.coroutines.launch
 class TasksActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityTasksBinding
+    private val sessionManager by lazy { (application as BgApplication).sessionManager }
     private val prefs by lazy { getSharedPreferences(WallpaperWorker.PREFS_NAME, MODE_PRIVATE) }
     private val repository = DeviceRepository()
     private lateinit var adapter: TasksAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        RetrofitClient.sessionManager = sessionManager
         binding = ActivityTasksBinding.inflate(layoutInflater)
         setContentView(binding.root)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        val deviceId = prefs.getString(WallpaperWorker.KEY_DEVICE_ID, null)
+        val deviceId = sessionManager.deviceId ?: prefs.getString(WallpaperWorker.KEY_DEVICE_ID, null)
         if (deviceId == null) {
             Toast.makeText(this, "Device non enregistré", Toast.LENGTH_SHORT).show()
             finish()

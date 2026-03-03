@@ -10,8 +10,8 @@
     </header>
 
     <div id="review-grid" class="ds-review__grid">
-      <% if @images.any? %>
-        <%= render partial: "admin/review_image", collection: @images, as: :image %>
+      <% if @images&.any? %>
+        <%= render partial: "admin/review_image", collection: @images || [], as: :image %>
       <% else %>
         <p class="ds-review__empty">Aucune image. Lance <code>rails wikimedia:fetch_images</code> ou enregistre la liste dans Paramètres.</p>
       <% end %>

@@ -1,0 +1,81 @@
+// Reusable components
+
+@import "variables";
+
+// Flash messages
+.ds-flash {
+  padding: $ds-space-md $ds-space-lg;
+  border-radius: $ds-radius-sm;
+  margin-bottom: $ds-space-xl;
+  font-size: $ds-body-size;
+
+  &--success {
+    background: rgba(74, 157, 122, 0.15);
+    color: $ds-success;
+    border: 1px solid rgba(74, 157, 122, 0.3);
+  }
+
+  &--error {
+    background: rgba(199, 92, 92, 0.15);
+    color: $ds-error;
+    border: 1px solid rgba(199, 92, 92, 0.3);
+  }
+}
+
+// Buttons
+.ds-btn {
+  padding: $ds-space-sm $ds-space-lg;
+  border: none;
+  border-radius: $ds-radius-sm;
+  font-size: $ds-body-size;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background $ds-transition, color $ds-transition;
+
+  &--primary {
+    background: $ds-amber;
+    color: $ds-bg;
+
+    &:hover {
+      background: $ds-amber-dim;
+    }
+  }
+
+  &--secondary {
+    background: $ds-surface-elevated;
+    color: $ds-text-muted;
+    border: 1px solid $ds-border;
+
+    &:hover {
+      background: $ds-border;
+      color: $ds-text;
+    }
+  }
+
+  &--ghost {
+    background: transparent;
+    color: $ds-teal;
+
+    &:hover {
+      color: $ds-teal-dim;
+    }
+  }
+
+  &--sm {
+    padding: 0.35rem 0.6rem;
+    font-size: $ds-small-size;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+}
+
+// Section title
+.ds-section-title {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: $ds-text-muted;
+  margin: 0 0 $ds-space-md;
+}

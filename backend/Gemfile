@@ -36,6 +36,9 @@ gem "bootsnap", require: false
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
 gem "image_processing", "~> 1.2"
 
+# SASS for design system
+gem "sassc-rails", "~> 2.1"
+
 # Firebase Cloud Messaging
 gem "googleauth", "~> 1.8"
 

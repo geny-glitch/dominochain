@@ -1,0 +1,46 @@
+// OTB Design System — Blade Runner 2049 inspired
+// Design tokens
+
+// Colors
+$ds-bg: #0a0a0b;
+$ds-surface: #121214;
+$ds-surface-elevated: #1a1a1d;
+$ds-border: #2a2a2e;
+$ds-text: #e8e6e3;
+$ds-text-muted: #8a8784;
+$ds-amber: #e9a03f;
+$ds-amber-dim: #b87d2e;
+$ds-teal: #2ec4b6;
+$ds-teal-dim: #1e9d92;
+$ds-error: #c75c5c;
+$ds-success: #4a9d7a;
+
+// Typography
+$ds-font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+$ds-font-mono: ui-monospace, monospace;
+$ds-font-serif: "Georgia", "Times New Roman", serif;
+
+$ds-title-size: 1.75rem;
+$ds-title-weight: 300;
+$ds-title-spacing: 0.08em;
+$ds-subtitle-size: 0.8rem;
+$ds-body-size: 0.875rem;
+$ds-small-size: 0.75rem;
+$ds-tiny-size: 0.65rem;
+
+// Spacing
+$ds-space-xs: 0.25rem;
+$ds-space-sm: 0.5rem;
+$ds-space-md: 0.75rem;
+$ds-space-lg: 1rem;
+$ds-space-xl: 1.5rem;
+$ds-space-2xl: 2rem;
+$ds-space-3xl: 2.5rem;
+
+// Radii
+$ds-radius-sm: 4px;
+$ds-radius-md: 6px;
+$ds-radius-lg: 8px;
+
+// Transitions
+$ds-transition: 0.2s;

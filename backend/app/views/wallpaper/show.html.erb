@@ -2,55 +2,55 @@
 <% device_ratio ||= 9.0 / 16 %>
 
 <% content_for :head do %>
-  <style>body { background: #0a0a0b; margin: 0; }</style>
+  <link rel="stylesheet" href="https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.css" />
 <% end %>
 
-<div class="br-page">
-  <div class="br-container">
+<div class="ds-page">
+  <div class="ds-container">
     <% if flash[:notice] %>
-      <div class="br-flash br-flash--success"><%= flash[:notice] %></div>
+      <div class="ds-flash ds-flash--success"><%= flash[:notice] %></div>
     <% end %>
     <% if flash[:alert] %>
-      <div class="br-flash br-flash--error"><%= flash[:alert] %></div>
+      <div class="ds-flash ds-flash--error"><%= flash[:alert] %></div>
     <% end %>
 
-    <header class="br-header">
-      <h1 class="br-title">OTB</h1>
-      <p class="br-subtitle">Own their backgrounds</p>
+    <header class="ds-header">
+      <h1 class="ds-title">OTB</h1>
+      <p class="ds-subtitle">Own their backgrounds</p>
     </header>
 
     <% if @device %>
-      <div class="br-device-info">
-        <span class="br-device-id"><%= @device_id %></span>
+      <div class="ds-device-info">
+        <span class="ds-device-id"><%= @device_id %></span>
         <% if @device.screen_width.present? && @device.screen_height.present? %>
-          <span class="br-sep">·</span>
+          <span class="ds-sep">·</span>
           <span><%= @device.screen_width %>×<%= @device.screen_height %></span>
         <% end %>
         <% if @device.fcm_token.present? %>
-          <span class="br-sep">·</span>
-          <span class="br-status br-status--on">Push</span>
+          <span class="ds-sep">·</span>
+          <span class="ds-status ds-status--on">Push</span>
         <% else %>
-          <span class="br-sep">·</span>
-          <span class="br-status br-status--off">Push off</span>
+          <span class="ds-sep">·</span>
+          <span class="ds-status ds-status--off">Push off</span>
         <% end %>
       </div>
 
-      <%= form_with url: wallpaper_upload_submit_path(@device_id), method: :post, local: true, multipart: true, id: "upload-form", class: "br-form" do |f| %>
-        <div class="br-upload">
-          <div id="file-input-wrapper" class="br-file-wrapper">
-            <label class="br-file-label">
+      <%= form_with url: wallpaper_upload_submit_path(@device_id), method: :post, local: true, multipart: true, id: "upload-form", class: "ds-form" do |f| %>
+        <div class="ds-upload">
+          <div id="file-input-wrapper" class="ds-file-wrapper">
+            <label class="ds-file-label">
               <%= f.file_field :image, accept: "image/*", id: "image-input" %>
-              <span class="br-file-text">Choisir une image</span>
+              <span class="ds-file-text">Choisir une image</span>
             </label>
           </div>
-          <div id="crop-container" class="br-crop-container" style="display: none;">
-            <p class="br-crop-label">Recadrez (ratio écran)</p>
-            <div id="crop-wrapper" class="br-crop-wrapper">
+          <div id="crop-container" class="ds-crop-container" style="display: none;">
+            <p class="ds-crop-label">Recadrez (ratio écran)</p>
+            <div id="crop-wrapper" class="ds-crop-wrapper">
               <img id="crop-img" src="" alt="Crop" />
             </div>
-            <div class="br-crop-actions">
-              <button type="button" id="change-image-btn" class="br-btn br-btn--secondary">Changer</button>
-              <%= f.submit "Envoyer", id: "upload-btn", class: "br-btn br-btn--primary" %>
+            <div class="ds-crop-actions">
+              <button type="button" id="change-image-btn" class="ds-btn ds-btn--secondary">Changer</button>
+              <%= f.submit "Envoyer", id: "upload-btn", class: "ds-btn ds-btn--primary" %>
             </div>
           </div>
         </div>
@@ -60,307 +60,51 @@
         <% current_wallpaper = @wallpapers.first %>
         <% if current_wallpaper.image.attached? %>
           <% current_variant = @device.screen_width.present? && @device.screen_height.present? ? current_wallpaper.variant_for(@device) : current_wallpaper.image %>
-          <section class="br-current">
-            <h2 class="br-section-title">Fond actuel</h2>
-            <div class="br-current-frame" style="aspect-ratio: <%= device_ratio %>;">
-              <%= image_tag current_variant, alt: "Current wallpaper", class: "br-current-img" %>
+          <section class="ds-current">
+            <h2 class="ds-section-title">Fond actuel</h2>
+            <div class="ds-current-frame" style="aspect-ratio: <%= device_ratio %>;">
+              <%= image_tag current_variant, alt: "Current wallpaper", class: "ds-current-img" %>
             </div>
           </section>
         <% end %>
 
-        <section class="br-history">
-          <div class="br-history-header">
-            <h2 class="br-section-title">Historique</h2>
-            <button type="button" id="download-all-btn" class="br-btn br-btn--ghost br-btn--sm">
+        <section class="ds-history">
+          <div class="ds-history-header">
+            <h2 class="ds-section-title">Historique</h2>
+            <button type="button" id="download-all-btn" class="ds-btn ds-btn--ghost ds-btn--sm">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               Tout télécharger
             </button>
           </div>
-          <div class="br-history-grid" id="wallpapers-grid" style="--device-ratio: <%= device_ratio %>;">
+          <div class="ds-history-grid" id="wallpapers-grid" style="--device-ratio: <%= device_ratio %>;">
             <% @wallpapers.each do |wallpaper| %>
               <% next unless wallpaper.image.attached? %>
               <% variant = @device.screen_width.present? && @device.screen_height.present? ? wallpaper.variant_for(@device) : wallpaper.image %>
               <% download_url = url_for(variant) %>
-              <div class="br-wallpaper-card wallpaper-card" data-download-url="<%= download_url %>" data-filename="wallpaper-<%= wallpaper.created_at.strftime('%Y%m%d-%H%M') %>-<%= wallpaper.id %>.jpg">
-                <div class="br-wallpaper-thumb" style="aspect-ratio: <%= device_ratio %>;">
-                  <%= image_tag variant, alt: "", class: "br-wallpaper-img" %>
-                  <a href="<%= download_url %>" download="wallpaper-<%= wallpaper.created_at.strftime('%Y%m%d-%H%M') %>-<%= wallpaper.id %>.jpg" class="br-download-icon" title="Télécharger">
+              <div class="ds-wallpaper-card wallpaper-card" data-download-url="<%= download_url %>" data-filename="wallpaper-<%= wallpaper.created_at.strftime('%Y%m%d-%H%M') %>-<%= wallpaper.id %>.jpg">
+                <div class="ds-wallpaper-thumb" style="aspect-ratio: <%= device_ratio %>;">
+                  <%= image_tag variant, alt: "", class: "ds-wallpaper-img" %>
+                  <a href="<%= download_url %>" download="wallpaper-<%= wallpaper.created_at.strftime('%Y%m%d-%H%M') %>-<%= wallpaper.id %>.jpg" class="ds-download-icon" title="Télécharger">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                   </a>
                 </div>
-                <div class="br-wallpaper-meta">
+                <div class="ds-wallpaper-meta">
                   <span><%= wallpaper.created_at.strftime("%d/%m %H:%M") %></span>
                   <% if wallpaper.first_downloaded_at %>
-                    <span class="br-badge">✓</span>
+                    <span class="ds-badge">✓</span>
                   <% end %>
                 </div>
-                <%= button_to "Supprimer", wallpaper_destroy_path(@device_id, wallpaper.id), method: :delete, form: { data: { turbo_confirm: "Supprimer ce wallpaper ?" } }, class: "br-delete-btn" %>
+                <%= button_to "Supprimer", wallpaper_destroy_path(@device_id, wallpaper.id), method: :delete, form: { data: { turbo_confirm: "Supprimer ce wallpaper ?" } }, class: "ds-delete-btn" %>
               </div>
             <% end %>
           </div>
         </section>
       <% end %>
     <% else %>
-      <p class="br-error">Device not found. Ouvre l'app pour t'enregistrer.</p>
+      <p class="ds-error">Device not found. Ouvre l'app pour t'enregistrer.</p>
     <% end %>
   </div>
 </div>
-
-<style>
-  :root {
-    --br-bg: #0a0a0b;
-    --br-surface: #121214;
-    --br-surface-elevated: #1a1a1d;
-    --br-border: #2a2a2e;
-    --br-text: #e8e6e3;
-    --br-text-muted: #8a8784;
-    --br-amber: #e9a03f;
-    --br-amber-dim: #b87d2e;
-    --br-teal: #2ec4b6;
-    --br-teal-dim: #1e9d92;
-    --br-error: #c75c5c;
-    --br-success: #4a9d7a;
-  }
-
-  .br-page {
-    min-height: 100vh;
-    background: var(--br-bg);
-    font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
-    color: var(--br-text);
-    padding: 2rem 1rem;
-  }
-
-  .br-container {
-    max-width: 420px;
-    margin: 0 auto;
-  }
-
-  .br-flash {
-    padding: 0.75rem 1rem;
-    border-radius: 4px;
-    margin-bottom: 1.5rem;
-    font-size: 0.875rem;
-  }
-  .br-flash--success {
-    background: rgba(74, 157, 122, 0.15);
-    color: var(--br-success);
-    border: 1px solid rgba(74, 157, 122, 0.3);
-  }
-  .br-flash--error {
-    background: rgba(199, 92, 92, 0.15);
-    color: var(--br-error);
-    border: 1px solid rgba(199, 92, 92, 0.3);
-  }
-
-  .br-header {
-    margin-bottom: 1.5rem;
-  }
-  .br-title {
-    font-size: 1.75rem;
-    font-weight: 300;
-    letter-spacing: 0.08em;
-    margin: 0;
-    color: var(--br-text);
-  }
-  .br-subtitle {
-    font-size: 0.8rem;
-    color: var(--br-text-muted);
-    margin: 0.25rem 0 0;
-    letter-spacing: 0.04em;
-  }
-
-  .br-device-info {
-    font-size: 0.75rem;
-    color: var(--br-text-muted);
-    margin-bottom: 1.5rem;
-    font-family: ui-monospace, monospace;
-  }
-  .br-device-id { color: var(--br-teal); }
-  .br-sep { margin: 0 0.35rem; opacity: 0.5; }
-  .br-status--on { color: var(--br-success); }
-  .br-status--off { color: var(--br-text-muted); }
-
-  .br-file-wrapper { margin-bottom: 1rem; }
-  .br-file-label {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 1.25rem;
-    border: 1px dashed var(--br-border);
-    border-radius: 6px;
-    background: var(--br-surface);
-    cursor: pointer;
-    transition: border-color 0.2s, background 0.2s;
-  }
-  .br-file-label:hover {
-    border-color: var(--br-amber-dim);
-    background: var(--br-surface-elevated);
-  }
-  .br-file-label input[type="file"] { display: none; }
-  .br-file-text { color: var(--br-text-muted); font-size: 0.875rem; }
-
-  .br-crop-container { margin-top: 1rem; }
-  .br-crop-label {
-    font-size: 0.75rem;
-    color: var(--br-text-muted);
-    margin-bottom: 0.5rem;
-  }
-  .br-crop-wrapper {
-    max-height: 380px;
-    background: var(--br-bg);
-    border-radius: 6px;
-    overflow: hidden;
-    border: 1px solid var(--br-border);
-  }
-  .br-crop-wrapper img { max-width: 100%; display: block; }
-  .br-crop-actions {
-    display: flex;
-    gap: 0.5rem;
-    margin-top: 0.75rem;
-  }
-
-  .br-btn {
-    padding: 0.5rem 1rem;
-    border: none;
-    border-radius: 4px;
-    font-size: 0.875rem;
-    cursor: pointer;
-    font-family: inherit;
-    transition: background 0.2s, color 0.2s;
-  }
-  .br-btn--primary {
-    background: var(--br-amber);
-    color: #0a0a0b;
-  }
-  .br-btn--primary:hover { background: var(--br-amber-dim); }
-  .br-btn--secondary {
-    background: var(--br-surface-elevated);
-    color: var(--br-text-muted);
-    border: 1px solid var(--br-border);
-  }
-  .br-btn--secondary:hover {
-    background: var(--br-border);
-    color: var(--br-text);
-  }
-  .br-btn--ghost {
-    background: transparent;
-    color: var(--br-teal);
-  }
-  .br-btn--ghost:hover { color: var(--br-teal-dim); }
-  .br-btn--sm {
-    padding: 0.35rem 0.6rem;
-    font-size: 0.75rem;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-  }
-
-  .br-current {
-    margin-top: 2.5rem;
-    margin-bottom: 2rem;
-  }
-  .br-section-title {
-    font-size: 0.7rem;
-    font-weight: 600;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--br-text-muted);
-    margin: 0 0 0.75rem;
-  }
-  .br-current-frame {
-    border-radius: 8px;
-    overflow: hidden;
-    border: 1px solid var(--br-border);
-    background: var(--br-surface);
-  }
-  .br-current-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-  }
-
-  .br-history { margin-top: 1.5rem; }
-  .br-history-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 0.75rem;
-  }
-  .br-history-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-    gap: 0.75rem;
-  }
-  .br-wallpaper-card {
-    background: var(--br-surface);
-    border: 1px solid var(--br-border);
-    border-radius: 6px;
-    overflow: hidden;
-  }
-  .br-wallpaper-thumb {
-    position: relative;
-    overflow: hidden;
-  }
-  .br-wallpaper-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-  }
-  .br-download-icon {
-    position: absolute;
-    top: 4px;
-    right: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 26px;
-    height: 26px;
-    background: rgba(10, 10, 11, 0.75);
-    color: var(--br-teal);
-    border-radius: 4px;
-    text-decoration: none;
-    transition: background 0.2s, color 0.2s;
-  }
-  .br-download-icon:hover {
-    background: var(--br-teal);
-    color: var(--br-bg);
-  }
-  .br-wallpaper-meta {
-    padding: 0.3rem 0.5rem;
-    font-size: 0.65rem;
-    color: var(--br-text-muted);
-    display: flex;
-    align-items: center;
-    gap: 0.35rem;
-  }
-  .br-badge { color: var(--br-success); }
-  .br-delete-btn {
-    width: 100%;
-    padding: 0.3rem;
-    font-size: 0.65rem;
-    background: transparent;
-    color: var(--br-text-muted);
-    border: none;
-    border-top: 1px solid var(--br-border);
-    cursor: pointer;
-    transition: color 0.2s, background 0.2s;
-  }
-  .br-delete-btn:hover {
-    color: var(--br-error);
-    background: rgba(199, 92, 92, 0.1);
-  }
-
-  .br-error {
-    color: var(--br-error);
-    font-size: 0.875rem;
-  }
-</style>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.css" />
 <script src="https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.js"></script>
 <script>
   (function() {

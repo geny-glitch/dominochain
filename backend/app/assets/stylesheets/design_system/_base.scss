@@ -1,0 +1,36 @@
+// Base styles — applied globally
+
+@import "variables";
+
+:root {
+  --ds-bg: #{$ds-bg};
+  --ds-surface: #{$ds-surface};
+  --ds-surface-elevated: #{$ds-surface-elevated};
+  --ds-border: #{$ds-border};
+  --ds-text: #{$ds-text};
+  --ds-text-muted: #{$ds-text-muted};
+  --ds-amber: #{$ds-amber};
+  --ds-amber-dim: #{$ds-amber-dim};
+  --ds-teal: #{$ds-teal};
+  --ds-teal-dim: #{$ds-teal-dim};
+  --ds-error: #{$ds-error};
+  --ds-success: #{$ds-success};
+}
+
+html {
+  box-sizing: border-box;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+}
+
+body {
+  margin: 0;
+  background: $ds-bg;
+  font-family: $ds-font-family;
+  color: $ds-text;
+  -webkit-font-smoothing: antialiased;
+}

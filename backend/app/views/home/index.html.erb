@@ -1,16 +1,16 @@
 <% content_for :title, "OTB - Own their backgrounds" %>
 
-<div class="home">
-  <div class="home__collage" aria-hidden="true">
+<div class="ds-home">
+  <div class="ds-home__collage" aria-hidden="true">
     <% 24.times do |i| %>
-      <div class="home__collage-tile" style="--i: <%= i %>">
+      <div class="ds-home__collage-tile" style="--i: <%= i %>">
         <img src="https://picsum.photos/seed/<%= ['lifestyle', 'aesthetic', 'mood', 'vibe', 'style', 'photo'][i % 6] %>-<%= i %>/400/300" alt="" loading="lazy" />
       </div>
     <% end %>
   </div>
 
-  <div class="home__content">
-    <div class="home__logo">
+  <div class="ds-home__content">
+    <div class="ds-home__logo">
       <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <defs>
           <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -25,7 +25,7 @@
         <rect x="44" y="44" width="32" height="32" rx="4" fill="white" opacity="0.85"/>
       </svg>
     </div>
-    <h1 class="home__title">OTB</h1>
-    <p class="home__tagline">Own their backgrounds</p>
+    <h1 class="ds-home__title">OTB</h1>
+    <p class="ds-home__tagline">Own their backgrounds</p>
   </div>
 </div>

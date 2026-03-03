@@ -57,8 +57,9 @@
         </div>
       <% end %>
 
-      <% if @wallpapers.any? %>
-        <% current_wallpaper = @wallpapers.first %>
+      <% if @applications.any? %>
+        <% current_application = @applications.first %>
+        <% current_wallpaper = current_application.wallpaper %>
         <% if current_wallpaper.image.attached? %>
           <% current_variant = @device.screen_width.present? && @device.screen_height.present? ? current_wallpaper.variant_for(@device) : current_wallpaper.image %>
           <section class="ds-current">
@@ -78,24 +79,31 @@
             </button>
           </div>
           <div class="ds-history-grid" id="wallpapers-grid" style="--device-ratio: <%= device_ratio %>;">
-            <% @wallpapers.each do |wallpaper| %>
+            <% @applications.each_with_index do |application, index| %>
+              <% wallpaper = application.wallpaper %>
               <% next unless wallpaper.image.attached? %>
               <% variant = @device.screen_width.present? && @device.screen_height.present? ? wallpaper.variant_for(@device) : wallpaper.image %>
               <% download_url = url_for(variant) %>
-              <div class="ds-wallpaper-card wallpaper-card" data-download-url="<%= download_url %>" data-filename="wallpaper-<%= wallpaper.created_at.strftime('%Y%m%d-%H%M') %>-<%= wallpaper.id %>.jpg">
+              <% is_current = index == 0 %>
+              <div class="ds-wallpaper-card wallpaper-card" data-download-url="<%= download_url %>" data-filename="wallpaper-<%= application.applied_at.strftime('%Y%m%d-%H%M') %>-<%= wallpaper.id %>.jpg">
                 <div class="ds-wallpaper-thumb" style="aspect-ratio: <%= device_ratio %>;">
                   <%= image_tag variant, alt: "", class: "ds-wallpaper-img" %>
-                  <a href="<%= download_url %>" download="wallpaper-<%= wallpaper.created_at.strftime('%Y%m%d-%H%M') %>-<%= wallpaper.id %>.jpg" class="ds-download-icon" title="Télécharger">
+                  <a href="<%= download_url %>" download="wallpaper-<%= application.applied_at.strftime('%Y%m%d-%H%M') %>-<%= wallpaper.id %>.jpg" class="ds-download-icon" title="Télécharger">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                   </a>
                 </div>
                 <div class="ds-wallpaper-meta">
-                  <span><%= wallpaper.created_at.strftime("%d/%m %H:%M") %></span>
+                  <span><%= application.applied_at.strftime("%d/%m %H:%M") %></span>
                   <% if wallpaper.first_downloaded_at %>
                     <span class="ds-badge">✓</span>
                   <% end %>
                 </div>
-                <%= button_to "Supprimer", wallpaper_destroy_path(@device_id, wallpaper.id), method: :delete, form: { data: { turbo_confirm: "Supprimer ce wallpaper ?" } }, class: "ds-delete-btn" %>
+                <div class="ds-wallpaper-actions">
+                  <% unless is_current %>
+                    <%= button_to "Définir comme actuel", wallpaper_set_current_path(@device_id, wallpaper.id), method: :post, class: "ds-btn ds-btn--secondary ds-btn--sm" %>
+                  <% end %>
+                  <%= button_to "Supprimer", wallpaper_destroy_path(@device_id, wallpaper.id), method: :delete, form: { data: { turbo_confirm: "Supprimer ce wallpaper ?" } }, class: "ds-delete-btn" %>
+                </div>
               </div>
             <% end %>
           </div>

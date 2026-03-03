@@ -1,5 +1,6 @@
 class Wallpaper < ApplicationRecord
   belongs_to :device
+  has_many :wallpaper_applications, dependent: :destroy
   has_one_attached :image
 
   after_create_commit :send_push_notification

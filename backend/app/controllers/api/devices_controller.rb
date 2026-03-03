@@ -21,7 +21,7 @@ module Api
 
     def wallpaper
       device = Device.find_by!(device_id: params[:id])
-      wallpaper = device.wallpapers.order(created_at: :desc).first
+      wallpaper = device.current_wallpaper
 
       if wallpaper&.image&.attached?
         wallpaper.update_column(:first_downloaded_at, Time.current) if wallpaper.first_downloaded_at.nil?
@@ -39,6 +39,7 @@ module Api
     def upload_wallpaper
       device = Device.find_by!(device_id: params[:id])
       wallpaper = device.wallpapers.create!(image: params[:image])
+      device.wallpaper_applications.create!(wallpaper: wallpaper, applied_at: Time.current)
       url = device.screen_width.present? && device.screen_height.present? ?
         polymorphic_url(wallpaper.variant_for(device)) : polymorphic_url(wallpaper.image)
       render json: {

@@ -211,6 +211,18 @@
   gap: 0.35rem;
 }
 
+.ds-wallpaper-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.3rem $ds-space-sm;
+  border-top: 1px solid $ds-border;
+
+  .ds-btn {
+    width: 100%;
+  }
+}
+
 .ds-badge {
   color: $ds-success;
 }
@@ -222,7 +234,6 @@
   background: transparent;
   color: $ds-text-muted;
   border: none;
-  border-top: 1px solid $ds-border;
   cursor: pointer;
   transition: color $ds-transition, background $ds-transition;
 

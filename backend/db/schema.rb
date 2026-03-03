@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_03_02_160001) do
+ActiveRecord::Schema[7.2].define(version: 2026_03_02_170000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -52,6 +52,17 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_02_160001) do
     t.index ["device_id"], name: "index_devices_on_device_id", unique: true
   end
 
+  create_table "wallpaper_applications", force: :cascade do |t|
+    t.bigint "device_id", null: false
+    t.bigint "wallpaper_id", null: false
+    t.datetime "applied_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["device_id", "applied_at"], name: "index_wallpaper_applications_on_device_id_and_applied_at"
+    t.index ["device_id"], name: "index_wallpaper_applications_on_device_id"
+    t.index ["wallpaper_id"], name: "index_wallpaper_applications_on_wallpaper_id"
+  end
+
   create_table "wallpapers", force: :cascade do |t|
     t.bigint "device_id", null: false
     t.datetime "created_at", null: false
@@ -62,5 +73,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_02_160001) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "wallpaper_applications", "devices"
+  add_foreign_key "wallpaper_applications", "wallpapers"
   add_foreign_key "wallpapers", "devices"
 end

@@ -6,7 +6,7 @@ class InfluencerImage < ApplicationRecord
   validates :source, presence: true
 
   scope :visible, -> { where(hidden: false) }
-  scope :positive_score, -> { where("likes_count > dislikes_count") }
+  scope :positive_score, -> { where("likes_count >= dislikes_count") }
   scope :random, -> { order(Arel.sql("RANDOM()")) }
 
   def self.random_sample(limit = 48)

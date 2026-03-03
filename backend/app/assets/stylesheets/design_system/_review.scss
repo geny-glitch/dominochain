@@ -41,25 +41,26 @@
   color: $ds-text;
 }
 
-// Pinterest-style masonry grid — same 8 cols + 2px gap as home
+// Grille de carrés
 .ds-review__grid {
-  column-count: 8;
-  column-gap: 2px;
-  padding: 2px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 4px;
+  padding: 4px;
 
-  @media (max-width: 1200px) {
-    column-count: 6;
+  @media (min-width: 600px) {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   }
-  @media (max-width: 900px) {
-    column-count: 4;
+  @media (min-width: 900px) {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   }
-  @media (max-width: 600px) {
-    column-count: 2;
+  @media (min-width: 1200px) {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   }
 }
 
 .ds-review__empty {
-  column-span: all;
+  grid-column: 1 / -1;
   color: $ds-text-muted;
   font-size: $ds-body-size;
   padding: $ds-space-2xl;
@@ -73,13 +74,12 @@
   }
 }
 
-// Card — same tile style as home collage
+// Card — carré avec image recadrée
 .ds-review-card {
-  break-inside: avoid;
-  margin-bottom: 2px;
+  aspect-ratio: 1;
   position: relative;
   overflow: hidden;
-  border-radius: 2px;
+  border-radius: 4px;
   transition: opacity 0.3s, transform 0.3s;
 
   &:hover .ds-review-card__actions {
@@ -88,14 +88,15 @@
 }
 
 .ds-review-card__img {
-  display: block;
+  position: absolute;
+  inset: 0;
   line-height: 0;
 
   img {
     width: 100%;
-    height: auto;
+    height: 100%;
+    object-fit: cover;
     display: block;
-    vertical-align: bottom;
     filter: saturate(0.85) brightness(0.6);
   }
 }

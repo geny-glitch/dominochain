@@ -86,7 +86,7 @@
             .then(r => r.json())
             .then(data => {
               const countEl = dislikeBtn.querySelector('.ds-review-card__dislike-count');
-              if (countEl) countEl.textContent = data.dislikes_count;
+              if (countEl) countEl.textContent = -data.dislikes_count;
             });
         });
       }

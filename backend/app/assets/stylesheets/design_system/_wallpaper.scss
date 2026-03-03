@@ -370,6 +370,20 @@
   margin-top: 0.2rem;
 }
 
+.ds-task-card-actions {
+  display: flex;
+  align-items: center;
+  gap: $ds-space-sm;
+}
+
+.ds-task-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: $ds-space-md;
+  width: 100%;
+}
+
 .ds-task-status {
   font-size: $ds-tiny-size;
   padding: 0.2rem 0.5rem;

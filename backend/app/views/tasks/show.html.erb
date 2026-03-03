@@ -11,9 +11,12 @@
 
     <header class="ds-header" style="flex-direction: column; align-items: flex-start;">
       <%= link_to "← Retour", wallpaper_upload_path(@device_id), class: "ds-back-link" %>
-      <div>
-        <h1 class="ds-title"><%= @task.name %></h1>
-        <p class="ds-subtitle">Deadline: <%= @task.deadline_at.strftime("%d/%m/%Y %H:%M") %></p>
+      <div class="ds-task-header-row">
+        <div>
+          <h1 class="ds-title"><%= @task.name %></h1>
+          <p class="ds-subtitle">Deadline: <%= @task.deadline_at.strftime("%d/%m/%Y %H:%M") %></p>
+        </div>
+        <%= button_to "Supprimer", wallpaper_task_destroy_path(@device_id, @task), method: :delete, form: { data: { turbo_confirm: "Supprimer cette tâche ?" } }, class: "ds-btn ds-btn--ghost ds-btn--sm ds-delete-btn" %>
       </div>
     </header>
 

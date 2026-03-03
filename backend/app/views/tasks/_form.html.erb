@@ -1,7 +1,7 @@
 <%= form_with url: wallpaper_tasks_path(@device_id), method: :post, local: true, class: "ds-form ds-task-form" do |f| %>
   <div class="ds-form-group">
     <label for="task_name" class="ds-form-label">Nom</label>
-    <input type="text" name="task[name]" id="task_name" class="ds-input" required placeholder="Ex: Ranger la chambre">
+    <input type="text" name="task[name]" id="task_name" class="ds-input" required placeholder='Ex: Ecrire 100 fois "je serai obéissant"'>
   </div>
 
   <div class="ds-form-group">
@@ -11,7 +11,7 @@
 
   <div class="ds-form-group">
     <label for="task_expected_proof" class="ds-form-label">Preuve attendue</label>
-    <textarea name="task[expected_proof]" id="task_expected_proof" class="ds-input ds-textarea" rows="2" placeholder="Ex: Photo de la chambre rangée"></textarea>
+    <textarea name="task[expected_proof]" id="task_expected_proof" class="ds-input ds-textarea" rows="2" placeholder="Ex: Photo des lignes ou lien vers writeforme"></textarea>
   </div>
 
   <div class="ds-form-group">

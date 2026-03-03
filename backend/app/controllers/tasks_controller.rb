@@ -2,7 +2,7 @@
 
 class TasksController < ApplicationController
   before_action :set_device
-  before_action :set_task, only: [:show, :accept_proof, :reject_proof]
+  before_action :set_task, only: [:show, :accept_proof, :reject_proof, :destroy]
 
   def create
     deadline_at = compute_deadline
@@ -38,6 +38,11 @@ class TasksController < ApplicationController
     @task.proof_of_completion.update!(status: "rejected", reviewed_at: Time.current)
     @task.update!(status: "rejected")
     redirect_to wallpaper_upload_path(@device_id), notice: "Preuve refusée. Le beta a été notifié."
+  end
+
+  def destroy
+    @task.soft_destroy!
+    redirect_to wallpaper_upload_path(@device_id), notice: "Tâche supprimée."
   end
 
   private

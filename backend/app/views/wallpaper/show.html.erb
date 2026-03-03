@@ -78,7 +78,10 @@
                     <% end %>
                   </div>
                 </div>
-                <%= link_to "Voir", wallpaper_task_path(@device_id, task), class: "ds-btn ds-btn--secondary ds-btn--sm" %>
+                <div class="ds-task-card-actions">
+                  <%= link_to "Voir", wallpaper_task_path(@device_id, task), class: "ds-btn ds-btn--secondary ds-btn--sm" %>
+                  <%= button_to "Supprimer", wallpaper_task_destroy_path(@device_id, task), method: :delete, form: { data: { turbo_confirm: "Supprimer cette tâche ?" } }, class: "ds-btn ds-btn--ghost ds-btn--sm ds-delete-btn" %>
+                </div>
               </li>
             <% end %>
           </ul>

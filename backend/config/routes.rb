@@ -44,4 +44,5 @@ Rails.application.routes.draw do
   get "w/:device_id/tasks/:id", to: "tasks#show", as: :wallpaper_task
   post "w/:device_id/tasks/:id/accept_proof", to: "tasks#accept_proof", as: :wallpaper_task_accept_proof
   post "w/:device_id/tasks/:id/reject_proof", to: "tasks#reject_proof", as: :wallpaper_task_reject_proof
+  delete "w/:device_id/tasks/:id", to: "tasks#destroy", as: :wallpaper_task_destroy
 end

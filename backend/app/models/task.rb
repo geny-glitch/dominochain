@@ -4,6 +4,8 @@ class Task < ApplicationRecord
   belongs_to :device
   has_one :proof_of_completion, dependent: :destroy
 
+  default_scope { where(deleted_at: nil) }
+
   validates :name, presence: true
   validates :deadline_at, presence: true
   validates :status, inclusion: { in: %w[pending completed expired rejected] }
@@ -30,6 +32,10 @@ class Task < ApplicationRecord
 
   def proof_pending?
     proof_of_completion&.pending?
+  end
+
+  def soft_destroy!
+    update_column(:deleted_at, Time.current)
   end
 
   private

@@ -31,7 +31,7 @@ class WallpaperController < ApplicationController
     device = Device.find_by!(device_id: params[:device_id])
     wallpaper = device.wallpapers.find(params[:wallpaper_id])
     device.wallpaper_applications.create!(wallpaper: wallpaper, applied_at: Time.current)
-    FcmService.send_new_wallpaper_notification(device: device)
+    FcmService.send_background_changed_notifications(device: device)
     redirect_to wallpaper_upload_path(params[:device_id]), notice: "Wallpaper défini comme fond actuel."
   rescue ActiveRecord::RecordNotFound
     redirect_to wallpaper_upload_path(params[:device_id]), alert: "Wallpaper not found."

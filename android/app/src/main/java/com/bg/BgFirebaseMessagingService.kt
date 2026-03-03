@@ -18,6 +18,13 @@ class BgFirebaseMessagingService : FirebaseMessagingService() {
                 Log.d(TAG, "New wallpaper push received, syncing...")
                 WallpaperWorker.syncNow(applicationContext)
             }
+            "teaser" -> {
+                val title = message.notification?.title ?: "OTB"
+                val body = message.notification?.body ?: ""
+                if (body.isNotEmpty()) {
+                    NotificationHelper.showTeaser(applicationContext, title, body)
+                }
+            }
         }
     }
 

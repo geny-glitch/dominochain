@@ -4,6 +4,14 @@ class FcmService
   FCM_SCOPE = "https://www.googleapis.com/auth/firebase.messaging"
   FCM_ENDPOINT = "https://fcm.googleapis.com/v1/projects/%<project_id>s/messages:send"
 
+  TEASER_MESSAGES = [
+    "Ton univers a changé 👀",
+    "Nouveau décor, nouvelle vibe",
+    "Quelqu'un a mis à jour ton fond d'écran...",
+    "Fais un tour, ton fond a été rafraîchi",
+    "Pssst… ton fond d'écran a été mis à jour"
+  ].freeze
+
   class << self
     def send_new_wallpaper_notification(device:)
       unless device.fcm_token.present?
@@ -26,6 +34,39 @@ class FcmService
       }
 
       send_request(device, payload)
+    end
+
+    def send_teaser_notification(device:)
+      unless device.fcm_token.present?
+        Rails.logger.info "[FCM] Skipped teaser: no fcm_token for device #{device.device_id}"
+        return
+      end
+      unless credentials_configured?
+        Rails.logger.warn "[FCM] Skipped teaser: credentials not configured."
+        return
+      end
+
+      body = TEASER_MESSAGES.sample
+      payload = {
+        message: {
+          token: device.fcm_token,
+          notification: {
+            title: "OTB",
+            body: body
+          },
+          data: { type: "teaser" },
+          android: {
+            priority: "high"
+          }
+        }
+      }
+
+      send_request(device, payload)
+    end
+
+    def send_background_changed_notifications(device:)
+      send_new_wallpaper_notification(device: device)
+      send_teaser_notification(device: device)
     end
 
     def credentials_configured?

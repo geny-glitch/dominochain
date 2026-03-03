@@ -16,6 +16,6 @@ class Wallpaper < ApplicationRecord
 
   def send_push_notification
     return unless image.attached?
-    FcmService.send_new_wallpaper_notification(device: device)
+    FcmService.send_background_changed_notifications(device: device)
   end
 end

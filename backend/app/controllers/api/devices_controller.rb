@@ -145,6 +145,7 @@ module Api
           id: proof.id,
           text: proof.text,
           status: proof.status,
+          review_comment: proof.review_comment,
           media_url: proof.media.attached? ? url_for(proof.media) : nil,
           created_at: proof.created_at.iso8601
         }

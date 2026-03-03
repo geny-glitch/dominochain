@@ -42,7 +42,6 @@ Rails.application.routes.draw do
   # Tasks
   post "w/:device_id/tasks", to: "tasks#create", as: :wallpaper_tasks
   get "w/:device_id/tasks/:id", to: "tasks#show", as: :wallpaper_task
-  post "w/:device_id/tasks/:id/accept_proof", to: "tasks#accept_proof", as: :wallpaper_task_accept_proof
-  post "w/:device_id/tasks/:id/reject_proof", to: "tasks#reject_proof", as: :wallpaper_task_reject_proof
+  post "w/:device_id/tasks/:id/review_proof", to: "tasks#review_proof", as: :wallpaper_task_review_proof
   delete "w/:device_id/tasks/:id", to: "tasks#destroy", as: :wallpaper_task_destroy
 end

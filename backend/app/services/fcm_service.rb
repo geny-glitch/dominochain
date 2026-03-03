@@ -118,6 +118,7 @@ class FcmService
 
       title = "OTB"
       body = proof.accepted? ? "Preuve acceptée ✓" : "Preuve refusée"
+      body += ": #{proof.review_comment}" if proof.review_comment.present?
 
       payload = {
         message: {
@@ -126,7 +127,8 @@ class FcmService
           data: {
             type: "proof_reviewed",
             task_id: proof.task_id.to_s,
-            status: proof.status
+            status: proof.status,
+            review_comment: proof.review_comment.to_s
           },
           android: { priority: "high" }
         }

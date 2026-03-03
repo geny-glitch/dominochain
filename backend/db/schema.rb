@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_03_03_150000) do
+ActiveRecord::Schema[7.2].define(version: 2026_03_03_160000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -80,6 +80,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_03_150000) do
     t.datetime "reviewed_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.text "review_comment"
     t.index ["status"], name: "index_proof_of_completions_on_status"
     t.index ["task_id"], name: "index_proof_of_completions_on_task_id"
   end

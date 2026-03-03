@@ -120,6 +120,12 @@ class TaskDetailActivity : AppCompatActivity() {
                 "rejected" -> "Preuve refusée"
                 else -> task.proof.status
             }
+            if (!task.proof.review_comment.isNullOrBlank()) {
+                binding.proofSubmittedComment.visibility = View.VISIBLE
+                binding.proofSubmittedComment.text = task.proof.review_comment
+            } else {
+                binding.proofSubmittedComment.visibility = View.GONE
+            }
         } else {
             binding.proofFormSection.visibility = View.GONE
             binding.proofSubmittedSection.visibility = View.GONE
@@ -128,7 +134,9 @@ class TaskDetailActivity : AppCompatActivity() {
 
     private fun formatDate(iso: String): String {
         return try {
-            val parser = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US)
+            val parser = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US).apply {
+                timeZone = java.util.TimeZone.getTimeZone("UTC")
+            }
             val date = parser.parse(iso.replace("Z", "").take(19))
             if (date != null) SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(date)
             else iso.take(16)

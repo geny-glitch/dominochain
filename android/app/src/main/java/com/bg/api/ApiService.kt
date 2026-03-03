@@ -96,6 +96,7 @@ data class ProofResponse(
     val id: Long,
     val text: String?,
     val status: String,
+    val review_comment: String?,
     val media_url: String?,
     val created_at: String?
 )

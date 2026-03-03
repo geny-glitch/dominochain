@@ -2,7 +2,7 @@
 
 class TasksController < ApplicationController
   before_action :set_device
-  before_action :set_task, only: [:show, :accept_proof, :reject_proof, :destroy]
+  before_action :set_task, only: [:show, :review_proof, :destroy]
 
   def create
     deadline_at = compute_deadline
@@ -18,26 +18,22 @@ class TasksController < ApplicationController
     # Rendered for boss to review proof
   end
 
-  def accept_proof
+  def review_proof
     unless @task.proof_of_completion&.pending?
       redirect_to wallpaper_task_path(@device_id, @task), alert: "Aucune preuve en attente."
       return
     end
 
-    @task.proof_of_completion.update!(status: "accepted", reviewed_at: Time.current)
-    @task.update!(status: "completed")
-    redirect_to wallpaper_upload_path(@device_id), notice: "Preuve acceptée. Le beta a été notifié."
-  end
+    accept = params[:accept] == "Accepter"
+    proof = @task.proof_of_completion
+    proof.update!(status: accept ? "accepted" : "rejected", reviewed_at: Time.current, review_comment: params[:review_comment].presence)
+    @task.update!(status: accept ? "completed" : "rejected")
 
-  def reject_proof
-    unless @task.proof_of_completion&.pending?
-      redirect_to wallpaper_task_path(@device_id, @task), alert: "Aucune preuve en attente."
-      return
+    if accept
+      redirect_to wallpaper_upload_path(@device_id), notice: "Preuve acceptée. Le beta a été notifié."
+    else
+      redirect_to wallpaper_upload_path(@device_id), notice: "Preuve refusée. Le beta a été notifié."
     end
-
-    @task.proof_of_completion.update!(status: "rejected", reviewed_at: Time.current)
-    @task.update!(status: "rejected")
-    redirect_to wallpaper_upload_path(@device_id), notice: "Preuve refusée. Le beta a été notifié."
   end
 
   def destroy

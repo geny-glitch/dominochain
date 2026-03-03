@@ -453,6 +453,15 @@
   margin-top: $ds-space-sm;
 }
 
+.ds-proof-review {
+  margin-top: $ds-space-lg;
+
+  .ds-proof-review__comment {
+    margin-top: $ds-space-sm;
+    margin-bottom: $ds-space-md;
+  }
+}
+
 .ds-proof-actions {
   display: flex;
   gap: $ds-space-md;

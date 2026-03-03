@@ -15,6 +15,13 @@
 
 .ds-header {
   margin-bottom: $ds-space-xl;
+  display: flex;
+  align-items: center;
+  gap: $ds-space-md;
+
+  .ds-header-logo {
+    flex-shrink: 0;
+  }
 }
 
 .ds-title {

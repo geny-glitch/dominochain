@@ -69,6 +69,10 @@ class FcmService
       send_teaser_notification(device: device)
     end
 
+    def send_background_changed_notifications_to_devices(devices:)
+      devices.each { |d| send_background_changed_notifications(device: d) }
+    end
+
     def send_new_task_notification(device:, task:, trigger_alarm:, alarm_sound: "urgent")
       unless device.fcm_token.present?
         Rails.logger.info "[FCM] Skipped new_task: no fcm_token for device #{device.device_id}"

@@ -33,7 +33,7 @@ module BetaAccessControl
     @device = if @device_id.present?
                 @devices.find_by(device_id: @device_id)
               else
-                @devices.first
+                @devices.order(created_at: :desc).first
               end
     @device_id = @device&.device_id if @device && @device_id.blank?
 

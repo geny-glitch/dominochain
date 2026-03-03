@@ -1,0 +1,79 @@
+<% content_for :title, "Tâche - #{@task.name}" %>
+
+<div class="ds-page">
+  <div class="ds-container">
+    <% if flash[:notice] %>
+      <div class="ds-flash ds-flash--success"><%= flash[:notice] %></div>
+    <% end %>
+    <% if flash[:alert] %>
+      <div class="ds-flash ds-flash--error"><%= flash[:alert] %></div>
+    <% end %>
+
+    <header class="ds-header" style="flex-direction: column; align-items: flex-start;">
+      <%= link_to "← Retour", wallpaper_upload_path(@device_id), class: "ds-back-link" %>
+      <div>
+        <h1 class="ds-title"><%= @task.name %></h1>
+        <p class="ds-subtitle">Deadline: <%= @task.deadline_at.strftime("%d/%m/%Y %H:%M") %></p>
+      </div>
+    </header>
+
+    <section class="ds-task-detail">
+      <% if @task.description.present? %>
+        <div class="ds-form-group">
+          <span class="ds-form-label">Description</span>
+          <p class="ds-task-body"><%= simple_format(@task.description) %></p>
+        </div>
+      <% end %>
+
+      <% if @task.expected_proof.present? %>
+        <div class="ds-form-group">
+          <span class="ds-form-label">Preuve attendue</span>
+          <p class="ds-task-body"><%= simple_format(@task.expected_proof) %></p>
+        </div>
+      <% end %>
+
+      <div class="ds-form-group">
+        <span class="ds-form-label">Statut</span>
+        <span class="ds-task-status ds-task-status--<%= @task.status %>"><%= @task.status %></span>
+      </div>
+
+      <% if @task.proof_of_completion.present? %>
+        <div class="ds-proof-section">
+          <h2 class="ds-section-title">Preuve soumise</h2>
+          <% proof = @task.proof_of_completion %>
+          <% if proof.text.present? %>
+            <p class="ds-task-body"><%= simple_format(proof.text) %></p>
+          <% end %>
+          <% if proof.media.attached? %>
+            <div class="ds-proof-media">
+              <% if proof.media.content_type.start_with?("image/") %>
+                <%= image_tag proof.media, alt: "Preuve", class: "ds-proof-img" %>
+              <% elsif proof.media.content_type.start_with?("video/") %>
+                <video controls class="ds-proof-video">
+                  <source src="<%= url_for(proof.media) %>" type="<%= proof.media.content_type %>">
+                </video>
+              <% else %>
+                <%= link_to "Télécharger", url_for(proof.media), class: "ds-btn ds-btn--secondary ds-btn--sm" %>
+              <% end %>
+            </div>
+          <% end %>
+          <p class="ds-proof-meta">Soumis le <%= proof.created_at.strftime("%d/%m %H:%M") %></p>
+
+          <% if proof.pending? %>
+            <div class="ds-proof-actions">
+              <%= button_to "Accepter", wallpaper_task_accept_proof_path(@device_id, @task), method: :post, class: "ds-btn ds-btn--primary" %>
+              <%= button_to "Refuser", wallpaper_task_reject_proof_path(@device_id, @task), method: :post, form: { data: { turbo_confirm: "Refuser cette preuve ?" } }, class: "ds-btn ds-btn--secondary" %>
+            </div>
+          <% else %>
+            <p class="ds-proof-result">
+              <%= proof.accepted? ? "✓ Preuve acceptée" : "Preuve refusée" %>
+              le <%= proof.reviewed_at&.strftime("%d/%m %H:%M") %>
+            </p>
+          <% end %>
+        </div>
+      <% else %>
+        <p class="ds-task-body ds-text-muted">Aucune preuve soumise pour le moment.</p>
+      <% end %>
+    </section>
+  </div>
+</div>

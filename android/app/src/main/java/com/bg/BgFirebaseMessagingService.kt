@@ -25,6 +25,21 @@ class BgFirebaseMessagingService : FirebaseMessagingService() {
                     NotificationHelper.showTeaser(applicationContext, title, body)
                 }
             }
+            "new_task" -> {
+                val title = message.data["title"] ?: message.notification?.title ?: "OTB"
+                val body = message.data["body"] ?: message.notification?.body ?: "Nouvelle tâche"
+                val taskId = message.data["task_id"] ?: ""
+                val triggerAlarm = message.data["trigger_alarm"] == "true"
+                NotificationHelper.showTaskNotification(applicationContext, title, body, taskId, triggerAlarm)
+            }
+            "proof_reviewed" -> {
+                val title = message.notification?.title ?: "OTB"
+                val body = message.notification?.body ?: ""
+                val taskId = message.data["task_id"] ?: ""
+                if (body.isNotEmpty()) {
+                    NotificationHelper.showProofReviewedNotification(applicationContext, title, body, taskId)
+                }
+            }
         }
     }
 

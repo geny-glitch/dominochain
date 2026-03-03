@@ -84,7 +84,75 @@ module Api
       head :no_content
     end
 
+    def tasks
+      device = Device.find_by!(device_id: params[:id])
+      tasks = device.tasks.recent
+      render json: tasks.map { |t| task_json(t) }
+    end
+
+    def task_detail
+      device = Device.find_by!(device_id: params[:id])
+      task = device.tasks.find(params[:task_id])
+      render json: task_detail_json(task)
+    end
+
+    def submit_proof
+      device = Device.find_by!(device_id: params[:id])
+      task = device.tasks.find(params[:task_id])
+
+      unless task.deadline_at.future?
+        return render json: { error: "La deadline est dépassée" }, status: :unprocessable_entity
+      end
+      if task.proof_accepted?
+        return render json: { error: "La preuve a déjà été acceptée" }, status: :unprocessable_entity
+      end
+
+      proof = task.proof_of_completion || task.build_proof_of_completion
+      proof.text = params[:text].presence
+      if params[:media].present?
+        proof.media.purge if proof.media.attached?
+        proof.media.attach(params[:media])
+      end
+      proof.status = "pending"
+      proof.reviewed_at = nil
+      proof.save!
+
+      render json: { id: proof.id, status: proof.status }, status: :created
+    rescue ActiveRecord::RecordInvalid => e
+      render json: { error: e.record.errors.full_messages.join(", ") }, status: :unprocessable_entity
+    end
+
     private
+
+    def task_json(task)
+      {
+        id: task.id,
+        name: task.name,
+        description: task.description,
+        expected_proof: task.expected_proof,
+        deadline_at: task.deadline_at.iso8601,
+        status: task.effective_status,
+        can_submit_proof: task.can_submit_proof?,
+        proof_status: task.proof_of_completion&.status
+      }
+    end
+
+    def task_detail_json(task)
+      json = task_json(task)
+      if task.proof_of_completion.present?
+        proof = task.proof_of_completion
+        json[:proof] = {
+          id: proof.id,
+          text: proof.text,
+          status: proof.status,
+          media_url: proof.media.attached? ? url_for(proof.media) : nil,
+          created_at: proof.created_at.iso8601
+        }
+      else
+        json[:proof] = nil
+      end
+      json
+    end
 
     def wallpaper_upload_url(device_id)
       "#{request.base_url}/w/#{device_id}"

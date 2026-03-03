@@ -61,6 +61,30 @@
         </div>
       <% end %>
 
+      <section class="ds-task-section">
+        <h2 class="ds-section-title">Tâches</h2>
+        <%= render "tasks/form" %>
+        <% if @tasks.any? %>
+          <ul class="ds-task-list">
+            <% @tasks.each do |task| %>
+              <li class="ds-task-card">
+                <div class="ds-task-card-info">
+                  <span class="ds-task-card-name"><%= task.name %></span>
+                  <div class="ds-task-card-meta">
+                    Deadline: <%= task.deadline_at.strftime("%d/%m %H:%M") %>
+                    · <span class="ds-task-status ds-task-status--<%= task.status %>"><%= task.status %></span>
+                    <% if task.proof_pending? %>
+                      · <span class="ds-task-status ds-task-status--pending">Preuve en attente</span>
+                    <% end %>
+                  </div>
+                </div>
+                <%= link_to "Voir", wallpaper_task_path(@device_id, task), class: "ds-btn ds-btn--secondary ds-btn--sm" %>
+              </li>
+            <% end %>
+          </ul>
+        <% end %>
+      </section>
+
       <% if @applications.any? %>
         <% current_application = @applications.first %>
         <% current_wallpaper = current_application.wallpaper %>

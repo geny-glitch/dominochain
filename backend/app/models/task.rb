@@ -1,0 +1,40 @@
+# frozen_string_literal: true
+
+class Task < ApplicationRecord
+  belongs_to :device
+  has_one :proof_of_completion, dependent: :destroy
+
+  validates :name, presence: true
+  validates :deadline_at, presence: true
+  validates :status, inclusion: { in: %w[pending completed expired rejected] }
+
+  scope :recent, -> { order(created_at: :desc) }
+
+  after_create_commit :send_new_task_notification
+
+  def expired?
+    status == "expired" || (deadline_at.past? && status == "pending")
+  end
+
+  def effective_status
+    (status == "pending" && deadline_at.past?) ? "expired" : status
+  end
+
+  def can_submit_proof?
+    deadline_at.future? && !proof_accepted?
+  end
+
+  def proof_accepted?
+    proof_of_completion&.accepted?
+  end
+
+  def proof_pending?
+    proof_of_completion&.pending?
+  end
+
+  private
+
+  def send_new_task_notification
+    FcmService.send_new_task_notification(device: device, task: self, trigger_alarm: trigger_alarm)
+  end
+end

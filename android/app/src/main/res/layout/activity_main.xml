@@ -77,6 +77,13 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Refresh Wallpaper"
+        android:layout_marginBottom="8dp" />
+
+    <Button
+        android:id="@+id/tasks_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Tâches"
         android:layout_marginBottom="24dp" />
 
     <TextView

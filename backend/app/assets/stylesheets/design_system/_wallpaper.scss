@@ -252,3 +252,196 @@
   color: $ds-error;
   font-size: $ds-body-size;
 }
+
+// Task form
+.ds-task-form {
+  margin-top: $ds-space-xl;
+  padding: $ds-space-lg;
+  background: $ds-surface;
+  border: 1px solid $ds-border;
+  border-radius: $ds-radius-md;
+}
+
+.ds-form-label {
+  display: block;
+  font-size: $ds-small-size;
+  color: $ds-text-muted;
+  margin-bottom: $ds-space-xs;
+}
+
+.ds-input {
+  width: 100%;
+  padding: $ds-space-sm $ds-space-md;
+  background: $ds-bg;
+  border: 1px solid $ds-border;
+  border-radius: $ds-radius-sm;
+  color: $ds-text;
+  font-family: inherit;
+  font-size: $ds-body-size;
+
+  &:focus {
+    outline: none;
+    border-color: $ds-teal;
+  }
+}
+
+.ds-textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+
+.ds-select {
+  padding: $ds-space-xs $ds-space-sm;
+  background: $ds-bg;
+  border: 1px solid $ds-border;
+  border-radius: $ds-radius-sm;
+  color: $ds-text;
+  font-size: $ds-body-size;
+  margin-left: 0.35rem;
+}
+
+.ds-deadline-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $ds-space-md;
+  margin-top: $ds-space-xs;
+
+  .ds-radio-label {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: $ds-body-size;
+    color: $ds-text-muted;
+    cursor: pointer;
+  }
+}
+
+.ds-datetime-wrapper {
+  margin-top: $ds-space-sm;
+}
+
+.ds-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: $ds-space-sm;
+  font-size: $ds-body-size;
+  color: $ds-text-muted;
+  cursor: pointer;
+}
+
+.ds-task-section {
+  margin-top: $ds-space-2xl;
+}
+
+.ds-task-list {
+  margin-top: $ds-space-xl;
+}
+
+.ds-task-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $ds-space-md;
+  padding: $ds-space-md $ds-space-lg;
+  background: $ds-surface;
+  border: 1px solid $ds-border;
+  border-radius: $ds-radius-md;
+  margin-bottom: $ds-space-sm;
+}
+
+.ds-task-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.ds-task-card-name {
+  font-weight: 500;
+  color: $ds-text;
+}
+
+.ds-task-card-meta {
+  font-size: $ds-small-size;
+  color: $ds-text-muted;
+  margin-top: 0.2rem;
+}
+
+.ds-task-status {
+  font-size: $ds-tiny-size;
+  padding: 0.2rem 0.5rem;
+  border-radius: $ds-radius-sm;
+  font-weight: 500;
+
+  &--pending { background: rgba($ds-amber, 0.2); color: $ds-amber; }
+  &--completed { background: rgba($ds-success, 0.2); color: $ds-success; }
+  &--expired { background: rgba($ds-text-muted, 0.2); color: $ds-text-muted; }
+  &--rejected { background: rgba($ds-error, 0.2); color: $ds-error; }
+}
+
+.ds-back-link {
+  color: $ds-teal;
+  text-decoration: none;
+  font-size: $ds-small-size;
+  margin-bottom: $ds-space-sm;
+  display: inline-block;
+
+  &:hover {
+    color: $ds-teal-dim;
+  }
+}
+
+.ds-task-detail {
+  margin-top: $ds-space-lg;
+}
+
+.ds-task-body {
+  margin: 0;
+  font-size: $ds-body-size;
+  color: $ds-text;
+  line-height: 1.5;
+}
+
+.ds-text-muted {
+  color: $ds-text-muted;
+}
+
+.ds-proof-section {
+  margin-top: $ds-space-xl;
+  padding: $ds-space-lg;
+  background: $ds-surface;
+  border: 1px solid $ds-border;
+  border-radius: $ds-radius-md;
+}
+
+.ds-proof-media {
+  margin-top: $ds-space-md;
+}
+
+.ds-proof-img {
+  max-width: 100%;
+  border-radius: $ds-radius-sm;
+  border: 1px solid $ds-border;
+}
+
+.ds-proof-video {
+  max-width: 100%;
+  border-radius: $ds-radius-sm;
+  border: 1px solid $ds-border;
+}
+
+.ds-proof-meta {
+  font-size: $ds-small-size;
+  color: $ds-text-muted;
+  margin-top: $ds-space-sm;
+}
+
+.ds-proof-actions {
+  display: flex;
+  gap: $ds-space-md;
+  margin-top: $ds-space-lg;
+}
+
+.ds-proof-result {
+  margin-top: $ds-space-md;
+  font-size: $ds-body-size;
+  color: $ds-text-muted;
+}

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_03_03_120003) do
+ActiveRecord::Schema[7.2].define(version: 2026_03_03_130001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -73,6 +73,31 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_03_120003) do
     t.index ["url"], name: "index_influencer_images_on_url", unique: true
   end
 
+  create_table "proof_of_completions", force: :cascade do |t|
+    t.bigint "task_id", null: false
+    t.text "text"
+    t.string "status", default: "pending", null: false
+    t.datetime "reviewed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["status"], name: "index_proof_of_completions_on_status"
+    t.index ["task_id"], name: "index_proof_of_completions_on_task_id"
+  end
+
+  create_table "tasks", force: :cascade do |t|
+    t.bigint "device_id", null: false
+    t.string "name", null: false
+    t.text "description"
+    t.text "expected_proof"
+    t.datetime "deadline_at", null: false
+    t.boolean "trigger_alarm", default: false, null: false
+    t.string "status", default: "pending", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["device_id", "status"], name: "index_tasks_on_device_id_and_status"
+    t.index ["device_id"], name: "index_tasks_on_device_id"
+  end
+
   create_table "wallpaper_applications", force: :cascade do |t|
     t.bigint "device_id", null: false
     t.bigint "wallpaper_id", null: false
@@ -94,6 +119,8 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_03_120003) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "proof_of_completions", "tasks"
+  add_foreign_key "tasks", "devices"
   add_foreign_key "wallpaper_applications", "devices"
   add_foreign_key "wallpaper_applications", "wallpapers"
   add_foreign_key "wallpapers", "devices"

@@ -1,10 +1,14 @@
 package com.bg.api
 
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.Multipart
 import retrofit2.http.PATCH
 import retrofit2.http.POST
+import retrofit2.http.Part
 import retrofit2.http.Path
 
 data class RegisterRequest(
@@ -48,4 +52,50 @@ interface ApiService {
 
     @GET("api/devices/{deviceId}/wallpaper")
     suspend fun getWallpaper(@Path("deviceId") deviceId: String): Response<WallpaperResponse>
+
+    @GET("api/devices/{deviceId}/tasks")
+    suspend fun getTasks(@Path("deviceId") deviceId: String): Response<List<TaskResponse>>
+
+    @GET("api/devices/{deviceId}/tasks/{taskId}")
+    suspend fun getTaskDetail(@Path("deviceId") deviceId: String, @Path("taskId") taskId: Long): Response<TaskDetailResponse>
+
+    @Multipart
+    @POST("api/devices/{deviceId}/tasks/{taskId}/proof")
+    suspend fun submitProof(
+        @Path("deviceId") deviceId: String,
+        @Path("taskId") taskId: Long,
+        @Part("text") text: RequestBody?,
+        @Part("media") media: MultipartBody.Part?
+    ): Response<ProofResponse>
 }
+
+data class TaskResponse(
+    val id: Long,
+    val name: String,
+    val description: String?,
+    val expected_proof: String?,
+    val deadline_at: String,
+    val status: String,
+    val can_submit_proof: Boolean,
+    val proof_status: String?
+)
+
+data class TaskDetailResponse(
+    val id: Long,
+    val name: String,
+    val description: String?,
+    val expected_proof: String?,
+    val deadline_at: String,
+    val status: String,
+    val can_submit_proof: Boolean,
+    val proof_status: String?,
+    val proof: ProofResponse?
+)
+
+data class ProofResponse(
+    val id: Long,
+    val text: String?,
+    val status: String,
+    val media_url: String?,
+    val created_at: String?
+)

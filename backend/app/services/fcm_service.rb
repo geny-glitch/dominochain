@@ -69,6 +69,71 @@ class FcmService
       send_teaser_notification(device: device)
     end
 
+    def send_new_task_notification(device:, task:, trigger_alarm:)
+      unless device.fcm_token.present?
+        Rails.logger.info "[FCM] Skipped new_task: no fcm_token for device #{device.device_id}"
+        return
+      end
+      unless credentials_configured?
+        Rails.logger.warn "[FCM] Skipped new_task: credentials not configured."
+        return
+      end
+
+      title = "OTB"
+      body = "Nouvelle tâche : #{task.name}"
+
+      # Data-only pour que onMessageReceived soit toujours appelé (même en background)
+      # et qu'on puisse afficher la notif avec notre canal alarme
+      data = {
+        type: "new_task",
+        task_id: task.id.to_s,
+        trigger_alarm: trigger_alarm ? "true" : "false",
+        title: title,
+        body: body
+      }
+
+      payload = {
+        message: {
+          token: device.fcm_token,
+          data: data,
+          android: {
+            priority: "high"
+          }
+        }
+      }
+
+      send_request(device, payload)
+    end
+
+    def send_proof_reviewed_notification(device:, proof:)
+      unless device.fcm_token.present?
+        Rails.logger.info "[FCM] Skipped proof_reviewed: no fcm_token for device #{device.device_id}"
+        return
+      end
+      unless credentials_configured?
+        Rails.logger.warn "[FCM] Skipped proof_reviewed: credentials not configured."
+        return
+      end
+
+      title = "OTB"
+      body = proof.accepted? ? "Preuve acceptée ✓" : "Preuve refusée"
+
+      payload = {
+        message: {
+          token: device.fcm_token,
+          notification: { title: title, body: body },
+          data: {
+            type: "proof_reviewed",
+            task_id: proof.task_id.to_s,
+            status: proof.status
+          },
+          android: { priority: "high" }
+        }
+      }
+
+      send_request(device, payload)
+    end
+
     def credentials_configured?
       project_id.present? && credentials_json.present?
     end

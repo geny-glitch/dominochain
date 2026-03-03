@@ -28,6 +28,9 @@ Rails.application.routes.draw do
     post "devices/:id/wallpaper", to: "devices#upload_wallpaper", as: :upload_wallpaper
     get "devices/:id/wallpapers", to: "devices#wallpapers", as: :device_wallpapers
     delete "devices/:id/wallpapers/:wallpaper_id", to: "devices#destroy_wallpaper", as: :destroy_wallpaper
+    get "devices/:id/tasks", to: "devices#tasks", as: :device_tasks
+    get "devices/:id/tasks/:task_id", to: "devices#task_detail", as: :device_task
+    post "devices/:id/tasks/:task_id/proof", to: "devices#submit_proof", as: :device_task_proof
   end
 
   # Web upload UI
@@ -35,4 +38,10 @@ Rails.application.routes.draw do
   post "w/:device_id", to: "wallpaper#upload", as: :wallpaper_upload_submit
   post "w/:device_id/wallpapers/:wallpaper_id/set_current", to: "wallpaper#set_current", as: :wallpaper_set_current
   delete "w/:device_id/wallpapers/:wallpaper_id", to: "wallpaper#destroy", as: :wallpaper_destroy
+
+  # Tasks
+  post "w/:device_id/tasks", to: "tasks#create", as: :wallpaper_tasks
+  get "w/:device_id/tasks/:id", to: "tasks#show", as: :wallpaper_task
+  post "w/:device_id/tasks/:id/accept_proof", to: "tasks#accept_proof", as: :wallpaper_task_accept_proof
+  post "w/:device_id/tasks/:id/reject_proof", to: "tasks#reject_proof", as: :wallpaper_task_reject_proof
 end

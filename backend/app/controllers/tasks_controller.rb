@@ -1,0 +1,67 @@
+# frozen_string_literal: true
+
+class TasksController < ApplicationController
+  before_action :set_device
+  before_action :set_task, only: [:show, :accept_proof, :reject_proof]
+
+  def create
+    deadline_at = compute_deadline
+    @task = @device.tasks.create!(task_params.merge(deadline_at: deadline_at))
+    redirect_to wallpaper_upload_path(@device_id), notice: "Tâche créée. Une notification a été envoyée."
+  rescue ActiveRecord::RecordInvalid => e
+    redirect_to wallpaper_upload_path(@device_id), alert: e.record.errors.full_messages.join(", ")
+  rescue ArgumentError => e
+    redirect_to wallpaper_upload_path(@device_id), alert: e.message
+  end
+
+  def show
+    # Rendered for boss to review proof
+  end
+
+  def accept_proof
+    unless @task.proof_of_completion&.pending?
+      redirect_to wallpaper_task_path(@device_id, @task), alert: "Aucune preuve en attente."
+      return
+    end
+
+    @task.proof_of_completion.update!(status: "accepted", reviewed_at: Time.current)
+    @task.update!(status: "completed")
+    redirect_to wallpaper_upload_path(@device_id), notice: "Preuve acceptée. Le beta a été notifié."
+  end
+
+  def reject_proof
+    unless @task.proof_of_completion&.pending?
+      redirect_to wallpaper_task_path(@device_id, @task), alert: "Aucune preuve en attente."
+      return
+    end
+
+    @task.proof_of_completion.update!(status: "rejected", reviewed_at: Time.current)
+    @task.update!(status: "rejected")
+    redirect_to wallpaper_upload_path(@device_id), notice: "Preuve refusée. Le beta a été notifié."
+  end
+
+  private
+
+  def set_device
+    @device_id = params[:device_id]
+    @device = Device.find_by!(device_id: @device_id)
+  end
+
+  def set_task
+    @task = @device.tasks.find(params[:id])
+  end
+
+  def task_params
+    params.require(:task).permit(:name, :description, :expected_proof, :trigger_alarm)
+  end
+
+  def compute_deadline
+    if params[:deadline_mode] == "duration"
+      duration_minutes = params[:deadline_duration].to_i
+      Time.current + duration_minutes.minutes
+    else
+      raw = params.dig(:task, :deadline_at)
+      raw.present? ? Time.zone.parse(raw) : raise(ArgumentError, "Deadline requise")
+    end
+  end
+end

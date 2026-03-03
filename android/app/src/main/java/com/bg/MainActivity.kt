@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import android.view.View
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -73,6 +74,27 @@ class MainActivity : AppCompatActivity() {
         }
 
         WallpaperWorker.schedule(this)
+
+        findViewById<View>(R.id.tasks_button)?.setOnClickListener {
+            startActivity(Intent(this, TasksActivity::class.java))
+        }
+
+        handleTasksIntent(intent)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleTasksIntent(intent)
+    }
+
+    private fun handleTasksIntent(intent: Intent) {
+        if (intent.getBooleanExtra("open_tasks", false)) {
+            val taskId = intent.getStringExtra("task_id")
+            startActivity(Intent(this, TasksActivity::class.java).apply {
+                putExtra("task_id", taskId)
+            })
+        }
     }
 
     override fun onResume() {

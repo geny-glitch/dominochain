@@ -5,6 +5,7 @@ class WallpaperController < ApplicationController
     @device_id = params[:device_id]
     @device = Device.find_by(device_id: @device_id)
     @applications = @device&.wallpaper_applications&.includes(:wallpaper)&.recent || []
+    @tasks = @device&.tasks&.recent || []
   end
 
   def upload

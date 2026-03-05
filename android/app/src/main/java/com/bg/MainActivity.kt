@@ -99,6 +99,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         setupScreenshotSwitch()
+        setupBatteryOptimizationLink()
 
         findViewById<View>(R.id.send_control_request_button)?.setOnClickListener {
             val bossNickname = findViewById<android.widget.EditText>(R.id.boss_nickname_input).text.toString().trim()
@@ -157,6 +158,32 @@ class MainActivity : AppCompatActivity() {
             openAccessibilitySettings()
             // Revert immediately — real state is reflected in onResume after returning from Settings
             switch.isChecked = BgAccessibilityService.isEnabled(this)
+        }
+    }
+
+    private fun setupBatteryOptimizationLink() {
+        binding.batteryOptimizationLink.setOnClickListener {
+            openBatteryOptimizationSettings()
+        }
+    }
+
+    private fun openBatteryOptimizationSettings() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            try {
+                val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                    data = Uri.parse("package:$packageName")
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                }
+                startActivity(intent)
+            } catch (_: Exception) {
+                try {
+                    startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).apply {
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    })
+                } catch (_: Exception) {
+                    Toast.makeText(this, "Impossible d'ouvrir les réglages batterie", Toast.LENGTH_SHORT).show()
+                }
+            }
         }
     }
 

@@ -21,3 +21,4 @@ Pouvoir blur / éditer des photos dans l'e web avant upload
 Prendre un screenshot de l'écran
 Réorg l'app
 Réorg le web
+Déverrouiller si on prend un screenshot ?

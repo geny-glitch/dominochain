@@ -64,6 +64,7 @@ data class WallpaperResponse(
 data class FcmTokenRequest(val fcm_token: String)
 
 data class NameRequest(val name: String?)
+data class PermissionsRequest(val permissions_ok: Boolean, val permissions_missing: List<String>? = null)
 
 interface ApiService {
     @POST("api/auth/login")
@@ -91,6 +92,12 @@ interface ApiService {
     suspend fun updateName(
         @Path("deviceId") deviceId: String,
         @Body body: NameRequest
+    ): Response<Unit>
+
+    @PATCH("api/devices/{deviceId}/permissions")
+    suspend fun updatePermissions(
+        @Path("deviceId") deviceId: String,
+        @Body body: PermissionsRequest
     ): Response<Unit>
 
     @GET("api/devices/{deviceId}/wallpaper")

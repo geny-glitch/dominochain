@@ -18,8 +18,11 @@ import androidx.core.content.PermissionChecker.checkSelfPermission
 import androidx.lifecycle.lifecycleScope
 import com.bg.databinding.ActivityMainBinding
 import com.google.firebase.messaging.FirebaseMessaging
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 
 class MainActivity : AppCompatActivity() {
 
@@ -93,6 +96,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         WallpaperWorker.schedule(this)
+        PermissionsWorker.schedule(this)
+        PermissionsWorker.checkNow(this)
 
         findViewById<View>(R.id.tasks_button)?.setOnClickListener {
             startActivity(Intent(this, TasksActivity::class.java))
@@ -140,6 +145,7 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         syncWallpaper()
         syncScreenshotSwitchState()
+        reportPermissionsImmediately()
     }
 
     private fun syncScreenshotSwitchState() {
@@ -149,6 +155,19 @@ class MainActivity : AppCompatActivity() {
 
     private fun syncWallpaper() {
         WallpaperWorker.syncNow(this)
+    }
+
+    private fun reportPermissionsImmediately() {
+        val deviceId = sessionManager.deviceId ?: return
+        if (sessionManager.token.isNullOrBlank()) return
+        lifecycleScope.launch {
+            delay(500)
+            val result = PermissionsChecker.check(this@MainActivity)
+            withContext(Dispatchers.IO) {
+                RetrofitClient.sessionManager = sessionManager
+                DeviceRepository().reportPermissionsStatus(deviceId, result.allOk, result.missingReasons)
+            }
+        }
     }
 
     private fun setupScreenshotSwitch() {

@@ -15,6 +15,11 @@ class WallpaperController < ApplicationController
     redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), notice: "Demande de screenshot envoyée."
   end
 
+  def grant_permissions_request
+    FcmService.send_grant_permissions_notification(device: @device)
+    redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), notice: "Notification envoyée au beta pour accorder les autorisations."
+  end
+
   def upload
     image_param = params.require(:image)
     first_wallpaper = @device.wallpapers.create!(image: image_param)

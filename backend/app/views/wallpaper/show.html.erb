@@ -14,11 +14,60 @@
       <div class="ds-flash ds-flash--error"><%= flash[:alert] %></div>
     <% end %>
 
+    <% if @device %>
+      <% permissions_all_ok = @device.permissions_ok || @device.permissions_missing_list.empty? %>
+    <% end %>
+
     <header class="ds-header">
       <%= image_tag "otb-logo.png", alt: "OTB", class: "ds-header-logo", width: 48, height: 48 %>
-      <h1 class="ds-title">OTB</h1>
-      <p class="ds-subtitle">Own their backgrounds</p>
+      <div class="ds-header-text">
+        <h1 class="ds-title">OTB</h1>
+        <p class="ds-subtitle ds-subtitle--with-icon">
+          Own their backgrounds
+          <% if @device %>
+            <button type="button" class="ds-permissions-icon ds-permissions-icon--<%= permissions_all_ok ? 'ok' : 'warning' %>" id="permissions-icon-btn" title="<%= permissions_all_ok ? 'Autorisations OK' : 'Autorisations manquantes' %>" aria-label="<%= permissions_all_ok ? 'Autorisations OK' : 'Autorisations manquantes' %>">
+              <% if permissions_all_ok %>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              <% else %>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              <% end %>
+            </button>
+          <% end %>
+        </p>
+      </div>
     </header>
+
+    <% if @device %>
+      <dialog id="permissions-dialog" class="ds-dialog">
+        <button type="button" class="ds-dialog-close-btn" id="permissions-dialog-close" title="Fermer" aria-label="Fermer">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+        <div class="ds-dialog-content">
+          <% if permissions_all_ok %>
+            <p class="ds-dialog-text">Les autorisations sont correctement configurées. L'app fonctionnera correctement.</p>
+            <ul class="ds-permissions-checklist">
+              <% Device::PERMISSION_LABELS.each_value do |label| %>
+                <li class="ds-permissions-checklist-item ds-permissions-checklist-item--ok"><span class="ds-permissions-check">✓</span> <%= label %></li>
+              <% end %>
+            </ul>
+          <% else %>
+            <p class="ds-dialog-text">Il manque certaines autorisations sur le téléphone du beta. Sans elles, les captures d'écran et les notifications peuvent ne pas fonctionner.</p>
+            <ul class="ds-permissions-checklist">
+              <% missing_list = @device.permissions_missing_list %>
+              <% Device::PERMISSION_LABELS.each do |key, label| %>
+                <% ok = !missing_list.include?(key) %>
+                <li class="ds-permissions-checklist-item ds-permissions-checklist-item--<%= ok ? 'ok' : 'missing' %>">
+                  <span class="ds-permissions-check"><%= ok ? '✓' : '✗' %></span> <%= label %>
+                </li>
+              <% end %>
+            </ul>
+            <div class="ds-dialog-actions">
+              <%= button_to "Envoyer une notification au beta", wallpaper_grant_permissions_request_path(@nickname, device_id: @device_id), method: :post, class: "ds-btn ds-btn--primary ds-btn--sm" %>
+            </div>
+          <% end %>
+        </div>
+      </dialog>
+    <% end %>
 
     <% if @device %>
       <%# 3 CTA carrés %>
@@ -355,6 +404,25 @@
           });
         }, 'image/jpeg', 0.9);
       });
+    }
+
+    const permissionsIconBtn = document.getElementById('permissions-icon-btn');
+    const permissionsDialog = document.getElementById('permissions-dialog');
+    const permissionsDialogClose = document.getElementById('permissions-dialog-close');
+    if (permissionsIconBtn && permissionsDialog) {
+      permissionsIconBtn.addEventListener('click', function() {
+        permissionsDialog.showModal();
+      });
+    }
+    if (permissionsDialog) {
+      permissionsDialog.addEventListener('click', function(e) {
+        if (e.target === permissionsDialog) permissionsDialog.close();
+      });
+      if (permissionsDialogClose) {
+        permissionsDialogClose.addEventListener('click', function() {
+          permissionsDialog.close();
+        });
+      }
     }
 
     const taskCtaBtn = document.getElementById('task-cta-btn');

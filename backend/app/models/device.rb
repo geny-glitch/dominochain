@@ -12,4 +12,17 @@ class Device < ApplicationRecord
   def display_name
     name.presence || device_id
   end
+
+  PERMISSION_LABELS = {
+    "accessibilité" => "Service accessibilité (captures d'écran)",
+    "optimisation batterie" => "Désactiver l'optimisation batterie",
+    "notifications" => "Autoriser les notifications"
+  }.freeze
+
+  def permissions_missing_list
+    return [] if permissions_missing.blank?
+    JSON.parse(permissions_missing)
+  rescue JSON::ParserError
+    []
+  end
 end

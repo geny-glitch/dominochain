@@ -87,6 +87,19 @@ module Api
       head :no_content
     end
 
+    def update_permissions
+      device = Device.find_by!(device_id: params[:id])
+      missing = params[:permissions_missing]
+      missing = missing.to_a.map(&:to_s) if missing.respond_to?(:to_a)
+      permissions_ok = params.require(:permissions_ok)
+      device.update!(
+        permissions_ok: permissions_ok,
+        permissions_missing: permissions_ok ? nil : (missing.presence&.to_json),
+        permissions_checked_at: Time.current
+      )
+      head :no_content
+    end
+
     def tasks
       device = Device.find_by!(device_id: params[:id])
       user = device.user

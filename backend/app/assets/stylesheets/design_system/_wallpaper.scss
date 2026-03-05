@@ -22,6 +22,125 @@
   .ds-header-logo {
     flex-shrink: 0;
   }
+
+  .ds-header-text {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+.ds-subtitle--with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.ds-permissions-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  margin-left: 0.25rem;
+  background: transparent;
+  border: none;
+  border-radius: $ds-radius-sm;
+  cursor: pointer;
+  transition: opacity $ds-transition;
+
+  &:hover {
+    opacity: 0.8;
+  }
+
+  &--ok {
+    color: $ds-success;
+  }
+
+  &--warning {
+    color: $ds-amber;
+  }
+}
+
+.ds-dialog {
+  position: relative;
+  max-width: 90vw;
+  width: 360px;
+  padding: $ds-space-xl;
+  padding-top: 2.5rem;
+  border: 1px solid $ds-border;
+  border-radius: $ds-radius-md;
+  background: $ds-surface;
+
+  &::backdrop {
+    background: rgba(0, 0, 0, 0.5);
+  }
+}
+
+.ds-dialog-close-btn {
+  position: absolute;
+  top: $ds-space-md;
+  right: $ds-space-md;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: $ds-radius-sm;
+  color: $ds-text-muted;
+  cursor: pointer;
+  transition: color $ds-transition, background $ds-transition;
+
+  &:hover {
+    color: $ds-text;
+    background: rgba($ds-text-muted, 0.15);
+  }
+}
+
+.ds-dialog-content {
+  margin-bottom: 0;
+}
+
+.ds-dialog-text {
+  margin: 0 0 $ds-space-md;
+  font-size: $ds-body-size;
+  color: $ds-text;
+  line-height: 1.5;
+}
+
+.ds-dialog-actions {
+  margin-top: $ds-space-md;
+}
+
+.ds-permissions-checklist {
+  list-style: none;
+  margin: $ds-space-md 0 0;
+  padding: 0;
+}
+
+.ds-permissions-checklist-item {
+  display: flex;
+  align-items: center;
+  gap: $ds-space-sm;
+  font-size: $ds-small-size;
+  color: $ds-text-muted;
+  margin-bottom: $ds-space-xs;
+
+  &--ok {
+    color: $ds-success;
+  }
+
+  &--missing {
+    color: $ds-amber;
+  }
+}
+
+.ds-permissions-check {
+  flex-shrink: 0;
+  font-weight: 600;
 }
 
 .ds-title {

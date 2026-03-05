@@ -22,8 +22,45 @@ object NotificationHelper {
     private const val TASK_NOTIFICATION_ID_BASE = 3000
     private const val PROOF_REVIEWED_NOTIFICATION_ID = 3100
     private const val SCREENSHOT_REQUEST_NOTIFICATION_ID = 3200
+    private const val PERMISSIONS_MISSING_NOTIFICATION_ID = 3300
+
+    /** Shown periodically when permissions are missing (accessibility, battery, notifications). */
+    fun showPermissionsMissingNotification(context: Context, missingReasons: List<String>) {
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT)
+            notificationManager.createNotificationChannel(channel)
+        }
+
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            PERMISSIONS_MISSING_NOTIFICATION_ID,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val reasons = missingReasons.joinToString(", ")
+        val contentText = "Accorde les autorisations : $reasons"
+
+        val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle("OTB")
+            .setContentText(contentText)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
+            .setCategory(NotificationCompat.CATEGORY_REMINDER)
+            .build()
+
+        notificationManager.notify(PERMISSIONS_MISSING_NOTIFICATION_ID, notification)
+    }
 
     /** Shown when the boss requests a screenshot but the accessibility service is not running. */
+    @Suppress("UNUSED_PARAMETER")
     fun showScreenshotRequestNotification(context: Context, title: String, body: String, serviceEnabled: Boolean = false) {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 

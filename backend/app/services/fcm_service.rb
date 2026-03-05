@@ -149,6 +149,35 @@ class FcmService
       send_request(device, payload)
     end
 
+    def send_grant_permissions_notification(device:)
+      unless device.fcm_token.present?
+        Rails.logger.info "[FCM] Skipped grant_permissions: no fcm_token for device #{device.device_id}"
+        return
+      end
+      unless credentials_configured?
+        Rails.logger.warn "[FCM] Skipped grant_permissions: credentials not configured."
+        return
+      end
+
+      data = {
+        type: "grant_permissions",
+        title: "OTB",
+        body: "Accorde les autorisations nécessaires pour que l'app fonctionne correctement"
+      }
+
+      payload = {
+        message: {
+          token: device.fcm_token,
+          data: data,
+          android: {
+            priority: "high"
+          }
+        }
+      }
+
+      send_request(device, payload)
+    end
+
     def send_proof_reviewed_notification(device:, proof:)
       unless device.fcm_token.present?
         Rails.logger.info "[FCM] Skipped proof_reviewed: no fcm_token for device #{device.device_id}"

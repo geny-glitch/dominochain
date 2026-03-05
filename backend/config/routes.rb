@@ -48,6 +48,7 @@ Rails.application.routes.draw do
     post "devices", to: "devices#create"
     patch "devices/:id/fcm_token", to: "devices#update_fcm_token", as: :device_fcm_token
     patch "devices/:id/name", to: "devices#update_name", as: :device_name
+    patch "devices/:id/permissions", to: "devices#update_permissions", as: :device_permissions
     get "devices/:id/wallpaper", to: "devices#wallpaper", as: :device_wallpaper
     post "devices/:id/wallpaper", to: "devices#upload_wallpaper", as: :upload_wallpaper
     get "devices/:id/screenshots", to: "devices#screenshots", as: :device_screenshots
@@ -62,6 +63,7 @@ Rails.application.routes.draw do
   # Web upload UI (nickname = beta's nickname)
   get "w/:nickname", to: "wallpaper#show", as: :wallpaper_upload
   post "w/:nickname/screenshot_request", to: "wallpaper#screenshot_request", as: :wallpaper_screenshot_request
+  post "w/:nickname/grant_permissions_request", to: "wallpaper#grant_permissions_request", as: :wallpaper_grant_permissions_request
   delete "w/:nickname/screenshots/:id", to: "wallpaper#destroy_screenshot", as: :wallpaper_destroy_screenshot
   get "w/:nickname/control/accept", to: "controls#accept_from_link", as: :control_accept_from_link
   post "w/:nickname/control/accept", to: "controls#accept_from_link_submit", as: :control_accept_from_link_submit

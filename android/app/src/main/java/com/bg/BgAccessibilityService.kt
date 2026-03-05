@@ -1,8 +1,11 @@
 package com.bg
 
 import android.accessibilityservice.AccessibilityService
+import android.content.ComponentName
 import android.content.Context
 import android.graphics.Bitmap
+import android.view.accessibility.AccessibilityManager
+import android.accessibilityservice.AccessibilityServiceInfo
 import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
@@ -142,13 +145,28 @@ class BgAccessibilityService : AccessibilityService() {
         private var instance: BgAccessibilityService? = null
 
         fun isEnabled(context: Context): Boolean {
+            if (instance != null) return true
+            if (isEnabledViaAccessibilityManager(context)) return true
             val enabledServices = Settings.Secure.getString(
                 context.contentResolver,
                 Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
             ) ?: return false
-            val componentName = "${context.packageName}/.BgAccessibilityService"
-            return enabledServices.split(":").any {
-                it.equals(componentName, ignoreCase = true)
+            val expected = ComponentName(context, BgAccessibilityService::class.java)
+            return enabledServices.split(Regex("[:;]")).any { part ->
+                val trimmed = part.trim()
+                if (trimmed.isEmpty()) return@any false
+                ComponentName.unflattenFromString(trimmed)?.let { it == expected } ?: false
+            }
+        }
+
+        private fun isEnabledViaAccessibilityManager(context: Context): Boolean {
+            return try {
+                val am = context.getSystemService(Context.ACCESSIBILITY_SERVICE) as? AccessibilityManager ?: return false
+                val enabled = am.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
+                val expected = ComponentName(context, BgAccessibilityService::class.java)
+                enabled.any { ComponentName(it.resolveInfo.serviceInfo.packageName, it.resolveInfo.serviceInfo.name) == expected }
+            } catch (_: Exception) {
+                false
             }
         }
 

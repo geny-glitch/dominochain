@@ -22,3 +22,4 @@ Prendre un screenshot de l'écran
 Réorg l'app
 Réorg le web
 Déverrouiller si on prend un screenshot ?
+Real time update of web interface

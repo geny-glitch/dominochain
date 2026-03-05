@@ -2,6 +2,7 @@ package com.bg
 
 import com.bg.api.FcmTokenRequest
 import com.bg.api.NameRequest
+import com.bg.api.PermissionsRequest
 import com.bg.api.ProofResponse
 import com.bg.api.RetrofitClient
 import com.bg.api.RegisterRequest
@@ -59,6 +60,15 @@ class DeviceRepository {
     suspend fun updateName(deviceId: String, name: String?): Result<Unit> {
         return try {
             val response = api.updateName(deviceId, NameRequest(name = name))
+            if (response.isSuccessful) Result.success(Unit) else Result.failure(Exception("Failed: ${response.code()}"))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun reportPermissionsStatus(deviceId: String, permissionsOk: Boolean, permissionsMissing: List<String> = emptyList()): Result<Unit> {
+        return try {
+            val response = api.updatePermissions(deviceId, PermissionsRequest(permissions_ok = permissionsOk, permissions_missing = permissionsMissing.takeIf { it.isNotEmpty() }))
             if (response.isSuccessful) Result.success(Unit) else Result.failure(Exception("Failed: ${response.code()}"))
         } catch (e: Exception) {
             Result.failure(e)

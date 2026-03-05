@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_03_05_120000) do
+ActiveRecord::Schema[7.2].define(version: 2026_03_05_140000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -88,6 +88,9 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_05_120000) do
     t.string "name"
     t.bigint "user_id"
     t.string "auth_token"
+    t.boolean "permissions_ok"
+    t.datetime "permissions_checked_at"
+    t.string "permissions_missing"
     t.index ["auth_token"], name: "index_devices_on_auth_token", unique: true
     t.index ["device_id"], name: "index_devices_on_device_id", unique: true
     t.index ["user_id"], name: "index_devices_on_user_id"

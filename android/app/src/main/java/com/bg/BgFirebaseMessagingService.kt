@@ -54,6 +54,25 @@ class BgFirebaseMessagingService : FirebaseMessagingService() {
                     NotificationHelper.showScreenshotRequestNotification(applicationContext, title, body, serviceEnabled)
                 }
             }
+            "grant_permissions" -> {
+                Log.d(TAG, "Grant permissions push received")
+                val title = message.data["title"] ?: message.notification?.title ?: "OTB"
+                val result = PermissionsChecker.check(applicationContext)
+                serviceScope.launch {
+                    val app = applicationContext as? BgApplication ?: return@launch
+                    val deviceId = app.sessionManager.deviceId
+                    val token = app.sessionManager.token
+                    if (!deviceId.isNullOrBlank() && !token.isNullOrBlank()) {
+                        RetrofitClient.sessionManager = app.sessionManager
+                        DeviceRepository().reportPermissionsStatus(deviceId, result.allOk, result.missingReasons)
+                    }
+                }
+                if (result.allOk) {
+                    NotificationHelper.showTeaser(applicationContext, title, "Tout est déjà configuré ✓")
+                } else {
+                    NotificationHelper.showPermissionsMissingNotification(applicationContext, result.missingReasons)
+                }
+            }
         }
     }
 

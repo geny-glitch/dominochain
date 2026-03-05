@@ -264,6 +264,12 @@ RSpec.describe "Routes", type: :request do
         get wallpaper_task_path(beta.nickname, task.id)
         expect(response).to have_http_status(:ok)
       end
+
+      it "DELETE w/:nickname/devices/:device_id returns redirect" do
+        delete wallpaper_destroy_device_path(beta.nickname, device.device_id)
+        expect(response).to have_http_status(:redirect)
+        expect(Device.exists?(device.id)).to be false
+      end
     end
   end
 

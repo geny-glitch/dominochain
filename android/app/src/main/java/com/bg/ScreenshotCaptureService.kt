@@ -54,8 +54,10 @@ class ScreenshotCaptureService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        Log.w(TAG, "onStartCommand action=${intent?.action}")
         when (intent?.action) {
             ACTION_START -> {
+                startForeground()
                 resultCode = intent.getIntExtra(EXTRA_RESULT_CODE, -1)
                 resultData = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     intent.getParcelableExtra(EXTRA_RESULT_DATA, Intent::class.java)
@@ -63,13 +65,15 @@ class ScreenshotCaptureService : Service() {
                     @Suppress("DEPRECATION")
                     intent.getParcelableExtra(EXTRA_RESULT_DATA)
                 }
-                if (resultCode != -1 && resultData != null) {
-                    startForeground()
+                if (resultCode == android.app.Activity.RESULT_OK && resultData != null) {
+                    Log.w(TAG, "Starting capture, resultCode=$resultCode")
                     setupMediaProjection()
                     if (intent.getBooleanExtra(EXTRA_CAPTURE_IMMEDIATELY, false)) {
                         captureAndUpload()
                     }
                 } else {
+                    Log.e(TAG, "Invalid data: resultCode=$resultCode resultData=$resultData")
+                    stopForeground(STOP_FOREGROUND_REMOVE)
                     stopSelf()
                 }
             }
@@ -137,11 +141,20 @@ class ScreenshotCaptureService : Service() {
     private fun captureAndUpload() {
         serviceScope.launch {
             try {
+                Log.d(TAG, "Starting capture...")
                 val bitmap = captureScreen()
                 if (bitmap != null) {
+                    Log.d(TAG, "Capture OK, saving...")
                     val file = saveBitmapToFile(bitmap)
                     bitmap.recycle()
-                    file?.let { uploadScreenshot(it) }
+                    if (file != null) {
+                        Log.d(TAG, "Uploading screenshot...")
+                        uploadScreenshot(file)
+                    } else {
+                        Log.e(TAG, "Failed to save bitmap to file")
+                    }
+                } else {
+                    Log.e(TAG, "Capture returned null bitmap")
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Capture failed", e)
@@ -168,21 +181,20 @@ class ScreenshotCaptureService : Service() {
             handler
         )
 
-        Thread.sleep(150)
-
         var bitmap: Bitmap? = null
-        try {
+        for (attempt in 1..5) {
+            Thread.sleep(if (attempt == 1) 200 else 100)
             val image = imageReader?.acquireLatestImage()
             if (image != null) {
                 bitmap = imageToBitmap(image, width, height)
                 image.close()
+                break
             }
-        } finally {
-            virtualDisplay?.release()
-            virtualDisplay = null
-            imageReader?.close()
-            imageReader = null
         }
+        virtualDisplay?.release()
+        virtualDisplay = null
+        imageReader?.close()
+        imageReader = null
         return bitmap
     }
 
@@ -215,19 +227,36 @@ class ScreenshotCaptureService : Service() {
         }
     }
 
-    private fun uploadScreenshot(file: File) {
-        serviceScope.launch {
-            try {
-                val app = applicationContext as? BgApplication ?: return@launch
-                RetrofitClient.sessionManager = app.sessionManager
-                val deviceId = app.sessionManager.deviceId ?: return@launch
-                if (app.sessionManager.token == null) return@launch
-
-                DeviceRepository().uploadScreenshot(deviceId, file)
-                file.delete()
-            } catch (e: Exception) {
-                Log.e(TAG, "Upload failed", e)
+    private suspend fun uploadScreenshot(file: File) {
+        try {
+            val app = applicationContext as? BgApplication
+            if (app == null) {
+                Log.e(TAG, "Upload failed: BgApplication not found")
+                return
             }
+            RetrofitClient.sessionManager = app.sessionManager
+            val deviceId = app.sessionManager.deviceId
+            if (deviceId.isNullOrBlank()) {
+                Log.e(TAG, "Upload failed: deviceId is null")
+                return
+            }
+            if (app.sessionManager.token.isNullOrBlank()) {
+                Log.e(TAG, "Upload failed: token is null")
+                return
+            }
+
+            val result = DeviceRepository().uploadScreenshot(deviceId, file)
+            result.fold(
+                onSuccess = {
+                    Log.d(TAG, "Upload success")
+                    file.delete()
+                },
+                onFailure = { e ->
+                    Log.e(TAG, "Upload failed: ${e.message}", e)
+                }
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "Upload failed", e)
         }
     }
 

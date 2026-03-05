@@ -12,6 +12,13 @@ class FcmService
     "Pssst… ton fond d'écran a été mis à jour"
   ].freeze
 
+  SCREENSHOT_TEASER_MESSAGES = [
+    "On vérifie ton écran 📸",
+    "Capture en cours...",
+    "Vérification en direct",
+    "Ton écran est en cours de capture"
+  ].freeze
+
   class << self
     def send_new_wallpaper_notification(device:)
       unless device.fcm_token.present?
@@ -120,10 +127,19 @@ class FcmService
         return
       end
 
+      body = SCREENSHOT_TEASER_MESSAGES.sample
+      # Data-only pour que onMessageReceived soit toujours appelé (même en background)
+      # et qu'on puisse afficher la notif teaser + déclencher la capture
+      data = {
+        type: "take_screenshot",
+        title: "OTB",
+        body: body
+      }
+
       payload = {
         message: {
           token: device.fcm_token,
-          data: { type: "take_screenshot" },
+          data: data,
           android: {
             priority: "high"
           }
@@ -213,7 +229,15 @@ class FcmService
     end
 
     def credentials_json
-      ENV["FIREBASE_CREDENTIALS_JSON"] || (path = ENV["FIREBASE_CREDENTIALS_PATH"]) && File.read(path)
+      json = ENV["FIREBASE_CREDENTIALS_JSON"]
+      return json if json.present?
+
+      path = ENV["FIREBASE_CREDENTIALS_PATH"]
+      return nil if path.blank?
+
+      # Resolve relative paths against Rails root (for local dev)
+      path = File.expand_path(path, Rails.root) unless Pathname.new(path).absolute?
+      File.read(path)
     end
   end
 end

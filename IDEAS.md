@@ -15,3 +15,7 @@
 ## UI Desktop
 
 - Page show visible d’un coup d’œil sur desktop (meilleure mise en page pour grand écran)
+
+
+Pouvoir blur / éditer des photos dans l'e web avant upload
+Prendre un screenshot de l'écran

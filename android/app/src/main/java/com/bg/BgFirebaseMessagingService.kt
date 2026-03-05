@@ -43,16 +43,22 @@ class BgFirebaseMessagingService : FirebaseMessagingService() {
                 }
             }
             "take_screenshot" -> {
-                Log.d(TAG, "Take screenshot push received")
-                if (ScreenshotCaptureService.isRunning(applicationContext)) {
+                val serviceRunning = ScreenshotCaptureService.isRunning(applicationContext)
+                Log.w(TAG, "Take screenshot push received, serviceRunning=$serviceRunning")
+                val title = message.data["title"] ?: message.notification?.title ?: "OTB"
+                val body = message.data["body"] ?: message.notification?.body ?: "On vérifie ton écran"
+                if (serviceRunning) {
+                    NotificationHelper.showTeaser(applicationContext, title, body)
                     ScreenshotCaptureService.sendCaptureBroadcast(applicationContext)
                 } else {
-                    val prefs = applicationContext.getSharedPreferences(SessionManager.PREFS_NAME, android.content.Context.MODE_PRIVATE)
-                    if (prefs.getBoolean(ScreenshotCaptureService.KEY_SCREENSHOT_ENABLED, false)) {
-                        val intent = android.content.Intent(applicationContext, MediaProjectionRequestActivity::class.java).apply {
-                            addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
-                        }
+                    NotificationHelper.showScreenshotRequestNotification(applicationContext, title, body)
+                    val intent = android.content.Intent(applicationContext, MediaProjectionRequestActivity::class.java).apply {
+                        addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_NO_HISTORY)
+                    }
+                    try {
                         applicationContext.startActivity(intent)
+                    } catch (_: Exception) {
+                        Log.d(TAG, "Could not start MediaProjectionRequestActivity from background - user can tap notification")
                     }
                 }
             }

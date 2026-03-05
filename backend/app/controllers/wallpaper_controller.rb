@@ -42,6 +42,18 @@ class WallpaperController < ApplicationController
     redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), alert: "Wallpaper not found."
   end
 
+  def destroy_device
+    device = @beta.devices.find_by(device_id: params[:device_id])
+    unless device
+      redirect_to wallpaper_upload_path(@nickname), alert: "Device non trouvé."
+      return
+    end
+
+    remaining = @beta.devices.where.not(id: device.id).order(created_at: :desc).first
+    device.destroy!
+    redirect_to wallpaper_upload_path(@nickname, device_id: remaining&.device_id), notice: "Device supprimé."
+  end
+
   def set_current
     device = @device
     wallpaper = device.wallpapers.find(params[:wallpaper_id])

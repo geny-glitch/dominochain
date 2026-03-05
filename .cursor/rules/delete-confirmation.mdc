@@ -1,0 +1,33 @@
+---
+description: Toujours demander confirmation sur les boutons de suppression
+globs: backend/app/views/**/*.erb
+alwaysApply: false
+---
+
+# Confirmation sur les suppressions
+
+Toujours ajouter une confirmation utilisateur avant toute action destructive (suppression, libération, etc.).
+
+## button_to avec method: :delete
+
+```erb
+<%= button_to "Supprimer", path, method: :delete, form: { data: { turbo_confirm: "Message de confirmation clair." } }, class: "..." %>
+```
+
+## link_to avec turbo_method: :delete
+
+```erb
+<%= link_to "Supprimer", path, data: { turbo_method: :delete, turbo_confirm: "Message de confirmation clair." }, class: "..." %>
+```
+
+## f.submit pour actions destructives
+
+```erb
+<%= f.submit "Refuser", data: { turbo_confirm: "Refuser cette preuve ?" }, class: "..." %>
+```
+
+## Règles
+
+- Message explicite : décrire ce qui sera supprimé ou l’effet de l’action
+- Ne pas oublier `turbo_confirm` sur les formulaires générés par `button_to`
+- Exceptions : déconnexion (logout) peut rester sans confirmation

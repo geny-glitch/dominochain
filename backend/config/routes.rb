@@ -67,6 +67,7 @@ Rails.application.routes.draw do
   post "w/:nickname", to: "wallpaper#upload", as: :wallpaper_upload_submit
   post "w/:nickname/wallpapers/:wallpaper_id/set_current", to: "wallpaper#set_current", as: :wallpaper_set_current
   delete "w/:nickname/wallpapers/:wallpaper_id", to: "wallpaper#destroy", as: :wallpaper_destroy
+  delete "w/:nickname/applications/:id", to: "wallpaper#destroy_application", as: :wallpaper_destroy_application
   delete "w/:nickname/devices/:device_id", to: "wallpaper#destroy_device", as: :wallpaper_destroy_device
 
   # Tasks

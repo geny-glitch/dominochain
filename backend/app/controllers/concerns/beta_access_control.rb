@@ -29,17 +29,9 @@ module BetaAccessControl
     end
 
     @devices = @beta.devices
-    @device_id = params[:device_id]
-    @device = if @device_id.present?
-                @devices.find_by(device_id: @device_id)
-              else
-                @devices.order(created_at: :desc).first
-              end
-    @device_id = @device&.device_id if @device && @device_id.blank?
-
-    if @devices.many? && @device.nil?
-      return redirect_to wallpaper_upload_path(@nickname), alert: "Sélectionnez un device."
-    end
+    # Un beta n'a qu'un device actif à la fois : on utilise toujours le dernier enregistré
+    @device = @devices.order(created_at: :desc).first
+    @device_id = @device&.device_id
     if @device.nil?
       # Boss/Admin a le contrôle mais le beta n'a pas de device : éviter la boucle avec control_accept_from_link
       redirect_target = current_user.admin? ? admin_path : dashboard_path

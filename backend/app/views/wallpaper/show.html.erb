@@ -20,36 +20,9 @@
       <p class="ds-subtitle">Own their backgrounds</p>
     </header>
 
-    <% if @devices&.many? %>
-      <div class="ds-device-picker">
-        <span class="ds-form-label">Device :</span>
-        <% @devices.each do |d| %>
-          <%= link_to d.display_name, wallpaper_upload_path(@nickname, device_id: d.device_id), class: "ds-btn ds-btn--sm #{@device_id == d.device_id ? 'ds-btn--primary' : 'ds-btn--ghost'}" %>
-        <% end %>
-      </div>
-    <% end %>
-
     <% if @device %>
-      <div class="ds-device-info">
-        <span class="ds-device-name"><%= @device.display_name %></span>
-        <% if @device.name.present? %>
-          <span class="ds-sep">·</span>
-          <span class="ds-device-id"><%= @device_id %></span>
-        <% end %>
-        <% if @device.screen_width.present? && @device.screen_height.present? %>
-          <span class="ds-sep">·</span>
-          <span><%= @device.screen_width %>×<%= @device.screen_height %></span>
-        <% end %>
-        <% if @device.fcm_token.present? %>
-          <span class="ds-sep">·</span>
-          <span class="ds-status ds-status--on">Push</span>
-        <% else %>
-          <span class="ds-sep">·</span>
-          <span class="ds-status ds-status--off">Push off</span>
-        <% end %>
-        <span class="ds-sep">·</span>
+      <div class="ds-top-actions">
         <%= button_to "Prendre un screenshot", wallpaper_screenshot_request_path(@nickname, device_id: @device_id), method: :post, class: "ds-btn ds-btn--secondary ds-btn--sm" %>
-        <%= button_to "Supprimer", wallpaper_destroy_device_path(@nickname, @device_id), method: :delete, form: { data: { turbo_confirm: "Supprimer ce device ? Tous les wallpapers associés seront perdus." }, onsubmit: "return confirm('Supprimer ce device ? Tous les wallpapers associés seront perdus.');" }, class: "ds-btn ds-btn--ghost ds-btn--sm ds-delete-btn" %>
       </div>
 
       <%= form_with url: wallpaper_upload_submit_path(@nickname, device_id: @device_id), method: :post, local: true, multipart: true, id: "upload-form", class: "ds-form" do |f| %>
@@ -167,13 +140,49 @@
                   <% unless is_current %>
                     <%= button_to "Définir comme actuel", wallpaper_set_current_path(@nickname, wallpaper.id, device_id: @device_id), method: :post, class: "ds-btn ds-btn--secondary ds-btn--sm" %>
                   <% end %>
-                  <%= button_to "Supprimer", wallpaper_destroy_path(@nickname, wallpaper.id, device_id: @device_id), method: :delete, form: { data: { turbo_confirm: "Supprimer ce wallpaper ?" } }, class: "ds-delete-btn" %>
+                  <%= button_to "Supprimer", wallpaper_destroy_application_path(@nickname, application.id, device_id: @device_id), method: :delete, form: { data: { turbo_confirm: "Retirer cette entrée de l'historique ?" } }, class: "ds-delete-btn" %>
                 </div>
               </div>
             <% end %>
           </div>
         </section>
       <% end %>
+
+      <details class="ds-debug-section">
+        <summary class="ds-debug-summary">Device (debug)</summary>
+        <div class="ds-debug-content">
+          <ul class="ds-debug-device-list">
+            <% @devices.order(created_at: :desc).each do |d| %>
+              <li class="ds-debug-device-item <%= 'ds-debug-device-item--current' if d.id == @device.id %>">
+                <span class="ds-debug-device-info">
+                  <span class="ds-device-name"><%= d.display_name %></span>
+                  <% if d.name.present? %>
+                    <span class="ds-sep">·</span>
+                    <span class="ds-device-id"><%= d.device_id %></span>
+                  <% end %>
+                  <% if d.screen_width.present? && d.screen_height.present? %>
+                    <span class="ds-sep">·</span>
+                    <span><%= d.screen_width %>×<%= d.screen_height %></span>
+                  <% end %>
+                  <% if d.fcm_token.present? %>
+                    <span class="ds-sep">·</span>
+                    <span class="ds-status ds-status--on">Push</span>
+                  <% else %>
+                    <span class="ds-sep">·</span>
+                    <span class="ds-status ds-status--off">Push off</span>
+                  <% end %>
+                  <% if d.id == @device.id %>
+                    <span class="ds-debug-badge">actif</span>
+                  <% end %>
+                </span>
+                <%= button_to wallpaper_destroy_device_path(@nickname, d.device_id), method: :delete, form: { data: { turbo_confirm: "Supprimer ce device ? Tous les wallpapers associés seront perdus." }, class: "ds-btn-icon-form" }, class: "ds-btn-icon ds-btn-icon--delete", title: "Supprimer" do %>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                <% end %>
+              </li>
+            <% end %>
+          </ul>
+        </div>
+      </details>
     <% else %>
       <p class="ds-error">Device not found. Ouvre l'app pour t'enregistrer.</p>
     <% end %>

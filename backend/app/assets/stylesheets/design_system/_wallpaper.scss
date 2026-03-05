@@ -43,6 +43,156 @@
   margin-bottom: $ds-space-xl;
 }
 
+// Boss page: 3 CTA cards
+.ds-boss-cta-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: $ds-space-md;
+  margin-bottom: $ds-space-xl;
+}
+
+.ds-boss-cta-card,
+.ds-boss-cta-form {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $ds-space-sm;
+  padding: $ds-space-md;
+  background: $ds-surface;
+  border: 1px solid $ds-border;
+  border-radius: $ds-radius-md;
+  cursor: pointer;
+  text-decoration: none;
+  color: $ds-text;
+  transition: border-color $ds-transition, background $ds-transition;
+  margin: 0;
+
+  &:hover {
+    border-color: $ds-teal;
+    background: $ds-surface-elevated;
+    color: $ds-text;
+  }
+}
+
+.ds-boss-cta-form {
+  button {
+    width: 100%;
+    height: 100%;
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: $ds-space-sm;
+    padding: 0;
+    font: inherit;
+    color: inherit;
+  }
+}
+
+.ds-boss-cta-icon {
+  width: 28px;
+  height: 28px;
+  color: $ds-teal;
+  flex-shrink: 0;
+}
+
+.ds-boss-cta-label {
+  font-size: $ds-small-size;
+  font-weight: 500;
+  text-align: center;
+  line-height: 1.2;
+}
+
+// Boss page: preview cards (fond d'écran | dernière capture)
+.ds-boss-preview-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $ds-space-md;
+  margin-bottom: $ds-space-2xl;
+}
+
+.ds-boss-preview-card {
+  background: $ds-surface;
+  border: 1px solid $ds-border;
+  border-radius: $ds-radius-md;
+  overflow: hidden;
+  min-height: 140px;
+
+  &--empty {
+    border-style: dashed;
+    border-color: $ds-border;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: $ds-space-lg;
+    text-align: center;
+  }
+}
+
+.ds-boss-preview-thumb {
+  aspect-ratio: var(--device-ratio, 9/16);
+  position: relative;
+  overflow: hidden;
+}
+
+.ds-boss-preview-placeholder {
+  font-size: $ds-small-size;
+  color: $ds-text-muted;
+  margin-bottom: $ds-space-sm;
+}
+
+.ds-boss-preview-cta {
+  font-size: $ds-small-size;
+  color: $ds-teal;
+  text-decoration: none;
+
+  &:hover {
+    color: $ds-teal-dim;
+    text-decoration: underline;
+  }
+}
+
+.ds-boss-preview-card--empty .ds-btn {
+  margin-top: 0;
+}
+
+.ds-task-form-details {
+  margin-top: $ds-space-md;
+  margin-bottom: $ds-space-lg;
+  min-width: 0;
+
+  &[open] {
+    overflow: visible;
+  }
+}
+
+.ds-task-form-summary {
+  cursor: pointer;
+  font-size: $ds-body-size;
+  color: $ds-teal;
+  list-style: none;
+
+  &::-webkit-details-marker {
+    display: none;
+  }
+
+  &::before {
+    content: "▸ ";
+    display: inline-block;
+    transition: transform 0.2s;
+  }
+}
+
+.ds-task-form-details[open] .ds-task-form-summary::before {
+  transform: rotate(90deg);
+}
+
 .ds-device-info {
   font-size: $ds-small-size;
   color: $ds-text-muted;
@@ -401,11 +551,16 @@
 
 // Task form
 .ds-task-form {
-  margin-top: $ds-space-xl;
+  margin-top: $ds-space-md;
   padding: $ds-space-lg;
   background: $ds-surface;
   border: 1px solid $ds-border;
   border-radius: $ds-radius-md;
+  min-width: 0;
+
+  .ds-form-group {
+    min-width: 0;
+  }
 }
 
 .ds-form-label {
@@ -417,6 +572,7 @@
 
 .ds-input {
   width: 100%;
+  max-width: 100%;
   padding: $ds-space-sm $ds-space-md;
   background: $ds-bg;
   border: 1px solid $ds-border;
@@ -424,6 +580,7 @@
   color: $ds-text;
   font-family: inherit;
   font-size: $ds-body-size;
+  box-sizing: border-box;
 
   &:focus {
     outline: none;
@@ -433,7 +590,9 @@
 
 .ds-textarea {
   resize: vertical;
-  min-height: 60px;
+  min-height: 64px;
+  overflow-y: auto;
+  box-sizing: border-box;
 }
 
 .ds-select {

@@ -33,4 +33,5 @@ Toujours utiliser les classes du design system pour les pages web. Ne pas écrir
 
 ## Référence
 
-Voir `backend/app/assets/stylesheets/design_system/` pour les styles disponibles.
+- Spec unifiée : `docs/DESIGN_SYSTEM.md`
+- Styles : `backend/app/assets/stylesheets/design_system/`

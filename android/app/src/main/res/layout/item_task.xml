@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/ds_card_background"
+    android:padding="@dimen/ds_space_lg"
+    android:layout_marginBottom="@dimen/ds_space_sm">
+
+    <TextView
+        android:id="@android:id/text1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        style="@style/DsBody"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@android:id/text2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        style="@style/DsSmall"
+        android:layout_marginTop="@dimen/ds_space_xs" />
+
+</LinearLayout>

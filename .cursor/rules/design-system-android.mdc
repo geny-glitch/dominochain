@@ -1,0 +1,50 @@
+---
+description: Respecter le design system OTB pour l'app Android
+globs: android/**/*.{xml,kt}
+alwaysApply: false
+---
+
+# Design System OTB — Android
+
+Toujours utiliser les ressources du design system pour les layouts et vues Android. Ne pas écrire de couleurs, dimensions ou styles en dur.
+
+## Référence
+
+Voir `docs/DESIGN_SYSTEM.md` pour la spec complète.
+
+## Couleurs
+
+Utiliser les couleurs nommées : `@color/ds_bg`, `@color/ds_text`, `@color/ds_text_muted`, `@color/ds_amber`, `@color/ds_teal`, etc. Jamais de hex en dur dans les layouts.
+
+## Espacement
+
+Utiliser `@dimen/ds_space_xs` à `@dimen/ds_space_3xl`, `@dimen/ds_page_padding`. Jamais de valeurs en dp en dur.
+
+## Styles
+
+- **Titre** : `@style/DsTitle` ou `DsTitleSmall`
+- **Sous-titre / labels** : `@style/DsSmall` ou `DsSectionTitle`
+- **Corps** : `@style/DsBody`
+- **Bouton principal** : `@style/DsButton`
+- **Bouton secondaire** : `@style/DsButtonSecondary`
+- **Input** : `@style/DsEditText`
+- **Carte** : `@drawable/ds_card_background`
+
+## Structure de layout
+
+```xml
+<!-- Page avec padding -->
+android:padding="@dimen/ds_page_padding"
+android:background="@color/ds_bg"
+
+<!-- Carte / bloc -->
+android:background="@drawable/ds_card_background"
+android:padding="@dimen/ds_space_lg"
+```
+
+## Fichiers de référence
+
+- `android/app/src/main/res/values/colors.xml`
+- `android/app/src/main/res/values/dimens.xml`
+- `android/app/src/main/res/values/styles.xml`
+- `android/app/src/main/res/values/themes.xml`

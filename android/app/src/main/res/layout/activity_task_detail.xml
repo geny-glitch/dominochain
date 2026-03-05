@@ -2,82 +2,81 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true">
+    android:fillViewport="true"
+    android:background="@color/ds_bg">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="24dp">
+        android:padding="@dimen/ds_page_padding">
 
         <TextView
             android:id="@+id/task_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="8dp" />
+            style="@style/DsTitleSmall"
+            android:layout_marginBottom="@dimen/ds_space_sm" />
 
         <TextView
             android:id="@+id/task_deadline"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="12sp"
-            android:textColor="#666666"
-            android:layout_marginBottom="16dp" />
+            style="@style/DsSmall"
+            android:layout_marginBottom="@dimen/ds_space_lg" />
 
         <TextView
             android:id="@+id/task_status"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="12sp"
-            android:padding="4dp"
-            android:layout_marginBottom="16dp" />
+            style="@style/DsSmall"
+            android:padding="@dimen/ds_space_xs"
+            android:layout_marginBottom="@dimen/ds_space_lg" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Description"
-            android:textSize="12sp"
-            android:textColor="#666666"
-            android:layout_marginBottom="4dp" />
+            style="@style/DsSectionTitle"
+            android:layout_marginBottom="@dimen/ds_space_xs" />
 
         <TextView
             android:id="@+id/task_description"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="14sp"
-            android:layout_marginBottom="16dp" />
+            style="@style/DsBody"
+            android:layout_marginBottom="@dimen/ds_space_lg" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Preuve attendue"
-            android:textSize="12sp"
-            android:textColor="#666666"
-            android:layout_marginBottom="4dp" />
+            style="@style/DsSectionTitle"
+            android:layout_marginBottom="@dimen/ds_space_xs" />
 
         <TextView
             android:id="@+id/task_expected_proof"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="14sp"
-            android:layout_marginBottom="24dp" />
+            style="@style/DsBody"
+            android:layout_marginBottom="@dimen/ds_space_xl" />
 
         <LinearLayout
             android:id="@+id/proof_form_section"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:visibility="gone">
+            android:visibility="gone"
+            android:background="@drawable/ds_card_background"
+            android:padding="@dimen/ds_space_lg"
+            android:layout_marginBottom="@dimen/ds_space_lg">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Soumettre une preuve"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:layout_marginBottom="8dp" />
+                style="@style/DsTitleSmall"
+                android:layout_marginBottom="@dimen/ds_space_sm" />
 
             <EditText
                 android:id="@+id/proof_text_input"
@@ -86,30 +85,31 @@
                 android:minLines="3"
                 android:hint="Texte de la preuve..."
                 android:inputType="textMultiLine"
-                android:padding="12dp"
-                android:layout_marginBottom="8dp" />
+                style="@style/DsEditText"
+                android:layout_marginBottom="@dimen/ds_space_sm" />
 
             <Button
                 android:id="@+id/proof_media_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Ajouter image/vidéo"
-                android:layout_marginBottom="8dp" />
+                style="@style/DsButtonSecondary"
+                android:layout_marginBottom="@dimen/ds_space_sm" />
 
             <TextView
                 android:id="@+id/proof_media_name"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="12sp"
-                android:textColor="#666666"
+                style="@style/DsSmall"
                 android:visibility="gone"
-                android:layout_marginBottom="8dp" />
+                android:layout_marginBottom="@dimen/ds_space_sm" />
 
             <Button
                 android:id="@+id/proof_submit_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Envoyer la preuve" />
+                android:text="Envoyer la preuve"
+                style="@style/DsButton" />
 
         </LinearLayout>
 
@@ -118,38 +118,39 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:visibility="gone">
+            android:visibility="gone"
+            android:background="@drawable/ds_card_background"
+            android:padding="@dimen/ds_space_lg">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Preuve soumise"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:layout_marginBottom="8dp" />
+                style="@style/DsTitleSmall"
+                android:layout_marginBottom="@dimen/ds_space_sm" />
 
             <TextView
                 android:id="@+id/proof_submitted_text"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textSize="14sp"
-                android:layout_marginBottom="8dp" />
+                style="@style/DsBody"
+                android:layout_marginBottom="@dimen/ds_space_sm" />
 
             <TextView
                 android:id="@+id/proof_submitted_status"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="12sp"
-                android:layout_marginBottom="8dp" />
+                style="@style/DsSmall"
+                android:layout_marginBottom="@dimen/ds_space_sm" />
 
             <TextView
                 android:id="@+id/proof_submitted_comment"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textSize="14sp"
-                android:textColor="#666666"
+                style="@style/DsBody"
+                android:textColor="@color/ds_text_muted"
                 android:visibility="gone"
-                android:layout_marginBottom="8dp" />
+                android:layout_marginBottom="@dimen/ds_space_sm" />
 
         </LinearLayout>
 

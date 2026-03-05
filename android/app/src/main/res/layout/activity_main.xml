@@ -2,30 +2,29 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true">
+    android:fillViewport="true"
+    android:background="@color/ds_bg">
 
 <LinearLayout
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="24dp"
+    android:padding="@dimen/ds_page_padding"
     android:gravity="center">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Upload Wallpaper"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="16dp" />
+        style="@style/DsTitle"
+        android:layout_marginBottom="@dimen/ds_space_lg" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Nom du device"
-        android:textSize="12sp"
-        android:textColor="#666666"
-        android:layout_marginBottom="4dp" />
+        style="@style/DsSmall"
+        android:layout_marginBottom="@dimen/ds_space_xs" />
 
     <EditText
         android:id="@+id/device_name_input"
@@ -35,69 +34,73 @@
         android:inputType="text"
         android:maxLines="1"
         android:imeOptions="actionDone"
-        android:padding="12dp"
-        android:layout_marginBottom="16dp" />
+        style="@style/DsEditText"
+        android:layout_marginBottom="@dimen/ds_space_lg" />
 
     <Button
         android:id="@+id/save_name_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Enregistrer le nom"
-        android:layout_marginBottom="24dp" />
+        style="@style/DsButton"
+        android:layout_marginBottom="@dimen/ds_space_xl" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Open this link to upload an image:"
-        android:textSize="14sp"
-        android:layout_marginBottom="8dp" />
+        style="@style/DsBody"
+        android:layout_marginBottom="@dimen/ds_space_sm" />
 
     <TextView
         android:id="@+id/web_url_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Loading..."
-        android:textSize="14sp"
-        android:textColor="#0000FF"
-        android:padding="12dp"
+        style="@style/DsBody"
+        android:textColor="@color/ds_teal"
+        android:padding="@dimen/ds_space_md"
         android:background="?attr/selectableItemBackground"
         android:clickable="true"
         android:focusable="true"
-        android:layout_marginBottom="16dp" />
+        android:layout_marginBottom="@dimen/ds_space_lg" />
 
     <Button
         android:id="@+id/copy_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Copy Link"
-        android:layout_marginBottom="8dp" />
+        style="@style/DsButton"
+        android:layout_marginBottom="@dimen/ds_space_sm" />
 
     <Button
         android:id="@+id/refresh_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Refresh Wallpaper"
-        android:layout_marginBottom="8dp" />
+        style="@style/DsButton"
+        android:layout_marginBottom="@dimen/ds_space_sm" />
 
     <Button
         android:id="@+id/tasks_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Tâches"
-        android:layout_marginBottom="16dp" />
+        style="@style/DsButtonSecondary"
+        android:layout_marginBottom="@dimen/ds_space_lg" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:layout_marginBottom="8dp">
+        android:layout_marginBottom="@dimen/ds_space_sm">
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Activer les captures d'écran (le boss peut prendre un screenshot à tout moment)"
-            android:textSize="14sp" />
+            style="@style/DsBody" />
         <androidx.appcompat.widget.SwitchCompat
             android:id="@+id/screenshot_switch"
             android:layout_width="wrap_content"
@@ -109,21 +112,20 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/battery_optimization_link"
-        android:textSize="12sp"
-        android:textColor="#0000FF"
-        android:padding="4dp"
+        style="@style/DsSmall"
+        android:textColor="@color/ds_teal"
+        android:padding="@dimen/ds_space_xs"
         android:background="?attr/selectableItemBackground"
         android:clickable="true"
         android:focusable="true"
-        android:layout_marginBottom="16dp" />
+        android:layout_marginBottom="@dimen/ds_space_lg" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Demander à être contrôlé par un boss"
-        android:textSize="12sp"
-        android:textColor="#666666"
-        android:layout_marginBottom="4dp" />
+        style="@style/DsSmall"
+        android:layout_marginBottom="@dimen/ds_space_xs" />
 
     <EditText
         android:id="@+id/boss_nickname_input"
@@ -132,29 +134,29 @@
         android:hint="Pseudo du boss"
         android:inputType="text"
         android:maxLines="1"
-        android:padding="12dp"
-        android:layout_marginBottom="8dp" />
+        style="@style/DsEditText"
+        android:layout_marginBottom="@dimen/ds_space_sm" />
 
     <Button
         android:id="@+id/send_control_request_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Envoyer la demande"
-        android:layout_marginBottom="24dp" />
+        style="@style/DsButton"
+        android:layout_marginBottom="@dimen/ds_space_xl" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Device ID"
-        android:textSize="12sp"
-        android:textColor="#666666"
-        android:layout_marginBottom="4dp" />
+        style="@style/DsSmall"
+        android:layout_marginBottom="@dimen/ds_space_xs" />
 
     <TextView
         android:id="@+id/device_id_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textSize="12sp"
+        style="@style/DsSmall"
         android:fontFamily="monospace" />
 
 </LinearLayout>

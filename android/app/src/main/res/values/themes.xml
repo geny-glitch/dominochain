@@ -1,9 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- OTB Design System — dark theme -->
 <resources>
     <style name="Theme.Bg" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
-        <item name="colorPrimary">@color/primary</item>
-        <item name="colorPrimaryVariant">@color/primary_dark</item>
-        <item name="colorOnPrimary">@color/white</item>
+        <item name="android:statusBarColor">@color/ds_bg</item>
+        <item name="android:navigationBarColor">@color/ds_bg</item>
+        <item name="android:windowBackground">@color/ds_bg</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="colorPrimary">@color/ds_amber</item>
+        <item name="colorPrimaryVariant">@color/ds_amber_dim</item>
+        <item name="colorOnPrimary">@color/ds_bg</item>
+        <item name="colorSurface">@color/ds_surface</item>
+        <item name="colorOnSurface">@color/ds_text</item>
+        <item name="colorError">@color/ds_error</item>
+        <item name="colorOnError">@color/ds_bg</item>
     </style>
     <style name="Theme.Bg.Transparent" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="android:windowIsTranslucent">true</item>

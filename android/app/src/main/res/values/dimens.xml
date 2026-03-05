@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- OTB Design System — spacing tokens -->
+<resources>
+    <dimen name="ds_space_xs">4dp</dimen>
+    <dimen name="ds_space_sm">8dp</dimen>
+    <dimen name="ds_space_md">12dp</dimen>
+    <dimen name="ds_space_lg">16dp</dimen>
+    <dimen name="ds_space_xl">24dp</dimen>
+    <dimen name="ds_space_2xl">32dp</dimen>
+    <dimen name="ds_space_3xl">40dp</dimen>
+
+    <dimen name="ds_radius_sm">4dp</dimen>
+    <dimen name="ds_radius_md">6dp</dimen>
+    <dimen name="ds_radius_lg">8dp</dimen>
+
+    <dimen name="ds_page_padding">24dp</dimen>
+</resources>

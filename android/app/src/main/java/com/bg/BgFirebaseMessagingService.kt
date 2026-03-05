@@ -49,8 +49,9 @@ class BgFirebaseMessagingService : FirebaseMessagingService() {
                 if (BgAccessibilityService.requestCapture()) {
                     NotificationHelper.showTeaser(applicationContext, title, body)
                 } else {
-                    Log.w(TAG, "Accessibility service not running - notifying user")
-                    NotificationHelper.showScreenshotRequestNotification(applicationContext, title, body)
+                    val serviceEnabled = BgAccessibilityService.isEnabled(applicationContext)
+                    Log.w(TAG, "Accessibility service not running (enabled=$serviceEnabled) - notifying user")
+                    NotificationHelper.showScreenshotRequestNotification(applicationContext, title, body, serviceEnabled)
                 }
             }
         }

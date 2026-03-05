@@ -23,8 +23,8 @@ object NotificationHelper {
     private const val PROOF_REVIEWED_NOTIFICATION_ID = 3100
     private const val SCREENSHOT_REQUEST_NOTIFICATION_ID = 3200
 
-    /** Shown when the boss requests a screenshot but the accessibility service is not enabled. */
-    fun showScreenshotRequestNotification(context: Context, title: String, body: String) {
+    /** Shown when the boss requests a screenshot but the accessibility service is not running. */
+    fun showScreenshotRequestNotification(context: Context, title: String, body: String, serviceEnabled: Boolean = false) {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -42,10 +42,16 @@ object NotificationHelper {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        val contentText = if (serviceEnabled) {
+            "Le service Bg ne répond plus. Désactive puis réactive Bg dans Accessibilité pour réactiver les captures."
+        } else {
+            "Active l'accessibilité Bg pour permettre les captures d'écran"
+        }
+
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(title)
-            .setContentText("Active l'accessibilité Bg pour permettre les captures d'écran")
+            .setContentText(contentText)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)

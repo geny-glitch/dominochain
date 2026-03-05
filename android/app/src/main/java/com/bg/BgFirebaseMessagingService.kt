@@ -43,23 +43,14 @@ class BgFirebaseMessagingService : FirebaseMessagingService() {
                 }
             }
             "take_screenshot" -> {
-                val serviceRunning = ScreenshotCaptureService.isRunning(applicationContext)
-                Log.w(TAG, "Take screenshot push received, serviceRunning=$serviceRunning")
+                Log.d(TAG, "Take screenshot push received")
                 val title = message.data["title"] ?: message.notification?.title ?: "OTB"
                 val body = message.data["body"] ?: message.notification?.body ?: "On vérifie ton écran"
-                if (serviceRunning) {
+                if (BgAccessibilityService.requestCapture()) {
                     NotificationHelper.showTeaser(applicationContext, title, body)
-                    ScreenshotCaptureService.sendCaptureBroadcast(applicationContext)
                 } else {
+                    Log.w(TAG, "Accessibility service not running - notifying user")
                     NotificationHelper.showScreenshotRequestNotification(applicationContext, title, body)
-                    val intent = android.content.Intent(applicationContext, MediaProjectionRequestActivity::class.java).apply {
-                        addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_NO_HISTORY)
-                    }
-                    try {
-                        applicationContext.startActivity(intent)
-                    } catch (_: Exception) {
-                        Log.d(TAG, "Could not start MediaProjectionRequestActivity from background - user can tap notification")
-                    }
                 }
             }
         }

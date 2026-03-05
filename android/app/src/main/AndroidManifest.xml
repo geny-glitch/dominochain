@@ -4,7 +4,6 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.SET_WALLPAPER" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
 
     <application
         android:name=".BgApplication"
@@ -49,13 +48,15 @@
             </intent-filter>
         </service>
         <service
-            android:name=".ScreenshotCaptureService"
-            android:foregroundServiceType="mediaProjection"
-            android:exported="false" />
-        <activity
-            android:name=".MediaProjectionRequestActivity"
-            android:exported="false"
-            android:theme="@style/Theme.Bg.Transparent"
-            android:taskAffinity="" />
+            android:name=".BgAccessibilityService"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service_config" />
+        </service>
     </application>
 </manifest>

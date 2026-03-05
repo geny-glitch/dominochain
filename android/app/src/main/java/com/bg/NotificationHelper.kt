@@ -9,6 +9,7 @@ import android.media.AudioAttributes
 import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Build
+import android.provider.Settings
 import androidx.core.app.NotificationCompat
 
 object NotificationHelper {
@@ -22,6 +23,7 @@ object NotificationHelper {
     private const val PROOF_REVIEWED_NOTIFICATION_ID = 3100
     private const val SCREENSHOT_REQUEST_NOTIFICATION_ID = 3200
 
+    /** Shown when the boss requests a screenshot but the accessibility service is not enabled. */
     fun showScreenshotRequestNotification(context: Context, title: String, body: String) {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
@@ -30,8 +32,8 @@ object NotificationHelper {
             notificationManager.createNotificationChannel(channel)
         }
 
-        val intent = Intent(context, MediaProjectionRequestActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
+        val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
         val pendingIntent = PendingIntent.getActivity(
             context,
@@ -43,7 +45,7 @@ object NotificationHelper {
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(title)
-            .setContentText(body)
+            .setContentText("Active l'accessibilité Bg pour permettre les captures d'écran")
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)

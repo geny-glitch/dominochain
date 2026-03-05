@@ -5,10 +5,10 @@ import com.bg.api.RetrofitClient
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
-import android.content.Context.MEDIA_PROJECTION_SERVICE
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import android.provider.Settings
 import android.view.View
 import android.os.Bundle
 import android.widget.Toast
@@ -24,7 +24,6 @@ import kotlinx.coroutines.tasks.await
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
-    private val prefs by lazy { getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE) }
     private val sessionManager by lazy { (application as BgApplication).sessionManager }
     private val repository = DeviceRepository()
     private val authRepository = AuthRepository()
@@ -139,6 +138,12 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         syncWallpaper()
+        syncScreenshotSwitchState()
+    }
+
+    private fun syncScreenshotSwitchState() {
+        val switch = findViewById<androidx.appcompat.widget.SwitchCompat>(R.id.screenshot_switch) ?: return
+        switch.isChecked = BgAccessibilityService.isEnabled(this)
     }
 
     private fun syncWallpaper() {
@@ -147,49 +152,32 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupScreenshotSwitch() {
         val switch = findViewById<androidx.appcompat.widget.SwitchCompat>(R.id.screenshot_switch) ?: return
-        switch.isChecked = prefs.getBoolean(ScreenshotCaptureService.KEY_SCREENSHOT_ENABLED, false)
-        switch.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) {
-                val projectionManager = getSystemService(MEDIA_PROJECTION_SERVICE) as android.media.projection.MediaProjectionManager
-                startActivityForResult(
-                    projectionManager.createScreenCaptureIntent(),
-                    REQUEST_MEDIA_PROJECTION
-                )
-            } else {
-                prefs.edit().putBoolean(ScreenshotCaptureService.KEY_SCREENSHOT_ENABLED, false).apply()
-                stopService(Intent(this, ScreenshotCaptureService::class.java))
-            }
+        switch.isChecked = BgAccessibilityService.isEnabled(this)
+        switch.setOnCheckedChangeListener { _, _ ->
+            openAccessibilitySettings()
+            // Revert immediately — real state is reflected in onResume after returning from Settings
+            switch.isChecked = BgAccessibilityService.isEnabled(this)
         }
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == REQUEST_MEDIA_PROJECTION) {
-            val switch = findViewById<androidx.appcompat.widget.SwitchCompat>(R.id.screenshot_switch) ?: return
-            if (resultCode == RESULT_OK && data != null) {
-                prefs.edit().putBoolean(ScreenshotCaptureService.KEY_SCREENSHOT_ENABLED, true).apply()
-                val serviceIntent = Intent(this, ScreenshotCaptureService::class.java).apply {
-                    action = ScreenshotCaptureService.ACTION_START
-                    putExtra(ScreenshotCaptureService.EXTRA_RESULT_CODE, resultCode)
-                    putExtra(ScreenshotCaptureService.EXTRA_RESULT_DATA, data)
-                }
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    startForegroundService(serviceIntent)
-                } else {
-                    startService(serviceIntent)
-                }
-            } else {
-                switch.isChecked = false
-            }
+    private fun openAccessibilitySettings() {
+        try {
+            startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            })
+        } catch (_: Exception) {
+            Toast.makeText(this, "Impossible d'ouvrir les réglages d'accessibilité", Toast.LENGTH_SHORT).show()
         }
     }
 
     private fun getDeviceName(): String? {
-        return prefs.getString(KEY_DEVICE_NAME, null)?.takeIf { it.isNotBlank() }
+        return getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getString(KEY_DEVICE_NAME, null)?.takeIf { it.isNotBlank() }
     }
 
     private fun saveDeviceName(name: String?) {
-        prefs.edit().putString(KEY_DEVICE_NAME, name ?: "").apply()
+        getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit().putString(KEY_DEVICE_NAME, name ?: "").apply()
     }
 
     private fun openUrl(url: String) {
@@ -224,9 +212,7 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         private const val PREFS_NAME = "bg_prefs"
-        private const val KEY_DEVICE_ID = "device_id"
         private const val KEY_DEVICE_NAME = "device_name"
         private const val REQUEST_NOTIFICATION = 1001
-        private const val REQUEST_MEDIA_PROJECTION = 1002
     }
 }

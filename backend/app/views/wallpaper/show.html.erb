@@ -112,7 +112,9 @@
                 </div>
                 <div class="ds-task-card-actions">
                   <%= link_to "Voir", wallpaper_task_path(@nickname, task, device_id: @device_id), class: "ds-btn ds-btn--secondary ds-btn--sm" %>
-                  <%= button_to "Supprimer", wallpaper_task_destroy_path(@nickname, task, device_id: @device_id), method: :delete, form: { data: { turbo_confirm: "Supprimer cette tâche ?" } }, class: "ds-btn ds-btn--ghost ds-btn--sm ds-delete-btn" %>
+                  <%= button_to wallpaper_task_destroy_path(@nickname, task, device_id: @device_id), method: :delete, form: { data: { turbo_confirm: "Supprimer cette tâche ?" }, class: "ds-btn-icon-form" }, class: "ds-btn-icon ds-btn-icon--delete", title: "Supprimer" do %>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                  <% end %>
                 </div>
               </li>
             <% end %>
@@ -123,22 +125,33 @@
       <%# Historique des screenshots %>
       <section class="ds-history">
         <h2 class="ds-section-title">Historique des screenshots</h2>
-        <% if @screenshots.any? %>
-          <div class="ds-history-grid" id="screenshots-grid" style="--device-ratio: <%= device_ratio %>;">
-            <% @screenshots.each do |screenshot| %>
-              <% next unless screenshot.image.attached? %>
-              <div class="ds-wallpaper-card">
-                <div class="ds-wallpaper-thumb" style="aspect-ratio: <%= device_ratio %>;">
-                  <%= image_tag screenshot.image, alt: "Screenshot", class: "ds-wallpaper-img" %>
-                  <a href="<%= url_for(screenshot.image) %>" download="screenshot-<%= screenshot.captured_at.strftime('%Y%m%d-%H%M') %>.jpg" class="ds-download-icon" title="Télécharger">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                  </a>
-                </div>
-                <div class="ds-wallpaper-meta">
-                  <span><%= screenshot.captured_at.strftime("%d/%m %H:%M") %></span>
-                </div>
+        <% screenshots_with_images = @screenshots.select { |s| s.image.attached? } %>
+        <% if screenshots_with_images.any? %>
+          <div class="ds-history-expandable" data-initial="6" data-step="9" data-total="<%= screenshots_with_images.size %>">
+            <div class="ds-history-grid-wrapper" id="screenshots-wrapper" style="--device-ratio: <%= device_ratio %>;">
+              <div class="ds-history-grid" id="screenshots-grid">
+                <% screenshots_with_images.each do |screenshot| %>
+                  <div class="ds-wallpaper-card ds-history-item">
+                    <div class="ds-wallpaper-thumb" style="aspect-ratio: <%= device_ratio %>;">
+                      <%= image_tag screenshot.image, alt: "Screenshot", class: "ds-wallpaper-img" %>
+                      <a href="<%= url_for(screenshot.image) %>" download="screenshot-<%= screenshot.captured_at.strftime('%Y%m%d-%H%M') %>.jpg" class="ds-download-icon" title="Télécharger">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                      </a>
+                      <% if current_user.admin? %>
+                        <%= button_to wallpaper_destroy_screenshot_path(@nickname, screenshot.id, device_id: @device_id), method: :delete, form: { data: { turbo_confirm: "Supprimer ce screenshot ?" }, class: "ds-btn-icon-form ds-btn-icon-form--overlay" }, class: "ds-btn-icon ds-btn-icon--delete ds-btn-icon--overlay", title: "Supprimer" do %>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                        <% end %>
+                      <% end %>
+                    </div>
+                    <div class="ds-wallpaper-meta">
+                      <span><%= screenshot.captured_at.strftime("%d/%m %H:%M") %></span>
+                    </div>
+                  </div>
+                <% end %>
               </div>
-            <% end %>
+              <div class="ds-history-fade"></div>
+            </div>
+            <button type="button" class="ds-history-more" id="screenshots-more">Voir plus</button>
           </div>
         <% else %>
           <p class="ds-text-muted" style="font-size: 0.8rem;">Aucun screenshot pour le moment.</p>
@@ -148,41 +161,49 @@
       <%# Historique des fonds d'écran choisis %>
       <section class="ds-history">
         <h2 class="ds-section-title">Historique des fonds d'écran</h2>
-        <% if @applications.any? %>
+        <% applications_with_images = @applications.select { |a| a.wallpaper.image.attached? } %>
+        <% if applications_with_images.any? %>
           <div class="ds-history-header">
             <button type="button" id="download-all-btn" class="ds-btn ds-btn--ghost ds-btn--sm">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               Tout télécharger
             </button>
           </div>
-          <div class="ds-history-grid" id="wallpapers-grid" style="--device-ratio: <%= device_ratio %>;">
-            <% @applications.each_with_index do |application, index| %>
-              <% wallpaper = application.wallpaper %>
-              <% next unless wallpaper.image.attached? %>
-              <% variant = @device.screen_width.present? && @device.screen_height.present? ? wallpaper.variant_for(@device) : wallpaper.image %>
-              <% download_url = url_for(variant) %>
-              <% is_current = index == 0 %>
-              <div class="ds-wallpaper-card wallpaper-card" data-download-url="<%= download_url %>" data-filename="wallpaper-<%= application.applied_at.strftime('%Y%m%d-%H%M') %>-<%= wallpaper.id %>.jpg">
-                <div class="ds-wallpaper-thumb" style="aspect-ratio: <%= device_ratio %>;">
-                  <%= image_tag variant, alt: "", class: "ds-wallpaper-img" %>
-                  <a href="<%= download_url %>" download="wallpaper-<%= application.applied_at.strftime('%Y%m%d-%H%M') %>-<%= wallpaper.id %>.jpg" class="ds-download-icon" title="Télécharger">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                  </a>
-                </div>
-                <div class="ds-wallpaper-meta">
-                  <span><%= application.applied_at.strftime("%d/%m %H:%M") %></span>
-                  <% if wallpaper.first_downloaded_at %>
-                    <span class="ds-badge">✓</span>
-                  <% end %>
-                </div>
-                <div class="ds-wallpaper-actions">
-                  <% unless is_current %>
-                    <%= button_to "Définir comme actuel", wallpaper_set_current_path(@nickname, wallpaper.id, device_id: @device_id), method: :post, class: "ds-btn ds-btn--secondary ds-btn--sm" %>
-                  <% end %>
-                  <%= button_to "Supprimer", wallpaper_destroy_application_path(@nickname, application.id, device_id: @device_id), method: :delete, form: { data: { turbo_confirm: "Retirer cette entrée de l'historique ?" } }, class: "ds-delete-btn" %>
-                </div>
+          <div class="ds-history-expandable" data-initial="6" data-step="9" data-total="<%= applications_with_images.size %>">
+            <div class="ds-history-grid-wrapper" id="wallpapers-wrapper" style="--device-ratio: <%= device_ratio %>;">
+              <div class="ds-history-grid" id="wallpapers-grid">
+                <% applications_with_images.each_with_index do |application, index| %>
+                  <% wallpaper = application.wallpaper %>
+                  <% variant = @device.screen_width.present? && @device.screen_height.present? ? wallpaper.variant_for(@device) : wallpaper.image %>
+                  <% download_url = url_for(variant) %>
+                  <% is_current = index == 0 %>
+                  <div class="ds-wallpaper-card wallpaper-card ds-history-item" data-download-url="<%= download_url %>" data-filename="wallpaper-<%= application.applied_at.strftime('%Y%m%d-%H%M') %>-<%= wallpaper.id %>.jpg">
+                    <div class="ds-wallpaper-thumb" style="aspect-ratio: <%= device_ratio %>;">
+                      <%= image_tag variant, alt: "", class: "ds-wallpaper-img" %>
+                      <a href="<%= download_url %>" download="wallpaper-<%= application.applied_at.strftime('%Y%m%d-%H%M') %>-<%= wallpaper.id %>.jpg" class="ds-download-icon" title="Télécharger">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                      </a>
+                      <%= button_to wallpaper_destroy_application_path(@nickname, application.id, device_id: @device_id), method: :delete, form: { data: { turbo_confirm: "Retirer cette entrée de l'historique ?" }, class: "ds-btn-icon-form ds-btn-icon-form--overlay" }, class: "ds-btn-icon ds-btn-icon--delete ds-btn-icon--overlay", title: "Supprimer" do %>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                      <% end %>
+                    </div>
+                    <div class="ds-wallpaper-meta">
+                      <span><%= application.applied_at.strftime("%d/%m %H:%M") %></span>
+                      <% if wallpaper.first_downloaded_at %>
+                        <span class="ds-badge">✓</span>
+                      <% end %>
+                    </div>
+                    <% unless is_current %>
+                      <div class="ds-wallpaper-actions">
+                        <%= button_to "Définir comme actuel", wallpaper_set_current_path(@nickname, wallpaper.id, device_id: @device_id), method: :post, class: "ds-btn ds-btn--secondary ds-btn--sm" %>
+                      </div>
+                    <% end %>
+                  </div>
+                <% end %>
               </div>
-            <% end %>
+              <div class="ds-history-fade"></div>
+            </div>
+            <button type="button" class="ds-history-more" id="wallpapers-more">Voir plus</button>
           </div>
         <% else %>
           <p class="ds-text-muted" style="font-size: 0.8rem;">Aucun fond d'écran pour le moment.</p>
@@ -190,7 +211,7 @@
       </section>
 
       <details class="ds-debug-section">
-        <summary class="ds-debug-summary">Device (debug)</summary>
+        <summary class="ds-debug-summary">Devices (debug)</summary>
         <div class="ds-debug-content">
           <ul class="ds-debug-device-list">
             <% @devices.order(created_at: :desc).each do |d| %>
@@ -225,7 +246,7 @@
         </div>
       </details>
     <% else %>
-      <p class="ds-error">Device not found. Ouvre l'app pour t'enregistrer.</p>
+      <p class="ds-error">Aucun device enregistré. Ouvre l'app pour t'enregistrer.</p>
     <% end %>
   </div>
 </div>
@@ -364,5 +385,49 @@
         });
       });
     }
+
+    function initHistoryExpandable(expandable) {
+      const wrapper = expandable.querySelector('.ds-history-grid-wrapper');
+      const grid = expandable.querySelector('.ds-history-grid');
+      const moreBtn = expandable.querySelector('.ds-history-more');
+      const fade = expandable.querySelector('.ds-history-fade');
+      if (!wrapper || !grid || !moreBtn) return;
+
+      const items = grid.querySelectorAll('.ds-history-item');
+      const total = items.length;
+      const initial = parseInt(expandable.dataset.initial || 6, 10);
+      const step = parseInt(expandable.dataset.step || 9, 10);
+
+      if (total <= initial) {
+        moreBtn.classList.add('ds-history-more--hidden');
+        if (fade) fade.style.display = 'none';
+        return;
+      }
+
+      if (fade) fade.style.display = 'none';
+
+      let visibleCount = initial;
+
+      function updateHeight() {
+        if (visibleCount >= total) {
+          wrapper.style.maxHeight = '';
+          wrapper.classList.add('ds-history-grid-wrapper--expanded');
+          moreBtn.classList.add('ds-history-more--hidden');
+        } else {
+          const nextItem = items[visibleCount];
+          const maxH = nextItem ? nextItem.offsetTop : wrapper.scrollHeight;
+          wrapper.style.maxHeight = maxH + 'px';
+        }
+      }
+
+      updateHeight();
+
+      moreBtn.addEventListener('click', function() {
+        visibleCount = Math.min(visibleCount + step, total);
+        updateHeight();
+      });
+    }
+
+    document.querySelectorAll('.ds-history-expandable').forEach(initHistoryExpandable);
   })();
 </script>

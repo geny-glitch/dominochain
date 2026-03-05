@@ -50,6 +50,16 @@ class WallpaperController < ApplicationController
     redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), alert: "Entrée non trouvée."
   end
 
+  def destroy_screenshot
+    return redirect_to(wallpaper_upload_path(@nickname, device_id: @device_id), alert: "Réservé aux admins.") unless current_user.admin?
+
+    screenshot = @device.device_screenshots.find(params[:id])
+    screenshot.destroy!
+    redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), notice: "Screenshot supprimé."
+  rescue ActiveRecord::RecordNotFound
+    redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), alert: "Screenshot non trouvé."
+  end
+
   def destroy_device
     device = @beta.devices.find_by(device_id: params[:device_id])
     unless device

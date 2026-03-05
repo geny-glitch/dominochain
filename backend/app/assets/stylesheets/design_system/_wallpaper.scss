@@ -290,6 +290,19 @@
 .ds-btn-icon-form {
   display: inline;
   margin: 0;
+
+  &--overlay {
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    width: 26px;
+    height: 26px;
+
+    button, .ds-btn-icon {
+      width: 100%;
+      height: 100%;
+    }
+  }
 }
 
 .ds-btn-icon {
@@ -312,9 +325,23 @@
     background: rgba($ds-error, 0.1);
   }
 
-  &--delete:hover {
+  &--delete {
     color: $ds-error;
-    background: rgba($ds-error, 0.1);
+  }
+
+  &--delete:hover {
+    color: $ds-bg;
+    background: rgba($ds-error, 0.9);
+  }
+
+  &--overlay {
+    background: rgba(10, 10, 11, 0.75);
+    color: $ds-error;
+
+    &:hover {
+      background: rgba($ds-error, 0.9);
+      color: $ds-bg;
+    }
   }
 }
 
@@ -431,6 +458,54 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: $ds-space-md;
+}
+
+.ds-history-expandable {
+  position: relative;
+}
+
+.ds-history-grid-wrapper {
+  position: relative;
+  overflow: hidden;
+  transition: max-height 0.3s ease-out;
+}
+
+.ds-history-grid-wrapper .ds-history-fade {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 140px;
+  background: linear-gradient(to bottom, $ds-bg, transparent);
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.ds-history-grid-wrapper.ds-history-grid-wrapper--expanded .ds-history-fade {
+  opacity: 0;
+}
+
+.ds-history-more {
+  display: block;
+  width: 100%;
+  margin-top: $ds-space-md;
+  padding: $ds-space-sm;
+  font-size: $ds-small-size;
+  color: $ds-teal;
+  background: transparent;
+  border: 1px dashed $ds-border;
+  border-radius: $ds-radius-sm;
+  cursor: pointer;
+  transition: color $ds-transition, border-color $ds-transition;
+
+  &:hover {
+    color: $ds-teal-dim;
+    border-color: $ds-teal;
+  }
+
+  &--hidden {
+    display: none;
+  }
 }
 
 .ds-history-grid {

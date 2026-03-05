@@ -62,6 +62,7 @@ Rails.application.routes.draw do
   # Web upload UI (nickname = beta's nickname)
   get "w/:nickname", to: "wallpaper#show", as: :wallpaper_upload
   post "w/:nickname/screenshot_request", to: "wallpaper#screenshot_request", as: :wallpaper_screenshot_request
+  delete "w/:nickname/screenshots/:id", to: "wallpaper#destroy_screenshot", as: :wallpaper_destroy_screenshot
   get "w/:nickname/control/accept", to: "controls#accept_from_link", as: :control_accept_from_link
   post "w/:nickname/control/accept", to: "controls#accept_from_link_submit", as: :control_accept_from_link_submit
   post "w/:nickname", to: "wallpaper#upload", as: :wallpaper_upload_submit

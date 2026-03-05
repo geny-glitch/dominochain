@@ -49,7 +49,7 @@
         <% end %>
         <span class="ds-sep">·</span>
         <%= button_to "Prendre un screenshot", wallpaper_screenshot_request_path(@nickname, device_id: @device_id), method: :post, class: "ds-btn ds-btn--secondary ds-btn--sm" %>
-        <%= button_to "Supprimer", wallpaper_destroy_device_path(@nickname, @device_id), method: :delete, form: { data: { turbo_confirm: "Supprimer ce device ? Tous les wallpapers et tâches associés seront perdus." }, onsubmit: "return confirm('Supprimer ce device ? Tous les wallpapers et tâches associés seront perdus.');" }, class: "ds-btn ds-btn--ghost ds-btn--sm ds-delete-btn" %>
+        <%= button_to "Supprimer", wallpaper_destroy_device_path(@nickname, @device_id), method: :delete, form: { data: { turbo_confirm: "Supprimer ce device ? Tous les wallpapers associés seront perdus." }, onsubmit: "return confirm('Supprimer ce device ? Tous les wallpapers associés seront perdus.');" }, class: "ds-btn ds-btn--ghost ds-btn--sm ds-delete-btn" %>
       </div>
 
       <%= form_with url: wallpaper_upload_submit_path(@nickname, device_id: @device_id), method: :post, local: true, multipart: true, id: "upload-form", class: "ds-form" do |f| %>

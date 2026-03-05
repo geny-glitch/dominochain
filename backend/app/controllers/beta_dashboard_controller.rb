@@ -9,11 +9,7 @@ class BetaDashboardController < ApplicationController
     @control = current_user.control
     @invite_url = control_accept_from_link_url(current_user.nickname)
     @devices = current_user.devices.order(created_at: :desc)
-    @tasks = Task
-      .joins(:device)
-      .where(devices: { user_id: current_user.id })
-      .recent
-      .includes(:proof_of_completion, device: :user)
+    @tasks = current_user.tasks.recent.includes(:proof_of_completion)
   end
 
   def task
@@ -55,7 +51,7 @@ class BetaDashboardController < ApplicationController
   end
 
   def set_task
-    @task = Task.joins(:device).where(devices: { user_id: current_user.id }).find(params[:id])
+    @task = current_user.tasks.find(params[:id])
   rescue ActiveRecord::RecordNotFound
     redirect_to beta_dashboard_path, alert: "Tâche non trouvée."
   end

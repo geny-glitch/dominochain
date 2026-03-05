@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_03_04_100000) do
+ActiveRecord::Schema[7.2].define(version: 2026_03_05_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -120,7 +120,6 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_04_100000) do
   end
 
   create_table "tasks", force: :cascade do |t|
-    t.bigint "device_id", null: false
     t.string "name", null: false
     t.text "description"
     t.text "expected_proof"
@@ -131,9 +130,9 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_04_100000) do
     t.datetime "updated_at", null: false
     t.string "alarm_sound", default: "urgent", null: false
     t.datetime "deleted_at"
+    t.bigint "user_id", null: false
     t.index ["deleted_at"], name: "index_tasks_on_deleted_at"
-    t.index ["device_id", "status"], name: "index_tasks_on_device_id_and_status"
-    t.index ["device_id"], name: "index_tasks_on_device_id"
+    t.index ["user_id", "status"], name: "index_tasks_on_user_id_and_status"
   end
 
   create_table "users", force: :cascade do |t|
@@ -182,7 +181,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_04_100000) do
   add_foreign_key "device_screenshots", "devices"
   add_foreign_key "devices", "users"
   add_foreign_key "proof_of_completions", "tasks"
-  add_foreign_key "tasks", "devices"
+  add_foreign_key "tasks", "users"
   add_foreign_key "wallpaper_applications", "devices"
   add_foreign_key "wallpaper_applications", "wallpapers"
   add_foreign_key "wallpapers", "devices"

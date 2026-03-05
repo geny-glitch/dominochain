@@ -50,7 +50,7 @@
               <div class="ds-task-card-info">
                 <span class="ds-task-card-name"><%= task.name %></span>
                 <div class="ds-task-card-meta">
-                  <%= task.device.display_name %> · Deadline: <%= task.deadline_at.strftime("%d/%m %H:%M") %>
+                  Deadline: <%= task.deadline_at.strftime("%d/%m %H:%M") %>
                   · <span class="ds-task-status ds-task-status--<%= task.effective_status %>"><%= task.effective_status %></span>
                   <% if task.proof_pending? %>
                     · <span class="ds-task-status ds-task-status--pending">Preuve en attente</span>

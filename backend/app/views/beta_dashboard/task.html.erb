@@ -10,7 +10,7 @@
       <%= link_to "← Retour au dashboard", beta_dashboard_path, class: "ds-back-link" %>
       <h1 class="ds-title"><%= @task.name %></h1>
       <p class="ds-subtitle">
-        <%= @task.device.display_name %> · Deadline: <%= @task.deadline_at.strftime("%d/%m/%Y %H:%M") %>
+        Deadline: <%= @task.deadline_at.strftime("%d/%m/%Y %H:%M") %>
       </p>
     </header>
 

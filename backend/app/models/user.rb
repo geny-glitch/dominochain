@@ -8,6 +8,7 @@ class User < ApplicationRecord
   enum role: { beta: 0, boss: 1, admin: 2 }
 
   has_many :devices, dependent: :nullify
+  has_many :tasks, dependent: :destroy
   has_one :control, foreign_key: :beta_id, dependent: :destroy
   has_many :controls, foreign_key: :boss_id, dependent: :destroy
   has_many :control_requests_sent, class_name: "ControlRequest", foreign_key: :beta_id, dependent: :destroy

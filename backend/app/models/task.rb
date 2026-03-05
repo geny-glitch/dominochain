@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class Task < ApplicationRecord
-  belongs_to :device
+  belongs_to :user
   has_one :proof_of_completion, dependent: :destroy
 
   default_scope { where(deleted_at: nil) }
@@ -41,6 +41,8 @@ class Task < ApplicationRecord
   private
 
   def send_new_task_notification
-    FcmService.send_new_task_notification(device: device, task: self, trigger_alarm: trigger_alarm, alarm_sound: alarm_sound.presence || "urgent")
+    user.devices.find_each do |device|
+      FcmService.send_new_task_notification(device: device, task: self, trigger_alarm: trigger_alarm, alarm_sound: alarm_sound.presence || "urgent")
+    end
   end
 end

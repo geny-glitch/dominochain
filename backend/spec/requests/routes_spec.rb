@@ -93,7 +93,7 @@ RSpec.describe "Routes", type: :request do
   describe "Beta task routes" do
     let(:beta) { create(:user, :beta) }
     let(:device) { create(:device, user: beta) }
-    let(:task) { create(:task, device: device) }
+    let(:task) { create(:task, user: beta) }
 
     before { sign_in beta }
 
@@ -260,7 +260,7 @@ RSpec.describe "Routes", type: :request do
       end
 
       it "GET w/:nickname/tasks/:id returns 200" do
-        task = create(:task, device: device)
+        task = create(:task, user: beta)
         get wallpaper_task_path(beta.nickname, task.id)
         expect(response).to have_http_status(:ok)
       end
@@ -278,7 +278,7 @@ RSpec.describe "Routes", type: :request do
     let(:boss) { create(:user, :boss) }
     let!(:device) { create(:device, user: beta) }
     let!(:control) { create(:control, boss: boss, beta: beta) }
-    let(:task) { create(:task, device: device) }
+    let(:task) { create(:task, user: beta) }
 
     before { sign_in boss }
 

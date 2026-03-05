@@ -34,6 +34,8 @@ class ProofOfCompletion < ApplicationRecord
     return unless saved_change_to_status?
     return unless accepted? || rejected?
 
-    FcmService.send_proof_reviewed_notification(device: task.device, proof: self)
+    task.user.devices.find_each do |device|
+      FcmService.send_proof_reviewed_notification(device: device, proof: self)
+    end
   end
 end

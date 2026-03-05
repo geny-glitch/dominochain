@@ -6,7 +6,7 @@ class WallpaperController < ApplicationController
   def show
     @device_id = @device.device_id
     @applications = @device.wallpaper_applications.includes(:wallpaper).recent
-    @tasks = @device.tasks.recent
+    @tasks = @beta.tasks.recent
     @screenshots = @device.device_screenshots.order(captured_at: :desc)
   end
 

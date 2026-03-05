@@ -6,7 +6,7 @@ class TasksController < ApplicationController
 
   def create
     deadline_at = compute_deadline
-    @task = @device.tasks.create!(task_params.merge(deadline_at: deadline_at))
+    @task = @beta.tasks.create!(task_params.merge(deadline_at: deadline_at))
     redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), notice: "Tâche créée. Une notification a été envoyée."
   rescue ActiveRecord::RecordInvalid => e
     redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), alert: e.record.errors.full_messages.join(", ")
@@ -44,7 +44,7 @@ class TasksController < ApplicationController
   private
 
   def set_task
-    @task = @device.tasks.find(params[:id])
+    @task = @beta.tasks.find(params[:id])
   rescue ActiveRecord::RecordNotFound
     redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), alert: "Tâche non trouvée."
   end

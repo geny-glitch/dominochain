@@ -89,13 +89,17 @@ module Api
 
     def tasks
       device = Device.find_by!(device_id: params[:id])
-      tasks = device.tasks.recent
+      user = device.user
+      return render json: [] unless user
+      tasks = user.tasks.recent
       render json: tasks.map { |t| task_json(t) }
     end
 
     def task_detail
       device = Device.find_by!(device_id: params[:id])
-      task = device.tasks.find(params[:task_id])
+      user = device.user
+      return head :not_found unless user
+      task = user.tasks.find(params[:task_id])
       render json: task_detail_json(task)
     end
 
@@ -131,7 +135,9 @@ module Api
 
     def submit_proof
       device = Device.find_by!(device_id: params[:id])
-      task = device.tasks.find(params[:task_id])
+      user = device.user
+      return head :not_found unless user
+      task = user.tasks.find(params[:task_id])
 
       unless task.deadline_at.future?
         return render json: { error: "La deadline est dépassée" }, status: :unprocessable_entity

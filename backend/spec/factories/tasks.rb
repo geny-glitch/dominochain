@@ -2,7 +2,7 @@
 
 FactoryBot.define do
   factory :task do
-    association :device
+    association :user
     name { "Test task" }
     description { "Test description" }
     deadline_at { 1.day.from_now }

@@ -25,10 +25,12 @@ class AdminController < ApplicationController
 
   def settings
     @app_setting = AppSetting.instance
+    @app_setting ||= AppSetting.create!(influencer_names: "")
   end
 
   def update_settings
     @app_setting = AppSetting.instance
+    @app_setting ||= AppSetting.create!(influencer_names: "")
     if @app_setting.update(influencer_names: params[:influencer_names])
       WikimediaCommonsService.fetch_and_store_all
       redirect_to admin_settings_path, notice: "Liste enregistrée. Images récupérées."

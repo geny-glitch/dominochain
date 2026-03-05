@@ -42,6 +42,7 @@ Rails.application.routes.draw do
     post "auth/login", to: "auth#login"
     post "auth/register", to: "auth#register"
     post "auth/logout", to: "auth#logout"
+    patch "auth/password", to: "passwords#update"
 
     post "control_requests", to: "control_requests#create"
 

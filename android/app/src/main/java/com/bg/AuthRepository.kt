@@ -87,6 +87,30 @@ class AuthRepository {
         }
     }
 
+    suspend fun changePassword(currentPassword: String, newPassword: String, confirmation: String): Result<Unit> {
+        return try {
+            val response = api.changePassword(
+                com.bg.api.ChangePasswordRequest(
+                    current_password = currentPassword,
+                    password = newPassword,
+                    password_confirmation = confirmation
+                )
+            )
+            if (response.isSuccessful) Result.success(Unit)
+            else {
+                val errorBody = response.errorBody()?.string() ?: ""
+                val error = try {
+                    com.google.gson.Gson().fromJson(errorBody, Map::class.java)?.get("error")?.toString() ?: "Erreur"
+                } catch (_: Exception) {
+                    "Erreur: ${response.code()}"
+                }
+                Result.failure(Exception(error))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun sendControlRequest(bossNickname: String): Result<String> {
         return try {
             val response = api.sendControlRequest(ApiService.ControlRequestBody(boss_nickname = bossNickname))

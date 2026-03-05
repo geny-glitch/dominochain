@@ -8,8 +8,6 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
-import android.provider.Settings
-import android.view.View
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -29,7 +27,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private val sessionManager by lazy { (application as BgApplication).sessionManager }
     private val repository = DeviceRepository()
-    private val authRepository = AuthRepository()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,22 +49,6 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         requestNotificationPermission()
-
-        binding.deviceIdText.text = deviceId
-
-        binding.deviceNameInput.setText(getDeviceName() ?: "")
-
-        binding.saveNameButton.setOnClickListener {
-            lifecycleScope.launch {
-                val name = binding.deviceNameInput.text.toString().trim().takeIf { it.isNotEmpty() }
-                saveDeviceName(name)
-                repository.updateName(deviceId, name).onSuccess {
-                    Toast.makeText(this@MainActivity, "Nom enregistré", Toast.LENGTH_SHORT).show()
-                }.onFailure {
-                    Toast.makeText(this@MainActivity, "Erreur: ${it.message}", Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
 
         lifecycleScope.launch {
             val displayMetrics = resources.displayMetrics
@@ -99,28 +80,8 @@ class MainActivity : AppCompatActivity() {
         PermissionsWorker.schedule(this)
         PermissionsWorker.checkNow(this)
 
-        findViewById<View>(R.id.tasks_button)?.setOnClickListener {
+        binding.tasksButton.setOnClickListener {
             startActivity(Intent(this, TasksActivity::class.java))
-        }
-
-        setupScreenshotSwitch()
-        setupBatteryOptimizationLink()
-
-        findViewById<View>(R.id.send_control_request_button)?.setOnClickListener {
-            val bossNickname = findViewById<android.widget.EditText>(R.id.boss_nickname_input).text.toString().trim()
-            if (bossNickname.isBlank()) {
-                Toast.makeText(this, "Entrez le pseudo du boss", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-            lifecycleScope.launch {
-                authRepository.sendControlRequest(bossNickname)
-                    .onSuccess { msg ->
-                        Toast.makeText(this@MainActivity, msg, Toast.LENGTH_SHORT).show()
-                    }
-                    .onFailure {
-                        Toast.makeText(this@MainActivity, it.message, Toast.LENGTH_SHORT).show()
-                    }
-            }
         }
 
         handleTasksIntent(intent)
@@ -144,13 +105,22 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         syncWallpaper()
-        syncScreenshotSwitchState()
         reportPermissionsImmediately()
     }
 
-    private fun syncScreenshotSwitchState() {
-        val switch = findViewById<androidx.appcompat.widget.SwitchCompat>(R.id.screenshot_switch) ?: return
-        switch.isChecked = BgAccessibilityService.isEnabled(this)
+    override fun onCreateOptionsMenu(menu: android.view.Menu): Boolean {
+        menuInflater.inflate(R.menu.main_menu, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: android.view.MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_settings -> {
+                startActivity(Intent(this, SettingsActivity::class.java))
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
     }
 
     private fun syncWallpaper() {
@@ -167,52 +137,6 @@ class MainActivity : AppCompatActivity() {
                 RetrofitClient.sessionManager = sessionManager
                 DeviceRepository().reportPermissionsStatus(deviceId, result.allOk, result.missingReasons)
             }
-        }
-    }
-
-    private fun setupScreenshotSwitch() {
-        val switch = findViewById<androidx.appcompat.widget.SwitchCompat>(R.id.screenshot_switch) ?: return
-        switch.isChecked = BgAccessibilityService.isEnabled(this)
-        switch.setOnCheckedChangeListener { _, _ ->
-            openAccessibilitySettings()
-            // Revert immediately — real state is reflected in onResume after returning from Settings
-            switch.isChecked = BgAccessibilityService.isEnabled(this)
-        }
-    }
-
-    private fun setupBatteryOptimizationLink() {
-        binding.batteryOptimizationLink.setOnClickListener {
-            openBatteryOptimizationSettings()
-        }
-    }
-
-    private fun openBatteryOptimizationSettings() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            try {
-                val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-                    data = Uri.parse("package:$packageName")
-                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                }
-                startActivity(intent)
-            } catch (_: Exception) {
-                try {
-                    startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).apply {
-                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                    })
-                } catch (_: Exception) {
-                    Toast.makeText(this, "Impossible d'ouvrir les réglages batterie", Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
-    }
-
-    private fun openAccessibilitySettings() {
-        try {
-            startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK
-            })
-        } catch (_: Exception) {
-            Toast.makeText(this, "Impossible d'ouvrir les réglages d'accessibilité", Toast.LENGTH_SHORT).show()
         }
     }
 

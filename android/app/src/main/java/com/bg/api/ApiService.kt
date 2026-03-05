@@ -56,6 +56,12 @@ data class AuthResponse(
 
 data class UserInfo(val nickname: String)
 
+data class ChangePasswordRequest(
+    val current_password: String,
+    val password: String,
+    val password_confirmation: String
+)
+
 data class WallpaperResponse(
     val url: String,
     val updated_at: String
@@ -72,6 +78,9 @@ interface ApiService {
 
     @POST("api/auth/register")
     suspend fun registerAuth(@Body request: RegisterAuthRequest): Response<AuthResponse>
+
+    @PATCH("api/auth/password")
+    suspend fun changePassword(@Body request: ChangePasswordRequest): Response<Unit>
 
     @POST("api/devices")
     suspend fun register(@Body request: RegisterRequest): Response<RegisterResponse>

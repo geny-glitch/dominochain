@@ -347,6 +347,32 @@ RSpec.describe "Routes", type: :request do
       end
     end
 
+    describe "PATCH /api/auth/password" do
+      it "returns 401 without auth" do
+        patch "/api/auth/password", params: { current_password: "x", password: "newpass123", password_confirmation: "newpass123" }
+        expect(response).to have_http_status(:unauthorized)
+      end
+
+      it "returns 204 with valid auth and correct current password" do
+        beta = create(:user, :beta, nickname: "pwbeta", password: "password123")
+        device = create(:device, user: beta)
+        patch "/api/auth/password",
+          params: { current_password: "password123", password: "newpass123", password_confirmation: "newpass123" },
+          headers: { "X-Device-Id" => device.device_id, "X-Device-Token" => device.auth_token }
+        expect(response).to have_http_status(:no_content)
+        expect(beta.reload.valid_password?("newpass123")).to be true
+      end
+
+      it "returns 401 with wrong current password" do
+        beta = create(:user, :beta, nickname: "pwbeta2", password: "password123")
+        device = create(:device, user: beta)
+        patch "/api/auth/password",
+          params: { current_password: "wrong", password: "newpass123", password_confirmation: "newpass123" },
+          headers: { "X-Device-Id" => device.device_id, "X-Device-Token" => device.auth_token }
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+
     describe "Devices (device auth required)" do
       let(:beta) { create(:user, :beta) }
       let(:device) { create(:device, user: beta) }

@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/ds_bg"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="@dimen/ds_page_padding">
+
+        <!-- Permissions -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/permissions"
+            style="@style/DsSectionTitle"
+            android:layout_marginBottom="@dimen/ds_space_md" />
+
+        <LinearLayout
+            android:id="@+id/permission_accessibility_row"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="@dimen/ds_space_md"
+            android:background="@drawable/ds_card_background"
+            android:layout_marginBottom="@dimen/ds_space_sm">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/permission_accessibility"
+                    style="@style/DsBody" />
+                <TextView
+                    android:id="@+id/permission_accessibility_status"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    style="@style/DsSmall"
+                    android:layout_marginTop="@dimen/ds_space_xs" />
+            </LinearLayout>
+            <ImageButton
+                android:id="@+id/permission_accessibility_action"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_open_in_new"
+                android:contentDescription="@string/permission_granted"
+                android:scaleType="centerInside" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/permission_battery_row"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="@dimen/ds_space_md"
+            android:background="@drawable/ds_card_background"
+            android:layout_marginBottom="@dimen/ds_space_sm">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/permission_battery"
+                    style="@style/DsBody" />
+                <TextView
+                    android:id="@+id/permission_battery_status"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    style="@style/DsSmall"
+                    android:layout_marginTop="@dimen/ds_space_xs" />
+            </LinearLayout>
+            <ImageButton
+                android:id="@+id/permission_battery_action"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_open_in_new"
+                android:contentDescription="@string/permission_granted"
+                android:scaleType="centerInside" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/permission_notifications_row"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="@dimen/ds_space_md"
+            android:background="@drawable/ds_card_background"
+            android:layout_marginBottom="@dimen/ds_space_xl">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/permission_notifications"
+                    style="@style/DsBody" />
+                <TextView
+                    android:id="@+id/permission_notifications_status"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    style="@style/DsSmall"
+                    android:layout_marginTop="@dimen/ds_space_xs" />
+            </LinearLayout>
+            <ImageButton
+                android:id="@+id/permission_notifications_action"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_open_in_new"
+                android:contentDescription="@string/permission_granted"
+                android:scaleType="centerInside" />
+        </LinearLayout>
+
+        <!-- Account -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/account"
+            style="@style/DsSectionTitle"
+            android:layout_marginBottom="@dimen/ds_space_md" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/ds_card_background"
+            android:padding="@dimen/ds_space_lg"
+            android:layout_marginBottom="@dimen/ds_space_xl">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/user_nickname"
+                style="@style/DsSmall"
+                android:layout_marginBottom="@dimen/ds_space_xs" />
+            <TextView
+                android:id="@+id/account_nickname"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="@style/DsBody"
+                android:layout_marginBottom="@dimen/ds_space_lg" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/device_name"
+                style="@style/DsSmall"
+                android:layout_marginBottom="@dimen/ds_space_xs" />
+            <EditText
+                android:id="@+id/account_device_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Ex: Mon téléphone"
+                android:inputType="text"
+                android:maxLines="1"
+                style="@style/DsEditText"
+                android:layout_marginBottom="@dimen/ds_space_lg" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/change_password"
+                style="@style/DsSectionTitle"
+                android:layout_marginBottom="@dimen/ds_space_md" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/current_password"
+                style="@style/DsSmall"
+                android:layout_marginBottom="@dimen/ds_space_xs" />
+            <EditText
+                android:id="@+id/current_password"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/current_password"
+                android:inputType="textPassword"
+                android:maxLines="1"
+                style="@style/DsEditText"
+                android:layout_marginBottom="@dimen/ds_space_md" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/new_password"
+                style="@style/DsSmall"
+                android:layout_marginBottom="@dimen/ds_space_xs" />
+            <EditText
+                android:id="@+id/new_password"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/new_password"
+                android:inputType="textPassword"
+                android:maxLines="1"
+                style="@style/DsEditText"
+                android:layout_marginBottom="@dimen/ds_space_md" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/confirm_password"
+                style="@style/DsSmall"
+                android:layout_marginBottom="@dimen/ds_space_xs" />
+            <EditText
+                android:id="@+id/confirm_password"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/confirm_password"
+                android:inputType="textPassword"
+                android:maxLines="1"
+                style="@style/DsEditText"
+                android:layout_marginBottom="@dimen/ds_space_md" />
+            <Button
+                android:id="@+id/change_password_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/change_password"
+                style="@style/DsButton" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Demander à être contrôlé par un boss"
+                style="@style/DsSmall"
+                android:layout_marginTop="@dimen/ds_space_xl"
+                android:layout_marginBottom="@dimen/ds_space_xs" />
+            <EditText
+                android:id="@+id/boss_nickname_input"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/boss_nickname_hint"
+                android:inputType="text"
+                android:maxLines="1"
+                style="@style/DsEditText"
+                android:layout_marginBottom="@dimen/ds_space_sm" />
+            <Button
+                android:id="@+id/send_control_request_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/send_control_request"
+                style="@style/DsButton" />
+        </LinearLayout>
+
+        <!-- Debug -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/debug"
+            style="@style/DsSectionTitle"
+            android:layout_marginBottom="@dimen/ds_space_md" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/ds_card_background"
+            android:padding="@dimen/ds_space_lg">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/device_id"
+                style="@style/DsSmall"
+                android:layout_marginBottom="@dimen/ds_space_xs" />
+            <TextView
+                android:id="@+id/debug_device_id"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="@style/DsSmall"
+                android:fontFamily="monospace" />
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>

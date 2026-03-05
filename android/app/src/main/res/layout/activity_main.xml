@@ -1,66 +1,147 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true"
+    android:orientation="vertical"
     android:background="@color/ds_bg">
 
-<LinearLayout
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="@dimen/ds_page_padding"
-    android:gravity="center">
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Upload Wallpaper"
-        style="@style/DsTitle"
-        android:layout_marginBottom="@dimen/ds_space_lg" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Open this link to upload an image:"
-        style="@style/DsBody"
-        android:layout_marginBottom="@dimen/ds_space_sm" />
-
-    <TextView
-        android:id="@+id/web_url_text"
+    <!-- Link bar - collé à la navbar -->
+    <LinearLayout
+        android:id="@+id/link_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Loading..."
-        style="@style/DsBody"
-        android:textColor="@color/ds_teal"
-        android:padding="@dimen/ds_space_md"
-        android:background="?attr/selectableItemBackground"
-        android:clickable="true"
-        android:focusable="true"
-        android:layout_marginBottom="@dimen/ds_space_lg" />
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="@dimen/ds_page_padding"
+        android:paddingVertical="@dimen/ds_space_sm"
+        android:background="@color/ds_surface"
+        android:minHeight="48dp">
 
-    <Button
-        android:id="@+id/copy_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Copy Link"
-        style="@style/DsButton"
-        android:layout_marginBottom="@dimen/ds_space_sm" />
+        <ImageButton
+            android:id="@+id/link_copy"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_content_copy"
+            android:contentDescription="@string/copy"
+            android:scaleType="centerInside" />
 
-    <Button
-        android:id="@+id/refresh_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Refresh Wallpaper"
-        style="@style/DsButton"
-        android:layout_marginBottom="@dimen/ds_space_sm" />
+        <ImageButton
+            android:id="@+id/link_share"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_share"
+            android:contentDescription="@string/share"
+            android:scaleType="centerInside" />
 
-    <Button
-        android:id="@+id/tasks_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Tâches"
-        style="@style/DsButtonSecondary" />
+        <TextView
+            android:id="@+id/web_url_text"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Loading..."
+            style="@style/DsBody"
+            android:textColor="@color/ds_teal"
+            android:gravity="center"
+            android:maxLines="1"
+            android:ellipsize="middle"
+            android:paddingHorizontal="@dimen/ds_space_sm"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackground" />
 
+        <ImageButton
+            android:id="@+id/link_open"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_open_in_new"
+            android:contentDescription="@string/open"
+            android:scaleType="centerInside" />
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="@dimen/ds_page_padding">
+
+            <Button
+                android:id="@+id/refresh_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Refresh Wallpaper"
+                style="@style/DsButton"
+                android:layout_marginBottom="@dimen/ds_space_xl" />
+
+            <!-- Tâches -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Tâches"
+                style="@style/DsSectionTitle"
+                android:layout_marginBottom="@dimen/ds_space_md" />
+
+            <ProgressBar
+                android:id="@+id/tasks_progress"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:visibility="gone"
+                android:layout_marginBottom="@dimen/ds_space_md" />
+
+            <TextView
+                android:id="@+id/tasks_empty"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Aucune tâche"
+                style="@style/DsBody"
+                android:textColor="@color/ds_text_muted"
+                android:visibility="gone"
+                android:layout_marginBottom="@dimen/ds_space_lg" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/tasks_list"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false"
+                android:visibility="gone"
+                tools:listitem="@layout/item_task"
+                android:layout_marginBottom="@dimen/ds_space_xl" />
+
+            <!-- Historique wallpapers -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Historique des wallpapers"
+                style="@style/DsSectionTitle"
+                android:layout_marginBottom="@dimen/ds_space_md" />
+
+            <TextView
+                android:id="@+id/wallpapers_empty"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Aucun wallpaper"
+                style="@style/DsBody"
+                android:textColor="@color/ds_text_muted"
+                android:visibility="gone"
+                android:layout_marginBottom="@dimen/ds_space_md" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/wallpapers_list"
+                android:layout_width="match_parent"
+                android:layout_height="180dp"
+                android:nestedScrollingEnabled="false"
+                android:visibility="gone"
+                tools:listitem="@layout/item_wallpaper" />
+
+        </LinearLayout>
+    </ScrollView>
 </LinearLayout>
-</ScrollView>

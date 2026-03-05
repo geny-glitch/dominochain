@@ -233,28 +233,65 @@
                 android:text="@string/change_password"
                 style="@style/DsButton" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Demander à être contrôlé par un boss"
-                style="@style/DsSmall"
-                android:layout_marginTop="@dimen/ds_space_xl"
-                android:layout_marginBottom="@dimen/ds_space_xs" />
-            <EditText
-                android:id="@+id/boss_nickname_input"
+            <LinearLayout
+                android:id="@+id/boss_request_section"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="@string/boss_nickname_hint"
-                android:inputType="text"
-                android:maxLines="1"
-                style="@style/DsEditText"
-                android:layout_marginBottom="@dimen/ds_space_sm" />
-            <Button
-                android:id="@+id/send_control_request_button"
-                android:layout_width="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="@dimen/ds_space_xl">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Demander à être contrôlé par un boss"
+                    style="@style/DsSmall"
+                    android:layout_marginBottom="@dimen/ds_space_xs" />
+                <EditText
+                    android:id="@+id/boss_nickname_input"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/boss_nickname_hint"
+                    android:inputType="text"
+                    android:maxLines="1"
+                    style="@style/DsEditText"
+                    android:layout_marginBottom="@dimen/ds_space_sm" />
+                <Button
+                    android:id="@+id/send_control_request_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/send_control_request"
+                    style="@style/DsButton" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/boss_owned_section"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/send_control_request"
-                style="@style/DsButton" />
+                android:orientation="vertical"
+                android:layout_marginTop="@dimen/ds_space_xl"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/boss_owned_label"
+                    style="@style/DsSmall"
+                    android:layout_marginBottom="@dimen/ds_space_xs" />
+                <TextView
+                    android:id="@+id/boss_name_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    style="@style/DsBody"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="@dimen/ds_space_xs" />
+                <TextView
+                    android:id="@+id/boss_teasing_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    style="@style/DsSmall"
+                    android:textColor="@color/ds_teal"
+                    android:text="@string/boss_owned_teasing" />
+            </LinearLayout>
         </LinearLayout>
 
         <!-- Debug -->
@@ -280,6 +317,20 @@
                 android:layout_marginBottom="@dimen/ds_space_xs" />
             <TextView
                 android:id="@+id/debug_device_id"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="@style/DsSmall"
+                android:fontFamily="monospace"
+                android:layout_marginBottom="@dimen/ds_space_md" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/server_url"
+                style="@style/DsSmall"
+                android:layout_marginBottom="@dimen/ds_space_xs" />
+            <TextView
+                android:id="@+id/debug_server_url"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 style="@style/DsSmall"

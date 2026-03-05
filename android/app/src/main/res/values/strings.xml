@@ -19,6 +19,12 @@
     <string name="new_password">Nouveau mot de passe</string>
     <string name="confirm_password">Confirmer le mot de passe</string>
     <string name="device_id">Device ID</string>
+    <string name="server_url">URL du serveur</string>
+    <string name="copy">Copier</string>
+    <string name="share">Partager</string>
+    <string name="open">Ouvrir</string>
     <string name="send_control_request">Envoyer la demande</string>
     <string name="boss_nickname_hint">Pseudo du boss</string>
+    <string name="boss_owned_label">Mon boss</string>
+    <string name="boss_owned_teasing">Tu lui appartiens… pour l\'instant.</string>
 </resources>

@@ -40,16 +40,40 @@ class SettingsActivity : AppCompatActivity() {
 
         val deviceId = sessionManager.deviceId ?: return
         binding.debugDeviceId.text = deviceId
+        binding.debugServerUrl.text = com.bg.BuildConfig.API_BASE_URL
         binding.accountNickname.text = sessionManager.nickname ?: "-"
         binding.accountDeviceName.setText(getDeviceName() ?: "")
 
         setupPermissions()
         setupAccount()
+        fetchBossStatus()
     }
 
     override fun onResume() {
         super.onResume()
         refreshPermissionsStatus()
+        fetchBossStatus()
+    }
+
+    private fun fetchBossStatus() {
+        lifecycleScope.launch {
+            RetrofitClient.sessionManager = sessionManager
+            authRepository.getMe()
+                .onSuccess { me ->
+                    if (me.boss_nickname != null) {
+                        binding.bossRequestSection.visibility = android.view.View.GONE
+                        binding.bossOwnedSection.visibility = android.view.View.VISIBLE
+                        binding.bossNameText.text = me.boss_nickname
+                    } else {
+                        binding.bossRequestSection.visibility = android.view.View.VISIBLE
+                        binding.bossOwnedSection.visibility = android.view.View.GONE
+                    }
+                }
+                .onFailure {
+                    binding.bossRequestSection.visibility = android.view.View.VISIBLE
+                    binding.bossOwnedSection.visibility = android.view.View.GONE
+                }
+        }
     }
 
     override fun onSupportNavigateUp(): Boolean {

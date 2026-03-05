@@ -347,6 +347,37 @@ RSpec.describe "Routes", type: :request do
       end
     end
 
+    describe "GET /api/auth/me" do
+      it "returns 401 without auth" do
+        get "/api/auth/me"
+        expect(response).to have_http_status(:unauthorized)
+      end
+
+      it "returns nickname and boss_nickname when beta is controlled" do
+        beta = create(:user, :beta, nickname: "mebeta")
+        boss = create(:user, :boss, nickname: "myboss")
+        create(:control, boss: boss, beta: beta, status: :accepted)
+        device = create(:device, user: beta)
+        get "/api/auth/me",
+          headers: { "X-Device-Id" => device.device_id, "X-Device-Token" => device.auth_token }
+        expect(response).to have_http_status(:ok)
+        json = JSON.parse(response.body)
+        expect(json["nickname"]).to eq("mebeta")
+        expect(json["boss_nickname"]).to eq("myboss")
+      end
+
+      it "returns boss_nickname null when beta has no control" do
+        beta = create(:user, :beta, nickname: "freebeta")
+        device = create(:device, user: beta)
+        get "/api/auth/me",
+          headers: { "X-Device-Id" => device.device_id, "X-Device-Token" => device.auth_token }
+        expect(response).to have_http_status(:ok)
+        json = JSON.parse(response.body)
+        expect(json["nickname"]).to eq("freebeta")
+        expect(json["boss_nickname"]).to be_nil
+      end
+    end
+
     describe "PATCH /api/auth/password" do
       it "returns 401 without auth" do
         patch "/api/auth/password", params: { current_password: "x", password: "newpass123", password_confirmation: "newpass123" }

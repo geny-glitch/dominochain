@@ -56,6 +56,11 @@ data class AuthResponse(
 
 data class UserInfo(val nickname: String)
 
+data class MeResponse(
+    val nickname: String,
+    val boss_nickname: String?
+)
+
 data class ChangePasswordRequest(
     val current_password: String,
     val password: String,
@@ -65,6 +70,13 @@ data class ChangePasswordRequest(
 data class WallpaperResponse(
     val url: String,
     val updated_at: String
+)
+
+data class WallpaperItemResponse(
+    val id: Long,
+    val url: String,
+    val created_at: String,
+    val first_downloaded_at: String?
 )
 
 data class FcmTokenRequest(val fcm_token: String)
@@ -78,6 +90,9 @@ interface ApiService {
 
     @POST("api/auth/register")
     suspend fun registerAuth(@Body request: RegisterAuthRequest): Response<AuthResponse>
+
+    @GET("api/auth/me")
+    suspend fun getMe(): Response<MeResponse>
 
     @PATCH("api/auth/password")
     suspend fun changePassword(@Body request: ChangePasswordRequest): Response<Unit>
@@ -111,6 +126,9 @@ interface ApiService {
 
     @GET("api/devices/{deviceId}/wallpaper")
     suspend fun getWallpaper(@Path("deviceId") deviceId: String): Response<WallpaperResponse>
+
+    @GET("api/devices/{deviceId}/wallpapers")
+    suspend fun getWallpapers(@Path("deviceId") deviceId: String): Response<List<WallpaperItemResponse>>
 
     @GET("api/devices/{deviceId}/tasks")
     suspend fun getTasks(@Path("deviceId") deviceId: String): Response<List<TaskResponse>>

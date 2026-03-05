@@ -9,6 +9,7 @@ import com.bg.api.RegisterRequest
 import com.bg.api.RegisterResponse
 import com.bg.api.TaskDetailResponse
 import com.bg.api.TaskResponse
+import com.bg.api.WallpaperItemResponse
 import com.bg.api.WallpaperResponse
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
@@ -70,6 +71,19 @@ class DeviceRepository {
         return try {
             val response = api.updatePermissions(deviceId, PermissionsRequest(permissions_ok = permissionsOk, permissions_missing = permissionsMissing.takeIf { it.isNotEmpty() }))
             if (response.isSuccessful) Result.success(Unit) else Result.failure(Exception("Failed: ${response.code()}"))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getWallpapers(deviceId: String): Result<List<WallpaperItemResponse>> {
+        return try {
+            val response = api.getWallpapers(deviceId)
+            if (response.isSuccessful) {
+                Result.success(response.body() ?: emptyList())
+            } else {
+                Result.failure(Exception("Failed: ${response.code()}"))
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }

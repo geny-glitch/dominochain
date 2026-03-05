@@ -87,6 +87,20 @@ class AuthRepository {
         }
     }
 
+    suspend fun getMe(): Result<com.bg.api.MeResponse> {
+        return try {
+            val response = api.getMe()
+            if (response.isSuccessful) {
+                response.body()?.let { Result.success(it) }
+                    ?: Result.failure(Exception("Empty response"))
+            } else {
+                Result.failure(Exception("Failed: ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun changePassword(currentPassword: String, newPassword: String, confirmation: String): Result<Unit> {
         return try {
             val response = api.changePassword(

@@ -1,0 +1,98 @@
+<% device_ratio = (@device&.screen_width.to_f / @device&.screen_height) if @device&.screen_width.to_i > 0 && @device&.screen_height.to_i > 0 %>
+<% device_ratio ||= 9.0 / 16 %>
+
+<% content_for :head do %>
+  <link rel="stylesheet" href="https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.css" />
+<% end %>
+
+<div class="ds-page ds-upload-page">
+  <div class="ds-container ds-upload-container">
+    <%= link_to "← Retour au beta", wallpaper_upload_path(@nickname, device_id: @device_id), class: "ds-back-link ds-upload-back" %>
+
+    <header class="ds-upload-header">
+      <h1 class="ds-title">Ajouter un fond d'écran</h1>
+      <div class="ds-upload-steps" id="step-indicator">
+        <span class="ds-upload-step ds-upload-step--active" data-step="1">1. Choisir</span>
+        <span class="ds-upload-step" data-step="2">2. Recadrer</span>
+        <span class="ds-upload-step" data-step="3">3. Modifier</span>
+      </div>
+    </header>
+
+    <%= form_with url: wallpaper_upload_submit_path(@nickname, device_id: @device_id), method: :post, local: true, multipart: true, id: "upload-form", class: "ds-form" do |f| %>
+      <%= f.file_field :image, accept: "image/*", id: "image-input", style: "display: none" %>
+    <% end %>
+
+    <%# Étape 1 : Choisir une image %>
+    <div id="step-choose" class="ds-upload-step-content">
+      <label for="image-input" class="ds-upload-choose-card">
+        <svg class="ds-upload-choose-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+        <span class="ds-upload-choose-label">Choisir une image</span>
+      </label>
+    </div>
+
+    <%# Étape 2 : Recadrer %>
+    <div id="step-crop" class="ds-upload-step-content" style="display: none;">
+      <p class="ds-editor-step-label">Recadrez (ratio écran du beta)</p>
+      <div id="crop-wrapper" class="ds-editor-crop-wrapper">
+        <img id="crop-img" src="" alt="Crop" />
+      </div>
+      <div class="ds-editor-actions">
+        <button type="button" id="change-image-btn" class="ds-btn ds-btn--secondary">Changer</button>
+        <button type="button" id="suivant-btn" class="ds-btn ds-btn--primary">Suivant →</button>
+      </div>
+    </div>
+
+    <%# Étape 3 : Modifier %>
+    <div id="step-edit" class="ds-upload-step-content" style="display: none;">
+      <div class="ds-editor-toolbar">
+        <button type="button" id="tool-pixelate" class="ds-tool-btn ds-tool-btn--active" title="Pixeliser (brush)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          Pixeliser
+        </button>
+        <button type="button" id="tool-text" class="ds-tool-btn" title="Écrire du texte">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>
+          Texte
+        </button>
+        <button type="button" id="tool-undo" class="ds-tool-btn" title="Annuler">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
+          Annuler
+        </button>
+      </div>
+      <div id="text-options" class="ds-editor-options-row">
+        <label class="ds-editor-option-label" title="Couleur">
+          <input type="color" id="text-color" value="#ffffff" class="ds-editor-color-input">
+        </label>
+        <label class="ds-editor-option-label">
+          <input type="range" id="text-size" min="16" max="200" value="100" step="4" class="ds-editor-range">
+          <span id="text-size-display" class="ds-editor-value">100px</span>
+        </label>
+      </div>
+      <div id="pixelate-options" class="ds-editor-options-row" style="display: none;">
+        <label class="ds-editor-option-label">
+          Taille brush
+          <input type="range" id="brush-size" min="20" max="600" value="320" step="5" class="ds-editor-range">
+        </label>
+        <label class="ds-editor-option-label">
+          Taille pixels
+          <input type="range" id="pixel-size" min="4" max="150" value="44" step="1" class="ds-editor-range">
+          <span id="pixel-size-display" class="ds-editor-value">44</span>
+        </label>
+      </div>
+      <p id="editor-hint" class="ds-editor-step-label">Cliquez pour écrire, ou glissez un texte pour le déplacer</p>
+      <div class="ds-editor-canvas-wrapper" id="canvas-wrapper">
+        <div id="brush-cursor" class="ds-brush-cursor" aria-hidden="true"></div>
+        <canvas id="edit-canvas"></canvas>
+        <div id="floating-text-wrapper" class="ds-editor-floating-text-wrapper" style="display:none;">
+          <div id="floating-text-input" class="ds-editor-floating-text" contenteditable="true" spellcheck="false"></div>
+          <button type="button" id="text-delete-btn" class="ds-editor-text-delete-btn" title="Supprimer">×</button>
+        </div>
+      </div>
+      <div class="ds-editor-actions">
+        <button type="button" id="edit-back-btn" class="ds-btn ds-btn--secondary">← Recadrer</button>
+        <button type="button" id="edit-submit-btn" class="ds-btn ds-btn--primary">Envoyer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%= render "wallpaper/upload_script", device: @device, nickname: @nickname, device_id: @device_id %>

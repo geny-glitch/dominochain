@@ -10,6 +10,10 @@ class WallpaperController < ApplicationController
     @screenshots = @device.device_screenshots.order(captured_at: :desc)
   end
 
+  def upload_new
+    @device_id = @device.device_id
+  end
+
   def screenshot_request
     FcmService.send_take_screenshot_notification(device: @device)
     redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), notice: "Demande de screenshot envoyée."

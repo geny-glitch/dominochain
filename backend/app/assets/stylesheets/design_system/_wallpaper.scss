@@ -967,7 +967,77 @@
   margin-top: $ds-space-lg;
 }
 
-// Modal plein écran (crop + edit)
+// Page dédiée upload (étapes)
+.ds-upload-page {
+  .ds-upload-container {
+    max-width: 480px;
+  }
+}
+
+.ds-upload-back {
+  display: inline-block;
+  margin-bottom: $ds-space-lg;
+}
+
+.ds-upload-header {
+  margin-bottom: $ds-space-xl;
+}
+
+.ds-upload-steps {
+  display: flex;
+  gap: $ds-space-md;
+  margin-top: $ds-space-sm;
+  font-size: $ds-small-size;
+  color: $ds-text-muted;
+}
+
+.ds-upload-step {
+  &--active {
+    color: $ds-teal;
+    font-weight: 500;
+  }
+}
+
+.ds-upload-step-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $ds-space-md;
+}
+
+.ds-upload-choose-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $ds-space-md;
+  width: 100%;
+  min-height: 200px;
+  padding: $ds-space-xl;
+  background: $ds-surface;
+  border: 2px dashed $ds-border;
+  border-radius: $ds-radius-md;
+  cursor: pointer;
+  transition: border-color $ds-transition, background $ds-transition;
+
+  &:hover {
+    border-color: $ds-teal;
+    background: $ds-surface-elevated;
+  }
+}
+
+.ds-upload-choose-icon {
+  width: 48px;
+  height: 48px;
+  color: $ds-teal;
+}
+
+.ds-upload-choose-label {
+  font-size: $ds-body-size;
+  color: $ds-text-muted;
+}
+
+// Modal plein écran (crop + edit) — conservé pour compat
 .ds-editor-modal {
   position: fixed;
   inset: 0;
@@ -1133,6 +1203,21 @@
     margin: 0 auto;
     cursor: crosshair;
   }
+
+  &.ds-tool-pixelate canvas {
+    cursor: none;
+  }
+}
+
+.ds-brush-cursor {
+  position: absolute;
+  pointer-events: none;
+  border: 2px solid rgba($ds-teal, 0.8);
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
+  transform: translate(-50%, -50%);
+  z-index: 5;
+  display: none;
 }
 
 .ds-editor-floating-text-wrapper {

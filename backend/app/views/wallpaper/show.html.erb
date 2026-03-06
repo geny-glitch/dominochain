@@ -89,17 +89,75 @@
       <%# Upload form (file input déclenché par le CTA Fond d'écran) %>
       <%= form_with url: wallpaper_upload_submit_path(@nickname, device_id: @device_id), method: :post, local: true, multipart: true, id: "upload-form", class: "ds-form" do |f| %>
         <%= f.file_field :image, accept: "image/*", id: "image-input", style: "display: none" %>
-        <div id="crop-container" class="ds-crop-container" style="display: none;">
-          <p class="ds-crop-label">Recadrez (ratio écran)</p>
-          <div id="crop-wrapper" class="ds-crop-wrapper">
+      <% end %>
+
+      <%# Modal plein écran : crop + edit %>
+      <div id="editor-modal" class="ds-editor-modal" style="display: none;">
+        <button type="button" id="editor-modal-close" class="ds-editor-modal-close" title="Fermer" aria-label="Fermer">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+
+        <div id="crop-container" class="ds-editor-modal-step">
+          <p class="ds-editor-step-label">Recadrez (ratio écran)</p>
+          <div id="crop-wrapper" class="ds-editor-crop-wrapper">
             <img id="crop-img" src="" alt="Crop" />
           </div>
-          <div class="ds-crop-actions">
+          <div class="ds-editor-actions">
             <button type="button" id="change-image-btn" class="ds-btn ds-btn--secondary">Changer</button>
-            <%= f.submit "Envoyer", id: "upload-btn", class: "ds-btn ds-btn--primary" %>
+            <button type="button" id="suivant-btn" class="ds-btn ds-btn--primary">Suivant →</button>
           </div>
         </div>
-      <% end %>
+
+        <div id="edit-container" class="ds-editor-modal-step" style="display: none;">
+          <div class="ds-editor-toolbar">
+            <button type="button" id="tool-text" class="ds-tool-btn ds-tool-btn--active" title="Écrire du texte">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>
+              Texte
+            </button>
+            <button type="button" id="tool-pixelate" class="ds-tool-btn" title="Pixeliser (brush)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+              Pixeliser
+            </button>
+            <button type="button" id="tool-undo" class="ds-tool-btn" title="Annuler">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
+              Annuler
+            </button>
+          </div>
+          <div id="text-options" class="ds-editor-options-row">
+            <label class="ds-editor-option-label" title="Couleur">
+              <input type="color" id="text-color" value="#ffffff" class="ds-editor-color-input">
+            </label>
+            <label class="ds-editor-option-label">
+              <input type="range" id="text-size" min="16" max="200" value="100" step="4" class="ds-editor-range">
+              <span id="text-size-display" class="ds-editor-value">100px</span>
+            </label>
+          </div>
+          <div id="pixelate-options" class="ds-editor-options-row" style="display: none;">
+            <label class="ds-editor-option-label">
+              Taille brush
+              <input type="range" id="brush-size" min="20" max="200" value="60" step="10" class="ds-editor-range">
+              <span id="brush-size-display" class="ds-editor-value">60</span>
+            </label>
+            <label class="ds-editor-option-label">
+              Taille pixels
+              <input type="range" id="pixel-size" min="4" max="32" value="12" step="2" class="ds-editor-range">
+              <span id="pixel-size-display" class="ds-editor-value">12</span>
+            </label>
+          </div>
+          <p id="editor-hint" class="ds-editor-step-label">Cliquez pour écrire, ou glissez un texte pour le déplacer</p>
+          <div class="ds-editor-canvas-wrapper" id="canvas-wrapper">
+            <canvas id="edit-canvas"></canvas>
+            <div id="floating-text-wrapper" class="ds-editor-floating-text-wrapper" style="display:none;">
+              <div id="floating-text-input" class="ds-editor-floating-text" contenteditable="true" spellcheck="false"></div>
+              <button type="button" id="text-delete-btn" class="ds-editor-text-delete-btn" title="Supprimer">×</button>
+            </div>
+          </div>
+          <div class="ds-editor-actions">
+            <button type="button" id="edit-back-btn" class="ds-btn ds-btn--secondary">← Recadrer</button>
+            <button type="button" id="edit-submit-btn" class="ds-btn ds-btn--primary">Envoyer</button>
+          </div>
+        </div>
+      </div>
 
       <%# Fond d'écran choisi | Dernière capture côte à côte %>
       <% current_application = @applications&.first %>
@@ -307,15 +365,17 @@
     const aspectRatio = (screenW > 0 && screenH > 0) ? screenW / screenH : 9 / 16;
     const uploadUrl = '<%= wallpaper_upload_submit_path(@nickname, device_id: @device_id) %>';
 
-    const input = document.getElementById('image-input');
-    const cropContainer = document.getElementById('crop-container');
-    const cropImg = document.getElementById('crop-img');
+    const input          = document.getElementById('image-input');
+    const form           = document.getElementById('upload-form');
+    const editorModal    = document.getElementById('editor-modal');
+    const modalClose     = document.getElementById('editor-modal-close');
+    const cropContainer  = document.getElementById('crop-container');
+    const editContainer  = document.getElementById('edit-container');
+    const cropImg        = document.getElementById('crop-img');
     const changeImageBtn = document.getElementById('change-image-btn');
-    const uploadBtn = document.getElementById('upload-btn');
-    const form = document.getElementById('upload-form');
+    const suivantBtn     = document.getElementById('suivant-btn');
 
     let cropper = null;
-    let currentFile = null;
 
     function initCropper() {
       if (cropper) cropper.destroy();
@@ -330,26 +390,23 @@
     }
 
     function showCrop(file) {
-      currentFile = file;
       const reader = new FileReader();
       reader.onload = function() {
         cropImg.src = reader.result;
+        editContainer.style.display = 'none';
         cropContainer.style.display = 'block';
-        cropImg.onload = function() {
-          initCropper();
-        };
+        editorModal.style.display = 'flex';
+        cropImg.onload = function() { initCropper(); };
       };
       reader.readAsDataURL(file);
     }
 
-    function resetCrop() {
-      if (cropper) {
-        cropper.destroy();
-        cropper = null;
-      }
-      currentFile = null;
+    function closeModal() {
+      if (cropper) { cropper.destroy(); cropper = null; }
       cropImg.src = '';
       cropContainer.style.display = 'none';
+      editContainer.style.display = 'none';
+      editorModal.style.display = 'none';
       input.value = '';
     }
 
@@ -361,71 +418,561 @@
       });
     }
 
-    if (changeImageBtn) {
-      changeImageBtn.addEventListener('click', resetCrop);
+    if (changeImageBtn) changeImageBtn.addEventListener('click', function() { input.click(); });
+    if (modalClose) modalClose.addEventListener('click', closeModal);
+    if (editorModal) {
+      editorModal.addEventListener('click', function(e) {
+        if (e.target === editorModal) closeModal();
+      });
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && editorModal.style.display === 'flex') {
+          closeModal();
+        }
+      });
     }
 
-    if (form) {
-      form.addEventListener('submit', function(e) {
-        e.preventDefault();
-        if (!cropper || !currentFile) return;
+    if (suivantBtn) {
+      suivantBtn.addEventListener('click', function() {
+        if (!cropper) return;
+        const croppedCanvas = cropper.getCroppedCanvas();
+        if (!croppedCanvas) return;
+        initEditStep(croppedCanvas);
+      });
+    }
 
-        const canvas = cropper.getCroppedCanvas();
-        canvas.toBlob(function(blob) {
+    // ── STEP 2 : EDIT ──────────────────────────────────────────────────────────
+
+    const editCanvas      = document.getElementById('edit-canvas');
+    const canvasWrapper   = document.getElementById('canvas-wrapper');
+    const editBackBtn     = document.getElementById('edit-back-btn');
+    const editSubmitBtn   = document.getElementById('edit-submit-btn');
+    const toolTextBtn     = document.getElementById('tool-text');
+    const toolPixelateBtn = document.getElementById('tool-pixelate');
+    const toolUndoBtn     = document.getElementById('tool-undo');
+    const textOptions     = document.getElementById('text-options');
+    const pixelateOptions = document.getElementById('pixelate-options');
+    const textColorInput  = document.getElementById('text-color');
+    const textSizeInput   = document.getElementById('text-size');
+    const textSizeDisplay = document.getElementById('text-size-display');
+    const brushSizeInput  = document.getElementById('brush-size');
+    const brushSizeDisplay = document.getElementById('brush-size-display');
+    const pixelSizeInput  = document.getElementById('pixel-size');
+    const pixelSizeDisplay = document.getElementById('pixel-size-display');
+    const floatingInput   = document.getElementById('floating-text-input');
+    const floatingWrapper = document.getElementById('floating-text-wrapper');
+    const textDeleteBtn   = document.getElementById('text-delete-btn');
+    const editorHint      = document.getElementById('editor-hint');
+
+    let editCtx = null;
+    let imageLayer = null;
+    let texts = [];
+    let currentTool = 'text';
+    let undoStack = [];
+    let pendingCanvasX = 0, pendingCanvasY = 0;
+    let draggingTextIndex = -1;
+    let dragOffsetX = 0, dragOffsetY = 0;
+    let editingTextIndex = -1;
+    let potentialDrag = null;
+    let isBrushDrawing = false;
+    let lastBrushX = -1, lastBrushY = -1;
+    let skipNextTouchEndForNewText = false;
+
+    const HINTS = {
+      text:     'Cliquez pour écrire, ou glissez un texte pour le déplacer. Clic sur un texte = modifier.',
+      pixelate: 'Glissez sur la photo pour pixeliser'
+    };
+
+    function getCSSToCanvasScale() {
+      const r = editCanvas.getBoundingClientRect();
+      return { x: editCanvas.width / r.width, y: editCanvas.height / r.height };
+    }
+
+    function clientToCanvas(clientX, clientY) {
+      const rect = editCanvas.getBoundingClientRect();
+      const scale = getCSSToCanvasScale();
+      return {
+        x: (clientX - rect.left) * scale.x,
+        y: (clientY - rect.top) * scale.y
+      };
+    }
+
+    function saveUndoState() {
+      if (!imageLayer || !editCtx) return;
+      const imgCopy = editCtx.createImageData(imageLayer);
+      imgCopy.data.set(imageLayer.data);
+      undoStack.push({ imageData: imgCopy, texts: JSON.parse(JSON.stringify(texts)) });
+      if (undoStack.length > 20) undoStack.shift();
+    }
+
+    function setTool(tool) {
+      currentTool = tool;
+      toolTextBtn.classList.toggle('ds-tool-btn--active', tool === 'text');
+      toolPixelateBtn.classList.toggle('ds-tool-btn--active', tool === 'pixelate');
+      textOptions.style.display = tool === 'text' ? '' : 'none';
+      pixelateOptions.style.display = tool === 'pixelate' ? '' : 'none';
+      if (editorHint) editorHint.textContent = HINTS[tool] || '';
+      cancelText();
+    }
+
+    function initEditStep(croppedCanvas) {
+      editCanvas.width  = croppedCanvas.width;
+      editCanvas.height = croppedCanvas.height;
+      editCtx = editCanvas.getContext('2d');
+      editCtx.drawImage(croppedCanvas, 0, 0);
+      imageLayer = editCtx.getImageData(0, 0, editCanvas.width, editCanvas.height);
+      texts = [];
+      undoStack = [];
+      cropContainer.style.display = 'none';
+      editContainer.style.display = 'block';
+      setTool('text');
+      render();
+    }
+
+    function render() {
+      if (!editCtx || !imageLayer) return;
+      editCtx.putImageData(imageLayer, 0, 0);
+      const font = 'Inter, -apple-system, sans-serif';
+      texts.forEach(function(t, i) {
+        if (i === editingTextIndex) return;
+        editCtx.font         = `bold ${t.fontSize}px ${font}`;
+        editCtx.fillStyle    = t.color;
+        editCtx.textAlign    = 'center';
+        editCtx.textBaseline = 'middle';
+        editCtx.shadowColor  = 'rgba(0,0,0,0.8)';
+        editCtx.shadowBlur   = Math.max(3, t.fontSize * 0.15);
+        editCtx.fillText(t.text, t.x, t.y);
+        editCtx.textAlign    = 'left';
+        editCtx.textBaseline = 'top';
+        editCtx.shadowBlur   = 0;
+      });
+    }
+
+    function hitTestText(cx, cy) {
+      if (!editCtx) return -1;
+      const font = 'Inter, -apple-system, sans-serif';
+      for (let i = texts.length - 1; i >= 0; i--) {
+        const t = texts[i];
+        editCtx.font = `bold ${t.fontSize}px ${font}`;
+        const w = editCtx.measureText(t.text).width;
+        const h = t.fontSize * 1.2;
+        const left = t.x - w / 2;
+        const top = t.y - h / 2;
+        if (cx >= left && cx <= left + w && cy >= top && cy <= top + h) return i;
+      }
+      return -1;
+    }
+
+    // ── Text tool ──────────────────────────────────────────────────────────────
+
+    function showFloatingInput(cssX, cssY, canvasX, canvasY, textIndex) {
+      editingTextIndex = textIndex !== undefined ? textIndex : -1;
+      pendingCanvasX = canvasX;
+      pendingCanvasY = canvasY;
+      const scale = getCSSToCanvasScale();
+      let displaySize, color;
+      if (editingTextIndex >= 0) {
+        const t = texts[editingTextIndex];
+        displaySize = t.fontSize / scale.x;
+        color = t.color;
+        floatingInput.textContent = t.text;
+        if (textDeleteBtn) textDeleteBtn.style.display = '';
+      } else {
+        displaySize = parseInt(textSizeInput.value) / scale.x;
+        color = textColorInput.value;
+        floatingInput.textContent = '';
+        if (textDeleteBtn) textDeleteBtn.style.display = 'none';
+      }
+      floatingWrapper.style.left   = cssX + 'px';
+      floatingWrapper.style.top    = cssY + 'px';
+      floatingInput.style.fontSize = displaySize + 'px';
+      floatingInput.style.color    = color;
+      floatingWrapper.style.display = 'block';
+      requestAnimationFrame(function() {
+        requestAnimationFrame(function() {
+          floatingInput.focus({ preventScroll: true });
+          const range = document.createRange();
+          range.selectNodeContents(floatingInput);
+          range.collapse(editingTextIndex >= 0);
+          const sel = window.getSelection();
+          if (sel) { sel.removeAllRanges(); sel.addRange(range); }
+        });
+      });
+    }
+
+    function commitText() {
+      if (!floatingWrapper || floatingWrapper.style.display !== 'block') return;
+      const text = (floatingInput.textContent || '').trim();
+      const wasEditing = editingTextIndex >= 0;
+      const idx = editingTextIndex;
+      floatingWrapper.style.display = 'none';
+      floatingInput.textContent = '';
+      editingTextIndex = -1;
+      if (wasEditing) {
+        saveUndoState();
+        if (!text) {
+          texts.splice(idx, 1);
+        } else {
+          texts[idx].text = text;
+        }
+      } else {
+        if (!text) return;
+        saveUndoState();
+        texts.push({
+          text: text,
+          x: pendingCanvasX,
+          y: pendingCanvasY,
+          fontSize: parseInt(textSizeInput.value),
+          color: textColorInput.value
+        });
+      }
+      render();
+    }
+
+    function cancelText() {
+      if (!floatingWrapper) return;
+      floatingWrapper.style.display = 'none';
+      floatingInput.textContent = '';
+      editingTextIndex = -1;
+    }
+
+    function deleteCurrentText() {
+      if (editingTextIndex < 0) return;
+      saveUndoState();
+      texts.splice(editingTextIndex, 1);
+      editingTextIndex = -1;
+      floatingWrapper.style.display = 'none';
+      floatingInput.textContent = '';
+      render();
+    }
+
+    if (floatingInput) {
+      floatingInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter')  { e.preventDefault(); commitText(); }
+        if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); cancelText(); }
+      });
+      floatingInput.addEventListener('paste', function(e) {
+        e.preventDefault();
+        const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+        document.execCommand('insertText', false, text);
+      });
+    }
+    if (textDeleteBtn) {
+      textDeleteBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        deleteCurrentText();
+      });
+    }
+
+    if (textSizeInput && textSizeDisplay) {
+      textSizeInput.addEventListener('input', function() {
+        textSizeDisplay.textContent = this.value + 'px';
+        if (floatingWrapper && floatingWrapper.style.display === 'block' && editingTextIndex < 0) {
+          const scale = getCSSToCanvasScale();
+          floatingInput.style.fontSize = (parseInt(this.value) / scale.x) + 'px';
+        }
+      });
+    }
+
+    if (brushSizeInput && brushSizeDisplay) {
+      brushSizeInput.addEventListener('input', function() {
+        brushSizeDisplay.textContent = this.value;
+      });
+    }
+    if (pixelSizeInput && pixelSizeDisplay) {
+      pixelSizeInput.addEventListener('input', function() {
+        pixelSizeDisplay.textContent = this.value;
+      });
+    }
+
+    // ── Pixelate brush ──────────────────────────────────────────────────────────
+
+    function pixelateRegionInImageData(data, x, y, w, h, blockSize) {
+      const wd = data.width;
+      const ht = data.height;
+      const d = data.data;
+      x = Math.max(0, Math.round(x));
+      y = Math.max(0, Math.round(y));
+      w = Math.min(Math.round(w), wd - x);
+      h = Math.min(Math.round(h), ht - y);
+      if (w <= 0 || h <= 0) return;
+      blockSize = Math.max(2, blockSize);
+      for (let py = 0; py < h; py += blockSize) {
+        for (let px = 0; px < w; px += blockSize) {
+          const gx = x + px;
+          const gy = y + py;
+          const i = (gy * wd + gx) * 4;
+          const r = d[i], g = d[i+1], b = d[i+2], a = d[i+3];
+          for (let by = 0; by < blockSize && py + by < h; by++) {
+            for (let bx = 0; bx < blockSize && px + bx < w; bx++) {
+              const idx = ((y + py + by) * wd + (x + px + bx)) * 4;
+              d[idx] = r; d[idx+1] = g; d[idx+2] = b; d[idx+3] = a;
+            }
+          }
+        }
+      }
+    }
+
+    function applyBrushAt(canvasX, canvasY) {
+      const brushSize = parseInt(brushSizeInput.value) || 60;
+      const pixelSize = parseInt(pixelSizeInput.value) || 12;
+      const half = brushSize / 2;
+      const x = Math.max(0, canvasX - half);
+      const y = Math.max(0, canvasY - half);
+      const w = Math.min(brushSize, editCanvas.width - x);
+      const h = Math.min(brushSize, editCanvas.height - y);
+      if (w <= 0 || h <= 0) return;
+      pixelateRegionInImageData(imageLayer, x, y, w, h, pixelSize);
+    }
+
+    function handleBrushDown(clientX, clientY) {
+      const pt = clientToCanvas(clientX, clientY);
+      saveUndoState();
+      isBrushDrawing = true;
+      lastBrushX = pt.x;
+      lastBrushY = pt.y;
+      applyBrushAt(pt.x, pt.y);
+      render();
+    }
+
+    function handleBrushMove(clientX, clientY) {
+      if (!isBrushDrawing) return;
+      const pt = clientToCanvas(clientX, clientY);
+      const step = parseInt(brushSizeInput.value) * 0.3;
+      const dist = Math.hypot(pt.x - lastBrushX, pt.y - lastBrushY);
+      if (dist >= step) {
+        applyBrushAt(pt.x, pt.y);
+        lastBrushX = pt.x;
+        lastBrushY = pt.y;
+        render();
+      }
+    }
+
+    function handleBrushUp() {
+      isBrushDrawing = false;
+    }
+
+    // ── Canvas events ───────────────────────────────────────────────────────────
+
+    function handleCanvasMouseDown(e) {
+      if (floatingWrapper && floatingWrapper.style.display === 'block') {
+        cancelText();
+        return;
+      }
+      const wrapperRect = canvasWrapper.getBoundingClientRect();
+      const pt = clientToCanvas(e.clientX, e.clientY);
+      if (currentTool === 'text') {
+        const hit = hitTestText(pt.x, pt.y);
+        if (hit >= 0) {
+          potentialDrag = { index: hit, startX: pt.x, startY: pt.y };
+        } else {
+          e.preventDefault();
+          commitText();
+          showFloatingInput(
+            e.clientX - wrapperRect.left,
+            e.clientY - wrapperRect.top,
+            pt.x, pt.y
+          );
+        }
+      } else if (currentTool === 'pixelate') {
+        handleBrushDown(e.clientX, e.clientY);
+      }
+    }
+
+    function handleCanvasMouseMove(e) {
+      if (currentTool === 'pixelate') {
+        handleBrushMove(e.clientX, e.clientY);
+      } else if (currentTool === 'text') {
+        if (potentialDrag) {
+          const pt = clientToCanvas(e.clientX, e.clientY);
+          const dist = Math.hypot(pt.x - potentialDrag.startX, pt.y - potentialDrag.startY);
+          if (dist > 6) {
+            saveUndoState();
+            draggingTextIndex = potentialDrag.index;
+            dragOffsetX = pt.x - texts[potentialDrag.index].x;
+            dragOffsetY = pt.y - texts[potentialDrag.index].y;
+            potentialDrag = null;
+          }
+        } else if (draggingTextIndex >= 0) {
+          const pt = clientToCanvas(e.clientX, e.clientY);
+          texts[draggingTextIndex].x = pt.x - dragOffsetX;
+          texts[draggingTextIndex].y = pt.y - dragOffsetY;
+          render();
+        }
+      }
+    }
+
+    function handleCanvasMouseUp(e) {
+      if (currentTool === 'pixelate') {
+        handleBrushUp();
+      } else if (currentTool === 'text') {
+        if (draggingTextIndex >= 0) {
+          draggingTextIndex = -1;
+        } else if (potentialDrag) {
+          const wrapperRect = canvasWrapper.getBoundingClientRect();
+          const canvasRect = editCanvas.getBoundingClientRect();
+          const scale = getCSSToCanvasScale();
+          const t = texts[potentialDrag.index];
+          const cssX = (canvasRect.left - wrapperRect.left) + t.x / scale.x;
+          const cssY = (canvasRect.top - wrapperRect.top) + t.y / scale.y;
+          showFloatingInput(cssX, cssY, t.x, t.y, potentialDrag.index);
+          potentialDrag = null;
+          render();
+        }
+      }
+    }
+
+    if (editCanvas) {
+      editCanvas.addEventListener('mousedown', handleCanvasMouseDown);
+      editCanvas.addEventListener('touchstart', function(e) {
+        const t = e.touches[0];
+        const ev = { clientX: t.clientX, clientY: t.clientY };
+        if (floatingWrapper && floatingWrapper.style.display === 'block') {
+          e.preventDefault();
+          cancelText();
+          skipNextTouchEndForNewText = true;
+          return;
+        }
+        skipNextTouchEndForNewText = false;
+        if (currentTool === 'pixelate') {
+          e.preventDefault();
+          handleCanvasMouseDown(ev);
+        } else if (currentTool === 'text') {
+          const pt = clientToCanvas(t.clientX, t.clientY);
+          const hit = hitTestText(pt.x, pt.y);
+          if (hit >= 0) {
+            e.preventDefault();
+            potentialDrag = { index: hit, startX: pt.x, startY: pt.y };
+          }
+        }
+      }, { passive: false });
+
+      editCanvas.addEventListener('touchmove', function(e) {
+        if (currentTool === 'pixelate' || draggingTextIndex >= 0 || potentialDrag) e.preventDefault();
+        const t = e.touches[0];
+        handleCanvasMouseMove({ clientX: t.clientX, clientY: t.clientY });
+      }, { passive: false });
+
+      editCanvas.addEventListener('touchend', function(e) {
+        if (currentTool === 'pixelate' || draggingTextIndex >= 0 || potentialDrag) e.preventDefault();
+        const t = e.changedTouches[0];
+        if (currentTool === 'text') {
+          if (draggingTextIndex >= 0 || potentialDrag) {
+            handleCanvasMouseUp(e);
+          } else if (skipNextTouchEndForNewText) {
+            skipNextTouchEndForNewText = false;
+          } else {
+            const wrapperRect = canvasWrapper.getBoundingClientRect();
+            const pt = clientToCanvas(t.clientX, t.clientY);
+            commitText();
+            showFloatingInput(t.clientX - wrapperRect.left, t.clientY - wrapperRect.top, pt.x, pt.y);
+          }
+        } else {
+          handleCanvasMouseUp(e);
+        }
+      }, { passive: false });
+    }
+
+    window.addEventListener('mousemove', handleCanvasMouseMove);
+    window.addEventListener('mouseup', handleCanvasMouseUp);
+
+    function handleClickOutsideFloating(e) {
+      if (!floatingWrapper || floatingWrapper.style.display !== 'block') return;
+      if (floatingWrapper.contains(e.target)) return;
+      cancelText();
+      e.stopPropagation();
+    }
+
+    document.addEventListener('mousedown', function(e) {
+      if (!editContainer || editContainer.style.display !== 'block') return;
+      handleClickOutsideFloating(e);
+    }, true);
+    document.addEventListener('touchstart', function(e) {
+      if (!editContainer || editContainer.style.display !== 'block') return;
+      if (!floatingWrapper || floatingWrapper.style.display !== 'block') return;
+      if (floatingWrapper.contains(e.target)) return;
+      cancelText();
+      skipNextTouchEndForNewText = true;
+    }, { passive: true, capture: true });
+
+    // ── Toolbar & actions ───────────────────────────────────────────────────────
+
+    if (toolTextBtn)     toolTextBtn.addEventListener('click', function() { setTool('text'); });
+    if (toolPixelateBtn) toolPixelateBtn.addEventListener('click', function() { setTool('pixelate'); });
+
+    if (toolUndoBtn) {
+      toolUndoBtn.addEventListener('click', function() {
+        cancelText();
+        if (undoStack.length > 0 && imageLayer && editCtx) {
+          const s = undoStack.pop();
+          imageLayer.data.set(s.imageData.data);
+          texts = s.texts;
+          render();
+        }
+      });
+    }
+
+    if (editBackBtn) {
+      editBackBtn.addEventListener('click', function() {
+        cancelText();
+        editContainer.style.display = 'none';
+        cropContainer.style.display = 'block';
+      });
+    }
+
+    if (editSubmitBtn) {
+      editSubmitBtn.addEventListener('click', function() {
+        commitText();
+        if (!editCanvas || !editCanvas.width || !editCtx) return;
+        editSubmitBtn.disabled    = true;
+        editSubmitBtn.textContent = 'Envoi...';
+        editCanvas.toBlob(function(blob) {
           const formData = new FormData();
           formData.append('image', blob, 'wallpaper.jpg');
           const token = form.querySelector('input[name="authenticity_token"]')?.value;
           if (token) formData.append('authenticity_token', token);
-
-          uploadBtn.disabled = true;
-          uploadBtn.value = 'Envoi...';
-
           fetch(uploadUrl, {
             method: 'POST',
             body: formData,
             credentials: 'same-origin',
-            headers: {
-              'X-CSRF-Token': token || '',
-              'Accept': 'text/html'
-            },
+            headers: { 'X-CSRF-Token': token || '', 'Accept': 'text/html' },
             redirect: 'follow'
           }).then(function(res) {
             if (res.ok || res.redirected) {
               window.location.href = res.url;
             } else {
-              uploadBtn.disabled = false;
-              uploadBtn.value = 'Envoyer';
+              editSubmitBtn.disabled    = false;
+              editSubmitBtn.textContent = 'Envoyer';
               alert('Erreur lors de l\'upload.');
             }
           }).catch(function() {
-            uploadBtn.disabled = false;
-            uploadBtn.value = 'Envoyer';
+            editSubmitBtn.disabled    = false;
+            editSubmitBtn.textContent = 'Envoyer';
             alert('Erreur lors de l\'upload.');
           });
         }, 'image/jpeg', 0.9);
       });
     }
 
-    const permissionsIconBtn = document.getElementById('permissions-icon-btn');
-    const permissionsDialog = document.getElementById('permissions-dialog');
+    // ── Permissions dialog ────────────────────────────────────────────────────
+
+    const permissionsIconBtn   = document.getElementById('permissions-icon-btn');
+    const permissionsDialog    = document.getElementById('permissions-dialog');
     const permissionsDialogClose = document.getElementById('permissions-dialog-close');
     if (permissionsIconBtn && permissionsDialog) {
-      permissionsIconBtn.addEventListener('click', function() {
-        permissionsDialog.showModal();
-      });
+      permissionsIconBtn.addEventListener('click', function() { permissionsDialog.showModal(); });
     }
     if (permissionsDialog) {
       permissionsDialog.addEventListener('click', function(e) {
         if (e.target === permissionsDialog) permissionsDialog.close();
       });
       if (permissionsDialogClose) {
-        permissionsDialogClose.addEventListener('click', function() {
-          permissionsDialog.close();
-        });
+        permissionsDialogClose.addEventListener('click', function() { permissionsDialog.close(); });
       }
     }
 
-    const taskCtaBtn = document.getElementById('task-cta-btn');
+    // ── Task CTA ──────────────────────────────────────────────────────────────
+
+    const taskCtaBtn     = document.getElementById('task-cta-btn');
     const taskFormDetails = document.getElementById('task-form-details');
     if (taskCtaBtn && taskFormDetails) {
       taskCtaBtn.addEventListener('click', function() {
@@ -434,17 +981,16 @@
       });
     }
 
+    // ── Download all ──────────────────────────────────────────────────────────
+
     const downloadAllBtn = document.getElementById('download-all-btn');
     if (downloadAllBtn) {
       downloadAllBtn.addEventListener('click', function() {
-        const cards = document.querySelectorAll('.wallpaper-card');
-        cards.forEach(function(card, i) {
+        document.querySelectorAll('.wallpaper-card').forEach(function(card, i) {
           setTimeout(function() {
-            const url = card.dataset.downloadUrl;
-            const filename = card.dataset.filename || 'wallpaper.jpg';
             const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
+            a.href = card.dataset.downloadUrl;
+            a.download = card.dataset.filename || 'wallpaper.jpg';
             a.style.display = 'none';
             document.body.appendChild(a);
             a.click();
@@ -454,28 +1000,25 @@
       });
     }
 
+    // ── History expandable ────────────────────────────────────────────────────
+
     function initHistoryExpandable(expandable) {
       const wrapper = expandable.querySelector('.ds-history-grid-wrapper');
-      const grid = expandable.querySelector('.ds-history-grid');
+      const grid    = expandable.querySelector('.ds-history-grid');
       const moreBtn = expandable.querySelector('.ds-history-more');
-      const fade = expandable.querySelector('.ds-history-fade');
+      const fade    = expandable.querySelector('.ds-history-fade');
       if (!wrapper || !grid || !moreBtn) return;
-
-      const items = grid.querySelectorAll('.ds-history-item');
-      const total = items.length;
+      const items   = grid.querySelectorAll('.ds-history-item');
+      const total   = items.length;
       const initial = parseInt(expandable.dataset.initial || 6, 10);
-      const step = parseInt(expandable.dataset.step || 9, 10);
-
+      const step    = parseInt(expandable.dataset.step    || 9, 10);
       if (total <= initial) {
         moreBtn.classList.add('ds-history-more--hidden');
         if (fade) fade.style.display = 'none';
         return;
       }
-
       if (fade) fade.style.display = 'none';
-
       let visibleCount = initial;
-
       function updateHeight() {
         if (visibleCount >= total) {
           wrapper.style.maxHeight = '';
@@ -483,13 +1026,10 @@
           moreBtn.classList.add('ds-history-more--hidden');
         } else {
           const nextItem = items[visibleCount];
-          const maxH = nextItem ? nextItem.offsetTop : wrapper.scrollHeight;
-          wrapper.style.maxHeight = maxH + 'px';
+          wrapper.style.maxHeight = (nextItem ? nextItem.offsetTop : wrapper.scrollHeight) + 'px';
         }
       }
-
       updateHeight();
-
       moreBtn.addEventListener('click', function() {
         visibleCount = Math.min(visibleCount + step, total);
         updateHeight();

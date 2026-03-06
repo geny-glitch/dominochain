@@ -967,6 +967,223 @@
   margin-top: $ds-space-lg;
 }
 
+// Modal plein écran (crop + edit)
+.ds-editor-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: $ds-bg;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: $ds-space-lg;
+  overflow-y: auto;
+}
+
+.ds-editor-modal-close {
+  position: fixed;
+  top: $ds-space-md;
+  right: $ds-space-md;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  background: rgba($ds-surface, 0.9);
+  border: 1px solid $ds-border;
+  border-radius: $ds-radius-md;
+  color: $ds-text-muted;
+  cursor: pointer;
+  z-index: 1001;
+  transition: color $ds-transition, background $ds-transition;
+
+  &:hover {
+    color: $ds-text;
+    background: $ds-surface-elevated;
+  }
+}
+
+.ds-editor-modal-step {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $ds-space-md;
+}
+
+.ds-editor-step-label {
+  font-size: $ds-small-size;
+  color: $ds-text-muted;
+  margin: 0;
+}
+
+.ds-editor-crop-wrapper {
+  width: 100%;
+  max-height: 75vh;
+  background: $ds-surface;
+  border-radius: $ds-radius-md;
+  overflow: hidden;
+  border: 1px solid $ds-border;
+
+  img {
+    max-width: 100%;
+    display: block;
+  }
+}
+
+.ds-editor-actions {
+  display: flex;
+  gap: $ds-space-sm;
+  width: 100%;
+  max-width: 360px;
+  justify-content: center;
+}
+
+// Photo editor
+.ds-editor-toolbar {
+  display: flex;
+  gap: $ds-space-sm;
+  margin-bottom: $ds-space-xs;
+  flex-wrap: wrap;
+}
+
+.ds-tool-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: $ds-space-xs $ds-space-md;
+  background: $ds-surface;
+  border: 1px solid $ds-border;
+  border-radius: $ds-radius-sm;
+  color: $ds-text-muted;
+  font-size: $ds-small-size;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all $ds-transition;
+
+  &:hover {
+    border-color: $ds-teal;
+    color: $ds-text;
+  }
+
+  &--active {
+    border-color: $ds-teal;
+    color: $ds-teal;
+    background: rgba($ds-teal, 0.1);
+  }
+}
+
+.ds-editor-options-row {
+  display: flex;
+  align-items: center;
+  gap: $ds-space-lg;
+  margin-bottom: $ds-space-sm;
+  flex-wrap: wrap;
+}
+
+.ds-editor-option-label {
+  display: flex;
+  align-items: center;
+  gap: $ds-space-xs;
+  font-size: $ds-small-size;
+  color: $ds-text-muted;
+  cursor: pointer;
+}
+
+.ds-editor-color-input {
+  width: 32px;
+  height: 24px;
+  padding: 2px;
+  border: 1px solid $ds-border;
+  border-radius: $ds-radius-sm;
+  background: $ds-surface;
+  cursor: pointer;
+}
+
+.ds-editor-range {
+  width: 80px;
+  accent-color: $ds-teal;
+}
+
+.ds-editor-value {
+  font-variant-numeric: tabular-nums;
+  min-width: 2.5ch;
+}
+
+.ds-editor-canvas-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  background: $ds-surface;
+  border: 1px solid $ds-border;
+  border-radius: $ds-radius-md;
+  overflow: hidden;
+  line-height: 0;
+  text-align: center;
+
+  canvas {
+    display: block;
+    max-width: 100%;
+    max-height: 65vh;
+    width: auto;
+    height: auto;
+    margin: 0 auto;
+    cursor: crosshair;
+  }
+}
+
+.ds-editor-floating-text-wrapper {
+  position: absolute;
+  display: inline-block;
+  z-index: 10;
+  transform: translate(-50%, -50%);
+}
+
+.ds-editor-floating-text {
+  display: inline-block;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px dashed rgba($ds-teal, 0.7);
+  border-radius: 2px;
+  color: #fff;
+  font-family: $ds-font-family;
+  font-weight: bold;
+  padding: 2px 6px;
+  outline: none;
+  min-width: 40px;
+  white-space: pre;
+  line-height: 1.2;
+  transform: translateY(-0.08em);
+  cursor: text;
+}
+
+.ds-editor-text-delete-btn {
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-left: 4px;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  font-size: 18px;
+  line-height: 1;
+  color: $ds-text-muted;
+  background: rgba($ds-surface, 0.9);
+  border: 1px solid $ds-border;
+  border-radius: $ds-radius-sm;
+  cursor: pointer;
+  transition: color $ds-transition, background $ds-transition;
+
+  &:hover {
+    color: $ds-error;
+    background: rgba($ds-error, 0.15);
+  }
+}
+
+
 .ds-proof-result {
   margin-top: $ds-space-md;
   font-size: $ds-body-size;

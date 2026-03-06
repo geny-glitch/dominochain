@@ -17,9 +17,14 @@
 - Page show visible d’un coup d’œil sur desktop (meilleure mise en page pour grand écran)
 
 
-Pouvoir blur / éditer des photos dans l'e web avant upload
-Prendre un screenshot de l'écran
-Réorg l'app
-Réorg le web
-Déverrouiller si on prend un screenshot ?
+x Prendre un screenshot de l'écran
+x Réorg l'app
+x Réorg le web
+x Déverrouiller si on prend un screenshot ?
+Ajout d'une punition
+Pouvoir blur / éditer des photos dans le web avant upload
 Real time update of web interface
+Collaterals
+connexion à pishock
+connexion à la block chain
+connexion à airdroid / ou remplacement d'airdroid

@@ -209,6 +209,39 @@ class FcmService
       send_request(device, payload)
     end
 
+    def send_punishment_notification(device:, task:, message: nil)
+      unless device.fcm_token.present?
+        Rails.logger.info "[FCM] Skipped punishment: no fcm_token for device #{device.device_id}"
+        return
+      end
+      unless credentials_configured?
+        Rails.logger.warn "[FCM] Skipped punishment: credentials not configured."
+        return
+      end
+
+      title = "OTB"
+      body = message.presence || "Tâche non terminée à temps..."
+
+      data = {
+        type: "punishment",
+        task_id: task.id.to_s,
+        title: title,
+        body: body
+      }
+
+      payload = {
+        message: {
+          token: device.fcm_token,
+          data: data,
+          android: {
+            priority: "high"
+          }
+        }
+      }
+
+      send_request(device, payload)
+    end
+
     def credentials_configured?
       project_id.present? && credentials_json.present?
     end

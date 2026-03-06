@@ -42,6 +42,12 @@ class BgFirebaseMessagingService : FirebaseMessagingService() {
                     NotificationHelper.showProofReviewedNotification(applicationContext, title, body, taskId)
                 }
             }
+            "punishment" -> {
+                val title = message.data["title"] ?: message.notification?.title ?: "OTB"
+                val body = message.data["body"] ?: message.notification?.body ?: "Tâche non terminée à temps..."
+                val taskId = message.data["task_id"] ?: ""
+                NotificationHelper.showPunishmentNotification(applicationContext, title, body, taskId)
+            }
             "take_screenshot" -> {
                 Log.d(TAG, "Take screenshot push received")
                 val title = message.data["title"] ?: message.notification?.title ?: "OTB"

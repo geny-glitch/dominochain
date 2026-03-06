@@ -2,7 +2,7 @@
 
 class TasksController < ApplicationController
   include BetaAccessControl
-  before_action :set_task, only: [:show, :review_proof, :destroy]
+  before_action :set_task, only: [:show, :review_proof, :punish, :destroy]
 
   def create
     deadline_at = compute_deadline
@@ -34,6 +34,22 @@ class TasksController < ApplicationController
     else
       redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), notice: "Preuve refusée. Le beta a été notifié."
     end
+  end
+
+  def punish
+    unless @task.expired?
+      redirect_to wallpaper_task_path(@nickname, @task, device_id: @device_id), alert: "Seules les tâches expirées peuvent être punies."
+      return
+    end
+
+    @task.update!(status: "expired") if @task.status == "pending"
+
+    message = params[:punishment_message].presence
+    @task.user.devices.find_each do |device|
+      FcmService.send_punishment_notification(device: device, task: @task, message: message)
+    end
+
+    redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), notice: "Punition envoyée au beta."
   end
 
   def destroy

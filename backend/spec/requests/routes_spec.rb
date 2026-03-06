@@ -299,6 +299,12 @@ RSpec.describe "Routes", type: :request do
       post wallpaper_task_review_proof_path(beta.nickname, task.id), params: { accept: "Accepter" }
       expect(response).to have_http_status(:redirect)
     end
+
+    it "POST w/:nickname/tasks/:id/punish returns redirect for expired task" do
+      expired_task = create(:task, user: beta, deadline_at: 1.hour.ago, status: "pending")
+      post wallpaper_task_punish_path(beta.nickname, expired_task.id, device_id: device.device_id), params: { punishment_message: "Tu aurais dû finir !" }
+      expect(response).to have_http_status(:redirect)
+    end
   end
 
   describe "API routes" do

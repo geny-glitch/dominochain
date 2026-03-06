@@ -28,3 +28,5 @@ Collaterals
 connexion à pishock
 connexion à la block chain
 connexion à airdroid / ou remplacement d'airdroid
+controle à distance
+tests côté app ?

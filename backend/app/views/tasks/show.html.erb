@@ -39,7 +39,7 @@
 
       <div class="ds-form-group">
         <span class="ds-form-label">Statut</span>
-        <span class="ds-task-status ds-task-status--<%= @task.status %>"><%= @task.status %></span>
+        <span class="ds-task-status ds-task-status--<%= @task.effective_status %>"><%= @task.effective_status %></span>
       </div>
 
       <% if @task.proof_of_completion.present? %>
@@ -85,6 +85,19 @@
         </div>
       <% else %>
         <p class="ds-task-body ds-text-muted">Aucune preuve soumise pour le moment.</p>
+      <% end %>
+
+      <% if @task.expired? && !@task.proof_pending? %>
+        <div class="ds-proof-section ds-punishment-section">
+          <h2 class="ds-section-title">Punir l'impertinent</h2>
+          <%= form_with url: wallpaper_task_punish_path(@nickname, @task, device_id: @device_id), method: :post, local: true, class: "ds-form ds-proof-review" do |f| %>
+            <label for="punishment_message" class="ds-form-label">Message (optionnel)</label>
+            <%= f.text_area :punishment_message, id: "punishment_message", class: "ds-input ds-textarea ds-proof-review__comment", rows: 2, placeholder: "Ex: Tu aurais dû finir à temps..." %>
+            <div class="ds-proof-actions">
+              <%= f.submit "Envoyer la punition", class: "ds-btn ds-btn--primary" %>
+            </div>
+          <% end %>
+        </div>
       <% end %>
     </section>
   </div>

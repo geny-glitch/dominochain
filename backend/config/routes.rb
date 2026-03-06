@@ -80,5 +80,6 @@ Rails.application.routes.draw do
   post "w/:nickname/tasks", to: "tasks#create", as: :wallpaper_tasks
   get "w/:nickname/tasks/:id", to: "tasks#show", as: :wallpaper_task
   post "w/:nickname/tasks/:id/review_proof", to: "tasks#review_proof", as: :wallpaper_task_review_proof
+  post "w/:nickname/tasks/:id/punish", to: "tasks#punish", as: :wallpaper_task_punish
   delete "w/:nickname/tasks/:id", to: "tasks#destroy", as: :wallpaper_task_destroy
 end

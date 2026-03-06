@@ -37,3 +37,9 @@ tests côté app ?
 
 
 mettre à dispo l'éditeur de photo sans login
+
+détection
+- nude on screen
+- fautes d'orthographe
+- strava (fréquence / vitesse / intensité)
+- echecs : objectif elo, streak de défaites

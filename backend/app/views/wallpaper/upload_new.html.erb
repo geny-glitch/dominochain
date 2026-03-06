@@ -3,6 +3,7 @@
 
 <% content_for :head do %>
   <link rel="stylesheet" href="https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto:wght@400;700&family=Open+Sans:wght@400;700&family=Playfair+Display:wght@400;700&family=Lato:wght@400;700&family=Montserrat:wght@400;700&family=Oswald:wght@400;700&family=Source+Sans+3:wght@400;700&family=Merriweather:wght@400;700&family=PT+Sans:wght@400;700&family=Raleway:wght@400;700&family=Ubuntu:wght@400;700&display=swap" rel="stylesheet">
 <% end %>
 
 <div class="ds-page ds-upload-page">
@@ -59,6 +60,31 @@
         </button>
       </div>
       <div id="text-options" class="ds-editor-options-row">
+        <label class="ds-editor-option-label" title="Police">
+          <select id="text-font" class="ds-editor-font-select">
+            <option value="Inter, -apple-system, sans-serif">Inter</option>
+            <option value="Roboto, sans-serif">Roboto</option>
+            <option value="'Open Sans', sans-serif">Open Sans</option>
+            <option value="Lato, sans-serif">Lato</option>
+            <option value="Montserrat, sans-serif">Montserrat</option>
+            <option value="Oswald, sans-serif">Oswald</option>
+            <option value="'Source Sans 3', sans-serif">Source Sans 3</option>
+            <option value="Raleway, sans-serif">Raleway</option>
+            <option value="Ubuntu, sans-serif">Ubuntu</option>
+            <option value="'PT Sans', sans-serif">PT Sans</option>
+            <option value="'Playfair Display', Georgia, serif">Playfair Display</option>
+            <option value="Merriweather, Georgia, serif">Merriweather</option>
+            <option value="Georgia, serif">Georgia</option>
+            <option value="'Courier New', monospace">Courier New</option>
+          </select>
+        </label>
+        <label class="ds-editor-option-label" title="Alignement">
+          <div class="ds-editor-align-btns" role="group" aria-label="Alignement du texte">
+            <button type="button" id="text-align-left" class="ds-editor-align-btn" title="Aligner à gauche" data-align="left">L</button>
+            <button type="button" id="text-align-center" class="ds-editor-align-btn ds-editor-align-btn--active" title="Centrer" data-align="center">C</button>
+            <button type="button" id="text-align-right" class="ds-editor-align-btn" title="Aligner à droite" data-align="right">R</button>
+          </div>
+        </label>
         <label class="ds-editor-option-label" title="Couleur">
           <input type="color" id="text-color" value="#ffffff" class="ds-editor-color-input">
         </label>

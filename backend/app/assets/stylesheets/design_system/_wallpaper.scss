@@ -1194,6 +1194,47 @@
   cursor: pointer;
 }
 
+.ds-editor-font-select {
+  padding: $ds-space-xs $ds-space-sm;
+  font-size: $ds-small-size;
+  background: $ds-bg;
+  border: 1px solid $ds-border;
+  border-radius: $ds-radius-sm;
+  color: $ds-text;
+  cursor: pointer;
+  max-width: 140px;
+}
+
+.ds-editor-align-btns {
+  display: flex;
+  gap: 2px;
+}
+
+.ds-editor-align-btn {
+  width: 28px;
+  height: 24px;
+  padding: 0;
+  font-size: 11px;
+  font-weight: 600;
+  background: $ds-bg;
+  border: 1px solid $ds-border;
+  border-radius: $ds-radius-sm;
+  color: $ds-text-muted;
+  cursor: pointer;
+  transition: color $ds-transition, background $ds-transition, border-color $ds-transition;
+
+  &:hover {
+    color: $ds-text;
+    background: $ds-surface-elevated;
+  }
+
+  &--active {
+    color: $ds-teal;
+    border-color: $ds-teal;
+    background: rgba($ds-teal, 0.1);
+  }
+}
+
 .ds-editor-range {
   width: 80px;
   accent-color: $ds-teal;
@@ -1259,7 +1300,7 @@
   padding: 2px 6px;
   outline: none;
   min-width: 40px;
-  white-space: pre;
+  white-space: pre-wrap;
   line-height: 1.2;
   transform: translateY(-0.08em);
   cursor: text;

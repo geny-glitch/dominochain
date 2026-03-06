@@ -94,6 +94,8 @@
     const toolUndoBtn     = document.getElementById('tool-undo');
     const textOptions     = document.getElementById('text-options');
     const pixelateOptions = document.getElementById('pixelate-options');
+    const textFontInput   = document.getElementById('text-font');
+    const textAlignBtns   = document.querySelectorAll('.ds-editor-align-btn');
     const textColorInput  = document.getElementById('text-color');
     const textSizeInput   = document.getElementById('text-size');
     const textSizeDisplay = document.getElementById('text-size-display');
@@ -123,7 +125,7 @@
     let skipNextTouchEndForNewText = false;
 
     const HINTS = {
-      text:     'Cliquez pour écrire, ou glissez un texte pour le déplacer. Clic sur un texte = modifier.',
+      text:     'Cliquez pour écrire. Entrée = valider, Maj+Entrée = retour à la ligne, clic dehors = valider. Glissez un texte pour le déplacer.',
       pixelate: 'Glissez sur la photo pour pixeliser'
     };
 
@@ -200,20 +202,57 @@
       return preview;
     }
 
+    function getFontFamily(t) {
+      return t.font || (textFontInput ? textFontInput.value : 'Inter, -apple-system, sans-serif');
+    }
+
+    function getTextAlign(t) {
+      return t.align || (document.querySelector('.ds-editor-align-btn--active')?.dataset?.align) || 'center';
+    }
+
+    function getTextBlockMetrics(t) {
+      const font = getFontFamily(t);
+      const align = getTextAlign(t);
+      editCtx.font = `bold ${t.fontSize}px ${font}`;
+      const lines = (t.text || '').split('\n');
+      const lineHeight = t.fontSize * 1.2;
+      const widths = lines.map(function(l) { return editCtx.measureText(l).width; });
+      const maxWidth = widths.length ? Math.max.apply(null, widths) : 0;
+      const totalHeight = lines.length * lineHeight;
+      let left, right;
+      if (align === 'center') {
+        left = t.x - maxWidth / 2;
+        right = t.x + maxWidth / 2;
+      } else if (align === 'right') {
+        left = t.x - maxWidth;
+        right = t.x;
+      } else {
+        left = t.x;
+        right = t.x + maxWidth;
+      }
+      return { lines, widths, lineHeight, totalHeight, left, right, top: t.y - totalHeight / 2, bottom: t.y + totalHeight / 2 };
+    }
+
     function render(alternateImageData) {
       if (!editCtx || !imageLayer) return;
       const src = alternateImageData || imageLayer;
       editCtx.putImageData(src, 0, 0);
-      const font = 'Inter, -apple-system, sans-serif';
       texts.forEach(function(t, i) {
         if (i === editingTextIndex) return;
+        const font = getFontFamily(t);
+        const align = getTextAlign(t);
         editCtx.font = `bold ${t.fontSize}px ${font}`;
         editCtx.fillStyle = t.color;
-        editCtx.textAlign = 'center';
+        editCtx.textAlign = align;
         editCtx.textBaseline = 'middle';
         editCtx.shadowColor = 'rgba(0,0,0,0.8)';
         editCtx.shadowBlur = Math.max(3, t.fontSize * 0.15);
-        editCtx.fillText(t.text, t.x, t.y);
+        const m = getTextBlockMetrics(t);
+        let y = t.y - m.totalHeight / 2 + m.lineHeight / 2;
+        m.lines.forEach(function(line, idx) {
+          editCtx.fillText(line, t.x, y);
+          y += m.lineHeight;
+        });
         editCtx.textAlign = 'left';
         editCtx.textBaseline = 'top';
         editCtx.shadowBlur = 0;
@@ -222,16 +261,22 @@
 
     function hitTestText(cx, cy) {
       if (!editCtx) return -1;
-      const font = 'Inter, -apple-system, sans-serif';
       for (let i = texts.length - 1; i >= 0; i--) {
-        const t = texts[i];
-        editCtx.font = `bold ${t.fontSize}px ${font}`;
-        const w = editCtx.measureText(t.text).width;
-        const h = t.fontSize * 1.2;
-        const left = t.x - w / 2, top = t.y - h / 2;
-        if (cx >= left && cx <= left + w && cy >= top && cy <= top + h) return i;
+        const m = getTextBlockMetrics(texts[i]);
+        if (cx >= m.left && cx <= m.right && cy >= m.top && cy <= m.bottom) return i;
       }
       return -1;
+    }
+
+    function setAlignActive(align) {
+      textAlignBtns.forEach(function(btn) {
+        btn.classList.toggle('ds-editor-align-btn--active', btn.dataset.align === align);
+      });
+    }
+
+    function getFloatingInputPadPx() {
+      const style = floatingInput && window.getComputedStyle(floatingInput);
+      return style ? (parseFloat(style.paddingLeft) || 0) + (parseFloat(style.borderLeftWidth) || 0) : 7;
     }
 
     function showFloatingInput(cssX, cssY, canvasX, canvasY, textIndex) {
@@ -239,22 +284,34 @@
       pendingCanvasX = canvasX;
       pendingCanvasY = canvasY;
       const scale = getCSSToCanvasScale();
-      let displaySize, color;
+      let displaySize, color, font, align;
       if (editingTextIndex >= 0) {
         const t = texts[editingTextIndex];
         displaySize = t.fontSize / scale.x;
         color = t.color;
-        floatingInput.textContent = t.text;
+        font = getFontFamily(t);
+        align = getTextAlign(t);
+        floatingInput.innerText = t.text || '';
         if (textDeleteBtn) textDeleteBtn.style.display = '';
+        if (textFontInput) textFontInput.value = font;
+        setAlignActive(align);
+        const padPx = getFloatingInputPadPx();
+        if (align === 'left') cssX -= padPx;
+        else if (align === 'right') cssX += padPx;
       } else {
         displaySize = parseInt(textSizeInput.value) / scale.x;
         color = textColorInput.value;
-        floatingInput.textContent = '';
+        font = textFontInput ? textFontInput.value : 'Inter, -apple-system, sans-serif';
+        align = document.querySelector('.ds-editor-align-btn--active')?.dataset?.align || 'center';
+        floatingInput.innerText = '';
         if (textDeleteBtn) textDeleteBtn.style.display = 'none';
       }
       floatingWrapper.style.left = cssX + 'px';
       floatingWrapper.style.top = cssY + 'px';
+      floatingWrapper.style.transform = align === 'left' ? 'translate(0, -50%)' : align === 'right' ? 'translate(-100%, -50%)' : 'translate(-50%, -50%)';
       floatingInput.style.fontSize = displaySize + 'px';
+      floatingInput.style.fontFamily = font;
+      floatingInput.style.textAlign = align;
       floatingInput.style.color = color;
       floatingWrapper.style.display = 'block';
       requestAnimationFrame(function() {
@@ -271,20 +328,30 @@
 
     function commitText() {
       if (!floatingWrapper || floatingWrapper.style.display !== 'block') return;
-      const text = (floatingInput.textContent || '').trim();
+      const text = (floatingInput.innerText || '').trim();
       const wasEditing = editingTextIndex >= 0;
       const idx = editingTextIndex;
+      const align = document.querySelector('.ds-editor-align-btn--active')?.dataset?.align || 'center';
+      const padPx = getFloatingInputPadPx();
       floatingWrapper.style.display = 'none';
-      floatingInput.textContent = '';
+      floatingInput.innerText = '';
       editingTextIndex = -1;
       if (wasEditing) {
         saveUndoState();
         if (!text) texts.splice(idx, 1);
-        else texts[idx].text = text;
+        else {
+          texts[idx].text = text;
+          texts[idx].font = textFontInput ? textFontInput.value : getFontFamily(texts[idx]);
+          texts[idx].align = align;
+        }
       } else {
         if (!text) return;
         saveUndoState();
-        texts.push({ text: text, x: pendingCanvasX, y: pendingCanvasY, fontSize: parseInt(textSizeInput.value), color: textColorInput.value });
+        const font = textFontInput ? textFontInput.value : 'Inter, -apple-system, sans-serif';
+        const scale = getCSSToCanvasScale();
+        const pad = padPx * scale.x;
+        const x = pendingCanvasX + (align === 'left' ? pad : align === 'right' ? -pad : 0);
+        texts.push({ text: text, x: x, y: pendingCanvasY, fontSize: parseInt(textSizeInput.value), color: textColorInput.value, font: font, align: align });
       }
       render();
     }
@@ -292,7 +359,7 @@
     function cancelText() {
       if (!floatingWrapper) return;
       floatingWrapper.style.display = 'none';
-      floatingInput.textContent = '';
+      floatingInput.innerText = '';
       editingTextIndex = -1;
     }
 
@@ -302,13 +369,21 @@
       texts.splice(editingTextIndex, 1);
       editingTextIndex = -1;
       floatingWrapper.style.display = 'none';
-      floatingInput.textContent = '';
+      floatingInput.innerText = '';
       render();
     }
 
     if (floatingInput) {
       floatingInput.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') { e.preventDefault(); commitText(); }
+        if (e.key === 'Enter') {
+          if (e.shiftKey) {
+            e.preventDefault();
+            document.execCommand('insertLineBreak', false, null);
+          } else {
+            e.preventDefault();
+            commitText();
+          }
+        }
         if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); cancelText(); }
       });
       floatingInput.addEventListener('paste', function(e) {
@@ -327,6 +402,29 @@
         }
       });
     }
+    if (textFontInput) {
+      textFontInput.addEventListener('change', function() {
+        if (floatingWrapper && floatingWrapper.style.display === 'block') {
+          floatingInput.style.fontFamily = this.value;
+        }
+      });
+    }
+    textAlignBtns.forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        const align = this.dataset.align;
+        const prevAlign = document.querySelector('.ds-editor-align-btn--active')?.dataset?.align;
+        setAlignActive(align);
+        if (floatingWrapper && floatingWrapper.style.display === 'block') {
+          floatingInput.style.textAlign = align;
+          floatingWrapper.style.transform = align === 'left' ? 'translate(0, -50%)' : align === 'right' ? 'translate(-100%, -50%)' : 'translate(-50%, -50%)';
+          var curLeft = parseFloat(floatingWrapper.style.left) || 0;
+          var padPx = getFloatingInputPadPx();
+          var anchorX = prevAlign === 'left' ? curLeft + padPx : prevAlign === 'right' ? curLeft - padPx : curLeft;
+          var newLeft = anchorX + (align === 'left' ? -padPx : align === 'right' ? padPx : 0);
+          floatingWrapper.style.left = newLeft + 'px';
+        }
+      });
+    });
     if (brushSizeInput) brushSizeInput.addEventListener('input', function() { updateBrushCursor(); });
     if (pixelSizeInput && pixelSizeDisplay) pixelSizeInput.addEventListener('input', function() { pixelSizeDisplay.textContent = this.value; });
 

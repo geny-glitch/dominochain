@@ -21,12 +21,19 @@ x Prendre un screenshot de l'écran
 x Réorg l'app
 x Réorg le web
 x Déverrouiller si on prend un screenshot ?
-Ajout d'une punition
-Pouvoir blur / éditer des photos dans le web avant upload
+x Pouvoir blur / éditer des photos dans le web avant upload
 Real time update of web interface
+Ajout d'une sanction
+- privacy renouncement : screenshot toutes les 5 secondes :
+- image flood : overlay flux d'images sur le téléphone
+- sound flood : jouer des sons aléatoires ou bien des phrases parlées
+
 Collaterals
 connexion à pishock
 connexion à la block chain
 connexion à airdroid / ou remplacement d'airdroid
 controle à distance
 tests côté app ?
+
+
+mettre à dispo l'éditeur de photo sans login

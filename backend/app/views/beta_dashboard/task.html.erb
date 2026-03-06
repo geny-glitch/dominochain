@@ -29,6 +29,20 @@
         </div>
       <% end %>
 
+      <% if @task.punishments.any? %>
+        <div class="ds-proof-section">
+          <h2 class="ds-section-title">Punitions reçues</h2>
+          <ul class="ds-punishment-list">
+            <% @task.punishments.order(created_at: :desc).each do |punishment| %>
+              <li class="ds-punishment-item">
+                <p class="ds-punishment-message"><%= punishment.message.presence || "Tâche non terminée à temps..." %></p>
+                <p class="ds-proof-meta">Le <%= punishment.created_at.strftime("%d/%m %H:%M") %></p>
+              </li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+
       <div class="ds-proof-section">
         <h2 class="ds-section-title">Soumettre ta preuve</h2>
         <p class="ds-form-hint">Texte ou image/vidéo obligatoire.</p>

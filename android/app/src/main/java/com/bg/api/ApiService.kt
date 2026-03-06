@@ -173,7 +173,14 @@ data class TaskDetailResponse(
     val status: String,
     val can_submit_proof: Boolean,
     val proof_status: String?,
-    val proof: ProofResponse?
+    val proof: ProofResponse?,
+    val punishments: List<PunishmentResponse>? = null
+)
+
+data class PunishmentResponse(
+    val id: Long,
+    val message: String?,
+    val created_at: String
 )
 
 data class ScreenshotResponse(

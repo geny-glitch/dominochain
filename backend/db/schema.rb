@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_03_05_140000) do
+ActiveRecord::Schema[7.2].define(version: 2026_03_06_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -122,6 +122,15 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_05_140000) do
     t.index ["task_id"], name: "index_proof_of_completions_on_task_id"
   end
 
+  create_table "punishments", force: :cascade do |t|
+    t.bigint "task_id", null: false
+    t.text "message"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["task_id", "created_at"], name: "index_punishments_on_task_id_and_created_at"
+    t.index ["task_id"], name: "index_punishments_on_task_id"
+  end
+
   create_table "tasks", force: :cascade do |t|
     t.string "name", null: false
     t.text "description"
@@ -184,6 +193,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_05_140000) do
   add_foreign_key "device_screenshots", "devices"
   add_foreign_key "devices", "users"
   add_foreign_key "proof_of_completions", "tasks"
+  add_foreign_key "punishments", "tasks"
   add_foreign_key "tasks", "users"
   add_foreign_key "wallpaper_applications", "devices"
   add_foreign_key "wallpaper_applications", "wallpapers"

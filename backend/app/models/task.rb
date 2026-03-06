@@ -3,6 +3,7 @@
 class Task < ApplicationRecord
   belongs_to :user
   has_one :proof_of_completion, dependent: :destroy
+  has_many :punishments, dependent: :destroy
 
   default_scope { where(deleted_at: nil) }
 

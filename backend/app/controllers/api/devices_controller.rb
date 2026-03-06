@@ -204,6 +204,13 @@ module Api
       else
         json[:proof] = nil
       end
+      json[:punishments] = task.punishments.order(created_at: :desc).map { |p|
+        {
+          id: p.id,
+          message: p.message,
+          created_at: p.created_at.iso8601
+        }
+      }
       json
     end
 

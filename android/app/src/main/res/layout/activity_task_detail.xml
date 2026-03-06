@@ -59,7 +59,32 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             style="@style/DsBody"
-            android:layout_marginBottom="@dimen/ds_space_xl" />
+            android:layout_marginBottom="@dimen/ds_space_lg" />
+
+        <LinearLayout
+            android:id="@+id/punishments_section"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:background="@drawable/ds_card_background"
+            android:padding="@dimen/ds_space_lg"
+            android:layout_marginBottom="@dimen/ds_space_lg">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Punitions reçues"
+                style="@style/DsTitleSmall"
+                android:layout_marginBottom="@dimen/ds_space_sm" />
+
+            <TextView
+                android:id="@+id/punishments_list"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                style="@style/DsBody" />
+
+        </LinearLayout>
 
         <LinearLayout
             android:id="@+id/proof_form_section"

@@ -14,8 +14,10 @@ import com.bg.databinding.ActivityTaskDetailBinding
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
-import java.text.SimpleDateFormat
-import java.util.Date
+import java.time.Instant
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 class TaskDetailActivity : AppCompatActivity() {
@@ -109,6 +111,18 @@ class TaskDetailActivity : AppCompatActivity() {
         binding.taskDescription.text = task.description ?: "-"
         binding.taskExpectedProof.text = task.expected_proof ?: "-"
 
+        val punishments = task.punishments.orEmpty()
+        if (punishments.isNotEmpty()) {
+            binding.punishmentsSection.visibility = View.VISIBLE
+            binding.punishmentsList.text = punishments.joinToString("\n\n") { p ->
+                val msg = p.message?.takeIf { it.isNotBlank() } ?: "Tâche non terminée à temps..."
+                val date = formatPunishmentDate(p.created_at)
+                "$msg\n— $date"
+            }
+        } else {
+            binding.punishmentsSection.visibility = View.GONE
+        }
+
         if (task.can_submit_proof) {
             binding.proofFormSection.visibility = View.VISIBLE
             binding.proofSubmittedSection.visibility = View.GONE
@@ -134,16 +148,32 @@ class TaskDetailActivity : AppCompatActivity() {
         }
     }
 
-    private fun formatDate(iso: String): String {
+    private fun formatPunishmentDate(iso: String): String {
         return try {
-            val parser = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US).apply {
-                timeZone = java.util.TimeZone.getTimeZone("UTC")
+            val zdt = try {
+                java.time.Instant.parse(iso).atZone(java.time.ZoneId.systemDefault())
+            } catch (_: Exception) {
+                java.time.ZonedDateTime.parse(iso)
             }
-            val date = parser.parse(iso.replace("Z", "").take(19))
-            if (date != null) SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(date)
-            else iso.take(16)
+            java.time.format.DateTimeFormatter.ofPattern("dd/MM HH'h'mm", Locale.FRENCH).format(zdt)
         } catch (_: Exception) {
-            iso.take(16)
+            iso.replace("T", " ")
+        }
+    }
+
+    private fun formatDate(iso: String): String {
+        val zone = ZoneId.systemDefault()
+        return try {
+            val zdt = try {
+                Instant.parse(iso).atZone(zone)
+            } catch (_: Exception) {
+                ZonedDateTime.parse(iso)
+            }
+            DateTimeFormatter.ofPattern("EEEE d MMMM yyyy 'à' HH'h'mm", Locale.FRENCH).format(zdt)
+        } catch (_: Exception) {
+            val m = Regex("(\\d{4})-(\\d{2})-(\\d{2})[T ](\\d{2}):(\\d{2})").find(iso)
+            if (m != null) "${m.groupValues[3]}/${m.groupValues[2]}/${m.groupValues[1]} à ${m.groupValues[4]}h${m.groupValues[5]}"
+            else iso.replace("T", " ")
         }
     }
 

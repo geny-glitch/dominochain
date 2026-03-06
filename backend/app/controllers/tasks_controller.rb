@@ -45,6 +45,8 @@ class TasksController < ApplicationController
     @task.update!(status: "expired") if @task.status == "pending"
 
     message = params[:punishment_message].presence
+    @task.punishments.create!(message: message)
+
     @task.user.devices.find_each do |device|
       FcmService.send_punishment_notification(device: device, task: @task, message: message)
     end

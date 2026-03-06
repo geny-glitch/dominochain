@@ -87,6 +87,20 @@
         <p class="ds-task-body ds-text-muted">Aucune preuve soumise pour le moment.</p>
       <% end %>
 
+      <% if @task.punishments.any? %>
+        <div class="ds-proof-section">
+          <h2 class="ds-section-title">Punitions envoyées</h2>
+          <ul class="ds-punishment-list">
+            <% @task.punishments.order(created_at: :desc).each do |punishment| %>
+              <li class="ds-punishment-item">
+                <p class="ds-punishment-message"><%= punishment.message.presence || "Tâche non terminée à temps..." %></p>
+                <p class="ds-proof-meta">Le <%= punishment.created_at.strftime("%d/%m %H:%M") %></p>
+              </li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+
       <% if @task.expired? && !@task.proof_pending? %>
         <div class="ds-proof-section ds-punishment-section">
           <h2 class="ds-section-title">Punir l'impertinent</h2>

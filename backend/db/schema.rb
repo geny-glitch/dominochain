@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_03_06_100000) do
+ActiveRecord::Schema[7.2].define(version: 2026_03_19_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -159,6 +159,9 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_06_100000) do
     t.string "uid"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "chaster_access_token"
+    t.string "chaster_refresh_token"
+    t.datetime "chaster_token_expires_at"
     t.index ["email"], name: "index_users_on_email"
     t.index ["nickname"], name: "index_users_on_nickname", unique: true
     t.index ["provider", "uid"], name: "index_users_on_provider_and_uid"

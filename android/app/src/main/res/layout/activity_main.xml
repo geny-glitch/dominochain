@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -80,6 +81,61 @@
                 android:text="Refresh Wallpaper"
                 style="@style/DsButton"
                 android:layout_marginBottom="@dimen/ds_space_xl" />
+
+            <!-- Chaster lock widget -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/chaster_card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/ds_space_xl"
+                android:visibility="gone"
+                app:cardBackgroundColor="@color/ds_surface"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="2dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/ds_space_md">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Chaster"
+                        style="@style/DsSectionTitle"
+                        android:layout_marginBottom="@dimen/ds_space_sm" />
+
+                    <TextView
+                        android:id="@+id/chaster_lock_title"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Lock en cours"
+                        style="@style/DsBody"
+                        android:layout_marginBottom="@dimen/ds_space_xs" />
+
+                    <TextView
+                        android:id="@+id/chaster_remaining"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="--"
+                        style="@style/DsBody"
+                        android:textSize="18sp"
+                        android:textColor="@color/ds_teal"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/chaster_hint"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Connecte Chaster depuis le dashboard web"
+                        style="@style/DsBody"
+                        android:textColor="@color/ds_text_muted"
+                        android:textSize="12sp"
+                        android:visibility="gone"
+                        android:layout_marginTop="@dimen/ds_space_sm" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
 
             <!-- Tâches -->
             <TextView

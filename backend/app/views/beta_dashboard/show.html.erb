@@ -17,6 +17,25 @@
       </div>
     </header>
 
+    <%# Chaster %>
+    <section class="ds-beta-section">
+      <h2 class="ds-section-title">Chaster</h2>
+      <% if current_user.chaster_access_token.present? %>
+        <div class="ds-beta-control-card">
+          <p class="ds-beta-control-text">Chaster connecté</p>
+          <p class="ds-beta-control-hint">Le temps restant de ton lock s'affiche sur l'écran d'accueil de l'app.</p>
+          <%= button_to "Déconnecter Chaster", chaster_disconnect_path, method: :delete, form: { data: { turbo_confirm: "Déconnecter ton compte Chaster ? Tu devras te reconnecter pour voir le lock." } }, class: "ds-btn ds-btn--secondary ds-btn--sm", style: "margin-top: 0.5rem;" %>
+        </div>
+      <% elsif ChasterService.configured? %>
+        <div class="ds-beta-control-card ds-beta-control-card--invite">
+          <p class="ds-beta-control-text">Connecte ton compte Chaster pour afficher le temps restant sur l'app.</p>
+          <%= link_to "Connecter Chaster", chaster_connect_path, class: "ds-btn ds-btn--primary ds-btn--sm", style: "margin-top: 0.5rem;" %>
+        </div>
+      <% else %>
+        <p class="ds-text-muted">Chaster n'est pas configuré sur ce serveur.</p>
+      <% end %>
+    </section>
+
     <%# Contrôle — qui contrôle ou lien d'invitation %>
     <section class="ds-beta-section">
       <h2 class="ds-section-title">Contrôle</h2>

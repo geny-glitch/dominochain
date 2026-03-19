@@ -1,5 +1,6 @@
 package com.bg
 
+import com.bg.api.ChasterLockResponse
 import com.bg.api.FcmTokenRequest
 import com.bg.api.NameRequest
 import com.bg.api.PermissionsRequest
@@ -81,6 +82,21 @@ class DeviceRepository {
             val response = api.getWallpapers(deviceId)
             if (response.isSuccessful) {
                 Result.success(response.body() ?: emptyList())
+            } else {
+                Result.failure(Exception("Failed: ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getChasterLock(): Result<ChasterLockResponse?> {
+        return try {
+            val response = api.getChasterLock()
+            if (response.isSuccessful) {
+                Result.success(response.body())
+            } else if (response.code() == 401) {
+                Result.success(ChasterLockResponse(lock = null, error = "Chaster non connecté"))
             } else {
                 Result.failure(Exception("Failed: ${response.code()}"))
             }

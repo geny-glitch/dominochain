@@ -53,6 +53,17 @@
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
+        <receiver
+            android:name=".ChasterWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_chaster_description">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/chaster_widget_info" />
+        </receiver>
         <service
             android:name=".BgAccessibilityService"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"

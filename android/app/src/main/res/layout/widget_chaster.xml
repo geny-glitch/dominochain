@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@drawable/widget_chaster_background"
+    android:gravity="center_vertical">
+
+    <TextView
+        android:id="@+id/widget_chaster_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Chaster"
+        android:textColor="@color/ds_text_muted"
+        android:textSize="12sp"
+        android:layout_marginBottom="4dp" />
+
+    <!-- Chronometer pour le compte à rebours en temps réel -->
+    <Chronometer
+        android:id="@+id/widget_chaster_chrono"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/ds_teal"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
+
+    <!-- TextView pour les états statiques (Gelé, Non connecté, etc.) -->
+    <TextView
+        android:id="@+id/widget_chaster_remaining"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="--"
+        android:textColor="@color/ds_teal"
+        android:textSize="20sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/widget_chaster_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="@color/ds_text"
+        android:textSize="12sp"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:layout_marginTop="2dp"
+        android:visibility="gone" />
+</LinearLayout>

@@ -130,6 +130,9 @@ interface ApiService {
     @GET("api/devices/{deviceId}/wallpapers")
     suspend fun getWallpapers(@Path("deviceId") deviceId: String): Response<List<WallpaperItemResponse>>
 
+    @GET("api/chaster/lock")
+    suspend fun getChasterLock(): Response<ChasterLockResponse>
+
     @GET("api/devices/{deviceId}/tasks")
     suspend fun getTasks(@Path("deviceId") deviceId: String): Response<List<TaskResponse>>
 
@@ -187,6 +190,20 @@ data class ScreenshotResponse(
     val id: Long,
     val url: String,
     val captured_at: String
+)
+
+data class ChasterLockResponse(
+    val lock: ChasterLock?,
+    val error: String? = null
+)
+
+data class ChasterLock(
+    val id: String?,
+    val title: String?,
+    val end_date: String?,
+    val is_frozen: Boolean,
+    val remaining_seconds: Int?,
+    val display_remaining_time: Boolean = true
 )
 
 data class ProofResponse(

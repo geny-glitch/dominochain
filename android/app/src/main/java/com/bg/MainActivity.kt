@@ -19,6 +19,7 @@ import com.bg.api.TaskResponse
 import com.bg.databinding.ActivityMainBinding
 import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
@@ -31,6 +32,7 @@ class MainActivity : AppCompatActivity() {
     private val repository = DeviceRepository()
     private lateinit var tasksAdapter: TasksAdapter
     private lateinit var wallpapersAdapter: WallpapersAdapter
+    private var chasterRefreshJob: Job? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -79,6 +81,7 @@ class MainActivity : AppCompatActivity() {
                 setupLinkBar(response.web_url)
                 loadTasks(deviceId)
                 loadWallpapers(deviceId)
+                loadChasterLock()
             }.onFailure {
                 binding.webUrlText.text = "Erreur: ${it.message}"
             }
@@ -125,6 +128,92 @@ class MainActivity : AppCompatActivity() {
                 binding.tasksEmpty.text = "Erreur de chargement"
             }
         }
+    }
+
+    private fun loadChasterLock() {
+        lifecycleScope.launch {
+            val result = repository.getChasterLock()
+            result.onSuccess { response ->
+                ChasterWidgetProvider.updateFromLock(this@MainActivity, response?.lock, response?.error)
+                val card = binding.chasterCard
+                val lock = response?.lock
+                val error = response?.error
+                when {
+                    lock != null -> {
+                        card.visibility = android.view.View.VISIBLE
+                        // Utiliser remaining_seconds pour calculer la fin locale (évite la dérive serveur/appareil)
+                        val remainingSec = lock.remaining_seconds ?: 0
+                        val localEndTimeMs = System.currentTimeMillis() + remainingSec * 1000L
+                        card.tag = ChasterLockDisplay(lock, localEndTimeMs)
+                        binding.chasterLockTitle.text = lock.title?.takeIf { it.isNotBlank() } ?: "Lock en cours"
+                        binding.chasterRemaining.text = formatRemainingTime(lock)
+                        binding.chasterHint.visibility = android.view.View.GONE
+                        scheduleChasterRefresh() // décompte en temps réel, ne pas annuler
+                    }
+                    error != null -> {
+                        chasterRefreshJob?.cancel()
+                        card.visibility = android.view.View.VISIBLE
+                        binding.chasterLockTitle.text = "Chaster"
+                        binding.chasterRemaining.text = "Non connecté"
+                        binding.chasterHint.visibility = android.view.View.VISIBLE
+                        binding.chasterHint.text = "Connecte Chaster depuis le dashboard web"
+                    }
+                    else -> {
+                        chasterRefreshJob?.cancel()
+                        // Connecté mais aucun lock
+                        card.visibility = android.view.View.VISIBLE
+                        binding.chasterLockTitle.text = "Chaster"
+                        binding.chasterRemaining.text = "Aucun lock en cours"
+                        binding.chasterHint.visibility = android.view.View.GONE
+                    }
+                }
+            }.onFailure {
+                binding.chasterCard.visibility = android.view.View.GONE
+                chasterRefreshJob?.cancel()
+            }
+        }
+    }
+
+    private fun scheduleChasterRefresh() {
+        chasterRefreshJob?.cancel()
+        chasterRefreshJob = lifecycleScope.launch {
+            while (true) {
+                delay(1000) // 1 seconde pour mettre à jour le compte à rebours
+                val display = binding.chasterCard.tag as? ChasterLockDisplay ?: break
+                if (display.lock.is_frozen) break
+                val remaining = ((display.localEndTimeMs - System.currentTimeMillis()) / 1000).toInt()
+                if (remaining <= 0) {
+                    loadChasterLock() // recharger pour mettre à jour
+                    break
+                }
+                binding.chasterRemaining.text = formatRemainingFromSeconds(remaining)
+            }
+        }
+    }
+
+    private data class ChasterLockDisplay(
+        val lock: com.bg.api.ChasterLock,
+        val localEndTimeMs: Long
+    )
+
+    private fun formatRemainingFromSeconds(sec: Int): String {
+        if (sec <= 0) return "Terminé"
+        val days = sec / 86400
+        val hours = (sec % 86400) / 3600
+        val mins = (sec % 3600) / 60
+        val secs = sec % 60
+        return when {
+            days > 0 -> "${days}j ${hours}h ${mins}min ${secs}s"
+            hours > 0 -> "${hours}h ${mins}min ${secs}s"
+            mins > 0 -> "${mins}min ${secs}s"
+            else -> "${secs}s"
+        }
+    }
+
+    private fun formatRemainingTime(lock: com.bg.api.ChasterLock): String {
+        if (lock.is_frozen) return "Gelé"
+        val sec = lock.remaining_seconds ?: return "--"
+        return formatRemainingFromSeconds(sec)
     }
 
     private fun loadWallpapers(deviceId: String) {
@@ -181,7 +270,11 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         syncWallpaper()
         reportPermissionsImmediately()
-        sessionManager.deviceId?.let { loadTasks(it); loadWallpapers(it) }
+        sessionManager.deviceId?.let {
+            loadTasks(it)
+            loadWallpapers(it)
+            loadChasterLock()
+        }
     }
 
     override fun onCreateOptionsMenu(menu: android.view.Menu): Boolean {

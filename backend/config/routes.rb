@@ -10,6 +10,11 @@ Rails.application.routes.draw do
 
   get "dashboard", to: "dashboard#show", as: :dashboard
   get "beta", to: "beta_dashboard#show", as: :beta_dashboard
+
+  # Chaster OAuth (beta only)
+  get "chaster/connect", to: "chaster#connect", as: :chaster_connect
+  get "chaster/callback", to: "chaster#callback", as: :chaster_callback
+  delete "chaster/disconnect", to: "chaster#disconnect", as: :chaster_disconnect
   get "beta/tasks/:id", to: "beta_dashboard#task", as: :beta_task
   post "beta/tasks/:id/proof", to: "beta_dashboard#submit_proof", as: :beta_task_proof
   post "control/release", to: "controls#release", as: :control_release
@@ -60,6 +65,8 @@ Rails.application.routes.draw do
     get "devices/:id/tasks", to: "devices#tasks", as: :device_tasks
     get "devices/:id/tasks/:task_id", to: "devices#task_detail", as: :device_task
     post "devices/:id/tasks/:task_id/proof", to: "devices#submit_proof", as: :device_task_proof
+
+    get "chaster/lock", to: "chaster#lock", as: :chaster_lock
   end
 
   # Web upload UI (nickname = beta's nickname)

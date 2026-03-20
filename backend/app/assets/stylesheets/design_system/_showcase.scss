@@ -310,10 +310,8 @@ html:has(body.snake-page-active) {
   align-items: center;
   justify-content: flex-start;
   padding: $ds-space-md $ds-space-xl $ds-space-xl;
+  /* safe-area: max() + env() incompatible avec SassC — fallback uniquement */
   padding-top: $ds-space-md;
-  @supports (padding-top: unquote("max(0px)")) {
-    padding-top: unquote("max(#{$ds-space-md}, env(safe-area-inset-top))");
-  }
   background: #0d1f0d;
   overflow-y: auto;
   overflow-x: hidden;

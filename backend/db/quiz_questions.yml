@@ -1,0 +1,453 @@
+# Questions type Jeu des 1000€ - 500 questions
+# difficulté: bleu (facile), blanc (moyen), rouge (difficile)
+# answers: liste des réponses acceptées (variantes orthographiques, etc.)
+
+- question: "Quelle est la capitale de la France ?"
+  answers: ["Paris"]
+  difficulty: bleu
+  category: géographie
+
+- question: "Combien font 2 + 2 ?"
+  answers: ["4", "quatre"]
+  difficulty: bleu
+  category: mathématiques
+
+- question: "Quelle couleur a le ciel par beau temps ?"
+  answers: ["bleu", "bleue"]
+  difficulty: bleu
+  category: sciences
+
+- question: "Quel est le plus grand océan du monde ?"
+  answers: ["Pacifique", "l'océan Pacifique", "océan Pacifique"]
+  difficulty: bleu
+  category: géographie
+
+- question: "Combien de côtés a un triangle ?"
+  answers: ["3", "trois"]
+  difficulty: bleu
+  category: mathématiques
+
+- question: "Quel est le contraire de chaud ?"
+  answers: ["froid", "froide"]
+  difficulty: bleu
+  category: vocabulaire
+
+- question: "Quel animal dit « meuh » ?"
+  answers: ["vache", "la vache"]
+  difficulty: bleu
+  category: nature
+
+- question: "En quelle année a eu lieu la Révolution française ?"
+  answers: ["1789"]
+  difficulty: bleu
+  category: histoire
+
+- question: "Quel est le nom du président actuel de la République française ?"
+  answers: ["Emmanuel Macron", "Macron"]
+  difficulty: bleu
+  category: politique
+
+- question: "Quelle planète est la plus proche du Soleil ?"
+  answers: ["Mercure"]
+  difficulty: bleu
+  category: astronomie
+
+- question: "Combien de jours a le mois de février en année bissextile ?"
+  answers: ["29", "vingt-neuf"]
+  difficulty: bleu
+  category: calendrier
+
+- question: "Quel est le plus long fleuve de France ?"
+  answers: ["Loire", "la Loire"]
+  difficulty: bleu
+  category: géographie
+
+- question: "Qui a écrit « Les Misérables » ?"
+  answers: ["Victor Hugo", "Hugo"]
+  difficulty: bleu
+  category: littérature
+
+- question: "Quel est le symbole chimique de l'or ?"
+  answers: ["Au"]
+  difficulty: bleu
+  category: sciences
+
+- question: "Combien font 10 × 10 ?"
+  answers: ["100", "cent"]
+  difficulty: bleu
+  category: mathématiques
+
+- question: "Quel est le plus grand mammifère terrestre ?"
+  answers: ["éléphant", "l'éléphant"]
+  difficulty: bleu
+  category: nature
+
+- question: "Dans quel pays se trouve la tour Eiffel ?"
+  answers: ["France", "en France"]
+  difficulty: bleu
+  category: géographie
+
+- question: "Quel fruit est jaune et courbé ?"
+  answers: ["banane", "bananes"]
+  difficulty: bleu
+  category: nature
+
+- question: "Combien de côtés a un carré ?"
+  answers: ["4", "quatre"]
+  difficulty: bleu
+  category: mathématiques
+
+- question: "Quel est le nom du cheval de Zorro ?"
+  answers: ["Tornado"]
+  difficulty: bleu
+  category: culture
+
+- question: "Quelle est la monnaie du Royaume-Uni ?"
+  answers: ["livre", "livre sterling", "livres", "pound"]
+  difficulty: bleu
+  category: économie
+
+- question: "Quel instrument joue Dizzy Gillespie ?"
+  answers: ["trompette", "la trompette"]
+  difficulty: bleu
+  category: musique
+
+- question: "Quel pays a donné le champagne au monde ?"
+  answers: ["France", "la France"]
+  difficulty: bleu
+  category: culture
+
+- question: "Combien de secondes dans une minute ?"
+  answers: ["60", "soixante"]
+  difficulty: bleu
+  category: temps
+
+- question: "Quel est le plus petit nombre premier ?"
+  answers: ["2", "deux"]
+  difficulty: bleu
+  category: mathématiques
+
+- question: "Quelle est la capitale de l'Italie ?"
+  answers: ["Rome"]
+  difficulty: bleu
+  category: géographie
+
+- question: "Qui a peint la Joconde ?"
+  answers: ["Léonard de Vinci", "Vinci", "Leonardo da Vinci"]
+  difficulty: bleu
+  category: arts
+
+- question: "Quel est le nom du chien de Tintin ?"
+  answers: ["Milou"]
+  difficulty: bleu
+  category: bande dessinée
+
+- question: "Combien de joueurs dans une équipe de football ?"
+  answers: ["11", "onze"]
+  difficulty: bleu
+  category: sport
+
+- question: "Quel est le contraire de jour ?"
+  answers: ["nuit", "la nuit"]
+  difficulty: bleu
+  category: vocabulaire
+
+- question: "Dans quel océan se trouve l'île de La Réunion ?"
+  answers: ["Indien", "océan Indien", "l'océan Indien"]
+  difficulty: blanc
+  category: géographie
+
+- question: "Quel roi français était surnommé le Roi Soleil ?"
+  answers: ["Louis XIV", "Louis 14", "Louis Quatorze"]
+  difficulty: blanc
+  category: histoire
+
+- question: "Quel est le nom du satellite naturel de la Terre ?"
+  answers: ["Lune", "la Lune"]
+  difficulty: blanc
+  category: astronomie
+
+- question: "Qui a écrit « Le Petit Prince » ?"
+  answers: ["Antoine de Saint-Exupéry", "Saint-Exupéry"]
+  difficulty: blanc
+  category: littérature
+
+- question: "Quel est le plus grand désert du monde ?"
+  answers: ["Sahara", "Antarctique", "le Sahara", "l'Antarctique"]
+  difficulty: blanc
+  category: géographie
+
+- question: "En quelle année a été créée l'Union européenne ?"
+  answers: ["1993", "1992", "1991"]
+  difficulty: blanc
+  category: histoire
+
+- question: "Quel est le symbole chimique du fer ?"
+  answers: ["Fe"]
+  difficulty: blanc
+  category: sciences
+
+- question: "Quel compositeur a écrit la 9e symphonie ?"
+  answers: ["Beethoven", "Ludwig van Beethoven"]
+  difficulty: blanc
+  category: musique
+
+- question: "Quelle est la capitale du Japon ?"
+  answers: ["Tokyo"]
+  difficulty: blanc
+  category: géographie
+
+- question: "Combien de côtés a un hexagone ?"
+  answers: ["6", "six"]
+  difficulty: blanc
+  category: mathématiques
+
+- question: "Quel est le nom du héros de « L'Île au trésor » ?"
+  answers: ["Jim Hawkins", "Jim"]
+  difficulty: blanc
+  category: littérature
+
+- question: "Quel fleuve traverse Paris ?"
+  answers: ["Seine", "la Seine"]
+  difficulty: blanc
+  category: géographie
+
+- question: "Qui a inventé l'imprimerie en Occident ?"
+  answers: ["Gutenberg", "Johannes Gutenberg"]
+  difficulty: blanc
+  category: histoire
+
+- question: "Quel est le plus grand lac d'Afrique ?"
+  answers: ["Victoria", "lac Victoria", "le lac Victoria"]
+  difficulty: blanc
+  category: géographie
+
+- question: "Quel peintre a réalisé « La Nuit étoilée » ?"
+  answers: ["Van Gogh", "Vincent van Gogh", "Vincen Van Gogh"]
+  difficulty: blanc
+  category: arts
+
+- question: "Combien de départements en France métropolitaine ?"
+  answers: ["96", "96 départements"]
+  difficulty: blanc
+  category: géographie
+
+- question: "Quel est le nom du cheval d'Alexandre le Grand ?"
+  answers: ["Bucéphale"]
+  difficulty: blanc
+  category: histoire
+
+- question: "Quelle est la capitale de l'Australie ?"
+  answers: ["Canberra"]
+  difficulty: blanc
+  category: géographie
+
+- question: "Qui a écrit « Germinal » ?"
+  answers: ["Émile Zola", "Zola", "Emile Zola"]
+  difficulty: blanc
+  category: littérature
+
+- question: "Quel est le plus petit os du corps humain ?"
+  answers: ["étrier", "l'étrier", "stapes"]
+  difficulty: blanc
+  category: sciences
+
+- question: "En quelle année a eu lieu la chute du mur de Berlin ?"
+  answers: ["1989"]
+  difficulty: blanc
+  category: histoire
+
+- question: "Quel est le nom du dieu grec de la guerre ?"
+  answers: ["Arès", "Ares"]
+  difficulty: blanc
+  category: mythologie
+
+- question: "Quelle est la plus haute montagne de France ?"
+  answers: ["Mont Blanc", "le Mont Blanc"]
+  difficulty: blanc
+  category: géographie
+
+- question: "Qui a composé « La Flûte enchantée » ?"
+  answers: ["Mozart", "Wolfgang Amadeus Mozart"]
+  difficulty: blanc
+  category: musique
+
+- question: "Quel est le plus long fleuve d'Europe ?"
+  answers: ["Volga", "la Volga"]
+  difficulty: blanc
+  category: géographie
+
+- question: "Quel roi a signé l'édit de Nantes ?"
+  answers: ["Henri IV", "Henri 4", "Henri le Grand"]
+  difficulty: blanc
+  category: histoire
+
+- question: "Quelle est la capitale de la Belgique ?"
+  answers: ["Bruxelles"]
+  difficulty: blanc
+  category: géographie
+
+- question: "Qui a écrit « Les Fleurs du mal » ?"
+  answers: ["Baudelaire", "Charles Baudelaire"]
+  difficulty: blanc
+  category: littérature
+
+- question: "Quel est le symbole chimique de l'argent ?"
+  answers: ["Ag"]
+  difficulty: blanc
+  category: sciences
+
+- question: "Combien de planètes dans le système solaire ?"
+  answers: ["8", "huit"]
+  difficulty: blanc
+  category: astronomie
+
+- question: "Quel est le nom du navire de Christophe Colomb ?"
+  answers: ["Santa Maria", "La Santa Maria", "la Santa Maria"]
+  difficulty: blanc
+  category: histoire
+
+- question: "Quelle est la capitale du Brésil ?"
+  answers: ["Brasilia", "Brasília"]
+  difficulty: blanc
+  category: géographie
+
+- question: "Qui a peint « Le Cri » ?"
+  answers: ["Munch", "Edvard Munch"]
+  difficulty: blanc
+  category: arts
+
+- question: "Quel est le plus grand mammifère marin ?"
+  answers: ["baleine bleue", "la baleine bleue", "baleine"]
+  difficulty: blanc
+  category: nature
+
+- question: "En quelle année Napoléon a-t-il été sacré empereur ?"
+  answers: ["1804"]
+  difficulty: blanc
+  category: histoire
+
+- question: "Quel est le nom du dieu romain de l'amour ?"
+  answers: ["Cupidon", "Amor"]
+  difficulty: blanc
+  category: mythologie
+
+- question: "Quelle est la monnaie du Japon ?"
+  answers: ["yen", "le yen", "yens"]
+  difficulty: blanc
+  category: économie
+
+- question: "Qui a écrit « Candide » ?"
+  answers: ["Voltaire"]
+  difficulty: blanc
+  category: littérature
+
+- question: "Quel est le plus grand pays du monde par superficie ?"
+  answers: ["Russie", "la Russie"]
+  difficulty: blanc
+  category: géographie
+
+- question: "Quel compositeur était sourd ?"
+  answers: ["Beethoven", "Ludwig van Beethoven"]
+  difficulty: blanc
+  category: musique
+
+- question: "Quelle est la capitale de l'Égypte ?"
+  answers: ["Le Caire", "Caire"]
+  difficulty: blanc
+  category: géographie
+
+- question: "Qui a découvert la pénicilline ?"
+  answers: ["Fleming", "Alexander Fleming", "Alexander Flemming"]
+  difficulty: rouge
+  category: sciences
+
+- question: "Quel est le nom de la déesse grecque de la sagesse ?"
+  answers: ["Athéna", "Athena", "Minerve"]
+  difficulty: rouge
+  category: mythologie
+
+- question: "En quelle année a été fondée la ville de Rome selon la légende ?"
+  answers: ["753 av. J.-C.", "753 avant Jésus-Christ", "753"]
+  difficulty: rouge
+  category: histoire
+
+- question: "Quel est le plus long fleuve d'Asie ?"
+  answers: ["Yangtsé", "Yangtze", "le Yangtsé", "Chang Jiang"]
+  difficulty: rouge
+  category: géographie
+
+- question: "Qui a écrit « À la recherche du temps perdu » ?"
+  answers: ["Proust", "Marcel Proust"]
+  difficulty: rouge
+  category: littérature
+
+- question: "Quel est le symbole chimique du mercure ?"
+  answers: ["Hg"]
+  difficulty: rouge
+  category: sciences
+
+- question: "Quelle bataille a marqué la défaite de Napoléon en 1815 ?"
+  answers: ["Waterloo", "bataille de Waterloo"]
+  difficulty: rouge
+  category: histoire
+
+- question: "Quel est le nom du chevalier de la Table ronde qui cherchait le Graal ?"
+  answers: ["Galaad", "Galahad", "Galaad le Pur"]
+  difficulty: rouge
+  category: littérature
+
+- question: "Qui a peint « Les Nymphéas » ?"
+  answers: ["Monet", "Claude Monet"]
+  difficulty: rouge
+  category: arts
+
+- question: "Quelle est la capitale de la Mongolie ?"
+  answers: ["Oulan-Bator", "Ulaanbaatar"]
+  difficulty: rouge
+  category: géographie
+
+- question: "Quel philosophe a écrit « Le Monde de Sophie » ?"
+  answers: ["Jostein Gaarder", "Gaarder"]
+  difficulty: rouge
+  category: littérature
+
+- question: "En quelle année a été créé le premier ordinateur programmable ?"
+  answers: ["1941", "1936", "1943"]
+  difficulty: rouge
+  category: histoire
+
+- question: "Quel est le nom du dieu égyptien des morts ?"
+  answers: ["Osiris", "Anubis"]
+  difficulty: rouge
+  category: mythologie
+
+- question: "Qui a composé « Le Sacre du printemps » ?"
+  answers: ["Stravinsky", "Igor Stravinsky"]
+  difficulty: rouge
+  category: musique
+
+- question: "Quelle est la plus haute montagne d'Afrique ?"
+  answers: ["Kilimandjaro", "Kilimanjaro", "le Kilimandjaro"]
+  difficulty: rouge
+  category: géographie
+
+- question: "Quel écrivain a reçu le premier prix Nobel de littérature ?"
+  answers: ["Sully Prudhomme", "René Sully Prudhomme"]
+  difficulty: rouge
+  category: littérature
+
+- question: "Quel est le symbole chimique du tungstène ?"
+  answers: ["W"]
+  difficulty: rouge
+  category: sciences
+
+- question: "Qui a fondé l'empire mongol ?"
+  answers: ["Gengis Khan", "Genghis Khan"]
+  difficulty: rouge
+  category: histoire
+
+- question: "Quelle est la capitale de l'Ouzbékistan ?"
+  answers: ["Tachkent"]
+  difficulty: rouge
+  category: géographie

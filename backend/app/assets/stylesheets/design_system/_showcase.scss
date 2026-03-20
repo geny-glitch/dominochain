@@ -1,13 +1,324 @@
-// Vitrine du beta — Snake Nokia 3310
+// Vitrine du beta — Page d'accueil avec choix des jeux
+
+.showcase-page {
+  min-height: 100vh;
+  padding: $ds-space-3xl $ds-space-xl;
+}
+
+.showcase-page .showcase-container {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 0 $ds-space-md;
+}
+
+.showcase-page .ds-header {
+  margin-bottom: $ds-space-2xl;
+  padding-top: $ds-space-lg;
+}
+
+.showcase-games {
+  display: flex;
+  flex-direction: column;
+  gap: $ds-space-xl;
+  margin-top: $ds-space-2xl;
+}
+
+.showcase-game-card {
+  display: block;
+  padding: $ds-space-xl $ds-space-2xl;
+  background: $ds-surface-elevated;
+  border: 1px solid $ds-border;
+  border-radius: $ds-radius-lg;
+  text-decoration: none;
+  color: $ds-text;
+  transition: border-color $ds-transition, box-shadow $ds-transition;
+
+  &:hover {
+    border-color: $ds-teal;
+    box-shadow: 0 0 0 1px $ds-teal;
+  }
+}
+
+.showcase-game-icon {
+  font-size: 2rem;
+  display: block;
+  margin-bottom: $ds-space-md;
+}
+
+.showcase-game-title {
+  font-size: 1.25rem;
+  margin: 0 0 $ds-space-sm;
+  color: $ds-text;
+}
+
+.showcase-game-desc {
+  font-size: $ds-small-size;
+  color: $ds-text-muted;
+  margin: 0;
+  line-height: 1.5;
+}
+
+// Quiz 1000€ (page dédiée)
+
+.quiz-page {
+  min-height: 100vh;
+  padding: $ds-space-3xl $ds-space-xl;
+}
+
+.quiz-page .quiz-container {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 0 $ds-space-md;
+}
+
+.quiz-page .ds-header {
+  margin-bottom: $ds-space-xl;
+  padding-top: $ds-space-lg;
+}
+
+.quiz-nav,
+.snake-nav {
+  margin-top: $ds-space-md;
+}
+
+.quiz-nav {
+  text-align: right;
+}
+
+.snake-nav {
+  position: absolute;
+  top: $ds-space-sm;
+  left: $ds-space-md;
+}
+
+.quiz-intro {
+  text-align: center;
+  margin-top: $ds-space-2xl;
+  padding: 0 $ds-space-sm;
+}
+
+.quiz-rules {
+  color: $ds-text-muted;
+  font-size: $ds-body-size;
+  margin: 0 0 $ds-space-xl;
+  line-height: 1.5;
+}
+
+.quiz-game {
+  margin-top: $ds-space-xl;
+  padding: 0 $ds-space-sm;
+}
+
+.quiz-progress {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $ds-space-md;
+  font-size: $ds-small-size;
+  color: $ds-text-muted;
+}
+
+.quiz-score {
+  font-weight: 600;
+  color: $ds-text;
+}
+
+.quiz-difficulty {
+  display: inline-block;
+  padding: $ds-space-xs $ds-space-md;
+  border-radius: $ds-radius-md;
+  font-size: $ds-small-size;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: $ds-space-md;
+
+  &--bleu {
+    background: rgba(59, 130, 246, 0.2);
+    color: #60a5fa;
+    border: 1px solid rgba(59, 130, 246, 0.4);
+  }
+
+  &--blanc {
+    background: rgba(255, 255, 255, 0.15);
+    color: #e5e7eb;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+
+  &--rouge {
+    background: rgba(239, 68, 68, 0.2);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.4);
+  }
+}
+
+.quiz-question {
+  font-size: 1.125rem;
+  line-height: 1.6;
+  color: $ds-text;
+  margin: 0 0 $ds-space-lg;
+  font-weight: 500;
+}
+
+.quiz-timer {
+  height: 6px;
+  background: $ds-surface-elevated;
+  border-radius: $ds-radius-sm;
+  overflow: hidden;
+  margin-bottom: $ds-space-xl;
+}
+
+.quiz-timer-bar {
+  height: 100%;
+  background: $ds-teal;
+  transition: width 1s linear;
+}
+
+.quiz-answer-form {
+  display: flex;
+  gap: $ds-space-md;
+}
+
+.quiz-input {
+  flex: 1;
+}
+
+.quiz-choice {
+  text-align: center;
+  margin-top: $ds-space-2xl;
+  padding: $ds-space-xl $ds-space-2xl;
+  background: $ds-surface-elevated;
+  border-radius: $ds-radius-lg;
+  border: 1px solid $ds-border;
+}
+
+.quiz-choice-title {
+  font-size: 1.5rem;
+  margin: 0 0 $ds-space-md;
+  color: $ds-amber;
+}
+
+.quiz-choice p {
+  color: $ds-text-muted;
+  margin: 0 0 $ds-space-xl;
+  line-height: 1.5;
+}
+
+.quiz-choice-buttons {
+  display: flex;
+  gap: $ds-space-md;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.quiz-gameover {
+  text-align: center;
+  margin-top: $ds-space-2xl;
+  padding: 0 $ds-space-sm;
+}
+
+.quiz-gameover-title {
+  font-size: 1.5rem;
+  margin: 0 0 $ds-space-sm;
+  color: $ds-text;
+}
+
+.quiz-gameover-score {
+  font-size: $ds-body-size;
+  color: $ds-text-muted;
+  margin: 0 0 $ds-space-xl;
+}
+
+.quiz-leaderboard-form {
+  display: flex;
+  flex-direction: column;
+  gap: $ds-space-md;
+  margin-bottom: $ds-space-xl;
+  max-width: 280px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.quiz-leaderboard {
+  margin-top: $ds-space-2xl;
+  padding: 0 $ds-space-sm;
+}
+
+.quiz-leaderboard-list {
+  background: $ds-surface-elevated;
+  border: 1px solid $ds-border;
+  border-radius: $ds-radius-md;
+  padding: $ds-space-md;
+}
+
+.quiz-leaderboard-empty {
+  color: $ds-text-muted;
+  font-size: $ds-small-size;
+  margin: 0;
+}
+
+.quiz-leaderboard-row {
+  display: flex;
+  align-items: center;
+  gap: $ds-space-md;
+  padding: $ds-space-xs 0;
+  font-size: $ds-small-size;
+  color: $ds-text;
+
+  &:not(:last-child) {
+    border-bottom: 1px solid $ds-border;
+  }
+}
+
+.quiz-leaderboard-rank {
+  min-width: 1.5rem;
+  font-weight: 600;
+  color: $ds-amber;
+}
+
+.quiz-leaderboard-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quiz-leaderboard-score {
+  font-family: $ds-font-mono;
+}
+
+// Snake (page dédiée)
+body.snake-page-active {
+  overflow: hidden;
+  overscroll-behavior: none;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+}
+
+html:has(body.snake-page-active) {
+  overflow: hidden;
+}
 
 .snake-page {
+  position: relative;
   min-height: 100vh;
+  min-height: 100dvh;
+  height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: $ds-space-xl;
+  justify-content: flex-start;
+  padding: $ds-space-md $ds-space-xl $ds-space-xl;
+  padding-top: unquote("max(#{$ds-space-md}, env(safe-area-inset-top))");
   background: #0d1f0d;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+.snake-game {
+  touch-action: none;
 }
 
 .snake-container {
@@ -62,14 +373,14 @@
 
 .snake-dpad-cross {
   position: relative;
-  width: 120px;
-  height: 120px;
+  width: 240px;
+  height: 240px;
   background: #0a1510;
-  border-radius: 14px;
+  border-radius: 28px;
   box-shadow:
-    inset 0 2px 6px rgba(0, 0, 0, 0.6),
-    inset 0 -1px 0 rgba(34, 204, 34, 0.15),
-    0 4px 12px rgba(0, 0, 0, 0.4);
+    inset 0 4px 12px rgba(0, 0, 0, 0.6),
+    inset 0 -2px 0 rgba(34, 204, 34, 0.15),
+    0 8px 24px rgba(0, 0, 0, 0.4);
   clip-path: polygon(
     35% 0%, 65% 0%,
     65% 35%, 100% 35%, 100% 65%, 65% 65%,
@@ -83,11 +394,11 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 28px;
-  height: 28px;
+  width: 56px;
+  height: 56px;
   background: #152018;
   border-radius: 50%;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+  box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.5);
   pointer-events: none;
 }
 
@@ -121,65 +432,65 @@
 }
 
 .snake-dpad-btn--up {
-  top: 4px;
+  top: 8px;
   left: 50%;
   transform: translateX(-50%);
-  width: 36px;
-  height: 32px;
+  width: 72px;
+  height: 64px;
   display: flex;
   align-items: flex-start;
   justify-content: center;
 
   .snake-dpad-arrow {
-    border-width: 0 8px 12px 8px;
+    border-width: 0 16px 24px 16px;
     border-color: transparent transparent #22cc22 transparent;
   }
 }
 
 .snake-dpad-btn--down {
-  bottom: 4px;
+  bottom: 8px;
   left: 50%;
   transform: translateX(-50%);
-  width: 36px;
-  height: 32px;
+  width: 72px;
+  height: 64px;
   display: flex;
   align-items: flex-end;
   justify-content: center;
 
   .snake-dpad-arrow {
-    border-width: 12px 8px 0 8px;
+    border-width: 24px 16px 0 16px;
     border-color: #22cc22 transparent transparent transparent;
   }
 }
 
 .snake-dpad-btn--left {
-  left: 4px;
+  left: 8px;
   top: 50%;
   transform: translateY(-50%);
-  width: 32px;
-  height: 36px;
+  width: 64px;
+  height: 72px;
   display: flex;
   align-items: center;
   justify-content: flex-start;
 
   .snake-dpad-arrow {
-    border-width: 8px 12px 8px 0;
+    border-width: 16px 24px 16px 0;
     border-color: transparent #22cc22 transparent transparent;
   }
 }
 
 .snake-dpad-btn--right {
-  right: 4px;
+  right: 8px;
   top: 50%;
   transform: translateY(-50%);
-  width: 32px;
-  height: 36px;
+  width: 64px;
+  height: 72px;
   display: flex;
   align-items: center;
   justify-content: flex-end;
 
   .snake-dpad-arrow {
-    border-width: 8px 0 8px 12px;
+    border-width: 16px 0 16px 24px;
     border-color: transparent transparent transparent #22cc22;
   }
 }

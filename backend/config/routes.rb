@@ -13,10 +13,14 @@ Rails.application.routes.draw do
 
   # Vitrine du beta (page publique)
   get "showcase/:nickname", to: "showcase#show", as: :showcase
+  get "showcase/:nickname/quiz", to: "showcase#quiz", as: :showcase_quiz
+  get "showcase/:nickname/snake", to: "showcase#snake", as: :showcase_snake
   post "showcase/:nickname/add_time", to: "showcase#add_time", as: :showcase_add_time
   post "showcase/:nickname/sessions", to: "showcase#create_session", as: :showcase_create_session
   patch "showcase/:nickname/sessions/:id", to: "showcase#update_session", as: :showcase_update_session
   get "showcase/:nickname/leaderboard", to: "showcase#leaderboard", as: :showcase_leaderboard
+  get "showcase/:nickname/questions", to: "showcase#questions", as: :showcase_questions
+  post "showcase/:nickname/check_answer", to: "showcase#check_answer", as: :showcase_check_answer
 
   # Chaster OAuth (beta only)
   get "chaster/connect", to: "chaster#connect", as: :chaster_connect

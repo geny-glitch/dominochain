@@ -1,0 +1,412 @@
+<% content_for :title, "Le Jeu des 1000 €" %>
+
+<div class="quiz-page ds-page" data-nickname="<%= @beta.nickname %>">
+  <div class="ds-container quiz-container">
+    <header class="ds-header">
+      <%= image_tag "otb-logo.png", alt: "OTB", class: "ds-header-logo", width: 48, height: 48 %>
+      <div>
+        <h1 class="ds-title">Le Jeu des 1000 €</h1>
+        <p class="ds-subtitle">Inspiré de France Inter — Culture générale</p>
+      </div>
+    </header>
+
+    <div class="quiz-nav">
+      <%= link_to "← Retour", showcase_path(@beta.nickname), class: "ds-btn ds-btn--ghost ds-btn--sm" %>
+    </div>
+
+    <div id="quiz-intro" class="quiz-intro">
+      <p class="quiz-rules">
+        6 questions : 3 bleues (15€), 2 blanches (30€), 1 rouge (45€). 60 secondes par question, autant d'essais que tu veux — une erreur ne remet pas le timer. Réponds aux 6 pour tenter le Banco (500€), puis le Super Banco (1000€) !
+      </p>
+      <button type="button" class="ds-btn ds-btn--primary" id="quiz-start">Jouer</button>
+    </div>
+
+    <div id="quiz-game" class="quiz-game" style="display: none;">
+      <div class="quiz-progress">
+        <span id="quiz-question-num">1</span> / 6
+        <span class="quiz-score">Score : <strong id="quiz-score">0</strong> €</span>
+      </div>
+      <div id="quiz-difficulty" class="quiz-difficulty quiz-difficulty--bleu"></div>
+      <p id="quiz-question" class="quiz-question"></p>
+      <div class="quiz-timer">
+        <div id="quiz-timer-bar" class="quiz-timer-bar"></div>
+      </div>
+      <div class="quiz-answer-form">
+        <input type="text" id="quiz-answer" class="ds-input quiz-input" placeholder="Ta réponse..." autocomplete="off" />
+        <button type="button" class="ds-btn ds-btn--primary" id="quiz-submit">Valider</button>
+      </div>
+    </div>
+
+    <div id="quiz-banco-choice" class="quiz-choice" style="display: none;">
+      <h2 class="quiz-choice-title">Banco !</h2>
+      <p>Tu as répondu aux 6 questions. Une question difficile : 1 minute, 1 réponse. 500€ ou tu perds tout.</p>
+      <div class="quiz-choice-buttons">
+        <button type="button" class="ds-btn ds-btn--secondary" id="quiz-skip-banco">Garder mes gains</button>
+        <button type="button" class="ds-btn ds-btn--primary" id="quiz-do-banco">Tenter le Banco</button>
+      </div>
+    </div>
+
+    <div id="quiz-super-choice" class="quiz-choice" style="display: none;">
+      <h2 class="quiz-choice-title">Super Banco !</h2>
+      <p>Bravo ! Une dernière question très difficile : 1 minute, 1 réponse. 1000€ ou tu repars avec 500€.</p>
+      <div class="quiz-choice-buttons">
+        <button type="button" class="ds-btn ds-btn--secondary" id="quiz-skip-super">Garder 500€</button>
+        <button type="button" class="ds-btn ds-btn--primary" id="quiz-do-super">Tenter le Super Banco</button>
+      </div>
+    </div>
+
+    <div id="quiz-gameover" class="quiz-gameover" style="display: none;">
+      <h2 class="quiz-gameover-title">Fin de partie</h2>
+      <p class="quiz-gameover-score">Score final : <strong id="quiz-final-score">0</strong> €</p>
+      <div class="quiz-leaderboard-form">
+        <input type="text" id="quiz-player-name" class="ds-input" placeholder="Ton pseudo pour le leaderboard" maxlength="30" />
+        <button type="button" class="ds-btn ds-btn--primary" id="quiz-save-name">Enregistrer</button>
+      </div>
+      <button type="button" class="ds-btn ds-btn--ghost" id="quiz-replay">Rejouer</button>
+    </div>
+
+    <section class="quiz-leaderboard" id="quiz-leaderboard">
+      <h3 class="ds-section-title">Leaderboard</h3>
+      <div id="quiz-leaderboard-list" class="quiz-leaderboard-list">
+        <p class="quiz-leaderboard-empty">Aucun score enregistré</p>
+      </div>
+    </section>
+  </div>
+</div>
+
+<% if flash[:notice] %>
+  <div class="ds-flash ds-flash--success"><%= flash[:notice] %></div>
+<% end %>
+<% if flash[:alert] %>
+  <div class="ds-flash ds-flash--error"><%= flash[:alert] %></div>
+<% end %>
+
+<script>
+(function() {
+  const POINTS = { bleu: 15, blanc: 30, rouge: 45 };
+  const TIME_PER_QUESTION = 60; // comme le jeu radio : 60 s, erreur ne reset pas le timer
+
+  const nickname = document.querySelector(".quiz-page").dataset.nickname;
+  const urls = {
+    createSession: `/showcase/${nickname}/sessions`,
+    updateSession: (id) => `/showcase/${nickname}/sessions/${id}`,
+    addTime: `/showcase/${nickname}/add_time`,
+    leaderboard: `/showcase/${nickname}/leaderboard?game_type=quiz`,
+    questions: `/showcase/${nickname}/questions`,
+    checkAnswer: `/showcase/${nickname}/check_answer`
+  };
+
+  let questions = [];
+  let currentIndex = 0;
+  let score = 0;
+  let currentSessionId = null;
+  let timerId = null;
+  let timeLeft = 0;
+  let bancoWon = false;
+
+  const intro = document.getElementById("quiz-intro");
+  const gameEl = document.getElementById("quiz-game");
+  const bancoChoice = document.getElementById("quiz-banco-choice");
+  const superChoice = document.getElementById("quiz-super-choice");
+  const gameoverEl = document.getElementById("quiz-gameover");
+  const questionEl = document.getElementById("quiz-question");
+  const difficultyEl = document.getElementById("quiz-difficulty");
+  const questionNumEl = document.getElementById("quiz-question-num");
+  const scoreEl = document.getElementById("quiz-score");
+  const finalScoreEl = document.getElementById("quiz-final-score");
+  const answerInput = document.getElementById("quiz-answer");
+  const submitBtn = document.getElementById("quiz-submit");
+  const timerBar = document.getElementById("quiz-timer-bar");
+  const leaderboardList = document.getElementById("quiz-leaderboard-list");
+
+  function fetchJson(url, options = {}) {
+    return fetch(url, {
+      headers: { "Accept": "application/json", "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest", ...options.headers },
+      ...options
+    });
+  }
+
+  function postForm(url, body) {
+    return fetch(url, {
+      method: "POST",
+      headers: { "Accept": "application/json", "X-Requested-With": "XMLHttpRequest", "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.content || "", "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams(body)
+    });
+  }
+
+  function escapeHtml(s) {
+    const div = document.createElement("div");
+    div.textContent = s;
+    return div.innerHTML;
+  }
+
+  async function loadQuestions() {
+    const res = await fetchJson(urls.questions);
+    const data = await res.json();
+    return Array.isArray(data) ? data : [];
+  }
+
+  async function checkAnswer(questionId, answer) {
+    const res = await fetch(urls.checkAnswer, {
+      method: "POST",
+      headers: { "Accept": "application/json", "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest", "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.content || "" },
+      body: JSON.stringify({ question_id: questionId, answer })
+    });
+    const data = await res.json();
+    return data.correct === true;
+  }
+
+  async function addTime(seconds) {
+    try {
+      await postForm(urls.addTime, { seconds });
+    } catch (_) {}
+  }
+
+  function clearTimer() {
+    if (timerId) {
+      clearInterval(timerId);
+      timerId = null;
+    }
+  }
+
+  function startTimer(seconds, onEnd) {
+    clearTimer();
+    timeLeft = seconds;
+    const total = seconds;
+    timerBar.style.width = "100%";
+
+    timerId = setInterval(() => {
+      timeLeft--;
+      timerBar.style.width = `${(timeLeft / total) * 100}%`;
+      if (timeLeft <= 0) {
+        clearTimer();
+        onEnd();
+      }
+    }, 1000);
+  }
+
+  function showQuestion() {
+    const q = questions[currentIndex];
+    if (!q) return;
+
+    questionNumEl.textContent = currentIndex + 1;
+    scoreEl.textContent = score;
+    questionEl.textContent = q.question;
+    difficultyEl.className = "quiz-difficulty quiz-difficulty--" + q.difficulty;
+    difficultyEl.textContent = q.difficulty.charAt(0).toUpperCase() + q.difficulty.slice(1);
+    answerInput.value = "";
+    answerInput.focus();
+
+    startTimer(TIME_PER_QUESTION, () => {
+      submitBtn.disabled = true;
+      nextQuestion(false);
+    });
+    submitBtn.disabled = false;
+  }
+
+  async function nextQuestion(correct) {
+    clearTimer();
+    if (correct) {
+      const q = questions[currentIndex];
+      const pts = POINTS[q?.difficulty] || 0;
+      score += pts;
+      await addTime(pts);
+    }
+    currentIndex++;
+    if (currentIndex >= questions.length) {
+      endRound();
+    } else {
+      showQuestion();
+    }
+  }
+
+  async function endRound() {
+    gameEl.style.display = "none";
+    const maxScore = 15*3 + 30*2 + 45;
+    if (score >= maxScore) {
+      bancoChoice.style.display = "block";
+    } else {
+      showGameOver();
+    }
+  }
+
+  async function playBanco() {
+    bancoChoice.style.display = "none";
+    const res = await fetchJson(urls.questions + "?type=banco");
+    const data = await res.json();
+    if (!data.id) {
+      showGameOver();
+      return;
+    }
+    questions = [{ id: data.id, question: data.question, difficulty: "rouge" }];
+    currentIndex = 0;
+    gameEl.style.display = "block";
+    startTimer(TIME_PER_QUESTION, () => {
+      submitBtn.disabled = true;
+      bancoFailed();
+    });
+    showQuestion();
+  }
+
+  async function bancoFailed() {
+    score = 0;
+    showGameOver();
+  }
+
+  async function bancoSuccess() {
+    bancoWon = true;
+    score = 500;
+    gameEl.style.display = "none";
+    superChoice.style.display = "block";
+  }
+
+  async function playSuperBanco() {
+    superChoice.style.display = "none";
+    const res = await fetchJson(urls.questions + "?type=super_banco");
+    const data = await res.json();
+    if (!data.id) {
+      score = 500;
+      showGameOver();
+      return;
+    }
+    questions = [{ id: data.id, question: data.question, difficulty: "rouge" }];
+    currentIndex = 0;
+    gameEl.style.display = "block";
+    startTimer(TIME_PER_QUESTION, () => {
+      submitBtn.disabled = true;
+      score = 500;
+      showGameOver();
+    });
+    showQuestion();
+  }
+
+  async function superBancoSuccess() {
+    score = 1000;
+    showGameOver();
+  }
+
+  function showGameOver() {
+    gameEl.style.display = "none";
+    bancoChoice.style.display = "none";
+    superChoice.style.display = "none";
+    gameoverEl.style.display = "block";
+    finalScoreEl.textContent = score;
+    document.getElementById("quiz-player-name").value = "";
+    if (currentSessionId) {
+      fetchJson(urls.updateSession(currentSessionId), {
+        method: "PATCH",
+        body: JSON.stringify({ score })
+      }).catch(() => {});
+    }
+  }
+
+  async function loadLeaderboard() {
+    try {
+      const res = await fetchJson(urls.leaderboard);
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        leaderboardList.innerHTML = data.map(s =>
+          `<div class="quiz-leaderboard-row"><span class="quiz-leaderboard-rank">${s.rank}</span><span class="quiz-leaderboard-name">${escapeHtml(s.player_name)}</span><span class="quiz-leaderboard-score">${s.score} €</span></div>`
+        ).join("");
+        leaderboardList.classList.remove("quiz-leaderboard-empty");
+      } else {
+        leaderboardList.innerHTML = "<p class=\"quiz-leaderboard-empty\">Aucun score enregistré</p>";
+      }
+    } catch {
+      leaderboardList.innerHTML = "<p class=\"quiz-leaderboard-empty\">Aucun score enregistré</p>";
+    }
+  }
+
+  async function startGame() {
+    intro.style.display = "none";
+    gameoverEl.style.display = "none";
+    bancoChoice.style.display = "none";
+    superChoice.style.display = "none";
+
+    questions = await loadQuestions();
+    if (questions.length < 6) {
+      alert("Pas assez de questions disponibles. Lancez les seeds.");
+      intro.style.display = "block";
+      return;
+    }
+
+    questions = questions.slice(0, 6);
+    currentIndex = 0;
+    score = 0;
+    bancoWon = false;
+
+    try {
+      const res = await fetchJson(urls.createSession, {
+        method: "POST",
+        body: JSON.stringify({ game_type: "quiz" })
+      });
+      const data = await res.json();
+      if (data.id) currentSessionId = data.id;
+    } catch (_) {}
+
+    gameEl.style.display = "block";
+    showQuestion();
+  }
+
+  submitBtn.addEventListener("click", async () => {
+    const answer = answerInput.value.trim();
+    if (!answer) return;
+    const q = questions[currentIndex];
+    if (!q) return;
+
+    submitBtn.disabled = true;
+    const correct = await checkAnswer(q.id, answer);
+
+    if (correct) {
+      clearTimer();
+      const pts = POINTS[q.difficulty] || 0;
+      score += pts;
+      if (questions.length === 1 && bancoWon) {
+        superBancoSuccess();
+      } else if (questions.length === 1 && !bancoWon) {
+        bancoSuccess();
+      } else {
+        currentIndex++;
+        if (currentIndex >= questions.length) endRound();
+        else { showQuestion(); }
+      }
+    } else {
+      submitBtn.disabled = false;
+      answerInput.value = "";
+      answerInput.focus();
+    }
+  });
+
+  answerInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") submitBtn.click();
+  });
+
+  document.getElementById("quiz-start").addEventListener("click", startGame);
+  document.getElementById("quiz-replay").addEventListener("click", startGame);
+  document.getElementById("quiz-do-banco").addEventListener("click", playBanco);
+  document.getElementById("quiz-skip-banco").addEventListener("click", showGameOver);
+  document.getElementById("quiz-do-super").addEventListener("click", playSuperBanco);
+  document.getElementById("quiz-skip-super").addEventListener("click", () => { score = 500; showGameOver(); });
+
+  document.getElementById("quiz-save-name").addEventListener("click", async () => {
+    const name = document.getElementById("quiz-player-name").value.trim();
+    if (!name || !currentSessionId) return;
+    const btn = document.getElementById("quiz-save-name");
+    btn.disabled = true;
+    try {
+      const res = await fetchJson(urls.updateSession(currentSessionId), {
+        method: "PATCH",
+        body: JSON.stringify({ player_name: name })
+      });
+      if (res.ok) {
+        document.getElementById("quiz-player-name").value = "";
+        loadLeaderboard();
+      }
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  loadLeaderboard();
+})();
+</script>

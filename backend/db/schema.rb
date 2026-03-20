@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_03_20_132916) do
+ActiveRecord::Schema[7.2].define(version: 2026_03_20_145011) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -161,6 +161,18 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_20_132916) do
     t.datetime "updated_at", null: false
     t.index ["task_id", "created_at"], name: "index_punishments_on_task_id_and_created_at"
     t.index ["task_id"], name: "index_punishments_on_task_id"
+  end
+
+  create_table "quiz_questions", force: :cascade do |t|
+    t.text "question", null: false
+    t.jsonb "answers", default: [], null: false
+    t.string "difficulty", null: false
+    t.string "category"
+    t.string "question_type", default: "normal"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["difficulty"], name: "index_quiz_questions_on_difficulty"
+    t.index ["question_type"], name: "index_quiz_questions_on_question_type"
   end
 
   create_table "tasks", force: :cascade do |t|

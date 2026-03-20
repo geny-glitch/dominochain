@@ -1,49 +1,121 @@
-// Vitrine du beta
+// Vitrine du beta — Snake Nokia 3310
 
-.ds-showcase-section {
-  margin-top: $ds-space-2xl;
+.snake-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: $ds-space-xl;
+  background: #0d1f0d;
 }
 
-.ds-showcase-form {
-  margin-top: $ds-space-lg;
-
-  .ds-form-group {
-    margin-bottom: $ds-space-lg;
-  }
-
-  .ds-form-label {
-    display: block;
-    margin-bottom: $ds-space-sm;
-    font-size: $ds-body-size;
-    color: $ds-text;
-  }
+.snake-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $ds-space-xl;
 }
 
-.ds-showcase-slider {
-  width: 100%;
-  height: 8px;
-  -webkit-appearance: none;
-  appearance: none;
-  background: $ds-border;
+.snake-intro,
+.snake-gameover {
+  text-align: center;
+}
+
+.snake-title {
+  font-size: 2rem;
+  font-weight: 600;
+  color: #33ff33;
+  margin: 0 0 $ds-space-sm;
+  letter-spacing: 0.1em;
+  font-family: $ds-font-mono;
+}
+
+.snake-hint {
+  color: #22cc22;
+  font-size: $ds-small-size;
+  margin: 0 0 $ds-space-xl;
+  opacity: 0.9;
+}
+
+.snake-score {
+  color: #33ff33;
+  font-size: $ds-body-size;
+  font-family: $ds-font-mono;
+  margin-bottom: $ds-space-sm;
+}
+
+.snake-canvas {
+  display: block;
+  background: #0d1f0d;
+  border: 2px solid #22cc22;
   border-radius: 4px;
-  outline: none;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
 
-  &::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 24px;
-    height: 24px;
-    background: $ds-teal;
-    border-radius: 50%;
-    cursor: pointer;
+.snake-gameover-title {
+  font-size: 1.5rem;
+  color: #33ff33;
+  margin: 0 0 $ds-space-sm;
+  font-family: $ds-font-mono;
+}
+
+.snake-gameover-score {
+  color: #22cc22;
+  font-size: $ds-body-size;
+  margin: 0 0 $ds-space-xl;
+}
+
+.snake-btn {
+  padding: $ds-space-md $ds-space-xl;
+  font-size: $ds-body-size;
+  font-weight: 600;
+  border: none;
+  border-radius: $ds-radius-md;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity $ds-transition;
+
+  &:hover {
+    opacity: 0.9;
   }
 
-  &::-moz-range-thumb {
-    width: 24px;
-    height: 24px;
-    background: $ds-teal;
-    border-radius: 50%;
-    cursor: pointer;
-    border: none;
+  &:active {
+    opacity: 0.8;
   }
+}
+
+.snake-btn--start,
+.snake-btn--submit {
+  background: #33ff33;
+  color: #0d1f0d;
+}
+
+.snake-btn--ghost {
+  background: transparent;
+  color: #22cc22;
+  border: 1px solid #22cc22;
+  margin-top: $ds-space-md;
+}
+
+.snake-flash {
+  position: fixed;
+  bottom: $ds-space-xl;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: $ds-space-md $ds-space-xl;
+  border-radius: $ds-radius-md;
+  font-size: $ds-body-size;
+  z-index: 100;
+}
+
+.snake-flash--success {
+  background: $ds-success;
+  color: $ds-bg;
+}
+
+.snake-flash--error {
+  background: $ds-error;
+  color: $ds-bg;
 }

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_03_19_120000) do
+ActiveRecord::Schema[7.2].define(version: 2026_03_20_132916) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -116,6 +116,18 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_19_120000) do
     t.index ["user_id"], name: "index_devices_on_user_id"
   end
 
+  create_table "game_sessions", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "game_type", default: "snake", null: false
+    t.datetime "played_at", null: false
+    t.integer "score", default: 0, null: false
+    t.string "player_name"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "game_type"], name: "index_game_sessions_on_user_id_and_game_type"
+    t.index ["user_id"], name: "index_game_sessions_on_user_id"
+  end
+
   create_table "influencer_images", force: :cascade do |t|
     t.string "url", null: false
     t.string "name", null: false
@@ -216,6 +228,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_19_120000) do
   add_foreign_key "controls", "users", column: "boss_id"
   add_foreign_key "device_screenshots", "devices"
   add_foreign_key "devices", "users"
+  add_foreign_key "game_sessions", "users"
   add_foreign_key "proof_of_completions", "tasks"
   add_foreign_key "punishments", "tasks"
   add_foreign_key "tasks", "users"

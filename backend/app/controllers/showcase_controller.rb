@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class ShowcaseController < ApplicationController
-  skip_before_action :verify_authenticity_token, only: [:add_time]
+  skip_before_action :verify_authenticity_token, only: [:add_time, :create_session, :update_session]
 
   def show
     @beta = User.find_by(nickname: params[:nickname], role: :beta)
@@ -11,30 +11,75 @@ class ShowcaseController < ApplicationController
   end
 
   def add_time
-    @beta = User.find_by(nickname: params[:nickname], role: :beta)
-    unless @beta
-      redirect_to root_path, alert: "Page introuvable."
-      return
-    end
+    @beta = find_beta
+    return render(json: { error: "Page introuvable." }, status: 404) unless @beta
 
     seconds = params[:seconds]&.to_i
     unless seconds.present? && seconds.positive? && seconds <= 86_400 * 365 # max 1 an
-      redirect_to showcase_path(@beta.nickname), alert: "Score invalide."
-      return
+      return (request.format.json? ? (render(json: { error: "Score invalide." }, status: 422)) : redirect_to(showcase_path(@beta.nickname), alert: "Score invalide."))
     end
 
     service = ChasterService.new(@beta)
     lock = service.current_lock
     unless lock
-      redirect_to showcase_path(@beta.nickname), alert: "Indisponible pour le moment."
-      return
+      return (request.format.json? ? (render(json: { error: "Indisponible." }, status: 422)) : redirect_to(showcase_path(@beta.nickname), alert: "Indisponible pour le moment."))
     end
 
     service.add_time_to_lock(lock[:id], seconds)
-    redirect_to showcase_path(@beta.nickname), notice: "Merci !"
+    request.format.json? ? render(json: { ok: true }) : redirect_to(showcase_path(@beta.nickname), notice: "Merci !")
   rescue ChasterService::Unauthorized
-    redirect_to showcase_path(@beta.nickname), alert: "Indisponible pour le moment."
+    request.format.json? ? render(json: { error: "Indisponible." }, status: 401) : redirect_to(showcase_path(@beta.nickname), alert: "Indisponible pour le moment.")
   rescue ChasterService::Error => e
-    redirect_to showcase_path(@beta.nickname), alert: "Une erreur s'est produite."
+    request.format.json? ? render(json: { error: "Erreur." }, status: 500) : redirect_to(showcase_path(@beta.nickname), alert: "Une erreur s'est produite.")
+  end
+
+  def create_session
+    @beta = find_beta
+    return render(json: { error: "Page introuvable." }, status: 404) unless @beta
+
+    session = @beta.game_sessions.create!(
+      game_type: params[:game_type] || "snake",
+      played_at: Time.current,
+      score: 0
+    )
+    render json: { id: session.id }
+  rescue ActiveRecord::RecordInvalid => e
+    render json: { error: e.message }, status: 422
+  end
+
+  def update_session
+    @beta = find_beta
+    return render(json: { error: "Page introuvable." }, status: 404) unless @beta
+
+    game_session = @beta.game_sessions.find(params[:id])
+    game_session.update!(session_params)
+    render json: { ok: true }
+  rescue ActiveRecord::RecordNotFound
+    return render(json: { error: "Session introuvable." }, status: 404)
+  rescue ActiveRecord::RecordInvalid => e
+    render json: { error: e.message }, status: 422
+  end
+
+  def leaderboard
+    @beta = find_beta
+    return render(json: { error: "Page introuvable." }, status: 404) unless @beta
+
+    sessions = @beta.game_sessions
+      .where(game_type: params[:game_type] || "snake")
+      .where.not(player_name: [nil, ""])
+      .order(score: :desc)
+      .limit(10)
+
+    render json: sessions.map.with_index(1) { |s, i| { rank: i, player_name: s.player_name, score: s.score, played_at: s.played_at } }
+  end
+
+  private
+
+  def find_beta
+    User.find_by(nickname: params[:nickname], role: :beta)
+  end
+
+  def session_params
+    params.permit(:score, :player_name).slice(:score, :player_name).compact
   end
 end

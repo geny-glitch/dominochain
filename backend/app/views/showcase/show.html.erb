@@ -1,28 +1,44 @@
 <% content_for :title, "Snake" %>
 
-<div class="snake-page">
+<div class="snake-page" data-nickname="<%= @beta.nickname %>">
   <div class="snake-container">
     <div id="snake-intro" class="snake-intro">
       <h1 class="snake-title">Snake</h1>
-      <p class="snake-hint">Flèches ou swipe pour diriger</p>
+      <p class="snake-hint">Flèches, swipe ou croix directionnelle pour diriger</p>
       <button type="button" class="snake-btn snake-btn--start" id="snake-start">Jouer</button>
     </div>
 
     <div id="snake-game" class="snake-game" style="display: none;">
       <div class="snake-score">Score: <span id="snake-score">0</span></div>
       <canvas id="snake-canvas" class="snake-canvas" width="300" height="300"></canvas>
+      <div class="snake-dpad" aria-label="Contrôles directionnels">
+        <div class="snake-dpad-cross">
+          <span class="snake-dpad-center"></span>
+          <button type="button" class="snake-dpad-btn snake-dpad-btn--up" data-dir="up" aria-label="Haut"><span class="snake-dpad-arrow"></span></button>
+          <button type="button" class="snake-dpad-btn snake-dpad-btn--down" data-dir="down" aria-label="Bas"><span class="snake-dpad-arrow"></span></button>
+          <button type="button" class="snake-dpad-btn snake-dpad-btn--left" data-dir="left" aria-label="Gauche"><span class="snake-dpad-arrow"></span></button>
+          <button type="button" class="snake-dpad-btn snake-dpad-btn--right" data-dir="right" aria-label="Droite"><span class="snake-dpad-arrow"></span></button>
+        </div>
+      </div>
     </div>
 
     <div id="snake-gameover" class="snake-gameover" style="display: none;">
       <h2 class="snake-gameover-title">Game Over</h2>
       <p class="snake-gameover-score">Score: <span id="snake-final-score">0</span></p>
-      <%= form_with url: showcase_add_time_path(@beta.nickname), method: :post, local: true, id: "snake-submit-form" do |f| %>
-        <%= hidden_field_tag :seconds, "", id: "snake-seconds" %>
-        <button type="submit" class="snake-btn snake-btn--submit">Envoyer mon score</button>
-      <% end %>
+      <div class="snake-leaderboard-form">
+        <input type="text" id="snake-player-name" class="snake-input" placeholder="Ton pseudo pour le leaderboard" maxlength="30" />
+        <button type="button" class="snake-btn snake-btn--submit" id="snake-save-name">Enregistrer au leaderboard</button>
+      </div>
       <button type="button" class="snake-btn snake-btn--ghost" id="snake-replay">Rejouer</button>
     </div>
   </div>
+
+  <section class="snake-leaderboard" id="snake-leaderboard">
+    <h3 class="snake-leaderboard-title">Leaderboard</h3>
+    <div id="snake-leaderboard-list" class="snake-leaderboard-list">
+      <p class="snake-leaderboard-empty">Aucun score enregistré</p>
+    </div>
+  </section>
 </div>
 
 <% if flash[:notice] %>
@@ -37,6 +53,15 @@
   const GRID = 15;
   const CELL = 20;
   const CANVAS_SIZE = GRID * CELL;
+  const SECONDS_PER_FRUIT = 10;
+
+  const nickname = document.querySelector(".snake-page").dataset.nickname;
+  const urls = {
+    createSession: `/showcase/${nickname}/sessions`,
+    updateSession: (id) => `/showcase/${nickname}/sessions/${id}`,
+    addTime: `/showcase/${nickname}/add_time`,
+    leaderboard: `/showcase/${nickname}/leaderboard?game_type=snake`
+  };
 
   const canvas = document.getElementById("snake-canvas");
   const ctx = canvas.getContext("2d");
@@ -49,14 +74,66 @@
   let score = 0;
   let gameLoop = null;
   let gameOver = false;
+  let currentSessionId = null;
 
   const intro = document.getElementById("snake-intro");
   const gameEl = document.getElementById("snake-game");
   const gameoverEl = document.getElementById("snake-gameover");
   const scoreEl = document.getElementById("snake-score");
   const finalScoreEl = document.getElementById("snake-final-score");
-  const secondsInput = document.getElementById("snake-seconds");
-  const submitForm = document.getElementById("snake-submit-form");
+  const playerNameInput = document.getElementById("snake-player-name");
+  const saveNameBtn = document.getElementById("snake-save-name");
+  const leaderboardList = document.getElementById("snake-leaderboard-list");
+
+  function fetchJson(url, options = {}) {
+    const opts = {
+      headers: { "Accept": "application/json", "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest", ...options.headers },
+      ...options
+    };
+    return fetch(url, opts);
+  }
+
+  function postForm(url, body) {
+    const formData = new URLSearchParams(body);
+    return fetch(url, {
+      method: "POST",
+      headers: { "Accept": "application/json", "X-Requested-With": "XMLHttpRequest", "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.content || "" },
+      body: formData
+    });
+  }
+
+  async function onFruitEaten() {
+    if (!currentSessionId) return;
+    const updatePromise = fetchJson(urls.updateSession(currentSessionId), {
+      method: "PATCH",
+      body: JSON.stringify({ score: score })
+    }).catch(() => {});
+    const addTimePromise = postForm(urls.addTime, { seconds: SECONDS_PER_FRUIT }).catch(() => {});
+    await Promise.all([updatePromise, addTimePromise]);
+  }
+
+  async function loadLeaderboard() {
+    try {
+      const res = await fetchJson(urls.leaderboard);
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        leaderboardList.innerHTML = data.map(s =>
+          `<div class="snake-leaderboard-row"><span class="snake-leaderboard-rank">${s.rank}</span><span class="snake-leaderboard-name">${escapeHtml(s.player_name)}</span><span class="snake-leaderboard-score">${s.score}</span></div>`
+        ).join("");
+        leaderboardList.classList.remove("snake-leaderboard-empty");
+      } else {
+        leaderboardList.innerHTML = "<p class=\"snake-leaderboard-empty\">Aucun score enregistré</p>";
+      }
+    } catch {
+      leaderboardList.innerHTML = "<p class=\"snake-leaderboard-empty\">Aucun score enregistré</p>";
+    }
+  }
+
+  function escapeHtml(s) {
+    const div = document.createElement("div");
+    div.textContent = s;
+    return div.innerHTML;
+  }
 
   function init() {
     snake = [{ x: 7, y: 7 }];
@@ -64,6 +141,7 @@
     dirQueue.length = 0;
     score = 0;
     gameOver = false;
+    currentSessionId = null;
     spawnFood();
   }
 
@@ -110,6 +188,7 @@
     snake.unshift(head);
     if (head.x === food.x && head.y === food.y) {
       score++;
+      onFruitEaten();
       spawnFood();
     } else {
       snake.pop();
@@ -125,9 +204,13 @@
     gameEl.style.display = "none";
     gameoverEl.style.display = "block";
     finalScoreEl.textContent = score;
-    secondsInput.value = score * 10;
-    const submitBtn = submitForm.querySelector('button[type="submit"]');
-    submitBtn.disabled = score === 0;
+    playerNameInput.value = "";
+    if (currentSessionId) {
+      fetchJson(urls.updateSession(currentSessionId), {
+        method: "PATCH",
+        body: JSON.stringify({ score: score })
+      }).catch(() => {});
+    }
   }
 
   const fps = 12;
@@ -142,19 +225,56 @@
     if (!gameOver) gameLoop = requestAnimationFrame(run);
   }
 
-  function startGame() {
+  async function startGame() {
     init();
     intro.style.display = "none";
     gameEl.style.display = "block";
     gameoverEl.style.display = "none";
     scoreEl.textContent = "0";
-    submitForm.querySelector('button[type="submit"]').disabled = false;
+
+    try {
+      const res = await fetchJson(urls.createSession, {
+        method: "POST",
+        body: JSON.stringify({ game_type: "snake" })
+      });
+      const data = await res.json();
+      if (data.id) currentSessionId = data.id;
+    } catch (_) {}
+
     draw();
     run();
   }
 
+  saveNameBtn.addEventListener("click", async () => {
+    const name = (playerNameInput.value || "").trim();
+    if (!name || !currentSessionId) return;
+    saveNameBtn.disabled = true;
+    try {
+      const res = await fetchJson(urls.updateSession(currentSessionId), {
+        method: "PATCH",
+        body: JSON.stringify({ player_name: name })
+      });
+      if (res.ok) {
+        playerNameInput.value = "";
+        loadLeaderboard();
+      }
+    } finally {
+      saveNameBtn.disabled = false;
+    }
+  });
+
   document.getElementById("snake-start").addEventListener("click", startGame);
   document.getElementById("snake-replay").addEventListener("click", startGame);
+
+  const dirMap = { up: { x: 0, y: -1 }, down: { x: 0, y: 1 }, left: { x: -1, y: 0 }, right: { x: 1, y: 0 } };
+  document.querySelectorAll(".snake-dpad-btn").forEach(btn => {
+    const handleDir = (e) => {
+      e.preventDefault();
+      if (gameOver) return;
+      enqueueDir(dirMap[btn.dataset.dir]);
+    };
+    btn.addEventListener("pointerdown", handleDir);
+  });
 
   let touchStart = null;
   canvas.addEventListener("touchstart", e => {
@@ -184,5 +304,6 @@
     }
   });
 
+  loadLeaderboard();
 })();
 </script>

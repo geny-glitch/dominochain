@@ -1,0 +1,49 @@
+// Vitrine du beta
+
+.ds-showcase-section {
+  margin-top: $ds-space-2xl;
+}
+
+.ds-showcase-form {
+  margin-top: $ds-space-lg;
+
+  .ds-form-group {
+    margin-bottom: $ds-space-lg;
+  }
+
+  .ds-form-label {
+    display: block;
+    margin-bottom: $ds-space-sm;
+    font-size: $ds-body-size;
+    color: $ds-text;
+  }
+}
+
+.ds-showcase-slider {
+  width: 100%;
+  height: 8px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: $ds-border;
+  border-radius: 4px;
+  outline: none;
+
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 24px;
+    height: 24px;
+    background: $ds-teal;
+    border-radius: 50%;
+    cursor: pointer;
+  }
+
+  &::-moz-range-thumb {
+    width: 24px;
+    height: 24px;
+    background: $ds-teal;
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+  }
+}

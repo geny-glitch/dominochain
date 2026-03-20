@@ -41,6 +41,9 @@ gem "image_processing", "~> 1.2"
 # SASS for design system
 gem "sassc-rails", "~> 2.1"
 
+# QR codes
+gem "rqrcode"
+
 # Firebase Cloud Messaging
 gem "googleauth", "~> 1.8"
 

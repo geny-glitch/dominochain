@@ -6,6 +6,30 @@
   margin-top: $ds-space-2xl;
 }
 
+.ds-section-header {
+  display: flex;
+  align-items: center;
+  gap: $ds-space-sm;
+  margin-bottom: $ds-space-md;
+
+  .ds-section-title {
+    margin: 0;
+  }
+}
+
+.ds-btn--icon {
+  padding: $ds-space-sm;
+  line-height: 1;
+
+  svg {
+    display: block;
+  }
+}
+
+.ds-icon-refresh {
+  color: $ds-teal;
+}
+
 .ds-beta-control-card {
   padding: $ds-space-lg;
   background: $ds-surface;
@@ -21,6 +45,13 @@
   margin: 0;
   font-size: $ds-body-size;
   color: $ds-text;
+}
+
+.ds-chaster-countdown {
+  margin: $ds-space-sm 0 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: $ds-teal;
 }
 
 .ds-beta-control-hint {
@@ -71,4 +102,48 @@
   margin-top: $ds-space-2xl;
   padding-top: $ds-space-xl;
   border-top: 1px solid $ds-border;
+}
+
+.ds-showcase-preview {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: $ds-space-xl;
+  margin-top: $ds-space-md;
+}
+
+.ds-showcase-qr {
+  padding: $ds-space-md;
+  background: white;
+  border-radius: $ds-radius-sm;
+  border: 1px solid $ds-border;
+
+  svg {
+    display: block;
+  }
+}
+
+.ds-showcase-link {
+  flex: 1;
+  min-width: 200px;
+  display: flex;
+  align-items: center;
+  gap: $ds-space-sm;
+
+  code,
+  .ds-showcase-link-url {
+    flex: 1;
+    font-family: $ds-font-mono;
+    font-size: $ds-tiny-size;
+    color: $ds-teal;
+    word-break: break-all;
+  }
+
+  .ds-showcase-link-url {
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
 }

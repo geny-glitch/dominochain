@@ -28,4 +28,5 @@
     <string name="boss_owned_label">Mon boss</string>
     <string name="boss_owned_teasing">Tu lui appartiens… pour l\'instant.</string>
     <string name="widget_chaster_description">Affiche le temps restant de ton lock Chaster sur l\'écran d\'accueil.</string>
+    <string name="refresh">Actualiser</string>
 </resources>

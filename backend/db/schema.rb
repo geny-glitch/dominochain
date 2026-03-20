@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_03_19_100000) do
+ActiveRecord::Schema[7.2].define(version: 2026_03_19_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -46,6 +46,26 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_19_100000) do
     t.text "influencer_names"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "chaster_locks", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "chaster_lock_id", null: false
+    t.string "title"
+    t.string "status", default: "locked", null: false
+    t.datetime "start_date"
+    t.datetime "end_date"
+    t.boolean "is_frozen", default: false, null: false
+    t.datetime "frozen_at"
+    t.integer "total_duration"
+    t.datetime "unlocked_at"
+    t.jsonb "raw_data"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "chaster_lock_id"], name: "index_chaster_locks_on_user_id_and_chaster_lock_id", unique: true
+    t.index ["user_id", "end_date"], name: "index_chaster_locks_on_user_id_and_end_date"
+    t.index ["user_id", "status"], name: "index_chaster_locks_on_user_id_and_status"
+    t.index ["user_id"], name: "index_chaster_locks_on_user_id"
   end
 
   create_table "control_requests", force: :cascade do |t|
@@ -189,6 +209,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_19_100000) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "chaster_locks", "users"
   add_foreign_key "control_requests", "users", column: "beta_id"
   add_foreign_key "control_requests", "users", column: "boss_id"
   add_foreign_key "controls", "users", column: "beta_id"

@@ -11,6 +11,10 @@ Rails.application.routes.draw do
   get "dashboard", to: "dashboard#show", as: :dashboard
   get "beta", to: "beta_dashboard#show", as: :beta_dashboard
 
+  # Vitrine du beta (page publique)
+  get "showcase/:nickname", to: "showcase#show", as: :showcase
+  post "showcase/:nickname/add_time", to: "showcase#add_time", as: :showcase_add_time
+
   # Chaster OAuth (beta only)
   get "chaster/connect", to: "chaster#connect", as: :chaster_connect
   get "chaster/callback", to: "chaster#callback", as: :chaster_callback
@@ -67,6 +71,7 @@ Rails.application.routes.draw do
     post "devices/:id/tasks/:task_id/proof", to: "devices#submit_proof", as: :device_task_proof
 
     get "chaster/lock", to: "chaster#lock", as: :chaster_lock
+    get "chaster/locks", to: "chaster#locks", as: :chaster_locks
   end
 
   # Web upload UI (nickname = beta's nickname)

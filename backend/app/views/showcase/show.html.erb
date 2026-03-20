@@ -1,0 +1,51 @@
+<% content_for :title, "Vitrine de #{@beta.nickname} - OTB" %>
+
+<div class="ds-page">
+  <div class="ds-container">
+    <% if flash[:notice] %>
+      <div class="ds-flash ds-flash--success"><%= flash[:notice] %></div>
+    <% end %>
+    <% if flash[:alert] %>
+      <div class="ds-flash ds-flash--error"><%= flash[:alert] %></div>
+    <% end %>
+
+    <header class="ds-header">
+      <%= image_tag "otb-logo.png", alt: "OTB", class: "ds-header-logo", width: 48, height: 48 %>
+      <div>
+        <h1 class="ds-title">Vitrine de <%= @beta.nickname %></h1>
+        <p class="ds-subtitle">Page publique</p>
+      </div>
+    </header>
+
+    <section class="ds-showcase-section">
+      <div class="ds-beta-control-card">
+        <h2 class="ds-section-title">Ajouter du temps</h2>
+        <p class="ds-beta-control-hint">Choisis combien de secondes ajouter au lock de <%= @beta.nickname %>.</p>
+
+        <%= form_with url: showcase_add_time_path(@beta.nickname), method: :post, local: true, class: "ds-showcase-form" do |f| %>
+          <div class="ds-form-group">
+            <label for="seconds" class="ds-form-label">
+              <span id="seconds-display">5 min</span>
+            </label>
+            <input type="range" name="seconds" id="seconds" min="60" max="3600" value="300" step="60"
+                   class="ds-showcase-slider" oninput="updateDisplay(this.value)">
+          </div>
+          <button type="submit" class="ds-btn ds-btn--primary ds-btn--sm">
+            Ajouter du temps
+          </button>
+        <% end %>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+function updateDisplay(val) {
+  var sec = parseInt(val, 10);
+  var el = document.getElementById('seconds-display');
+  if (sec >= 3600) el.textContent = (sec / 3600) + 'h';
+  else if (sec >= 60) el.textContent = (sec / 60) + ' min';
+  else el.textContent = sec + 's';
+}
+updateDisplay(document.getElementById('seconds').value);
+</script>

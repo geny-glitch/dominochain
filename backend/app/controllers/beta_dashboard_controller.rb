@@ -10,6 +10,8 @@ class BetaDashboardController < ApplicationController
     @invite_url = control_accept_from_link_url(current_user.nickname)
     @devices = current_user.devices.order(created_at: :desc)
     @tasks = current_user.tasks.recent.includes(:proof_of_completion)
+    @chaster_lock = fetch_chaster_lock
+    @showcase_qr = generate_showcase_qr
   end
 
   def task
@@ -54,5 +56,19 @@ class BetaDashboardController < ApplicationController
     @task = current_user.tasks.find(params[:id])
   rescue ActiveRecord::RecordNotFound
     redirect_to beta_dashboard_path, alert: "Tâche non trouvée."
+  end
+
+  def fetch_chaster_lock
+    return nil unless current_user.chaster_access_token.present?
+
+    ChasterService.new(current_user).current_lock
+  rescue ChasterService::Unauthorized, ChasterService::Error
+    nil
+  end
+
+  def generate_showcase_qr
+    url = showcase_url(current_user.nickname)
+    qr = RQRCode::QRCode.new(url, size: 8, level: :m)
+    qr.as_svg(module_size: 4, fill: "ffffff", color: "000000")
   end
 end

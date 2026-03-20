@@ -110,14 +110,45 @@ class ChasterService
     JSON.parse(res.body)
   end
 
+  CACHE_TTL = 2.minutes
+
   def current_lock
+    ensure_valid_token!
+    raise Unauthorized, "Chaster non connecté" unless @user.chaster_access_token.present?
+
+    # Utiliser le cache DB si frais
+    cached = current_lock_from_db
+    return cached if cached.present?
+
+    # Sinon fetch Chaster, sync DB, retourner
+    sync_locks!
+    current_lock_from_db
+  end
+
+  def sync_locks!
     locks = fetch_locks
     locks = Array(locks)
+    active_ids = locks.filter_map { |l| l["_id"] if (l["status"] || l["Status"]) == "locked" }
 
-    lock = locks.find { |l| (l["status"] || l["Status"]) == "locked" }
+    # Marquer comme terminés les locks qu'on avait en "locked" mais qui ne sont plus actifs
+    @user.chaster_locks.active.where.not(chaster_lock_id: active_ids).find_each do |lock|
+      lock.update!(status: "unlocked", unlocked_at: Time.current)
+    end
+
+    # Upsert les locks actifs
+    locks.each do |lock_data|
+      next unless (lock_data["status"] || lock_data["Status"]) == "locked"
+
+      upsert_lock(lock_data)
+    end
+  end
+
+  def current_lock_from_db
+    lock = @user.chaster_locks.active.recent.first
     return nil unless lock
+    return nil if lock.updated_at < CACHE_TTL.ago
 
-    build_lock_info(lock)
+    build_lock_info_from_record(lock)
   end
 
   def self.client_id
@@ -132,7 +163,67 @@ class ChasterService
     client_id.present? && client_secret.present?
   end
 
+  def add_time_to_lock(lock_id, seconds)
+    ensure_valid_token!
+    raise Unauthorized, "Chaster non connecté" unless @user.chaster_access_token.present?
+
+    uri = URI("#{API_BASE}/locks/#{lock_id}/update-time")
+    req = Net::HTTP::Post.new(uri)
+    req["Authorization"] = "Bearer #{@user.chaster_access_token}"
+    req["Content-Type"] = "application/json"
+    req.body = { duration: seconds }.to_json
+
+    res = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) { |http| http.request(req) }
+
+    if res.code == "401"
+      refresh_tokens!
+      return add_time_to_lock(lock_id, seconds)
+    end
+
+    raise Error, "Chaster: #{res.body}" unless res.is_a?(Net::HTTPSuccess)
+
+    # Invalider le cache pour forcer un refresh
+    @user.chaster_locks.where(chaster_lock_id: lock_id).update_all(updated_at: 2.hours.ago)
+  end
+
   private
+
+  def upsert_lock(lock_data)
+    end_date_str = lock_data["endDate"]
+    end_date = end_date_str.present? ? Time.zone.parse(end_date_str) : nil
+
+    lock = @user.chaster_locks.find_or_initialize_by(chaster_lock_id: lock_data["_id"])
+    lock.assign_attributes(
+      title: lock_data["title"],
+      status: "locked",
+      start_date: lock_data["startDate"].present? ? Time.zone.parse(lock_data["startDate"]) : nil,
+      end_date: end_date,
+      is_frozen: lock_data["isFrozen"] == true,
+      frozen_at: lock_data["frozenAt"].present? ? Time.zone.parse(lock_data["frozenAt"]) : nil,
+      total_duration: lock_data["totalDuration"]&.to_i,
+      raw_data: lock_data.except("combination")
+    )
+    lock.save!
+  end
+
+  def build_lock_info_from_record(lock)
+    remaining_seconds = if lock.is_frozen
+                          nil
+                        elsif lock.end_date
+                          [lock.end_date - Time.current, 0].max.to_i
+                        else
+                          nil
+                        end
+
+    {
+      id: lock.chaster_lock_id,
+      title: lock.title,
+      end_date: lock.end_date&.iso8601,
+      is_frozen: lock.is_frozen,
+      remaining_seconds: remaining_seconds,
+      display_remaining_time: true
+    }
+  end
 
   def build_lock_info(lock)
     # Chaster API uses camelCase

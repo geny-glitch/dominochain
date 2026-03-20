@@ -93,6 +93,11 @@ class MainActivity : AppCompatActivity() {
             deviceId.let { loadWallpapers(it) }
         }
 
+        binding.chasterRefresh.setOnClickListener {
+            loadChasterLock()
+            ChasterWidgetWorker.updateNow(this)
+        }
+
         WallpaperWorker.schedule(this)
         PermissionsWorker.schedule(this)
         PermissionsWorker.checkNow(this)

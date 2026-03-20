@@ -13,6 +13,7 @@ class User < ApplicationRecord
   has_many :controls, foreign_key: :boss_id, dependent: :destroy
   has_many :control_requests_sent, class_name: "ControlRequest", foreign_key: :beta_id, dependent: :destroy
   has_many :control_requests_received, class_name: "ControlRequest", foreign_key: :boss_id, dependent: :destroy
+  has_many :chaster_locks, dependent: :destroy
 
   validates :nickname, presence: true, uniqueness: true
   validates :nickname, format: { with: /\A[a-zA-Z0-9_]+\z/, message: "ne peut contenir que lettres, chiffres et underscores" }

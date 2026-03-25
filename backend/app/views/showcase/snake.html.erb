@@ -54,7 +54,6 @@
   const GRID = 15;
   const CELL = 20;
   const CANVAS_SIZE = GRID * CELL;
-  const SECONDS_PER_FRUIT = 10;
 
   const nickname = document.querySelector(".snake-page").dataset.nickname;
   const urls = {
@@ -109,7 +108,7 @@
       method: "PATCH",
       body: JSON.stringify({ score: score })
     }).catch(() => {});
-    const addTimePromise = postForm(urls.addTime, { seconds: SECONDS_PER_FRUIT }).catch(() => {});
+    const addTimePromise = postForm(urls.addTime, { game_type: "snake" }).catch(() => {});
     await Promise.all([updatePromise, addTimePromise]);
   }
 

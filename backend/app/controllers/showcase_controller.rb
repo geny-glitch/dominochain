@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 class ShowcaseController < ApplicationController
+  # Temps ajouté au verrou par fruit mangé (Snake) — appliqué côté serveur dans #add_time, pas via params[:seconds].
+  SNAKE_SECONDS_PER_FRUIT = 60
+
   skip_before_action :verify_authenticity_token, only: [:add_time, :create_session, :update_session, :check_answer]
 
   def show
@@ -28,7 +31,11 @@ class ShowcaseController < ApplicationController
     @beta = find_beta
     return render(json: { error: "Page introuvable." }, status: 404) unless @beta
 
-    seconds = params[:seconds]&.to_i
+    seconds = if params[:game_type].to_s == "snake"
+      SNAKE_SECONDS_PER_FRUIT
+    else
+      params[:seconds]&.to_i
+    end
     unless seconds.present? && seconds.positive? && seconds <= 86_400 * 365 # max 1 an
       return (request.format.json? ? (render(json: { error: "Score invalide." }, status: 422)) : redirect_to(showcase_path(@beta.nickname), alert: "Score invalide."))
     end

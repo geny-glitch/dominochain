@@ -5,6 +5,20 @@ class BetaDashboardController < ApplicationController
   before_action :require_beta_role!
   before_action :set_task, only: [:task, :submit_proof]
 
+  def update_pishock
+    p = params.permit(:pishock_enabled, :pishock_username, :pishock_share_code, :pishock_api_key)
+    attrs = {
+      pishock_enabled: p[:pishock_enabled] == "1",
+      pishock_username: p[:pishock_username].to_s.strip.presence,
+      pishock_share_code: p[:pishock_share_code].to_s.strip.presence
+    }
+    attrs[:pishock_api_key] = p[:pishock_api_key] if p[:pishock_api_key].present?
+    current_user.update!(attrs)
+    redirect_to beta_dashboard_path, notice: "PiShock enregistré."
+  rescue ActiveRecord::RecordInvalid => e
+    redirect_to beta_dashboard_path, alert: e.record.errors.full_messages.join(", ")
+  end
+
   def show
     @control = current_user.control
     @invite_url = control_accept_from_link_url(current_user.nickname)

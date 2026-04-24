@@ -53,6 +53,37 @@
       <% end %>
     </section>
 
+    <%# PiShock %>
+    <section class="ds-beta-section">
+      <h2 class="ds-section-title">PiShock</h2>
+      <div class="ds-beta-control-card">
+        <p class="ds-beta-control-text">Connecte ton collier pour recevoir un choc léger à chaque fruit mangé au Snake et un choc proportionnel à ton score quand un joueur s’inscrit au leaderboard (quiz ou snake).</p>
+        <p class="ds-beta-control-hint">Crée une clé API et un share code sur <a href="https://pishock.com" target="_blank" rel="noopener noreferrer">pishock.com</a> — voir aussi la <a href="https://apidocs.pishock.com/" target="_blank" rel="noopener noreferrer">documentation API</a>.</p>
+        <%= form_with url: beta_pishock_path, method: :patch, local: true, class: "ds-form", style: "margin-top: 0.75rem;" do %>
+          <%= hidden_field_tag :pishock_enabled, "0" %>
+          <div class="ds-form-group">
+            <label class="ds-form-label">
+              <%= check_box_tag :pishock_enabled, "1", current_user.pishock_enabled, id: "pishock_enabled" %>
+              Activer PiShock pour ma vitrine
+            </label>
+          </div>
+          <div class="ds-form-group">
+            <%= label_tag :pishock_username, "Nom d’utilisateur PiShock", class: "ds-form-label" %>
+            <%= text_field_tag :pishock_username, current_user.pishock_username, class: "ds-input", autocomplete: "username" %>
+          </div>
+          <div class="ds-form-group">
+            <%= label_tag :pishock_share_code, "Share code", class: "ds-form-label" %>
+            <%= text_field_tag :pishock_share_code, current_user.pishock_share_code, class: "ds-input", autocomplete: "off" %>
+          </div>
+          <div class="ds-form-group">
+            <%= label_tag :pishock_api_key, "Clé API", class: "ds-form-label" %>
+            <%= password_field_tag :pishock_api_key, nil, class: "ds-input", autocomplete: "new-password", placeholder: current_user.pishock_api_key.present? ? "•••••••• (laisser vide pour ne pas changer)" : "" %>
+          </div>
+          <%= submit_tag "Enregistrer PiShock", class: "ds-btn ds-btn--primary ds-btn--sm" %>
+        <% end %>
+      </div>
+    </section>
+
     <%# Vitrine %>
     <section class="ds-beta-section">
       <h2 class="ds-section-title">Ma vitrine</h2>

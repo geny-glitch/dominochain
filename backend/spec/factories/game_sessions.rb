@@ -1,9 +1,11 @@
+# frozen_string_literal: true
+
 FactoryBot.define do
   factory :game_session do
-    user { nil }
-    game_type { "MyString" }
-    played_at { "2026-03-20 14:29:16" }
-    score { 1 }
-    player_name { "MyString" }
+    user
+    game_type { "snake" }
+    played_at { Time.current }
+    score { 0 }
+    player_name { nil }
   end
 end

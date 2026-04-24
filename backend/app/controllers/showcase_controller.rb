@@ -40,6 +40,10 @@ class ShowcaseController < ApplicationController
       return (request.format.json? ? (render(json: { error: "Score invalide." }, status: 422)) : redirect_to(showcase_path(@beta.nickname), alert: "Score invalide."))
     end
 
+    if params[:game_type].to_s == "snake"
+      PishockShockJob.perform_later(@beta.id, 1, 1)
+    end
+
     service = ChasterService.new(@beta)
     lock = service.current_lock
     unless lock
@@ -73,7 +77,19 @@ class ShowcaseController < ApplicationController
     return render(json: { error: "Page introuvable." }, status: 404) unless @beta
 
     game_session = @beta.game_sessions.find(params[:id])
-    game_session.update!(session_params)
+    permitted = session_params
+    name_was_blank = game_session.player_name.blank?
+    incoming_name = permitted[:player_name].presence
+    first_name_submission = name_was_blank && incoming_name.present?
+
+    game_session.update!(permitted)
+
+    if first_name_submission && game_session.player_name.present?
+      intensity = [game_session.score, 100].min
+      intensity = 1 if intensity < 1
+      PishockShockJob.perform_later(@beta.id, intensity, 1)
+    end
+
     render json: { ok: true }
   rescue ActiveRecord::RecordNotFound
     return render(json: { error: "Session introuvable." }, status: 404)

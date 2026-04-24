@@ -23,6 +23,10 @@ RSpec.describe "Route mapping", type: :routing do
     expect(patch: "/admin/settings").to route_to(controller: "admin", action: "update_settings")
   end
 
+  it "maps PATCH /beta/pishock to beta_dashboard#update_pishock" do
+    expect(patch: "/beta/pishock").to route_to(controller: "beta_dashboard", action: "update_pishock")
+  end
+
   it "maps GET /admin/review to admin#review" do
     expect(get: "/admin/review").to route_to(controller: "admin", action: "review")
   end

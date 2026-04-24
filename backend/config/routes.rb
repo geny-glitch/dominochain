@@ -10,6 +10,7 @@ Rails.application.routes.draw do
 
   get "dashboard", to: "dashboard#show", as: :dashboard
   get "beta", to: "beta_dashboard#show", as: :beta_dashboard
+  patch "beta/pishock", to: "beta_dashboard#update_pishock", as: :beta_pishock
 
   # Vitrine du beta (page publique)
   get "showcase/:nickname", to: "showcase#show", as: :showcase

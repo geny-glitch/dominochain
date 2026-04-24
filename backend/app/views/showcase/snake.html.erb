@@ -26,9 +26,12 @@
     <div id="snake-gameover" class="snake-gameover" style="display: none;">
       <h2 class="snake-gameover-title">Game Over</h2>
       <p class="snake-gameover-score">Score: <span id="snake-final-score">0</span></p>
-      <div class="snake-leaderboard-form">
-        <input type="text" id="snake-player-name" class="snake-input" placeholder="Ton pseudo pour le leaderboard" maxlength="30" />
-        <button type="button" class="snake-btn snake-btn--submit" id="snake-save-name">Enregistrer au leaderboard</button>
+      <div class="snake-leaderboard-form" id="snake-lb-name-block">
+        <p id="snake-lb-auto-registered" class="snake-lb-registered" hidden>Score enregistré pour <strong id="snake-lb-registered-name"></strong></p>
+        <div id="snake-lb-name-fields" class="snake-lb-name-fields">
+          <input type="text" id="snake-player-name" class="snake-input" placeholder="Ton pseudo pour le leaderboard" maxlength="30" />
+          <button type="button" class="snake-btn snake-btn--submit" id="snake-save-name">Enregistrer au leaderboard</button>
+        </div>
       </div>
       <button type="button" class="snake-btn snake-btn--ghost" id="snake-replay">Rejouer</button>
     </div>
@@ -36,8 +39,20 @@
 
   <section class="snake-leaderboard" id="snake-leaderboard">
     <h3 class="snake-leaderboard-title">Leaderboard</h3>
+    <div class="snake-leaderboard-toolbar">
+      <label class="snake-leaderboard-toolbar-label" for="snake-lb-sort">Trier</label>
+      <select id="snake-lb-sort" class="snake-input snake-leaderboard-sort" aria-label="Trier le classement">
+        <option value="score">Meilleur score</option>
+        <option value="recent">Plus récent</option>
+      </select>
+    </div>
     <div id="snake-leaderboard-list" class="snake-leaderboard-list">
       <p class="snake-leaderboard-empty">Aucun score enregistré</p>
+    </div>
+    <div id="snake-leaderboard-pagination" class="snake-leaderboard-pagination" hidden>
+      <button type="button" class="snake-btn snake-btn--ghost snake-btn--sm" id="snake-lb-prev" disabled>Précédent</button>
+      <span class="snake-leaderboard-page-label" id="snake-lb-page-label"></span>
+      <button type="button" class="snake-btn snake-btn--ghost snake-btn--sm" id="snake-lb-next">Suivant</button>
     </div>
   </section>
 </div>
@@ -56,11 +71,11 @@
   const CANVAS_SIZE = GRID * CELL;
 
   const nickname = document.querySelector(".snake-page").dataset.nickname;
+  const LEADERBOARD_PER_PAGE = 10;
   const urls = {
     createSession: `/showcase/${nickname}/sessions`,
     updateSession: (id) => `/showcase/${nickname}/sessions/${id}`,
-    addTime: `/showcase/${nickname}/add_time`,
-    leaderboard: `/showcase/${nickname}/leaderboard?game_type=snake`
+    addTime: `/showcase/${nickname}/add_time`
   };
 
   const canvas = document.getElementById("snake-canvas");
@@ -84,6 +99,12 @@
   const playerNameInput = document.getElementById("snake-player-name");
   const saveNameBtn = document.getElementById("snake-save-name");
   const leaderboardList = document.getElementById("snake-leaderboard-list");
+  const lbSortEl = document.getElementById("snake-lb-sort");
+  const lbPagEl = document.getElementById("snake-leaderboard-pagination");
+  const lbPrevBtn = document.getElementById("snake-lb-prev");
+  const lbNextBtn = document.getElementById("snake-lb-next");
+  const lbPageLabel = document.getElementById("snake-lb-page-label");
+  let lbPage = 1;
 
   function fetchJson(url, options = {}) {
     const opts = {
@@ -112,20 +133,118 @@
     await Promise.all([updatePromise, addTimePromise]);
   }
 
+  function playerCookieKey() {
+    return "bgShowcasePlayer_" + nickname.replace(/[^a-zA-Z0-9]/g, "_");
+  }
+  function getPlayerCookie() {
+    const prefix = playerCookieKey() + "=";
+    const parts = document.cookie.split(";");
+    for (let c of parts) {
+      c = c.trim();
+      if (c.startsWith(prefix)) return decodeURIComponent(c.slice(prefix.length).replace(/\+/g, " "));
+    }
+    return "";
+  }
+  function setPlayerCookie(value) {
+    const maxAge = 365 * 24 * 60 * 60;
+    document.cookie = playerCookieKey() + "=" + encodeURIComponent(value) + ";path=/;max-age=" + maxAge + ";SameSite=Lax";
+  }
+  function parsePlayedAt(iso) {
+    if (!iso) return null;
+    const d = new Date(iso);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  function formatPlayedDate(iso) {
+    const d = parsePlayedAt(iso);
+    if (!d) return "—";
+    const dd = String(d.getDate()).padStart(2, "0");
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    return dd + "/" + mm + "/" + d.getFullYear();
+  }
+  function formatPlayedTime(iso) {
+    const d = parsePlayedAt(iso);
+    if (!d) return "—";
+    return d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+  }
+  function buildLeaderboardUrl() {
+    const p = new URLSearchParams({
+      game_type: "snake",
+      sort: lbSortEl.value,
+      page: String(lbPage),
+      per_page: String(LEADERBOARD_PER_PAGE)
+    });
+    return "/showcase/" + nickname + "/leaderboard?" + p.toString();
+  }
+
+  const snakeNameFields = document.getElementById("snake-lb-name-fields");
+  const snakeAutoReg = document.getElementById("snake-lb-auto-registered");
+  const snakeRegName = document.getElementById("snake-lb-registered-name");
+
+  function setSnakeLeaderboardUi(showRegistered, nameForForm) {
+    if (showRegistered && nameForForm) {
+      snakeNameFields.hidden = true;
+      snakeAutoReg.hidden = false;
+      snakeRegName.textContent = nameForForm;
+    } else {
+      snakeNameFields.hidden = false;
+      snakeAutoReg.hidden = true;
+      playerNameInput.value = (nameForForm != null && nameForForm !== "") ? nameForForm : (getPlayerCookie() || "");
+    }
+  }
+
+  function renderLeaderboardPagination(meta) {
+    const { page, total_pages: totalPages, total } = meta;
+    if (total === 0 || !totalPages || totalPages <= 1) {
+      lbPagEl.hidden = true;
+      return;
+    }
+    lbPagEl.hidden = false;
+    lbPrevBtn.disabled = page <= 1;
+    lbNextBtn.disabled = page >= totalPages;
+    lbPageLabel.textContent = "Page " + page + " / " + totalPages;
+  }
+
   async function loadLeaderboard() {
     try {
-      const res = await fetchJson(urls.leaderboard);
+      const res = await fetchJson(buildLeaderboardUrl());
       const data = await res.json();
-      if (Array.isArray(data) && data.length > 0) {
-        leaderboardList.innerHTML = data.map(s =>
-          `<div class="snake-leaderboard-row"><span class="snake-leaderboard-rank">${s.rank}</span><span class="snake-leaderboard-name">${escapeHtml(s.player_name)}</span><span class="snake-leaderboard-score">${s.score}</span></div>`
-        ).join("");
-        leaderboardList.classList.remove("snake-leaderboard-empty");
+      if (data.error) {
+        leaderboardList.innerHTML = "<p class=\"snake-leaderboard-empty\">Aucun score enregistré</p>";
+        lbPagEl.hidden = true;
+        return;
+      }
+      const entries = data.entries;
+      if (Array.isArray(entries) && entries.length > 0) {
+        leaderboardList.innerHTML =
+          '<div class="snake-leaderboard-table-wrap">' +
+          '<table class="snake-leaderboard-table" aria-label="Classement">' +
+          "<thead><tr>" +
+          '<th scope="col" class="snake-leaderboard-th snake-leaderboard-th--num">#</th>' +
+          '<th scope="col" class="snake-leaderboard-th">Joueur</th>' +
+          '<th scope="col" class="snake-leaderboard-th snake-leaderboard-th--score">Score</th>' +
+          '<th scope="col" class="snake-leaderboard-th snake-leaderboard-th--meta">Date</th>' +
+          '<th scope="col" class="snake-leaderboard-th snake-leaderboard-th--meta">Heure</th>' +
+          "</tr></thead><tbody>" +
+          entries.map(s =>
+            "<tr>" +
+            `<td class="snake-leaderboard-td snake-leaderboard-td--num">${s.rank}</td>` +
+            `<td class="snake-leaderboard-td snake-leaderboard-td--name">` +
+              `<strong class="snake-lb-name">${escapeHtml(s.player_name)}</strong></td>` +
+            `<td class="snake-leaderboard-td snake-leaderboard-td--score">` +
+              `<strong class="snake-lb-score">${s.score}</strong></td>` +
+            `<td class="snake-leaderboard-td snake-leaderboard-td--date snake-lb-meta"><time datetime="${escapeHtml(s.played_at || "")}">${escapeHtml(formatPlayedDate(s.played_at))}</time></td>` +
+            `<td class="snake-leaderboard-td snake-leaderboard-td--time snake-lb-meta">${escapeHtml(formatPlayedTime(s.played_at))}</td>` +
+            "</tr>"
+          ).join("") +
+          "</tbody></table></div>";
+        renderLeaderboardPagination(data);
       } else {
         leaderboardList.innerHTML = "<p class=\"snake-leaderboard-empty\">Aucun score enregistré</p>";
+        lbPagEl.hidden = true;
       }
     } catch {
       leaderboardList.innerHTML = "<p class=\"snake-leaderboard-empty\">Aucun score enregistré</p>";
+      lbPagEl.hidden = true;
     }
   }
 
@@ -198,19 +317,37 @@
     draw();
   }
 
-  function endGame() {
+  async function endGame() {
     gameOver = true;
     if (gameLoop) cancelAnimationFrame(gameLoop);
     gameEl.style.display = "none";
     gameoverEl.style.display = "block";
     finalScoreEl.textContent = score;
-    playerNameInput.value = "";
+
+    const saved = getPlayerCookie().trim();
     if (currentSessionId) {
+      if (saved) {
+        try {
+          const res = await fetchJson(urls.updateSession(currentSessionId), {
+            method: "PATCH",
+            body: JSON.stringify({ score: score, player_name: saved })
+          });
+          if (res.ok) {
+            setPlayerCookie(saved);
+            setSnakeLeaderboardUi(true, saved);
+            lbPage = 1;
+            lbSortEl.value = "score";
+            loadLeaderboard();
+            return;
+          }
+        } catch (_) {}
+      }
       fetchJson(urls.updateSession(currentSessionId), {
         method: "PATCH",
         body: JSON.stringify({ score: score })
       }).catch(() => {});
     }
+    setSnakeLeaderboardUi(false, saved);
   }
 
   const fps = 12;
@@ -231,6 +368,7 @@
     gameEl.style.display = "block";
     gameoverEl.style.display = "none";
     scoreEl.textContent = "0";
+    setSnakeLeaderboardUi(false, getPlayerCookie() || "");
 
     try {
       const res = await fetchJson(urls.createSession, {
@@ -255,7 +393,10 @@
         body: JSON.stringify({ player_name: name })
       });
       if (res.ok) {
-        playerNameInput.value = "";
+        setPlayerCookie(name);
+        setSnakeLeaderboardUi(true, name);
+        lbPage = 1;
+        lbSortEl.value = "score";
         loadLeaderboard();
       }
     } finally {
@@ -265,6 +406,19 @@
 
   document.getElementById("snake-start").addEventListener("click", startGame);
   document.getElementById("snake-replay").addEventListener("click", startGame);
+
+  lbSortEl.addEventListener("change", () => {
+    lbPage = 1;
+    loadLeaderboard();
+  });
+  lbPrevBtn.addEventListener("click", () => {
+    if (lbPage > 1) { lbPage--; loadLeaderboard(); }
+  });
+  lbNextBtn.addEventListener("click", () => {
+    if (lbNextBtn.disabled) return;
+    lbPage++;
+    loadLeaderboard();
+  });
 
   const dirMap = { up: { x: 0, y: -1 }, down: { x: 0, y: 1 }, left: { x: -1, y: 0 }, right: { x: 1, y: 0 } };
   document.querySelectorAll(".snake-dpad-btn").forEach(btn => {

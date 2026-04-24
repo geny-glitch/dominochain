@@ -239,52 +239,160 @@
   margin-right: auto;
 }
 
+.quiz-lb-registered {
+  margin: 0 0 $ds-space-sm;
+  text-align: center;
+  color: $ds-text-muted;
+  font-size: $ds-body-size;
+
+  strong {
+    color: $ds-text;
+  }
+}
+
+.quiz-lb-name-fields {
+  display: flex;
+  flex-direction: column;
+  gap: $ds-space-md;
+}
+
 .quiz-leaderboard {
   margin-top: $ds-space-2xl;
   padding: 0 $ds-space-sm;
+}
+
+.quiz-leaderboard-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $ds-space-sm;
+  margin-bottom: $ds-space-md;
+}
+
+.quiz-leaderboard-toolbar-label {
+  font-size: $ds-small-size;
+  color: $ds-text-muted;
+}
+
+.quiz-leaderboard-sort {
+  max-width: 200px;
+  width: 100%;
 }
 
 .quiz-leaderboard-list {
   background: $ds-surface-elevated;
   border: 1px solid $ds-border;
   border-radius: $ds-radius-md;
-  padding: $ds-space-md;
+  padding: 0;
+  overflow: hidden;
 }
 
 .quiz-leaderboard-empty {
   color: $ds-text-muted;
   font-size: $ds-small-size;
   margin: 0;
+  padding: $ds-space-md;
 }
 
-.quiz-leaderboard-row {
-  display: flex;
-  align-items: center;
-  gap: $ds-space-md;
-  padding: $ds-space-xs 0;
-  font-size: $ds-small-size;
+.quiz-leaderboard-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.quiz-leaderboard-table {
+  width: 100%;
+  border-collapse: collapse;
   color: $ds-text;
 
-  &:not(:last-child) {
+  th,
+  td {
+    padding: $ds-space-sm $ds-space-md;
+    text-align: left;
+    vertical-align: middle;
     border-bottom: 1px solid $ds-border;
+  }
+
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  .quiz-leaderboard-th {
+    color: $ds-text-muted;
+    font-weight: 600;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    background: rgba($ds-border, 0.35);
+  }
+
+  .quiz-leaderboard-th--num {
+    width: 2rem;
+  }
+
+  .quiz-leaderboard-th--score {
+    text-align: right;
+    width: 4.25rem;
+  }
+
+  .quiz-leaderboard-th--meta {
+    width: 4.5rem;
+    font-size: 0.58rem;
+    color: $ds-text-muted;
+  }
+
+  .quiz-leaderboard-td--num {
+    font-weight: 600;
+    color: $ds-amber;
+    font-size: $ds-small-size;
+  }
+
+  .quiz-leaderboard-td--name {
+    max-width: 9rem;
+    word-break: break-word;
+    line-height: 1.35;
+
+    strong {
+      font-size: $ds-body-size;
+      font-weight: 700;
+      color: $ds-text;
+    }
+  }
+
+  .quiz-leaderboard-td--score {
+    text-align: right;
+    white-space: nowrap;
+
+    strong {
+      font-family: $ds-font-mono;
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: $ds-amber;
+      font-variant-numeric: tabular-nums;
+    }
+  }
+
+  .quiz-leaderboard-td--meta {
+    color: $ds-text-muted;
+    white-space: nowrap;
+    font-size: 0.68rem;
+    font-weight: 400;
+    font-variant-numeric: tabular-nums;
   }
 }
 
-.quiz-leaderboard-rank {
-  min-width: 1.5rem;
-  font-weight: 600;
-  color: $ds-amber;
+.quiz-leaderboard-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $ds-space-sm;
+  margin-top: $ds-space-md;
 }
 
-.quiz-leaderboard-name {
+.quiz-leaderboard-page-label {
+  font-size: $ds-small-size;
+  color: $ds-text-muted;
+  text-align: center;
   flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.quiz-leaderboard-score {
-  font-family: $ds-font-mono;
 }
 
 // Snake (page dédiée)
@@ -541,6 +649,12 @@ html:has(body.snake-page-active) {
   margin-top: $ds-space-md;
 }
 
+.snake-btn--sm {
+  padding: $ds-space-xs $ds-space-sm;
+  font-size: $ds-small-size;
+  margin-top: 0;
+}
+
 .snake-flash {
   position: fixed;
   bottom: $ds-space-xl;
@@ -570,6 +684,23 @@ html:has(body.snake-page-active) {
   max-width: 280px;
 }
 
+.snake-lb-registered {
+  margin: 0 0 $ds-space-sm;
+  text-align: center;
+  color: #88ff88;
+  font-size: $ds-body-size;
+
+  strong {
+    color: #eeffcc;
+  }
+}
+
+.snake-lb-name-fields {
+  display: flex;
+  flex-direction: column;
+  gap: $ds-space-md;
+}
+
 .snake-input {
   padding: $ds-space-md;
   font-size: $ds-body-size;
@@ -588,7 +719,7 @@ html:has(body.snake-page-active) {
 .snake-leaderboard {
   margin-top: $ds-space-2xl;
   width: 100%;
-  max-width: 320px;
+  max-width: 26rem;
 }
 
 .snake-leaderboard-title {
@@ -598,11 +729,33 @@ html:has(body.snake-page-active) {
   font-family: $ds-font-mono;
 }
 
+.snake-leaderboard-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $ds-space-sm;
+  width: 100%;
+  margin-bottom: $ds-space-md;
+}
+
+.snake-leaderboard-toolbar-label {
+  font-size: $ds-small-size;
+  color: #22cc22;
+  opacity: 0.8;
+}
+
+.snake-leaderboard-sort {
+  flex: 1;
+  min-width: 0;
+  max-width: 220px;
+}
+
 .snake-leaderboard-list {
   background: rgba(13, 31, 13, 0.8);
   border: 1px solid #22cc22;
   border-radius: $ds-radius-md;
-  padding: $ds-space-md;
+  padding: 0;
+  overflow: hidden;
 }
 
 .snake-leaderboard-empty {
@@ -610,34 +763,118 @@ html:has(body.snake-page-active) {
   opacity: 0.7;
   font-size: $ds-small-size;
   margin: 0;
+  padding: $ds-space-md;
 }
 
-.snake-leaderboard-row {
-  display: flex;
-  align-items: center;
-  gap: $ds-space-md;
-  padding: $ds-space-xs 0;
-  font-size: $ds-small-size;
+.snake-leaderboard-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.snake-leaderboard-table {
+  width: 100%;
+  border-collapse: collapse;
   color: #33ff33;
 
-  &:not(:last-child) {
-    border-bottom: 1px solid rgba(34, 204, 34, 0.3);
+  th,
+  td {
+    padding: $ds-space-sm $ds-space-md;
+    text-align: left;
+    vertical-align: middle;
+    border-bottom: 1px solid rgba(34, 204, 34, 0.35);
+  }
+
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  .snake-leaderboard-th {
+    color: #55ff55;
+    font-weight: 600;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    background: rgba(13, 31, 13, 0.95);
+  }
+
+  .snake-leaderboard-th--num {
+    width: 1.75rem;
+  }
+
+  .snake-leaderboard-th--score {
+    text-align: right;
+    width: 3.5rem;
+  }
+
+  .snake-leaderboard-th--meta {
+    width: 4rem;
+    font-size: 0.52rem;
+    color: #33aa33;
+    font-weight: 500;
+  }
+
+  .snake-leaderboard-td--num {
+    color: #44cc44;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  .snake-leaderboard-td--name {
+    max-width: 8rem;
+    word-break: break-word;
+  }
+
+  // Noms : <strong> pour graisse réelle + styles qui passent partout
+  .snake-lb-name {
+    display: inline-block;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #f6fff6;
+    letter-spacing: 0.01em;
+  }
+
+  .snake-leaderboard-td--score {
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .snake-lb-score {
+    display: inline-block;
+    font-family: $ds-font-mono;
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #fff6a0;
+    font-variant-numeric: tabular-nums;
+  }
+
+  // Date / heure : second plan
+  .snake-lb-meta {
+    color: #228822;
+    font-size: 0.64rem;
+    font-weight: 400;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
   }
 }
 
-.snake-leaderboard-rank {
-  min-width: 1.5rem;
-  font-weight: 600;
-  color: #55ff55;
+.snake-leaderboard-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $ds-space-sm;
+  width: 100%;
+  margin-top: $ds-space-md;
 }
 
-.snake-leaderboard-name {
+.snake-leaderboard-pagination .snake-btn--ghost {
+  margin-top: 0;
+}
+
+.snake-leaderboard-page-label {
+  font-size: $ds-small-size;
+  color: #22cc22;
+  text-align: center;
   flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  opacity: 0.85;
 }
 
-.snake-leaderboard-score {
-  font-family: $ds-font-mono;
-}

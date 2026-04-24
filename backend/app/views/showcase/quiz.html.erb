@@ -58,17 +58,32 @@
     <div id="quiz-gameover" class="quiz-gameover" style="display: none;">
       <h2 class="quiz-gameover-title">Fin de partie</h2>
       <p class="quiz-gameover-score">Score final : <strong id="quiz-final-score">0</strong> €</p>
-      <div class="quiz-leaderboard-form">
-        <input type="text" id="quiz-player-name" class="ds-input" placeholder="Ton pseudo pour le leaderboard" maxlength="30" />
-        <button type="button" class="ds-btn ds-btn--primary" id="quiz-save-name">Enregistrer</button>
+      <div class="quiz-leaderboard-form" id="quiz-lb-name-block">
+        <p id="quiz-lb-auto-registered" class="quiz-lb-registered" hidden>Score enregistré pour <strong id="quiz-lb-registered-name"></strong></p>
+        <div id="quiz-lb-name-fields" class="quiz-lb-name-fields">
+          <input type="text" id="quiz-player-name" class="ds-input" placeholder="Ton pseudo pour le leaderboard" maxlength="30" />
+          <button type="button" class="ds-btn ds-btn--primary" id="quiz-save-name">Enregistrer</button>
+        </div>
       </div>
       <button type="button" class="ds-btn ds-btn--ghost" id="quiz-replay">Rejouer</button>
     </div>
 
     <section class="quiz-leaderboard" id="quiz-leaderboard">
       <h3 class="ds-section-title">Leaderboard</h3>
+      <div class="quiz-leaderboard-toolbar">
+        <label class="quiz-leaderboard-toolbar-label" for="quiz-lb-sort">Trier</label>
+        <select id="quiz-lb-sort" class="ds-input quiz-leaderboard-sort" aria-label="Trier le classement">
+          <option value="score">Meilleur score</option>
+          <option value="recent">Plus récent</option>
+        </select>
+      </div>
       <div id="quiz-leaderboard-list" class="quiz-leaderboard-list">
         <p class="quiz-leaderboard-empty">Aucun score enregistré</p>
+      </div>
+      <div id="quiz-leaderboard-pagination" class="quiz-leaderboard-pagination" hidden>
+        <button type="button" class="ds-btn ds-btn--ghost ds-btn--sm" id="quiz-lb-prev" disabled>Précédent</button>
+        <span class="quiz-leaderboard-page-label" id="quiz-lb-page-label"></span>
+        <button type="button" class="ds-btn ds-btn--ghost ds-btn--sm" id="quiz-lb-next">Suivant</button>
       </div>
     </section>
   </div>
@@ -87,11 +102,11 @@
   const TIME_PER_QUESTION = 60; // comme le jeu radio : 60 s, erreur ne reset pas le timer
 
   const nickname = document.querySelector(".quiz-page").dataset.nickname;
+  const LEADERBOARD_PER_PAGE = 10;
   const urls = {
     createSession: `/showcase/${nickname}/sessions`,
     updateSession: (id) => `/showcase/${nickname}/sessions/${id}`,
     addTime: `/showcase/${nickname}/add_time`,
-    leaderboard: `/showcase/${nickname}/leaderboard?game_type=quiz`,
     questions: `/showcase/${nickname}/questions`,
     checkAnswer: `/showcase/${nickname}/check_answer`
   };
@@ -118,6 +133,14 @@
   const submitBtn = document.getElementById("quiz-submit");
   const timerBar = document.getElementById("quiz-timer-bar");
   const leaderboardList = document.getElementById("quiz-leaderboard-list");
+  const lbSortEl = document.getElementById("quiz-lb-sort");
+  const lbPagEl = document.getElementById("quiz-leaderboard-pagination");
+  const lbPrevBtn = document.getElementById("quiz-lb-prev");
+  const lbNextBtn = document.getElementById("quiz-lb-next");
+  const lbPageLabel = document.getElementById("quiz-lb-page-label");
+  const quizPlayerNameInput = document.getElementById("quiz-player-name");
+
+  let lbPage = 1;
 
   function fetchJson(url, options = {}) {
     return fetch(url, {
@@ -138,6 +161,64 @@
     const div = document.createElement("div");
     div.textContent = s;
     return div.innerHTML;
+  }
+
+  function playerCookieKey() {
+    return "bgShowcasePlayer_" + nickname.replace(/[^a-zA-Z0-9]/g, "_");
+  }
+  function getPlayerCookie() {
+    const prefix = playerCookieKey() + "=";
+    const parts = document.cookie.split(";");
+    for (let c of parts) {
+      c = c.trim();
+      if (c.startsWith(prefix)) return decodeURIComponent(c.slice(prefix.length).replace(/\+/g, " "));
+    }
+    return "";
+  }
+  function setPlayerCookie(value) {
+    const maxAge = 365 * 24 * 60 * 60;
+    document.cookie = playerCookieKey() + "=" + encodeURIComponent(value) + ";path=/;max-age=" + maxAge + ";SameSite=Lax";
+  }
+  function parsePlayedAt(iso) {
+    if (!iso) return null;
+    const d = new Date(iso);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  function formatPlayedDate(iso) {
+    const d = parsePlayedAt(iso);
+    if (!d) return "—";
+    const dd = String(d.getDate()).padStart(2, "0");
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    return dd + "/" + mm + "/" + d.getFullYear();
+  }
+  function formatPlayedTime(iso) {
+    const d = parsePlayedAt(iso);
+    if (!d) return "—";
+    return d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+  }
+  function buildLeaderboardUrl() {
+    const p = new URLSearchParams({
+      game_type: "quiz",
+      sort: lbSortEl.value,
+      page: String(lbPage),
+      per_page: String(LEADERBOARD_PER_PAGE)
+    });
+    return "/showcase/" + nickname + "/leaderboard?" + p.toString();
+  }
+
+  function setQuizLeaderboardUi(showRegistered, nameForForm) {
+    const fields = document.getElementById("quiz-lb-name-fields");
+    const reg = document.getElementById("quiz-lb-auto-registered");
+    const regName = document.getElementById("quiz-lb-registered-name");
+    if (showRegistered && nameForForm) {
+      fields.hidden = true;
+      reg.hidden = false;
+      regName.textContent = nameForForm;
+    } else {
+      fields.hidden = false;
+      reg.hidden = true;
+      quizPlayerNameInput.value = nameForForm != null && nameForForm !== "" ? nameForForm : (getPlayerCookie() || "");
+    }
   }
 
   async function loadQuestions() {
@@ -285,35 +366,90 @@
     showGameOver();
   }
 
-  function showGameOver() {
+  async function showGameOver() {
     gameEl.style.display = "none";
     bancoChoice.style.display = "none";
     superChoice.style.display = "none";
     gameoverEl.style.display = "block";
     finalScoreEl.textContent = score;
-    document.getElementById("quiz-player-name").value = "";
+
+    const saved = getPlayerCookie().trim();
     if (currentSessionId) {
+      if (saved) {
+        try {
+          const res = await fetchJson(urls.updateSession(currentSessionId), {
+            method: "PATCH",
+            body: JSON.stringify({ score, player_name: saved })
+          });
+          if (res.ok) {
+            setPlayerCookie(saved);
+            setQuizLeaderboardUi(true, saved);
+            lbPage = 1;
+            lbSortEl.value = "score";
+            loadLeaderboard();
+            return;
+          }
+        } catch (_) {}
+      }
       fetchJson(urls.updateSession(currentSessionId), {
         method: "PATCH",
         body: JSON.stringify({ score })
       }).catch(() => {});
     }
+    setQuizLeaderboardUi(false, saved);
+  }
+
+  function renderLeaderboardPagination(meta) {
+    const { page, total_pages: totalPages, total } = meta;
+    if (total === 0 || !totalPages || totalPages <= 1) {
+      lbPagEl.hidden = true;
+      return;
+    }
+    lbPagEl.hidden = false;
+    lbPrevBtn.disabled = page <= 1;
+    lbNextBtn.disabled = page >= totalPages;
+    lbPageLabel.textContent = "Page " + page + " / " + totalPages;
   }
 
   async function loadLeaderboard() {
     try {
-      const res = await fetchJson(urls.leaderboard);
+      const res = await fetchJson(buildLeaderboardUrl());
       const data = await res.json();
-      if (Array.isArray(data) && data.length > 0) {
-        leaderboardList.innerHTML = data.map(s =>
-          `<div class="quiz-leaderboard-row"><span class="quiz-leaderboard-rank">${s.rank}</span><span class="quiz-leaderboard-name">${escapeHtml(s.player_name)}</span><span class="quiz-leaderboard-score">${s.score} €</span></div>`
-        ).join("");
-        leaderboardList.classList.remove("quiz-leaderboard-empty");
+      if (data.error) {
+        leaderboardList.innerHTML = "<p class=\"quiz-leaderboard-empty\">Aucun score enregistré</p>";
+        lbPagEl.hidden = true;
+        return;
+      }
+      const entries = data.entries;
+      if (Array.isArray(entries) && entries.length > 0) {
+        leaderboardList.innerHTML =
+          '<div class="quiz-leaderboard-table-wrap">' +
+          '<table class="quiz-leaderboard-table" aria-label="Classement">' +
+          "<thead><tr>" +
+          '<th scope="col" class="quiz-leaderboard-th quiz-leaderboard-th--num">#</th>' +
+          '<th scope="col" class="quiz-leaderboard-th">Joueur</th>' +
+          '<th scope="col" class="quiz-leaderboard-th quiz-leaderboard-th--score">Score</th>' +
+          '<th scope="col" class="quiz-leaderboard-th quiz-leaderboard-th--meta">Date</th>' +
+          '<th scope="col" class="quiz-leaderboard-th quiz-leaderboard-th--meta">Heure</th>' +
+          "</tr></thead><tbody>" +
+          entries.map(s =>
+            "<tr>" +
+            `<td class="quiz-leaderboard-td quiz-leaderboard-td--num">${s.rank}</td>` +
+            `<td class="quiz-leaderboard-td quiz-leaderboard-td--name"><strong>${escapeHtml(s.player_name)}</strong></td>` +
+            `<td class="quiz-leaderboard-td quiz-leaderboard-td--score"><strong>${s.score} €</strong></td>` +
+            `<td class="quiz-leaderboard-td quiz-leaderboard-td--date quiz-leaderboard-td--meta"><time datetime="${escapeHtml(s.played_at || "")}">${escapeHtml(formatPlayedDate(s.played_at))}</time></td>` +
+            `<td class="quiz-leaderboard-td quiz-leaderboard-td--time quiz-leaderboard-td--meta">${escapeHtml(formatPlayedTime(s.played_at))}</td>` +
+            "</tr>"
+          ).join("") +
+          "</tbody></table></div>";
+        renderLeaderboardPagination(data);
       } else {
         leaderboardList.innerHTML = "<p class=\"quiz-leaderboard-empty\">Aucun score enregistré</p>";
+        lbPagEl.hidden = true;
       }
     } catch {
       leaderboardList.innerHTML = "<p class=\"quiz-leaderboard-empty\">Aucun score enregistré</p>";
+      lbPagEl.hidden = true;
     }
   }
 
@@ -322,6 +458,7 @@
     gameoverEl.style.display = "none";
     bancoChoice.style.display = "none";
     superChoice.style.display = "none";
+    setQuizLeaderboardUi(false, getPlayerCookie() || "");
 
     questions = await loadQuestions();
     if (questions.length < 6) {
@@ -389,7 +526,7 @@
   document.getElementById("quiz-skip-super").addEventListener("click", () => { score = 500; showGameOver(); });
 
   document.getElementById("quiz-save-name").addEventListener("click", async () => {
-    const name = document.getElementById("quiz-player-name").value.trim();
+    const name = quizPlayerNameInput.value.trim();
     if (!name || !currentSessionId) return;
     const btn = document.getElementById("quiz-save-name");
     btn.disabled = true;
@@ -399,12 +536,28 @@
         body: JSON.stringify({ player_name: name })
       });
       if (res.ok) {
-        document.getElementById("quiz-player-name").value = "";
+        setPlayerCookie(name);
+        setQuizLeaderboardUi(true, name);
+        lbPage = 1;
+        lbSortEl.value = "score";
         loadLeaderboard();
       }
     } finally {
       btn.disabled = false;
     }
+  });
+
+  lbSortEl.addEventListener("change", () => {
+    lbPage = 1;
+    loadLeaderboard();
+  });
+  lbPrevBtn.addEventListener("click", () => {
+    if (lbPage > 1) { lbPage--; loadLeaderboard(); }
+  });
+  lbNextBtn.addEventListener("click", () => {
+    if (lbNextBtn.disabled) return;
+    lbPage++;
+    loadLeaderboard();
   });
 
   loadLeaderboard();

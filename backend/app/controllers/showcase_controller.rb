@@ -127,17 +127,58 @@ class ShowcaseController < ApplicationController
     render json: { correct: correct }
   end
 
+  # Top N scores enregistrés (pseudo renseigné) pour la vitrine — paginé côté API.
+  LEADERBOARD_MAX = 100
+  LEADERBOARD_PER_PAGE_DEFAULT = 10
+  LEADERBOARD_PER_PAGE_MAX = 20
+
   def leaderboard
     @beta = find_beta
     return render(json: { error: "Page introuvable." }, status: 404) unless @beta
 
-    sessions = @beta.game_sessions
-      .where(game_type: params[:game_type] || "quiz")
-      .where.not(player_name: [nil, ""])
-      .order(score: :desc)
-      .limit(10)
+    game_type = params[:game_type].presence || "quiz"
+    sort = params[:sort].to_s == "recent" ? "recent" : "score"
+    page = [params[:page].to_i, 1].max
+    per_page = params[:per_page].to_i
+    per_page = LEADERBOARD_PER_PAGE_DEFAULT if per_page < 1
+    per_page = [per_page, LEADERBOARD_PER_PAGE_MAX].min
 
-    render json: sessions.map.with_index(1) { |s, i| { rank: i, player_name: s.player_name, score: s.score, played_at: s.played_at } }
+    base = @beta.game_sessions
+      .where(game_type: game_type)
+      .where.not(player_name: [nil, ""])
+
+    ordered = if sort == "recent"
+      base.order(played_at: :desc, id: :desc)
+    else
+      base.order(score: :desc, played_at: :desc, id: :desc)
+    end
+
+    all_ids = ordered.limit(LEADERBOARD_MAX).pluck(:id)
+    total = all_ids.length
+    offset = (page - 1) * per_page
+    page_ids = all_ids[offset, per_page] || []
+    by_id = page_ids.empty? ? {} : base.where(id: page_ids).index_by(&:id)
+    rows = page_ids.filter_map { |id| by_id[id] }
+
+    entries = rows.each_with_index.map do |s, i|
+      {
+        rank: offset + i + 1,
+        player_name: s.player_name,
+        score: s.score,
+        played_at: s.played_at
+      }
+    end
+
+    total_pages = total.zero? ? 0 : ((total - 1) / per_page) + 1
+
+    render json: {
+      entries: entries,
+      page: page,
+      per_page: per_page,
+      total: total,
+      total_pages: total_pages,
+      sort: sort
+    }
   end
 
   private

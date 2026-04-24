@@ -14,4 +14,6 @@
     <dimen name="ds_radius_lg">8dp</dimen>
 
     <dimen name="ds_page_padding">24dp</dimen>
+
+    <dimen name="ds_widget_icon_sm">22dp</dimen>
 </resources>

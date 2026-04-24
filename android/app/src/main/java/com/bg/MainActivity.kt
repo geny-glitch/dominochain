@@ -139,7 +139,12 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             val result = repository.getChasterLock()
             result.onSuccess { response ->
-                ChasterWidgetProvider.updateFromLock(this@MainActivity, response?.lock, response?.error)
+                ChasterWidgetProvider.updateFromLock(
+                    this@MainActivity,
+                    response?.lock,
+                    response?.error,
+                    response?.pishock_enabled == true
+                )
                 val card = binding.chasterCard
                 val lock = response?.lock
                 val error = response?.error

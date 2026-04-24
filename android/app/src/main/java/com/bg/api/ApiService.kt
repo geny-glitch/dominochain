@@ -194,7 +194,8 @@ data class ScreenshotResponse(
 
 data class ChasterLockResponse(
     val lock: ChasterLock?,
-    val error: String? = null
+    val error: String? = null,
+    val pishock_enabled: Boolean? = null
 )
 
 data class ChasterLock(

@@ -5,8 +5,12 @@ import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.content.Intent
+import android.os.Bundle
 import android.os.SystemClock
+import android.util.TypedValue
 import android.widget.RemoteViews
+import androidx.annotation.DimenRes
+
 class ChasterWidgetProvider : AppWidgetProvider() {
 
     override fun onUpdate(
@@ -23,19 +27,111 @@ class ChasterWidgetProvider : AppWidgetProvider() {
         ChasterWidgetWorker.enqueue(context)
     }
 
+    override fun onAppWidgetOptionsChanged(
+        context: Context,
+        appWidgetManager: AppWidgetManager,
+        appWidgetId: Int,
+        newOptions: Bundle
+    ) {
+        onWidgetSizeChanged(context, appWidgetManager, appWidgetId)
+    }
+
+    private data class WidgetState(
+        val remaining: String,
+        val endTimeMs: Long?,
+        val pishockEnabled: Boolean
+    )
+
     companion object {
-        fun updateFromLock(context: Context, lock: com.bg.api.ChasterLock?, error: String?) {
+        private const val PREFS_NAME = "chaster_widget_state"
+        private const val KEY_INIT = "initialized"
+        private const val KEY_STATIC = "static_text"
+        private const val KEY_END = "end_time_ms"
+        private const val KEY_PISH = "pishock"
+
+        private fun prefs(context: Context) =
+            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+
+        private fun persistState(context: Context, state: WidgetState) {
+            prefs(context).edit()
+                .putBoolean(KEY_INIT, true)
+                .putString(KEY_STATIC, state.remaining)
+                .putLong(KEY_END, state.endTimeMs ?: 0L)
+                .putBoolean(KEY_PISH, state.pishockEnabled)
+                .apply()
+        }
+
+        private fun loadState(context: Context): WidgetState? {
+            val p = prefs(context)
+            if (!p.getBoolean(KEY_INIT, false)) return null
+            val end = p.getLong(KEY_END, 0L).takeIf { it > 0L }
+            return WidgetState(
+                remaining = p.getString(KEY_STATIC, "--") ?: "--",
+                endTimeMs = end,
+                pishockEnabled = p.getBoolean(KEY_PISH, false)
+            )
+        }
+
+        private fun pxToDp(context: Context, @DimenRes dimen: Int): Float {
+            return context.resources.getDimension(dimen) / context.resources.displayMetrics.density
+        }
+
+        private fun iconSlotDp(context: Context, pishock: Boolean): Float {
+            if (!pishock) return 0f
+            val d = context.resources.displayMetrics.density
+            return (
+                context.resources.getDimension(R.dimen.ds_widget_icon_sm) +
+                    context.resources.getDimension(R.dimen.ds_space_xs)
+                ) / d
+        }
+
+        private fun widgetSizeDp(options: Bundle): Pair<Int, Int> {
+            val minW = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0)
+            val maxW = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH, 0)
+            val minH = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0)
+            val maxH = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, 0)
+            val w = when {
+                maxW > 0 -> maxW
+                minW > 0 -> minW
+                else -> 110
+            }
+            val h = when {
+                maxH > 0 -> maxH
+                minH > 0 -> minH
+                else -> 40
+            }
+            return w to h
+        }
+
+        private fun textSizeSpForWidget(
+            context: Context,
+            widthDp: Int,
+            heightDp: Int,
+            pishock: Boolean,
+            approximateCharCount: Int
+        ): Float {
+            val pad = 2f * pxToDp(context, R.dimen.ds_space_sm)
+            val icon = iconSlotDp(context, pishock)
+            val usableW = (widthDp - pad - icon).coerceAtLeast(24f)
+            val usableH = (heightDp - pad).coerceAtLeast(16f)
+            val fromH = usableH * 0.58f
+            val chars = approximateCharCount.coerceIn(3, 18)
+            val fromW = usableW * 0.92f / chars
+            return minOf(fromH, fromW).coerceIn(11f, 56f)
+        }
+
+        fun updateFromLock(
+            context: Context,
+            lock: com.bg.api.ChasterLock?,
+            error: String?,
+            pishockEnabled: Boolean
+        ) {
             val remainingSec = lock?.remaining_seconds ?: 0
             val useCountdown = lock != null && !lock.is_frozen && remainingSec > 0
 
-            // Même logique que l'app : remaining_seconds pour éviter la dérive serveur/appareil
             val endTimeMs = if (useCountdown) {
                 System.currentTimeMillis() + remainingSec * 1000L
             } else null
-            val title = when {
-                lock != null -> lock.title?.takeIf { it.isNotBlank() }
-                else -> null
-            }
             val staticText = when {
                 lock != null && lock.is_frozen -> "Gelé"
                 error != null -> "Non connecté"
@@ -44,7 +140,7 @@ class ChasterWidgetProvider : AppWidgetProvider() {
                 else -> formatRemaining(lock.remaining_seconds ?: 0)
             }
 
-            updateWidgets(context, title, staticText, endTimeMs)
+            updateWidgets(context, staticText, endTimeMs, pishockEnabled)
         }
 
         private fun formatRemaining(sec: Int): String {
@@ -63,49 +159,90 @@ class ChasterWidgetProvider : AppWidgetProvider() {
 
         fun updateWidgets(
             context: Context,
-            title: String?,
             remaining: String,
-            endTimeMs: Long? = null
+            endTimeMs: Long? = null,
+            pishockEnabled: Boolean = false
         ) {
+            val state = WidgetState(remaining, endTimeMs, pishockEnabled)
+            persistState(context, state)
             val appWidgetManager = AppWidgetManager.getInstance(context)
             val ids = appWidgetManager.getAppWidgetIds(
                 android.content.ComponentName(context, ChasterWidgetProvider::class.java)
             )
+            ids.forEach { applyWidget(context, appWidgetManager, it, state) }
+        }
+
+        internal fun onWidgetSizeChanged(
+            context: Context,
+            appWidgetManager: AppWidgetManager,
+            appWidgetId: Int
+        ) {
+            val state = loadState(context) ?: return
+            applyWidget(context, appWidgetManager, appWidgetId, state)
+        }
+
+        private fun applyWidget(
+            context: Context,
+            appWidgetManager: AppWidgetManager,
+            appWidgetId: Int,
+            state: WidgetState
+        ) {
+            val options = appWidgetManager.getAppWidgetOptions(appWidgetId)
+            val (wDp, hDp) = widgetSizeDp(options)
+            val charCount = if (state.endTimeMs != null) {
+                10
+            } else {
+                state.remaining.length.coerceAtLeast(4)
+            }
+            val textSp = textSizeSpForWidget(
+                context,
+                wDp,
+                hDp,
+                state.pishockEnabled,
+                charCount
+            )
+
             val pendingIntent = PendingIntent.getActivity(
                 context, 0,
                 Intent(context, MainActivity::class.java),
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
 
-            ids.forEach { id ->
-                val views = RemoteViews(context.packageName, R.layout.widget_chaster)
+            val views = RemoteViews(context.packageName, R.layout.widget_chaster)
 
-                if (endTimeMs != null) {
-                    // Chronometer en mode compte à rebours — se met à jour automatiquement chaque seconde
-                    val base = SystemClock.elapsedRealtime() + (endTimeMs - System.currentTimeMillis())
-                    views.setViewVisibility(R.id.widget_chaster_chrono, android.view.View.VISIBLE)
-                    views.setViewVisibility(R.id.widget_chaster_remaining, android.view.View.GONE)
-                    views.setChronometer(R.id.widget_chaster_chrono, base, null, true)
-                    views.setChronometerCountDown(R.id.widget_chaster_chrono, true)
-                    views.setOnClickPendingIntent(R.id.widget_chaster_chrono, pendingIntent)
-                } else {
-                    views.setViewVisibility(R.id.widget_chaster_chrono, android.view.View.GONE)
-                    views.setViewVisibility(R.id.widget_chaster_remaining, android.view.View.VISIBLE)
-                    views.setTextViewText(R.id.widget_chaster_remaining, remaining)
-                    views.setOnClickPendingIntent(R.id.widget_chaster_remaining, pendingIntent)
-                }
+            views.setTextViewTextSize(
+                R.id.widget_chaster_chrono,
+                TypedValue.COMPLEX_UNIT_SP,
+                textSp
+            )
+            views.setTextViewTextSize(
+                R.id.widget_chaster_remaining,
+                TypedValue.COMPLEX_UNIT_SP,
+                textSp
+            )
 
-                if (!title.isNullOrBlank()) {
-                    views.setViewVisibility(R.id.widget_chaster_title, android.view.View.VISIBLE)
-                    views.setTextViewText(R.id.widget_chaster_title, title)
-                } else {
-                    views.setViewVisibility(R.id.widget_chaster_title, android.view.View.GONE)
-                }
-                views.setOnClickPendingIntent(R.id.widget_chaster_label, pendingIntent)
-                views.setOnClickPendingIntent(R.id.widget_chaster_title, pendingIntent)
-
-                appWidgetManager.updateAppWidget(id, views)
+            if (state.endTimeMs != null) {
+                val base = SystemClock.elapsedRealtime() +
+                    (state.endTimeMs - System.currentTimeMillis())
+                views.setViewVisibility(R.id.widget_chaster_chrono, android.view.View.VISIBLE)
+                views.setViewVisibility(R.id.widget_chaster_remaining, android.view.View.GONE)
+                views.setChronometer(R.id.widget_chaster_chrono, base, null, true)
+                views.setChronometerCountDown(R.id.widget_chaster_chrono, true)
+            } else {
+                views.setViewVisibility(R.id.widget_chaster_chrono, android.view.View.GONE)
+                views.setViewVisibility(R.id.widget_chaster_remaining, android.view.View.VISIBLE)
+                views.setTextViewText(R.id.widget_chaster_remaining, state.remaining)
             }
+
+            if (state.pishockEnabled) {
+                views.setViewVisibility(R.id.widget_pishock_icon, android.view.View.VISIBLE)
+            } else {
+                views.setViewVisibility(R.id.widget_pishock_icon, android.view.View.GONE)
+            }
+
+            views.setOnClickPendingIntent(R.id.widget_chaster_root, pendingIntent)
+
+            appWidgetManager.updateAppWidget(appWidgetId, views)
         }
     }
 }

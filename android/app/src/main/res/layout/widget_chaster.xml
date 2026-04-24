@@ -1,50 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_chaster_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="16dp"
+    android:orientation="horizontal"
+    android:padding="@dimen/ds_space_sm"
     android:background="@drawable/widget_chaster_background"
     android:gravity="center_vertical">
 
-    <TextView
-        android:id="@+id/widget_chaster_label"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Chaster"
-        android:textColor="@color/ds_text_muted"
-        android:textSize="12sp"
-        android:layout_marginBottom="4dp" />
+    <FrameLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:layout_gravity="center_vertical">
 
-    <!-- Chronometer pour le compte à rebours en temps réel -->
-    <Chronometer
-        android:id="@+id/widget_chaster_chrono"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textColor="@color/ds_teal"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:visibility="gone" />
+        <Chronometer
+            android:id="@+id/widget_chaster_chrono"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center_vertical|start"
+            android:textColor="@color/ds_teal"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:visibility="gone" />
 
-    <!-- TextView pour les états statiques (Gelé, Non connecté, etc.) -->
-    <TextView
-        android:id="@+id/widget_chaster_remaining"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="--"
-        android:textColor="@color/ds_teal"
-        android:textSize="20sp"
-        android:textStyle="bold" />
+        <TextView
+            android:id="@+id/widget_chaster_remaining"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center_vertical|start"
+            android:text="--"
+            android:textColor="@color/ds_teal"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:maxLines="1" />
+    </FrameLayout>
 
-    <TextView
-        android:id="@+id/widget_chaster_title"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text=""
-        android:textColor="@color/ds_text"
-        android:textSize="12sp"
-        android:maxLines="1"
-        android:ellipsize="end"
-        android:layout_marginTop="2dp"
+    <ImageView
+        android:id="@+id/widget_pishock_icon"
+        android:layout_width="@dimen/ds_widget_icon_sm"
+        android:layout_height="@dimen/ds_widget_icon_sm"
+        android:layout_gravity="center_vertical"
+        android:layout_marginStart="@dimen/ds_space_xs"
+        android:contentDescription="@string/widget_pishock_icon_description"
+        android:scaleType="fitCenter"
+        android:src="@drawable/ic_widget_lightning"
         android:visibility="gone" />
 </LinearLayout>

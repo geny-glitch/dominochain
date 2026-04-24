@@ -7,9 +7,10 @@ module Api
     def lock
       service = ChasterService.new(current_user)
       lock_info = service.current_lock
+      pishock_enabled = current_user.pishock_enabled
 
       if lock_info.nil?
-        render json: { lock: nil }
+        render json: { lock: nil, pishock_enabled: pishock_enabled }
         return
       end
 
@@ -21,12 +22,13 @@ module Api
           is_frozen: lock_info[:is_frozen],
           remaining_seconds: lock_info[:remaining_seconds],
           display_remaining_time: lock_info[:display_remaining_time]
-        }
+        },
+        pishock_enabled: pishock_enabled
       }
     rescue ChasterService::Unauthorized
-      render json: { error: "Chaster non connecté", lock: nil }, status: :unauthorized
+      render json: { error: "Chaster non connecté", lock: nil, pishock_enabled: current_user.pishock_enabled }, status: :unauthorized
     rescue ChasterService::Error => e
-      render json: { error: e.message, lock: nil }, status: :unprocessable_entity
+      render json: { error: e.message, lock: nil, pishock_enabled: current_user.pishock_enabled }, status: :unprocessable_entity
     end
 
     def locks

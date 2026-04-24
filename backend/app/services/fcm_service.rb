@@ -209,6 +209,37 @@ class FcmService
       send_request(device, payload)
     end
 
+    def send_showcase_game_notification(device:, player_name:, score:, game_type:)
+      unless device.fcm_token.present?
+        Rails.logger.info "[FCM] Skipped showcase_game: no fcm_token for device #{device.device_id}"
+        return
+      end
+      unless credentials_configured?
+        Rails.logger.warn "[FCM] Skipped showcase_game: credentials not configured."
+        return
+      end
+
+      label = showcase_game_label(game_type)
+      title = "OTB"
+      body = "#{player_name} a terminé une partie de #{label} : #{score} point#{'s' if score != 1}"
+
+      payload = {
+        message: {
+          token: device.fcm_token,
+          notification: { title: title, body: body },
+          data: {
+            type: "showcase_game",
+            player_name: player_name.to_s,
+            score: score.to_s,
+            game_type: game_type.to_s
+          },
+          android: { priority: "high" }
+        }
+      }
+
+      send_request(device, payload)
+    end
+
     def send_punishment_notification(device:, task:, message: nil)
       unless device.fcm_token.present?
         Rails.logger.info "[FCM] Skipped punishment: no fcm_token for device #{device.device_id}"
@@ -247,6 +278,14 @@ class FcmService
     end
 
     private
+
+    def showcase_game_label(game_type)
+      case game_type.to_s
+      when "snake" then "Snake"
+      when "quiz" then "Quiz"
+      else game_type.to_s.presence || "jeu"
+      end
+    end
 
     def send_request(device, payload)
       uri = URI(format(FCM_ENDPOINT, project_id: project_id))

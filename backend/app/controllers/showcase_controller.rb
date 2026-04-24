@@ -78,16 +78,20 @@ class ShowcaseController < ApplicationController
 
     game_session = @beta.game_sessions.find(params[:id])
     permitted = session_params
-    name_was_blank = game_session.player_name.blank?
     incoming_name = permitted[:player_name].presence
-    first_name_submission = name_was_blank && incoming_name.present?
 
     game_session.update!(permitted)
 
-    if first_name_submission && game_session.player_name.present?
+    if incoming_name.present? && game_session.player_name.present?
       intensity = [game_session.score, 100].min
       intensity = 1 if intensity < 1
       PishockShockJob.perform_later(@beta.id, intensity, 1)
+      ShowcaseBetaNotifyJob.perform_later(
+        @beta.id,
+        game_session.player_name,
+        game_session.score,
+        game_session.game_type
+      )
     end
 
     render json: { ok: true }

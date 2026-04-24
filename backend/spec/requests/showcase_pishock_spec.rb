@@ -40,14 +40,32 @@ RSpec.describe "Showcase PiShock hooks", type: :request do
       end.to have_enqueued_job(PishockShockJob).with(beta.id, 100, 1)
     end
 
-    it "does not enqueue when player_name was already set" do
+    it "enqueues PishockShockJob when player_name is updated again" do
       game_session.update!(player_name: "Bob")
       expect do
         patch showcase_update_session_path(beta.nickname, game_session.id),
           params: { player_name: "Alice" },
           headers: { "Content-Type" => "application/json" },
           as: :json
-      end.not_to have_enqueued_job(PishockShockJob)
+      end.to have_enqueued_job(PishockShockJob).with(beta.id, 42, 1)
+    end
+
+    it "enqueues ShowcaseBetaNotifyJob when player_name is submitted" do
+      expect do
+        patch showcase_update_session_path(beta.nickname, game_session.id),
+          params: { player_name: "Alice" },
+          headers: { "Content-Type" => "application/json" },
+          as: :json
+      end.to have_enqueued_job(ShowcaseBetaNotifyJob).with(beta.id, "Alice", 42, "snake")
+    end
+
+    it "does not enqueue showcase notify when only score is patched" do
+      expect do
+        patch showcase_update_session_path(beta.nickname, game_session.id),
+          params: { score: 10 },
+          headers: { "Content-Type" => "application/json" },
+          as: :json
+      end.not_to have_enqueued_job(ShowcaseBetaNotifyJob)
     end
   end
 end

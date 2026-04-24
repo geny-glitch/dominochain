@@ -19,6 +19,23 @@ class BetaDashboardController < ApplicationController
     redirect_to beta_dashboard_path, alert: e.record.errors.full_messages.join(", ")
   end
 
+  def test_pishock
+    u = current_user.reload
+    unless u.pishock_username.present? && u.pishock_share_code.present? && u.pishock_api_key.present?
+      redirect_to beta_dashboard_path, alert: "Enregistre d’abord ton username, share code et clé API PiShock."
+      return
+    end
+
+    case PishockService.test_connection!(user: u)
+    when :ok
+      redirect_to beta_dashboard_path, notice: "PiShock : connexion OK (bip de test envoyé — vérifie sur l’appareil ou les logs pishock.com)."
+    when :skipped
+      redirect_to beta_dashboard_path, alert: "Configuration PiShock incomplète."
+    when :error
+      redirect_to beta_dashboard_path, alert: "PiShock : échec du test. Vérifie identifiants, share code, appareil en ligne, ou les logs Rails."
+    end
+  end
+
   def show
     @control = current_user.control
     @invite_url = control_accept_from_link_url(current_user.nickname)

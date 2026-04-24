@@ -90,6 +90,31 @@ RSpec.describe "Routes", type: :request do
     end
   end
 
+  describe "POST /beta/pishock/test" do
+    it "redirects to login when not authenticated" do
+      post beta_pishock_test_path
+      expect(response).to redirect_to(new_user_session_path)
+    end
+
+    it "redirects with alert when PiShock fields are empty" do
+      beta = create(:user, :beta)
+      sign_in beta
+      post beta_pishock_test_path
+      expect(response).to redirect_to(beta_dashboard_path)
+      expect(flash[:alert]).to include("Enregistre")
+    end
+
+    it "calls PishockService and sets flash on success" do
+      beta = create(:user, :beta, pishock_username: "u", pishock_share_code: "c", pishock_api_key: "k")
+      sign_in beta
+      allow(PishockService).to receive(:test_connection!).and_return(:ok)
+      post beta_pishock_test_path
+      expect(response).to redirect_to(beta_dashboard_path)
+      expect(flash[:notice]).to be_present
+      expect(PishockService).to have_received(:test_connection!).with(user: satisfy { |u| u.id == beta.id })
+    end
+  end
+
   describe "Beta task routes" do
     let(:beta) { create(:user, :beta) }
     let(:device) { create(:device, user: beta) }

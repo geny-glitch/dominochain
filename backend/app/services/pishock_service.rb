@@ -14,6 +14,11 @@ class PishockService
     def shock!(user:, intensity:, duration:)
       new(user).shock(intensity: intensity, duration: duration)
     end
+
+    # Short beep to verify credentials (does not require pishock_enabled).
+    def test_connection!(user:)
+      new(user).test_connection
+    end
   end
 
   def initialize(user)
@@ -28,18 +33,34 @@ class PishockService
     intensity = intensity.to_i.clamp(1, 100)
     duration_value = normalize_duration(duration)
 
-    uri = URI(API_URL)
-    # Integer JSON fields match python `requests.post(..., json=params)` (see pishock.zap.httpapi).
-    payload = {
-      "Username" => @user.pishock_username.to_s,
-      "Apikey" => @user.pishock_api_key.to_s,
-      "Code" => @user.pishock_share_code.to_s,
+    post_operate(
       "Name" => APP_NAME,
       "Op" => 0,
       "Intensity" => intensity,
       "Duration" => duration_value
-    }
+    )
+  end
 
+  def test_connection
+    return :skipped unless credentials_complete?
+
+    post_operate(
+      "Name" => "#{APP_NAME}_test",
+      "Op" => 2,
+      "Duration" => 1
+    )
+  end
+
+  private
+
+  def post_operate(extra)
+    payload = {
+      "Username" => @user.pishock_username.to_s,
+      "Apikey" => @user.pishock_api_key.to_s,
+      "Code" => @user.pishock_share_code.to_s
+    }.merge(extra)
+
+    uri = URI(API_URL)
     req = Net::HTTP::Post.new(uri)
     req["Content-Type"] = "application/json; charset=utf-8"
     req["User-Agent"] = USER_AGENT
@@ -63,8 +84,6 @@ class PishockService
     Rails.logger.warn("[PishockService] user_id=#{@user.id} error=#{e.class}: #{e.message}")
     :error
   end
-
-  private
 
   # PiShock accepts whole seconds 1–15, or sub-second floats as milliseconds (100–1500), same as Python-PiShock.
   def normalize_duration(duration)

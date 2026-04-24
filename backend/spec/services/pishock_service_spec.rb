@@ -14,6 +14,24 @@ RSpec.describe PishockService do
       expect(described_class.new(user).shock(intensity: 5, duration: 1)).to eq(:skipped)
     end
 
+    describe ".test_connection!" do
+      it "returns :skipped when credentials incomplete" do
+        user = create(:user, pishock_username: "u", pishock_api_key: "", pishock_share_code: "c")
+        expect(described_class.test_connection!(user: user)).to eq(:skipped)
+      end
+
+      it "returns :ok when beep succeeds" do
+        user = create(:user, pishock_username: "u", pishock_api_key: "k", pishock_share_code: "c")
+        res = double("response", body: "Operation Succeeded.")
+        allow(res).to receive(:is_a?).with(Net::HTTPSuccess).and_return(true)
+        http = instance_double(Net::HTTP)
+        allow(http).to receive(:request).and_return(res)
+        allow(Net::HTTP).to receive(:start).and_yield(http)
+
+        expect(described_class.test_connection!(user: user)).to eq(:ok)
+      end
+    end
+
     it "returns :ok when API responds with Operation Succeeded" do
       user = create(:user, pishock_enabled: true, pishock_username: "u", pishock_api_key: "k", pishock_share_code: "c")
       res = double("response",

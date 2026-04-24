@@ -81,6 +81,8 @@
           </div>
           <%= submit_tag "Enregistrer PiShock", class: "ds-btn ds-btn--primary ds-btn--sm" %>
         <% end %>
+        <p class="ds-beta-control-hint" style="margin-top: 0.75rem;">Teste avec les identifiants <strong>déjà enregistrés</strong> (enregistre le formulaire si tu viens de les modifier).</p>
+        <%= button_to "Tester la connexion (bip 1 s)", beta_pishock_test_path, method: :post, form: { data: { turbo_confirm: "Envoyer un bip de test sur ton PiShock ?" } }, class: "ds-btn ds-btn--secondary ds-btn--sm", style: "margin-top: 0.5rem;" %>
       </div>
     </section>
 

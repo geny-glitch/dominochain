@@ -28,11 +28,15 @@ class BetaDashboardController < ApplicationController
 
     case PishockService.test_connection!(user: u)
     when :ok
-      redirect_to beta_dashboard_path, notice: "PiShock : connexion OK (bip de test envoyé — vérifie sur l’appareil ou les logs pishock.com)."
+      redirect_to beta_dashboard_path, notice: "PiShock : compte validé (api.pishock.com) et bip de test OK — vérifie l’appareil ou les logs sur pishock.com."
+    when :auth_error
+      redirect_to beta_dashboard_path, alert: "PiShock : nom d’utilisateur ou clé API refusés (API publique v1). Vérifie sur pishock.com → Account."
+    when :device_error
+      redirect_to beta_dashboard_path, alert: "PiShock : compte OK, mais le bip a échoué (share code, revendication PUT /Share, shocker hors ligne ou en pause, …). Voir les logs Rails."
     when :skipped
       redirect_to beta_dashboard_path, alert: "Configuration PiShock incomplète."
     when :error
-      redirect_to beta_dashboard_path, alert: "PiShock : échec du test. Vérifie identifiants, share code, appareil en ligne, ou les logs Rails."
+      redirect_to beta_dashboard_path, alert: "PiShock : erreur réseau ou réponse inattendue. Voir les logs Rails."
     end
   end
 

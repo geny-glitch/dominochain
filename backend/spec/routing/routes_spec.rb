@@ -31,6 +31,14 @@ RSpec.describe "Route mapping", type: :routing do
     expect(post: "/beta/pishock/test").to route_to(controller: "beta_dashboard", action: "test_pishock")
   end
 
+  it "maps GET /beta/pishock/debug to pishock_debug#show" do
+    expect(get: "/beta/pishock/debug").to route_to(controller: "pishock_debug", action: "show")
+  end
+
+  it "maps POST /beta/pishock/debug/clear to pishock_debug#clear" do
+    expect(post: "/beta/pishock/debug/clear").to route_to(controller: "pishock_debug", action: "clear")
+  end
+
   it "maps GET /admin/review to admin#review" do
     expect(get: "/admin/review").to route_to(controller: "admin", action: "review")
   end

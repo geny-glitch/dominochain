@@ -12,6 +12,8 @@ if Rails.env.development?
     config.log_response = true
     config.log_benchmark = true
     # Do not print API keys / tokens in request bodies
-    config.filter_parameters = %w[Apikey apikey password Password access_token refresh_token client_secret]
+    config.filter_parameters = %w[
+      Apikey apikey X-PiShock-Api-Key password Password access_token refresh_token client_secret
+    ]
   end
 end

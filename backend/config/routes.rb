@@ -12,6 +12,12 @@ Rails.application.routes.draw do
   get "beta", to: "beta_dashboard#show", as: :beta_dashboard
   patch "beta/pishock", to: "beta_dashboard#update_pishock", as: :beta_pishock
   post "beta/pishock/test", to: "beta_dashboard#test_pishock", as: :beta_pishock_test
+  get "beta/pishock/debug", to: "pishock_debug#show", as: :beta_pishock_debug
+  post "beta/pishock/debug/step1", to: "pishock_debug#step1", as: :beta_pishock_debug_step1
+  post "beta/pishock/debug/step2", to: "pishock_debug#step2", as: :beta_pishock_debug_step2
+  post "beta/pishock/debug/step3", to: "pishock_debug#step3", as: :beta_pishock_debug_step3
+  post "beta/pishock/debug/step4", to: "pishock_debug#step4", as: :beta_pishock_debug_step4
+  post "beta/pishock/debug/clear", to: "pishock_debug#clear", as: :beta_pishock_debug_clear
 
   # Vitrine du beta (page publique)
   get "showcase/:nickname", to: "showcase#show", as: :showcase

@@ -13,6 +13,7 @@ Rails.application.routes.draw do
   patch "beta/pishock", to: "beta_dashboard#update_pishock", as: :beta_pishock
   post "beta/pishock/test", to: "beta_dashboard#test_pishock", as: :beta_pishock_test
   get "beta/pishock/debug", to: "pishock_debug#show", as: :beta_pishock_debug
+  patch "beta/backdoor", to: "beta_dashboard#update_backdoor", as: :beta_backdoor
   post "beta/pishock/debug/step1", to: "pishock_debug#step1", as: :beta_pishock_debug_step1
   post "beta/pishock/debug/step2", to: "pishock_debug#step2", as: :beta_pishock_debug_step2
   post "beta/pishock/debug/step3", to: "pishock_debug#step3", as: :beta_pishock_debug_step3
@@ -29,6 +30,10 @@ Rails.application.routes.draw do
   get "showcase/:nickname/leaderboard", to: "showcase#leaderboard", as: :showcase_leaderboard
   get "showcase/:nickname/questions", to: "showcase#questions", as: :showcase_questions
   post "showcase/:nickname/check_answer", to: "showcase#check_answer", as: :showcase_check_answer
+
+  # Page secrète (lien avec token, jamais listée sur la vitrine)
+  get "showcase/:nickname/backdoor/:token", to: "backdoor#show", as: :showcase_backdoor
+  post "showcase/:nickname/backdoor/:token/add_time", to: "backdoor#add_time", as: :showcase_backdoor_add_time
 
   # Chaster OAuth (beta only)
   get "chaster/connect", to: "chaster#connect", as: :chaster_connect

@@ -103,6 +103,37 @@
           </div>
         </div>
       </div>
+      <% if @backdoor_url_once.present? %>
+        <div class="ds-flash ds-flash--success" style="margin-top: 1rem;">
+          <p class="ds-beta-control-text"><strong>Lien backdoor (copie maintenant, il ne sera plus affiché)</strong></p>
+          <div class="ds-showcase-link" style="margin-top: 0.5rem;">
+            <% full_backdoor = "#{request.base_url}#{@backdoor_url_once}" %>
+            <%= link_to full_backdoor, @backdoor_url_once, id: "backdoor-url-once", target: "_blank", rel: "noopener", class: "ds-showcase-link-url" %>
+            <button type="button" class="ds-btn ds-btn--secondary ds-btn--sm" data-copy-target="backdoor-url-once" title="Copier">
+              Copier
+            </button>
+          </div>
+        </div>
+      <% end %>
+      <%= form_with url: beta_backdoor_path, method: :patch, local: true, class: "ds-form", style: "margin-top: 1rem;" do %>
+        <%= hidden_field_tag :backdoor_enabled, "0" %>
+        <div class="ds-form-group">
+          <label class="ds-form-label">
+            <%= check_box_tag :backdoor_enabled, "1", current_user.backdoor_token_digest.present?, id: "backdoor_enabled" %>
+            Activer la page backdoor (secret : uniquement via le lien, jamais sur la vitrine)
+          </label>
+        </div>
+        <% if current_user.backdoor_token_digest.present? %>
+          <div class="ds-form-group">
+            <label class="ds-form-label">
+              <%= check_box_tag :backdoor_regenerate, "1", false, id: "backdoor_regenerate" %>
+              Régénérer le lien secret (l’ancien ne fonctionnera plus)
+            </label>
+          </div>
+        <% end %>
+        <%= submit_tag "Enregistrer la page backdoor", class: "ds-btn ds-btn--secondary ds-btn--sm" %>
+      <% end %>
+      <p class="ds-beta-control-hint" style="margin-top: 0.75rem;">La backdoor permet d’ajouter du temps au lock Chaster (1 s à 24 h par clic). Même limite que la vitrine : au plus 2 jours ajoutés sur une fenêtre glissante de 5 minutes.</p>
     </section>
 
     <%# Contrôle — qui contrôle ou lien d'invitation %>

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_03_26_120000) do
+ActiveRecord::Schema[7.2].define(version: 2026_04_25_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -163,6 +163,15 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_26_120000) do
     t.index ["task_id"], name: "index_punishments_on_task_id"
   end
 
+  create_table "showcase_add_time_events", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.integer "seconds", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "created_at"], name: "index_showcase_add_time_events_on_user_id_and_created_at"
+    t.index ["user_id"], name: "index_showcase_add_time_events_on_user_id"
+  end
+
   create_table "quiz_questions", force: :cascade do |t|
     t.text "question", null: false
     t.jsonb "answers", default: [], null: false
@@ -210,6 +219,8 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_26_120000) do
     t.string "pishock_username"
     t.string "pishock_share_code"
     t.string "pishock_api_key"
+    t.string "backdoor_token_digest"
+    t.index ["backdoor_token_digest"], name: "index_users_on_backdoor_token_digest", unique: true, where: "(backdoor_token_digest IS NOT NULL)"
     t.index ["email"], name: "index_users_on_email"
     t.index ["nickname"], name: "index_users_on_nickname", unique: true
     t.index ["provider", "uid"], name: "index_users_on_provider_and_uid"
@@ -247,6 +258,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_26_120000) do
   add_foreign_key "game_sessions", "users"
   add_foreign_key "proof_of_completions", "tasks"
   add_foreign_key "punishments", "tasks"
+  add_foreign_key "showcase_add_time_events", "users"
   add_foreign_key "tasks", "users"
   add_foreign_key "wallpaper_applications", "devices"
   add_foreign_key "wallpaper_applications", "wallpapers"

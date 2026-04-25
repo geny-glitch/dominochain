@@ -103,6 +103,17 @@
           </div>
         </div>
       </div>
+      <%= form_with url: beta_backdoor_path, method: :patch, local: true, class: "ds-form", style: "margin-top: 1rem;" do %>
+        <%= hidden_field_tag :showcase_backdoor_enabled, "0" %>
+        <div class="ds-form-group">
+          <label class="ds-form-label">
+            <%= check_box_tag :showcase_backdoor_enabled, "1", current_user.showcase_backdoor_enabled?, id: "showcase_backdoor_enabled" %>
+            Activer la page backdoor (URL fixe, non affichée sur la vitrine : <%= showcase_backdoor_path(current_user.nickname) %>)
+          </label>
+        </div>
+        <%= submit_tag "Enregistrer la page backdoor", class: "ds-btn ds-btn--secondary ds-btn--sm" %>
+      <% end %>
+      <p class="ds-beta-control-hint" style="margin-top: 0.75rem;">La backdoor permet d’ajouter du temps au lock Chaster (1 s à 24 h par clic). Même limite que la vitrine : au plus 2 jours ajoutés sur une fenêtre glissante de 5 minutes.</p>
     </section>
 
     <%# Contrôle — qui contrôle ou lien d'invitation %>

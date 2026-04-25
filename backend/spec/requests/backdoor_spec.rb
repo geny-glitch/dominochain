@@ -2,7 +2,7 @@
 
 require "rails_helper"
 
-RSpec.describe "Showcase backdoor", type: :request do
+RSpec.describe "Showcase backdoor (legacy spec path)", type: :request do
   include ActiveJob::TestHelper
 
   let(:beta) { create(:user, :beta, nickname: "doorbeta") }
@@ -44,7 +44,9 @@ RSpec.describe "Showcase backdoor", type: :request do
       end.to have_enqueued_job(ShowcaseBackdoorNotifyJob).with(beta.id, "Visitor", 3_660, "Hello beta")
 
       expect(response).to have_http_status(:ok)
-      expect(JSON.parse(response.body)["ok"]).to be true
+      body = JSON.parse(response.body)
+      expect(body["ok"]).to be true
+      expect(body["remaining_seconds"]).to be_a(Integer)
       rec = beta.showcase_time_additions.last
       expect(rec.player_name).to eq("Visitor")
       expect(rec.message).to eq("Hello beta")
@@ -58,6 +60,20 @@ RSpec.describe "Showcase backdoor", type: :request do
         params: { days: 0, hours: 0, minutes: 5, player_name: "A", message: "B" },
         as: :json
       expect(response).to have_http_status(:not_found)
+    end
+
+    it "returns 429 when sliding window would exceed 2 days" do
+      ShowcaseAddTimeLimiter.reset_window!(beta.id)
+      travel_to Time.zone.parse("2026-04-25 12:00:00") do
+        ShowcaseAddTimeEvent.create!(user: beta, seconds: ShowcaseAddTimeLimiter::MAX_SECONDS_PER_WINDOW)
+      end
+
+      post showcase_backdoor_add_time_path(beta.nickname),
+        params: { days: 0, hours: 0, minutes: 1, player_name: "A", message: "B" },
+        as: :json
+
+      expect(response).to have_http_status(:too_many_requests)
+      expect(service).not_to have_received(:add_time_to_lock)
     end
   end
 end

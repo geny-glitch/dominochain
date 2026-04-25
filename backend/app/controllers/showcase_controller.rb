@@ -78,6 +78,14 @@ class ShowcaseController < ApplicationController
       return render json: { error: "Choisis une durée entre 1 minute et 1 an." }, status: 422
     end
 
+    unless ShowcaseAddTimeLimiter.allow?(beta_id: @beta.id, seconds: seconds)
+      cap = ShowcaseAddTimeLimiter.remaining_capacity(@beta.id)
+      return render json: {
+        error: "Trop de temps ajouté récemment (max 2 jours / 5 min). Encore #{cap} s possibles.",
+        remaining_seconds: cap
+      }, status: :too_many_requests
+    end
+
     name = payload[:player_name].to_s.strip
     message = payload[:message].to_s.strip
     if name.blank? || message.blank?
@@ -102,9 +110,15 @@ class ShowcaseController < ApplicationController
     end
 
     service.add_time_to_lock(lock[:id], seconds)
+    ShowcaseAddTimeLimiter.record!(beta_id: @beta.id, seconds: seconds)
     addition.update!(chaster_applied: true, chaster_error: nil)
     ShowcaseBackdoorNotifyJob.perform_later(@beta.id, name, seconds, message)
-    render json: { ok: true, seconds: seconds, lock: lock }
+    render json: {
+      ok: true,
+      seconds: seconds,
+      lock: lock,
+      remaining_seconds: ShowcaseAddTimeLimiter.remaining_capacity(@beta.id)
+    }
   rescue ChasterService::Unauthorized
     addition&.update(chaster_error: "Chaster non connecté", chaster_applied: false) if addition&.persisted?
     render json: { error: "Chaster non connecté côté vitrine." }, status: 401
@@ -133,6 +147,12 @@ class ShowcaseController < ApplicationController
       return (request.format.json? ? (render(json: { error: "Score invalide." }, status: 422)) : redirect_to(showcase_path(@beta.nickname), alert: "Score invalide."))
     end
 
+    unless ShowcaseAddTimeLimiter.allow?(beta_id: @beta.id, seconds: seconds)
+      cap = ShowcaseAddTimeLimiter.remaining_capacity(@beta.id)
+      msg = "Trop de temps ajouté récemment. Réessaie plus tard (max 2 jours / 5 min). Encore #{cap} s possibles."
+      return (request.format.json? ? (render(json: { error: msg }, status: 429)) : redirect_to(showcase_path(@beta.nickname), alert: msg))
+    end
+
     if params[:game_type].to_s == "snake"
       PishockShockJob.perform_later(@beta.id, 1, 1)
     end
@@ -144,6 +164,7 @@ class ShowcaseController < ApplicationController
     end
 
     service.add_time_to_lock(lock[:id], seconds)
+    ShowcaseAddTimeLimiter.record!(beta_id: @beta.id, seconds: seconds)
     request.format.json? ? render(json: { ok: true }) : redirect_to(showcase_path(@beta.nickname), notice: "Merci !")
   rescue ChasterService::Unauthorized
     request.format.json? ? render(json: { error: "Indisponible." }, status: 401) : redirect_to(showcase_path(@beta.nickname), alert: "Indisponible pour le moment.")

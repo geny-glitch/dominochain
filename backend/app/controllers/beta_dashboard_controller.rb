@@ -5,6 +5,20 @@ class BetaDashboardController < ApplicationController
   before_action :require_beta_role!
   before_action :set_task, only: [:task, :submit_proof]
 
+  def update_backdoor
+    p = params.permit(:showcase_backdoor_enabled)
+    enabled = p[:showcase_backdoor_enabled] == "1"
+    current_user.update!(showcase_backdoor_enabled: enabled)
+    if enabled
+      redirect_to beta_dashboard_path,
+        notice: "Page backdoor activée. URL (non affichée sur la vitrine) : #{request.base_url}#{showcase_backdoor_path(current_user.nickname)}"
+    else
+      redirect_to beta_dashboard_path, notice: "Page backdoor désactivée."
+    end
+  rescue ActiveRecord::RecordInvalid => e
+    redirect_to beta_dashboard_path, alert: e.record.errors.full_messages.join(", ")
+  end
+
   def update_pishock
     p = params.permit(:pishock_enabled, :pishock_username, :pishock_share_code, :pishock_api_key)
     attrs = {

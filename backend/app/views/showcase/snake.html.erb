@@ -1,24 +1,34 @@
 <% content_for :title, "Snake" %>
 <% content_for :body_class, "snake-page-active" %>
+<% content_for :head do %>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<% end %>
 
 <div class="snake-page" data-nickname="<%= @beta.nickname %>">
   <div class="snake-container">
     <div id="snake-intro" class="snake-intro">
       <h1 class="snake-title">Snake</h1>
-      <p class="snake-hint">Flèches, swipe ou croix directionnelle pour diriger</p>
+      <p class="snake-hint">Clavier, swipe sur le terrain, croix ou joystick pour diriger</p>
       <button type="button" class="snake-btn snake-btn--start" id="snake-start">Jouer</button>
     </div>
 
     <div id="snake-game" class="snake-game" style="display: none;">
       <div class="snake-score">Score: <span id="snake-score">0</span></div>
       <canvas id="snake-canvas" class="snake-canvas" width="300" height="300"></canvas>
-      <div class="snake-dpad" aria-label="Contrôles directionnels">
-        <div class="snake-dpad-cross">
-          <span class="snake-dpad-center"></span>
-          <button type="button" class="snake-dpad-btn snake-dpad-btn--up" data-dir="up" aria-label="Haut"><span class="snake-dpad-arrow"></span></button>
-          <button type="button" class="snake-dpad-btn snake-dpad-btn--down" data-dir="down" aria-label="Bas"><span class="snake-dpad-arrow"></span></button>
-          <button type="button" class="snake-dpad-btn snake-dpad-btn--left" data-dir="left" aria-label="Gauche"><span class="snake-dpad-arrow"></span></button>
-          <button type="button" class="snake-dpad-btn snake-dpad-btn--right" data-dir="right" aria-label="Droite"><span class="snake-dpad-arrow"></span></button>
+      <div class="snake-controls-row" aria-label="Contrôles tactiles">
+        <div class="snake-dpad" aria-label="Croix directionnelle">
+          <div class="snake-dpad-cross">
+            <span class="snake-dpad-center"></span>
+            <button type="button" class="snake-dpad-btn snake-dpad-btn--up" data-dir="up" aria-label="Haut"><span class="snake-dpad-arrow"></span></button>
+            <button type="button" class="snake-dpad-btn snake-dpad-btn--down" data-dir="down" aria-label="Bas"><span class="snake-dpad-arrow"></span></button>
+            <button type="button" class="snake-dpad-btn snake-dpad-btn--left" data-dir="left" aria-label="Gauche"><span class="snake-dpad-arrow"></span></button>
+            <button type="button" class="snake-dpad-btn snake-dpad-btn--right" data-dir="right" aria-label="Droite"><span class="snake-dpad-arrow"></span></button>
+          </div>
+        </div>
+        <div class="snake-joystick-wrap" aria-label="Joystick virtuel">
+          <div class="snake-joystick-ring" id="snake-joystick-ring" role="presentation">
+            <div class="snake-joystick-knob" id="snake-joystick-knob"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -85,7 +95,7 @@
   let food = { x: 0, y: 0 };
   let dir = { x: 1, y: 0 };
   const dirQueue = [];
-  const MAX_QUEUE = 3;
+  const MAX_QUEUE = 5;
   let score = 0;
   let gameLoop = null;
   let gameOver = false;
@@ -350,7 +360,7 @@
     setSnakeLeaderboardUi(false, saved);
   }
 
-  const fps = 12;
+  const fps = 18;
   const interval = 1000 / fps;
   let last = 0;
   function run() {
@@ -421,32 +431,113 @@
   });
 
   const dirMap = { up: { x: 0, y: -1 }, down: { x: 0, y: 1 }, left: { x: -1, y: 0 }, right: { x: 1, y: 0 } };
+  function applyDirFromName(name) {
+    const d = dirMap[name];
+    if (d) enqueueDir(d);
+  }
   document.querySelectorAll(".snake-dpad-btn").forEach(btn => {
-    const handleDir = (e) => {
-      e.preventDefault();
+    const dirName = btn.dataset.dir;
+    const onPointerDown = (e) => {
+      if (e.pointerType === "touch") e.preventDefault();
       if (gameOver) return;
-      enqueueDir(dirMap[btn.dataset.dir]);
+      applyDirFromName(dirName);
     };
-    btn.addEventListener("pointerdown", handleDir);
+    btn.addEventListener("pointerdown", onPointerDown);
+    btn.addEventListener("touchstart", (e) => { e.preventDefault(); }, { passive: false, capture: true });
   });
 
-  let touchStart = null;
-  canvas.addEventListener("touchstart", e => {
-    touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-  }, { passive: true });
-  canvas.addEventListener("touchend", e => {
-    if (!touchStart || gameOver) return;
-    const dx = e.changedTouches[0].clientX - touchStart.x;
-    const dy = e.changedTouches[0].clientY - touchStart.y;
+  const SWIPE_MIN = 14;
+  let swipePointerId = null;
+  let swipeStart = null;
+  canvas.addEventListener("pointerdown", (e) => {
+    if (gameOver) return;
+    swipePointerId = e.pointerId;
+    swipeStart = { x: e.clientX, y: e.clientY };
+    try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
+  });
+  canvas.addEventListener("pointerup", (e) => {
+    if (e.pointerId !== swipePointerId || !swipeStart || gameOver) return;
+    const dx = e.clientX - swipeStart.x;
+    const dy = e.clientY - swipeStart.y;
+    swipePointerId = null;
+    swipeStart = null;
+    if (Math.abs(dx) < SWIPE_MIN && Math.abs(dy) < SWIPE_MIN) return;
     if (Math.abs(dx) > Math.abs(dy)) {
-      if (dx > 20) enqueueDir({ x: 1, y: 0 });
-      else if (dx < -20) enqueueDir({ x: -1, y: 0 });
+      if (dx > 0) enqueueDir({ x: 1, y: 0 });
+      else enqueueDir({ x: -1, y: 0 });
     } else {
-      if (dy > 20) enqueueDir({ x: 0, y: 1 });
-      else if (dy < -20) enqueueDir({ x: 0, y: -1 });
+      if (dy > 0) enqueueDir({ x: 0, y: 1 });
+      else enqueueDir({ x: 0, y: -1 });
     }
-    touchStart = null;
-  }, { passive: true });
+  });
+  canvas.addEventListener("pointercancel", () => {
+    swipePointerId = null;
+    swipeStart = null;
+  });
+  canvas.addEventListener("lostpointercapture", () => {
+    swipePointerId = null;
+    swipeStart = null;
+  });
+
+  const joystickRing = document.getElementById("snake-joystick-ring");
+  const joystickKnob = document.getElementById("snake-joystick-knob");
+  let joyPointerId = null;
+  let joyCenter = { x: 0, y: 0 };
+  const JOY_COMMIT = 22;
+  const JOY_VISUAL_MAX = 36;
+
+  function joySetKnob(dx, dy) {
+    const len = Math.hypot(dx, dy) || 1;
+    const cap = Math.min(len, JOY_VISUAL_MAX);
+    const kx = (dx / len) * cap;
+    const ky = (dy / len) * cap;
+    joystickKnob.style.transform = "translate(calc(-50% + " + kx + "px), calc(-50% + " + ky + "px))";
+  }
+
+  function joyCommitDirection(dx, dy) {
+    if (Math.abs(dx) < JOY_COMMIT && Math.abs(dy) < JOY_COMMIT) return;
+    if (Math.abs(dx) > Math.abs(dy)) {
+      if (dx > 0) applyDirFromName("right");
+      else applyDirFromName("left");
+    } else {
+      if (dy > 0) applyDirFromName("down");
+      else applyDirFromName("up");
+    }
+  }
+
+  function joyPointerMove(e) {
+    if (e.pointerId !== joyPointerId) return;
+    const dx = e.clientX - joyCenter.x;
+    const dy = e.clientY - joyCenter.y;
+    joySetKnob(dx, dy);
+    joyCommitDirection(dx, dy);
+  }
+
+  function joyPointerEnd(e) {
+    if (e.pointerId !== joyPointerId) return;
+    joyPointerId = null;
+    joystickKnob.style.transform = "translate(-50%, -50%)";
+    try { joystickRing.releasePointerCapture(e.pointerId); } catch (_) {}
+  }
+
+  joystickRing.addEventListener("lostpointercapture", () => {
+    joyPointerId = null;
+    joystickKnob.style.transform = "translate(-50%, -50%)";
+  });
+
+  joystickRing.addEventListener("pointerdown", (e) => {
+    if (gameOver) return;
+    e.preventDefault();
+    const r = joystickRing.getBoundingClientRect();
+    joyCenter = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+    joyPointerId = e.pointerId;
+    joySetKnob(e.clientX - joyCenter.x, e.clientY - joyCenter.y);
+    joyCommitDirection(e.clientX - joyCenter.x, e.clientY - joyCenter.y);
+    try { joystickRing.setPointerCapture(e.pointerId); } catch (_) {}
+  });
+  joystickRing.addEventListener("pointermove", joyPointerMove);
+  joystickRing.addEventListener("pointerup", joyPointerEnd);
+  joystickRing.addEventListener("pointercancel", joyPointerEnd);
 
   document.addEventListener("keydown", e => {
     const scrollKeys = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " ", "Space", "PageUp", "PageDown", "Home", "End"];

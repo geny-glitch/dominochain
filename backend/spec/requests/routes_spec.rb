@@ -397,6 +397,7 @@ RSpec.describe "Routes", type: :request do
         json = JSON.parse(response.body)
         expect(json["nickname"]).to eq("mebeta")
         expect(json["boss_nickname"]).to eq("myboss")
+        expect(json["role"]).to eq("beta")
       end
 
       it "returns boss_nickname null when beta has no control" do
@@ -408,6 +409,85 @@ RSpec.describe "Routes", type: :request do
         json = JSON.parse(response.body)
         expect(json["nickname"]).to eq("freebeta")
         expect(json["boss_nickname"]).to be_nil
+        expect(json["role"]).to eq("beta")
+      end
+    end
+
+    describe "GET /api/showcase_settings" do
+      it "returns 401 without auth" do
+        get "/api/showcase_settings"
+        expect(response).to have_http_status(:unauthorized)
+      end
+
+      it "returns 403 for a boss (not beta)" do
+        boss = create(:user, :boss, nickname: "apibossshow")
+        device = create(:device, user: boss)
+        get "/api/showcase_settings",
+          headers: { "X-Device-Id" => device.device_id, "X-Device-Token" => device.auth_token }
+        expect(response).to have_http_status(:forbidden)
+      end
+
+      it "returns game flags for beta" do
+        beta = create(:user, :beta, showcase_quiz_enabled: true, showcase_snake_enabled: true)
+        device = create(:device, user: beta)
+        get "/api/showcase_settings",
+          headers: { "X-Device-Id" => device.device_id, "X-Device-Token" => device.auth_token }
+        expect(response).to have_http_status(:ok)
+        json = JSON.parse(response.body)
+        expect(json["showcase_quiz_enabled"]).to be true
+        expect(json["showcase_snake_enabled"]).to be true
+        expect(json["showcase_backdoor_enabled"]).to be true
+      end
+    end
+
+    describe "PATCH /api/showcase_settings" do
+      it "rejects when quiz, snake and backdoor would all be disabled" do
+        beta = create(
+          :user, :beta,
+          showcase_quiz_enabled: true,
+          showcase_snake_enabled: true,
+          showcase_backdoor_enabled: true
+        )
+        device = create(:device, user: beta)
+        patch "/api/showcase_settings",
+          params: {
+            showcase_quiz_enabled: false,
+            showcase_snake_enabled: false,
+            showcase_backdoor_enabled: false
+          },
+          headers: { "X-Device-Id" => device.device_id, "X-Device-Token" => device.auth_token }
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(beta.reload.showcase_quiz_enabled).to be true
+        expect(beta.showcase_snake_enabled).to be true
+        expect(beta.showcase_backdoor_enabled).to be true
+      end
+
+      it "allows disabling one game when the other stays on" do
+        beta = create(:user, :beta, showcase_quiz_enabled: true, showcase_snake_enabled: true)
+        device = create(:device, user: beta)
+        patch "/api/showcase_settings",
+          params: { showcase_snake_enabled: false },
+          headers: { "X-Device-Id" => device.device_id, "X-Device-Token" => device.auth_token }
+        expect(response).to have_http_status(:ok)
+        expect(beta.reload.showcase_quiz_enabled).to be true
+        expect(beta.showcase_snake_enabled).to be false
+      end
+
+      it "allows disabling both games when backdoor stays enabled" do
+        beta = create(
+          :user, :beta,
+          showcase_quiz_enabled: true,
+          showcase_snake_enabled: true,
+          showcase_backdoor_enabled: true
+        )
+        device = create(:device, user: beta)
+        patch "/api/showcase_settings",
+          params: { showcase_quiz_enabled: false, showcase_snake_enabled: false },
+          headers: { "X-Device-Id" => device.device_id, "X-Device-Token" => device.auth_token }
+        expect(response).to have_http_status(:ok)
+        expect(beta.reload.showcase_quiz_enabled).to be false
+        expect(beta.showcase_snake_enabled).to be false
+        expect(beta.showcase_backdoor_enabled).to be true
       end
     end
 

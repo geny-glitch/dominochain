@@ -6,6 +6,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -46,6 +47,7 @@ class SettingsActivity : AppCompatActivity() {
 
         setupPermissions()
         setupAccount()
+        setupShowcaseVitrine()
         fetchBossStatus()
     }
 
@@ -53,6 +55,63 @@ class SettingsActivity : AppCompatActivity() {
         super.onResume()
         refreshPermissionsStatus()
         fetchBossStatus()
+    }
+
+    private var showcaseListenerQuiet = false
+
+    private fun setupShowcaseVitrine() {
+        binding.showcaseQuizSwitch.setOnCheckedChangeListener { view, checked ->
+            if (showcaseListenerQuiet) return@setOnCheckedChangeListener
+            if (!checked && !binding.showcaseSnakeSwitch.isChecked) {
+                showcaseListenerQuiet = true
+                view.isChecked = true
+                showcaseListenerQuiet = false
+                Toast.makeText(this, R.string.showcase_least_one_game, Toast.LENGTH_SHORT).show()
+                return@setOnCheckedChangeListener
+            }
+            saveShowcaseSettings()
+        }
+        binding.showcaseSnakeSwitch.setOnCheckedChangeListener { view, checked ->
+            if (showcaseListenerQuiet) return@setOnCheckedChangeListener
+            if (!checked && !binding.showcaseQuizSwitch.isChecked) {
+                showcaseListenerQuiet = true
+                view.isChecked = true
+                showcaseListenerQuiet = false
+                Toast.makeText(this, R.string.showcase_least_one_game, Toast.LENGTH_SHORT).show()
+                return@setOnCheckedChangeListener
+            }
+            saveShowcaseSettings()
+        }
+    }
+
+    private fun loadShowcaseSettings() {
+        lifecycleScope.launch {
+            RetrofitClient.sessionManager = sessionManager
+            authRepository.getShowcaseSettings()
+                .onSuccess { st ->
+                    showcaseListenerQuiet = true
+                    binding.showcaseQuizSwitch.isChecked = st.showcase_quiz_enabled
+                    binding.showcaseSnakeSwitch.isChecked = st.showcase_snake_enabled
+                    showcaseListenerQuiet = false
+                }
+        }
+    }
+
+    private fun saveShowcaseSettings() {
+        val q = binding.showcaseQuizSwitch.isChecked
+        val s = binding.showcaseSnakeSwitch.isChecked
+        lifecycleScope.launch {
+            RetrofitClient.sessionManager = sessionManager
+            authRepository.updateShowcaseSettings(q, s, b)
+                .onFailure { err ->
+                    Toast.makeText(
+                        this@SettingsActivity,
+                        err.message ?: getString(R.string.showcase_settings_error),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    loadShowcaseSettings()
+                }
+        }
     }
 
     private fun fetchBossStatus() {
@@ -68,10 +127,18 @@ class SettingsActivity : AppCompatActivity() {
                         binding.bossRequestSection.visibility = android.view.View.VISIBLE
                         binding.bossOwnedSection.visibility = android.view.View.GONE
                     }
+                    val isBeta = me.role == null || me.role == "beta"
+                    if (isBeta) {
+                        binding.showcaseControlSection.visibility = View.VISIBLE
+                        loadShowcaseSettings()
+                    } else {
+                        binding.showcaseControlSection.visibility = View.GONE
+                    }
                 }
                 .onFailure {
                     binding.bossRequestSection.visibility = android.view.View.VISIBLE
                     binding.bossOwnedSection.visibility = android.view.View.GONE
+                    binding.showcaseControlSection.visibility = View.GONE
                 }
         }
     }

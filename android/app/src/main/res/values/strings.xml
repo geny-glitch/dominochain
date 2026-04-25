@@ -30,4 +30,13 @@
     <string name="widget_chaster_description">Temps restant du lock et indicateur PiShock sur l\'écran d\'accueil.</string>
     <string name="widget_pishock_icon_description">PiShock activé</string>
     <string name="refresh">Actualiser</string>
+    <string name="main_link_vitrine">Vitrine</string>
+    <string name="main_link_backdoor">Backdoor</string>
+    <string name="showcase_control_title">Vitrine (jeux publics)</string>
+    <string name="showcase_control_subtitle">Active ou désactive chaque jeu sur ta page vitrine. Au moins un reste toujours obligatoire.</string>
+    <string name="showcase_backdoor_label">Page Backdoor (timer + ajout de temps)</string>
+    <string name="showcase_quiz_label">Jeu des 1000 € (quiz)</string>
+    <string name="showcase_snake_label">Snake</string>
+    <string name="showcase_least_one_game">Garde au moins un jeu ou la page Backdoor activé.</string>
+    <string name="showcase_settings_error">Impossible d\'enregistrer les jeux. Réessaie.</string>
 </resources>

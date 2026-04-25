@@ -23,6 +23,9 @@ Rails.application.routes.draw do
   get "showcase/:nickname", to: "showcase#show", as: :showcase
   get "showcase/:nickname/quiz", to: "showcase#quiz", as: :showcase_quiz
   get "showcase/:nickname/snake", to: "showcase#snake", as: :showcase_snake
+  get "showcase/:nickname/backdoor", to: "showcase#backdoor", as: :showcase_backdoor
+  get "showcase/:nickname/backdoor/lock", to: "showcase#backdoor_chaster_lock", as: :showcase_backdoor_lock
+  post "showcase/:nickname/backdoor/add_time", to: "showcase#backdoor_add_time", as: :showcase_backdoor_add_time
   post "showcase/:nickname/add_time", to: "showcase#add_time", as: :showcase_add_time
   post "showcase/:nickname/sessions", to: "showcase#create_session", as: :showcase_create_session
   patch "showcase/:nickname/sessions/:id", to: "showcase#update_session", as: :showcase_update_session
@@ -87,6 +90,9 @@ Rails.application.routes.draw do
 
     get "chaster/lock", to: "chaster#lock", as: :chaster_lock
     get "chaster/locks", to: "chaster#locks", as: :chaster_locks
+
+    get "showcase_settings", to: "showcase_settings#show"
+    patch "showcase_settings", to: "showcase_settings#update"
   end
 
   # Web upload UI (nickname = beta's nickname)

@@ -878,3 +878,159 @@ html:has(body.snake-page-active) {
   opacity: 0.85;
 }
 
+// Backdoor — timer + add time
+.backdoor-page {
+  min-height: 100vh;
+  padding: $ds-space-3xl $ds-space-xl;
+}
+
+.backdoor-container {
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 0 $ds-space-md;
+}
+
+.backdoor-page .ds-header {
+  margin-bottom: $ds-space-md;
+  padding-top: $ds-space-lg;
+}
+
+.backdoor-nav {
+  margin: 0 0 $ds-space-xl;
+  text-align: right;
+}
+
+.backdoor-timer-card,
+.backdoor-form-card {
+  background: $ds-surface-elevated;
+  border: 1px solid $ds-border;
+  border-radius: $ds-radius-lg;
+  padding: $ds-space-xl;
+  margin-bottom: $ds-space-xl;
+}
+
+.backdoor-section-label {
+  font-size: $ds-small-size;
+  color: $ds-text-muted;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0 0 $ds-space-sm;
+}
+
+.backdoor-lock-title {
+  font-size: $ds-body-size;
+  margin: 0 0 $ds-space-md;
+  color: $ds-text;
+}
+
+.backdoor-countdown {
+  font-family: $ds-font-mono;
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: $ds-teal;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.backdoor-hint {
+  font-size: $ds-small-size;
+  margin: $ds-space-md 0 0;
+  line-height: 1.4;
+}
+
+.backdoor-form-title {
+  font-size: 1.2rem;
+  margin: 0 0 $ds-space-sm;
+  color: $ds-text;
+}
+
+.backdoor-form-intro {
+  color: $ds-text-muted;
+  font-size: $ds-body-size;
+  margin: 0 0 $ds-space-xl;
+}
+
+.backdoor-dhm {
+  display: flex;
+  justify-content: center;
+  gap: $ds-space-lg;
+  margin-bottom: $ds-space-xl;
+}
+
+.backdoor-dhm-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $ds-space-xs;
+}
+
+.backdoor-dhm-btn {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  border: 1px solid $ds-border;
+  background: rgba($ds-text, 0.06);
+  color: $ds-text;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: background $ds-transition, border-color $ds-transition;
+
+  &:hover {
+    border-color: $ds-teal;
+    color: $ds-teal;
+  }
+}
+
+.backdoor-dhm-digits {
+  font-family: $ds-font-mono;
+  font-size: 1.5rem;
+  font-weight: 600;
+  min-width: 2.5rem;
+  text-align: center;
+  color: $ds-text;
+  font-variant-numeric: tabular-nums;
+}
+
+.backdoor-dhm-label {
+  font-size: 0.7rem;
+  color: $ds-text-muted;
+  text-transform: lowercase;
+}
+
+.backdoor-dhm-err,
+.backdoor-form-err {
+  color: $ds-error;
+  font-size: $ds-small-size;
+  margin: 0 0 $ds-space-md;
+}
+
+.backdoor-field {
+  margin-bottom: $ds-space-md;
+}
+
+.backdoor-label {
+  display: block;
+  font-size: $ds-small-size;
+  color: $ds-text-muted;
+  margin-bottom: $ds-space-xs;
+}
+
+.backdoor-textarea {
+  width: 100%;
+  min-height: 5rem;
+  resize: vertical;
+}
+
+.backdoor-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: $ds-space-md;
+  margin-top: $ds-space-lg;
+}
+

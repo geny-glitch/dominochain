@@ -36,5 +36,11 @@ RSpec.describe "Showcase leaderboard", type: :request do
       get showcase_leaderboard_path("nonexistent_nick")
       expect(response).to have_http_status(:not_found)
     end
+
+    it "returns 404 when the requested game is disabled" do
+      beta.update!(showcase_quiz_enabled: false, showcase_snake_enabled: true)
+      get showcase_leaderboard_path(beta.nickname), params: { game_type: "quiz" }
+      expect(response).to have_http_status(:not_found)
+    end
   end
 end

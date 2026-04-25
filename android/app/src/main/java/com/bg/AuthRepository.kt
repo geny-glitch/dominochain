@@ -87,6 +87,50 @@ class AuthRepository {
         }
     }
 
+    suspend fun getShowcaseSettings(): Result<com.bg.api.ShowcaseSettingsResponse> {
+        return try {
+            val response = api.getShowcaseSettings()
+            if (response.isSuccessful) {
+                response.body()?.let { Result.success(it) }
+                    ?: Result.failure(Exception("Empty response"))
+            } else {
+                Result.failure(Exception("Failed: ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun updateShowcaseSettings(
+        showcaseQuizEnabled: Boolean,
+        showcaseSnakeEnabled: Boolean,
+        showcaseBackdoorEnabled: Boolean
+    ): Result<com.bg.api.ShowcaseSettingsResponse> {
+        return try {
+            val response = api.updateShowcaseSettings(
+                com.bg.api.ShowcaseSettingsRequest(
+                    showcase_quiz_enabled = showcaseQuizEnabled,
+                    showcase_snake_enabled = showcaseSnakeEnabled,
+                    showcase_backdoor_enabled = showcaseBackdoorEnabled
+                )
+            )
+            if (response.isSuccessful) {
+                response.body()?.let { Result.success(it) }
+                    ?: Result.failure(Exception("Empty response"))
+            } else {
+                val errorBody = response.errorBody()?.string() ?: ""
+                val error = try {
+                    com.google.gson.Gson().fromJson(errorBody, Map::class.java)?.get("error")?.toString() ?: "Erreur"
+                } catch (_: Exception) {
+                    "Erreur: ${response.code()}"
+                }
+                Result.failure(Exception(error))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun getMe(): Result<com.bg.api.MeResponse> {
         return try {
             val response = api.getMe()

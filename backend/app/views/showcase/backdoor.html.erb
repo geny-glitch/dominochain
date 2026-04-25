@@ -1,0 +1,279 @@
+<% content_for :title, "Backdoor" %>
+
+<div class="backdoor-page ds-page" data-nickname="<%= @beta.nickname %>">
+  <div class="ds-container backdoor-container">
+    <header class="ds-header">
+      <%= image_tag "otb-logo.png", alt: "OTB", class: "ds-header-logo", width: 48, height: 48 %>
+      <div>
+        <h1 class="ds-title">Backdoor</h1>
+        <p class="ds-subtitle">Ajoute du temps sur le cadenas Chaster</p>
+      </div>
+    </header>
+
+    <p class="backdoor-nav">
+      <%= link_to "← Retour", showcase_path(@beta.nickname), class: "ds-btn ds-btn--ghost ds-btn--sm" %>
+    </p>
+
+    <section class="backdoor-timer-card">
+      <h2 class="backdoor-section-label">Temps restant</h2>
+      <p id="backdoor-lock-title" class="backdoor-lock-title">—</p>
+      <p id="backdoor-countdown" class="backdoor-countdown" data-end-date="" data-frozen="false" aria-live="polite">—</p>
+      <p id="backdoor-lock-hint" class="ds-text-muted backdoor-hint" hidden></p>
+    </section>
+
+    <section class="backdoor-form-card" aria-labelledby="backdoor-form-title">
+      <h2 id="backdoor-form-title" class="backdoor-form-title">Add more time</h2>
+      <p class="backdoor-form-intro">Tu peux ajouter du temps sur le cadenas ici.</p>
+
+      <div class="backdoor-dhm" role="group" aria-label="Durée à ajouter">
+        <div class="backdoor-dhm-col">
+          <button type="button" class="backdoor-dhm-btn" data-field="d" data-delta="1" aria-label="Augmenter les jours">+</button>
+          <div class="backdoor-dhm-digits" id="backdoor-d">0</div>
+          <button type="button" class="backdoor-dhm-btn" data-field="d" data-delta="-1" aria-label="Diminuer les jours">−</button>
+          <span class="backdoor-dhm-label">day</span>
+        </div>
+        <div class="backdoor-dhm-col">
+          <button type="button" class="backdoor-dhm-btn" data-field="h" data-delta="1" aria-label="Augmenter les heures">+</button>
+          <div class="backdoor-dhm-digits" id="backdoor-h">00</div>
+          <button type="button" class="backdoor-dhm-btn" data-field="h" data-delta="-1" aria-label="Diminuer les heures">−</button>
+          <span class="backdoor-dhm-label">hour</span>
+        </div>
+        <div class="backdoor-dhm-col">
+          <button type="button" class="backdoor-dhm-btn" data-field="m" data-delta="1" aria-label="Augmenter les minutes">+</button>
+          <div class="backdoor-dhm-digits" id="backdoor-m">00</div>
+          <button type="button" class="backdoor-dhm-btn" data-field="m" data-delta="-1" aria-label="Diminuer les minutes">−</button>
+          <span class="backdoor-dhm-label">minute</span>
+        </div>
+      </div>
+      <p class="backdoor-dhm-err" id="backdoor-dhm-err" hidden>Choisis une durée d’au moins 1 minute.</p>
+
+      <div class="backdoor-field">
+        <label class="backdoor-label" for="backdoor-name">Nom</label>
+        <input type="text" id="backdoor-name" class="ds-input" maxlength="80" autocomplete="nickname" required placeholder="Ton pseudo" />
+      </div>
+      <div class="backdoor-field">
+        <label class="backdoor-label" for="backdoor-message">Message</label>
+        <textarea id="backdoor-message" class="ds-input backdoor-textarea" maxlength="500" required rows="3" placeholder="Un mot pour le beta…"></textarea>
+      </div>
+
+      <p class="backdoor-form-err" id="backdoor-form-err" hidden></p>
+
+      <div class="backdoor-form-actions">
+        <button type="button" class="ds-btn ds-btn--ghost" id="backdoor-reset">Annuler</button>
+        <button type="button" class="ds-btn ds-btn--primary" id="backdoor-submit">Add more time</button>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+(function() {
+  const page = document.querySelector(".backdoor-page");
+  const nickname = page.dataset.nickname;
+  const urls = {
+    lock: `/showcase/${nickname}/backdoor/lock`,
+    add: `/showcase/${nickname}/backdoor/add_time`
+  };
+
+  const dEl = document.getElementById("backdoor-d");
+  const hEl = document.getElementById("backdoor-h");
+  const mEl = document.getElementById("backdoor-m");
+  const nameInput = document.getElementById("backdoor-name");
+  const messageInput = document.getElementById("backdoor-message");
+  const countdownEl = document.getElementById("backdoor-countdown");
+  const titleEl = document.getElementById("backdoor-lock-title");
+  const hintEl = document.getElementById("backdoor-lock-hint");
+  const formErr = document.getElementById("backdoor-form-err");
+  const dhmErr = document.getElementById("backdoor-dhm-err");
+
+  let d = 0, h = 0, m = 0;
+  let tickId = null;
+  let endMs = null;
+  let isFrozen = false;
+  let lockTitle = "";
+
+  function playerCookieKey() {
+    return "bgShowcasePlayer_" + nickname.replace(/[^a-zA-Z0-9]/g, "_");
+  }
+  function getPlayerCookie() {
+    const prefix = playerCookieKey() + "=";
+    const parts = document.cookie.split(";");
+    for (let c of parts) {
+      c = c.trim();
+      if (c.startsWith(prefix)) return decodeURIComponent(c.slice(prefix.length).replace(/\+/g, " "));
+    }
+    return "";
+  }
+  function setPlayerCookie(value) {
+    const maxAge = 365 * 24 * 60 * 60;
+    document.cookie = playerCookieKey() + "=" + encodeURIComponent(value) + ";path=/;max-age=" + maxAge + ";SameSite=Lax";
+  }
+
+  function formatRemaining(sec) {
+    if (sec <= 0) return "0 s";
+    const days = Math.floor(sec / 86400);
+    const hours = Math.floor((sec % 86400) / 3600);
+    const mins = Math.floor((sec % 3600) / 60);
+    const secs = sec % 60;
+    if (days > 0) return days + "j " + hours + "h " + mins + "min " + secs + "s";
+    if (hours > 0) return hours + "h " + mins + "min " + secs + "s";
+    if (mins > 0) return mins + "min " + secs + "s";
+    return secs + "s";
+  }
+
+  function updateDigits() {
+    dEl.textContent = String(d);
+    hEl.textContent = String(h).padStart(2, "0");
+    mEl.textContent = String(m).padStart(2, "0");
+  }
+
+  function clampDhm() {
+    if (h > 23) h = 23;
+    if (h < 0) h = 0;
+    if (m > 59) m = 59;
+    if (m < 0) m = 0;
+    if (d < 0) d = 0;
+  }
+
+  function step(field, delta) {
+    if (field === "d") d = Math.max(0, d + delta);
+    if (field === "h") h = Math.max(0, Math.min(23, h + delta));
+    if (field === "m") m = Math.max(0, Math.min(59, m + delta));
+    updateDigits();
+  }
+
+  document.querySelectorAll(".backdoor-dhm-btn").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      const field = btn.getAttribute("data-field");
+      const delta = parseInt(btn.getAttribute("data-delta"), 10);
+      step(field, delta);
+    });
+  });
+
+  function totalSeconds() {
+    return d * 86400 + h * 3600 + m * 60;
+  }
+
+  function resetForm() {
+    d = 0; h = 0; m = 0;
+    updateDigits();
+    messageInput.value = "";
+    formErr.hidden = true;
+    dhmErr.hidden = true;
+  }
+
+  function stopTick() {
+    if (tickId) { clearInterval(tickId); tickId = null; }
+  }
+
+  function tick() {
+    if (isFrozen) {
+      countdownEl.textContent = "Gelé";
+      return;
+    }
+    if (endMs == null) { countdownEl.textContent = "—"; return; }
+    const left = Math.max(0, Math.floor((endMs - Date.now()) / 1000));
+    countdownEl.textContent = formatRemaining(left);
+  }
+
+  function applyLock(lock) {
+    stopTick();
+    if (!lock) {
+      titleEl.textContent = "Aucun cadenas actif";
+      endMs = null;
+      isFrozen = false;
+      countdownEl.textContent = "—";
+      hintEl.textContent = "Connecte Chaster côté beta pour afficher le compte à rebours.";
+      hintEl.hidden = false;
+      return;
+    }
+    lockTitle = lock.title || "Lock en cours";
+    titleEl.textContent = lockTitle;
+    isFrozen = !!lock.is_frozen;
+    if (isFrozen) {
+      countdownEl.textContent = "Gelé";
+      endMs = null;
+    } else if (lock.end_date) {
+      endMs = new Date(lock.end_date).getTime();
+      tick();
+      tickId = setInterval(tick, 1000);
+    } else {
+      endMs = null;
+      countdownEl.textContent = "—";
+    }
+    hintEl.hidden = true;
+  }
+
+  async function fetchLock() {
+    const res = await fetch(urls.lock, { headers: { "Accept": "application/json", "X-Requested-With": "XMLHttpRequest" } });
+    const data = await res.json();
+    if (res.status === 401) {
+      titleEl.textContent = "Chaster";
+      endMs = null;
+      countdownEl.textContent = "Non connecté";
+      hintEl.textContent = "Le beta doit connecter Chaster pour que la vitrine puisse agir sur le cadenas.";
+      hintEl.hidden = false;
+      return;
+    }
+    if (data.error && !data.lock) {
+      titleEl.textContent = "Chaster";
+      endMs = null;
+      countdownEl.textContent = "—";
+      hintEl.textContent = "Impossible de récupérer l’état du cadenas pour le moment.";
+      hintEl.hidden = false;
+      return;
+    }
+    applyLock(data.lock);
+  }
+
+  function validateBeforeSubmit() {
+    formErr.hidden = true;
+    dhmErr.hidden = true;
+    const name = (nameInput.value || "").trim();
+    const message = (messageInput.value || "").trim();
+    if (!name) { formErr.textContent = "Indique un nom."; formErr.hidden = false; return false; }
+    if (!message) { formErr.textContent = "Laisse un message."; formErr.hidden = false; return false; }
+    if (totalSeconds() <= 0) { dhmErr.hidden = false; return false; }
+    return true;
+  }
+
+  document.getElementById("backdoor-submit").addEventListener("click", async function() {
+    if (!validateBeforeSubmit()) return;
+    const btn = document.getElementById("backdoor-submit");
+    btn.disabled = true;
+    formErr.hidden = true;
+    try {
+      const res = await fetch(urls.add, {
+        method: "POST",
+        headers: { "Accept": "application/json", "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest" },
+        body: JSON.stringify({
+          days: d,
+          hours: h,
+          minutes: m,
+          player_name: (nameInput.value || "").trim(),
+          message: (messageInput.value || "").trim()
+        })
+      });
+      const data = await res.json().catch(function() { return {}; });
+      if (res.ok && data.ok) {
+        setPlayerCookie((nameInput.value || "").trim());
+        resetForm();
+        await fetchLock();
+        return;
+      }
+      formErr.textContent = data.error || "Erreur.";
+      formErr.hidden = false;
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  document.getElementById("backdoor-reset").addEventListener("click", function() { resetForm(); });
+  nameInput.addEventListener("change", function() { const t = (nameInput.value || "").trim(); if (t) setPlayerCookie(t); });
+
+  nameInput.value = getPlayerCookie() || "";
+  updateDigits();
+  fetchLock();
+  setInterval(fetchLock, 30000);
+})();
+</script>

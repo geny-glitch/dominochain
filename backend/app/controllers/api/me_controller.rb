@@ -11,7 +11,8 @@ module Api
 
       render json: {
         nickname: user.nickname,
-        boss_nickname: boss_nickname
+        boss_nickname: boss_nickname,
+        role: user.role
       }
     end
   end

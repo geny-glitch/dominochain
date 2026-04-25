@@ -58,7 +58,20 @@ data class UserInfo(val nickname: String)
 
 data class MeResponse(
     val nickname: String,
-    val boss_nickname: String?
+    val boss_nickname: String?,
+    val role: String? = null
+)
+
+data class ShowcaseSettingsResponse(
+    val showcase_quiz_enabled: Boolean,
+    val showcase_snake_enabled: Boolean,
+    val showcase_backdoor_enabled: Boolean
+)
+
+data class ShowcaseSettingsRequest(
+    val showcase_quiz_enabled: Boolean,
+    val showcase_snake_enabled: Boolean,
+    val showcase_backdoor_enabled: Boolean
 )
 
 data class ChangePasswordRequest(
@@ -93,6 +106,12 @@ interface ApiService {
 
     @GET("api/auth/me")
     suspend fun getMe(): Response<MeResponse>
+
+    @GET("api/showcase_settings")
+    suspend fun getShowcaseSettings(): Response<ShowcaseSettingsResponse>
+
+    @PATCH("api/showcase_settings")
+    suspend fun updateShowcaseSettings(@Body body: ShowcaseSettingsRequest): Response<ShowcaseSettingsResponse>
 
     @PATCH("api/auth/password")
     suspend fun changePassword(@Body request: ChangePasswordRequest): Response<Unit>

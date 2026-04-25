@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/ds_bg"
@@ -10,6 +11,95 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:padding="@dimen/ds_page_padding">
+
+        <LinearLayout
+            android:id="@+id/showcase_control_section"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:layout_marginBottom="@dimen/ds_space_xl">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/showcase_control_title"
+                style="@style/DsSectionTitle"
+                android:layout_marginBottom="@dimen/ds_space_md" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/showcase_control_subtitle"
+                style="@style/DsSmall"
+                android:layout_marginBottom="@dimen/ds_space_md" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/ds_card_background"
+                android:padding="@dimen/ds_space_md"
+                android:layout_marginBottom="@dimen/ds_space_sm">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/showcase_quiz_label"
+                    style="@style/DsBody" />
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/showcase_quiz_switch"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:useMaterialThemeColors="true" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/ds_card_background"
+                android:padding="@dimen/ds_space_md"
+                android:layout_marginBottom="@dimen/ds_space_sm">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/showcase_snake_label"
+                    style="@style/DsBody" />
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/showcase_snake_switch"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:useMaterialThemeColors="true" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/ds_card_background"
+                android:padding="@dimen/ds_space_md"
+                android:layout_marginBottom="@dimen/ds_space_sm">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/showcase_backdoor_label"
+                    style="@style/DsBody" />
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/showcase_backdoor_switch"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:useMaterialThemeColors="true" />
+            </LinearLayout>
+        </LinearLayout>
 
         <!-- Permissions -->
         <TextView

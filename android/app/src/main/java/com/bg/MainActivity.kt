@@ -9,6 +9,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.PermissionChecker.PERMISSION_GRANTED
 import androidx.core.content.PermissionChecker.checkSelfPermission
@@ -30,6 +31,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private val sessionManager by lazy { (application as BgApplication).sessionManager }
     private val repository = DeviceRepository()
+    private val authRepository = AuthRepository()
     private lateinit var tasksAdapter: TasksAdapter
     private lateinit var wallpapersAdapter: WallpapersAdapter
     private var chasterRefreshJob: Job? = null
@@ -79,6 +81,7 @@ class MainActivity : AppCompatActivity() {
             result.onSuccess { response ->
                 response.token?.let { sessionManager.token = it }
                 setupLinkBar(response.web_url)
+                setupBetaShowcaseLinks()
                 loadTasks(deviceId)
                 loadWallpapers(deviceId)
                 loadChasterLock()
@@ -111,6 +114,33 @@ class MainActivity : AppCompatActivity() {
         binding.linkCopy.setOnClickListener { copyToClipboard(url) }
         binding.linkShare.setOnClickListener { shareUrl(url) }
         binding.linkOpen.setOnClickListener { openUrl(url) }
+    }
+
+    private fun setupBetaShowcaseLinks() {
+        val nick = sessionManager.nickname?.trim().orEmpty()
+        if (nick.isEmpty()) return
+
+        val base = com.bg.BuildConfig.API_BASE_URL.trimEnd('/')
+        val vitrineUrl = "$base/showcase/$nick"
+        val backdoorUrl = "$base/showcase/$nick/backdoor"
+
+        lifecycleScope.launch {
+            val me = authRepository.getMe().getOrNull() ?: return@launch
+            val isBeta = me.role == null || me.role == "beta"
+            if (!isBeta) return@launch
+
+            val settings = authRepository.getShowcaseSettings().getOrNull()
+            val backdoorOn = settings?.showcase_backdoor_enabled == true
+
+            binding.betaShowcaseSection.visibility = View.VISIBLE
+            binding.showcaseLinkVitrine.setOnClickListener { openUrl(vitrineUrl) }
+            if (backdoorOn) {
+                binding.showcaseLinkBackdoor.visibility = View.VISIBLE
+                binding.showcaseLinkBackdoor.setOnClickListener { openUrl(backdoorUrl) }
+            } else {
+                binding.showcaseLinkBackdoor.visibility = View.GONE
+            }
+        }
     }
 
     private fun loadTasks(deviceId: String) {

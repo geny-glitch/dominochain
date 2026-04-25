@@ -2,20 +2,29 @@
 
 class ShowcaseController < ApplicationController
   # Temps ajouté au verrou par fruit mangé (Snake) — appliqué côté serveur dans #add_time, pas via params[:seconds].
-  SNAKE_SECONDS_PER_FRUIT = 60
+  SNAKE_SECONDS_PER_FRUIT = 300
 
-  skip_before_action :verify_authenticity_token, only: [:add_time, :create_session, :update_session, :check_answer]
+  # Backdoor: max duration per submission (aligné avec #add_time)
+  BACKDOOR_MAX_SECONDS = 86_400 * 365
+
+  skip_before_action :verify_authenticity_token, only: [
+    :add_time, :create_session, :update_session, :check_answer, :backdoor_add_time, :backdoor_chaster_lock
+  ]
 
   def show
     @beta = User.find_by(nickname: params[:nickname], role: :beta)
     return render "not_found", status: :not_found unless @beta
 
     @showcase_url = showcase_url(@beta.nickname)
+    @showcase_quiz_enabled = @beta.showcase_quiz_enabled
+    @showcase_snake_enabled = @beta.showcase_snake_enabled
+    @showcase_backdoor_enabled = @beta.showcase_backdoor_enabled
   end
 
   def quiz
     @beta = User.find_by(nickname: params[:nickname], role: :beta)
     return render "not_found", status: :not_found unless @beta
+    return render "not_found", status: :not_found unless @beta.showcase_quiz_enabled
 
     @showcase_url = showcase_url(@beta.nickname)
   end
@@ -23,13 +32,111 @@ class ShowcaseController < ApplicationController
   def snake
     @beta = User.find_by(nickname: params[:nickname], role: :beta)
     return render "not_found", status: :not_found unless @beta
+    return render "not_found", status: :not_found unless @beta.showcase_snake_enabled
 
     @showcase_url = showcase_url(@beta.nickname)
+  end
+
+  def backdoor
+    @beta = User.find_by(nickname: params[:nickname], role: :beta)
+    return render "not_found", status: :not_found unless @beta
+    return render "not_found", status: :not_found unless @beta.showcase_backdoor_enabled
+
+    @showcase_url = showcase_url(@beta.nickname)
+  end
+
+  def backdoor_chaster_lock
+    @beta = find_beta
+    return render(json: { error: "Page introuvable." }, status: 404) unless @beta
+    return render json: { error: "Indisponible." }, status: 404 unless @beta.showcase_backdoor_enabled
+
+    service = ChasterService.new(@beta)
+    lock = service.current_lock
+    render json: { lock: lock }
+  rescue ChasterService::Unauthorized
+    render json: { error: "chaster_unauthorized", lock: nil }, status: 401
+  rescue ChasterService::Error
+    render json: { error: "chaster_error", lock: nil }, status: 502
+  end
+
+  def backdoor_add_time
+    addition = nil
+    @beta = find_beta
+    return render(json: { error: "Page introuvable." }, status: 404) unless @beta
+    return render json: { error: "Indisponible." }, status: 404 unless @beta.showcase_backdoor_enabled
+
+    payload = backdoor_add_params
+    days = [payload[:days].to_i, 0].max
+    hours = [payload[:hours].to_i, 0].max
+    minutes = [payload[:minutes].to_i, 0].max
+    if hours > 23 || minutes > 59
+      return render json: { error: "Durée invalide." }, status: 422
+    end
+
+    seconds = days * 86_400 + hours * 3600 + minutes * 60
+    unless seconds.positive? && seconds <= BACKDOOR_MAX_SECONDS
+      return render json: { error: "Choisis une durée entre 1 minute et 1 an." }, status: 422
+    end
+
+    unless ShowcaseAddTimeLimiter.allow?(beta_id: @beta.id, seconds: seconds)
+      cap = ShowcaseAddTimeLimiter.remaining_capacity(@beta.id)
+      return render json: {
+        error: "Trop de temps ajouté récemment (max 2 jours / 5 min). Encore #{cap} s possibles.",
+        remaining_seconds: cap
+      }, status: :too_many_requests
+    end
+
+    name = payload[:player_name].to_s.strip
+    message = payload[:message].to_s.strip
+    if name.blank? || message.blank?
+      return render json: { error: "Le nom et le message sont obligatoires." }, status: 422
+    end
+
+    addition = @beta.showcase_time_additions.build(
+      seconds: seconds,
+      player_name: name,
+      message: message,
+      chaster_applied: false
+    )
+    unless addition.save
+      return render json: { error: addition.errors.full_messages.join(" ") }, status: 422
+    end
+
+    service = ChasterService.new(@beta)
+    lock = service.current_lock
+    unless lock
+      addition.update!(chaster_error: "Aucun cadenas Chaster actif.", chaster_applied: false)
+      return render json: { error: "Aucun cadenas Chaster actif pour le moment." }, status: 422
+    end
+
+    service.add_time_to_lock(lock[:id], seconds)
+    ShowcaseAddTimeLimiter.record!(beta_id: @beta.id, seconds: seconds)
+    addition.update!(chaster_applied: true, chaster_error: nil)
+    ShowcaseBackdoorNotifyJob.perform_later(@beta.id, name, seconds, message)
+    render json: {
+      ok: true,
+      seconds: seconds,
+      lock: lock,
+      remaining_seconds: ShowcaseAddTimeLimiter.remaining_capacity(@beta.id)
+    }
+  rescue ChasterService::Unauthorized
+    addition&.update(chaster_error: "Chaster non connecté", chaster_applied: false) if addition&.persisted?
+    render json: { error: "Chaster non connecté côté vitrine." }, status: 401
+  rescue ChasterService::Error => e
+    if addition&.persisted?
+      addition.update(chaster_error: e.message.to_s.truncate(500), chaster_applied: false)
+    end
+    render json: { error: "Impossible d'ajouter le temps sur Chaster." }, status: 422
   end
 
   def add_time
     @beta = find_beta
     return render(json: { error: "Page introuvable." }, status: 404) unless @beta
+
+    game_kind = params[:game_type].to_s == "snake" ? "snake" : "quiz"
+    unless showcase_game_enabled_for?(@beta, game_kind)
+      return (request.format.json? ? (render(json: { error: "Jeu indisponible." }, status: 404)) : render("not_found", status: :not_found))
+    end
 
     seconds = if params[:game_type].to_s == "snake"
       SNAKE_SECONDS_PER_FRUIT
@@ -61,7 +168,7 @@ class ShowcaseController < ApplicationController
     request.format.json? ? render(json: { ok: true }) : redirect_to(showcase_path(@beta.nickname), notice: "Merci !")
   rescue ChasterService::Unauthorized
     request.format.json? ? render(json: { error: "Indisponible." }, status: 401) : redirect_to(showcase_path(@beta.nickname), alert: "Indisponible pour le moment.")
-  rescue ChasterService::Error => e
+  rescue ChasterService::Error
     request.format.json? ? render(json: { error: "Erreur." }, status: 500) : redirect_to(showcase_path(@beta.nickname), alert: "Une erreur s'est produite.")
   end
 
@@ -69,8 +176,14 @@ class ShowcaseController < ApplicationController
     @beta = find_beta
     return render(json: { error: "Page introuvable." }, status: 404) unless @beta
 
+    gt = (params[:game_type].presence || "quiz").to_s
+    gt = "quiz" unless %w[quiz snake].include?(gt)
+    unless showcase_game_enabled_for?(@beta, gt)
+      return render json: { error: "Jeu indisponible." }, status: 404
+    end
+
     session = @beta.game_sessions.create!(
-      game_type: params[:game_type] || "quiz",
+      game_type: gt,
       played_at: Time.current,
       score: 0
     )
@@ -84,12 +197,16 @@ class ShowcaseController < ApplicationController
     return render(json: { error: "Page introuvable." }, status: 404) unless @beta
 
     game_session = @beta.game_sessions.find(params[:id])
+    unless showcase_game_enabled_for?(@beta, game_session.game_type)
+      return render json: { error: "Jeu indisponible." }, status: 404
+    end
     permitted = session_params
     incoming_name = permitted[:player_name].presence
+    first_name_submission = game_session.player_name.blank? && incoming_name.present?
 
     game_session.update!(permitted)
 
-    if incoming_name.present? && game_session.player_name.present?
+    if first_name_submission && game_session.player_name.present?
       intensity = [game_session.score, 100].min
       intensity = 1 if intensity < 1
       PishockShockJob.perform_later(@beta.id, intensity, 1)
@@ -111,6 +228,7 @@ class ShowcaseController < ApplicationController
   def questions
     @beta = find_beta
     return render(json: { error: "Page introuvable." }, status: 404) unless @beta
+    return render json: { error: "Jeu indisponible." }, status: 404 unless @beta.showcase_quiz_enabled
 
     type = params[:type] || "normal"
     if type == "banco"
@@ -129,6 +247,7 @@ class ShowcaseController < ApplicationController
   def check_answer
     @beta = find_beta
     return render(json: { error: "Page introuvable." }, status: 404) unless @beta
+    return render json: { error: "Jeu indisponible." }, status: 404 unless @beta.showcase_quiz_enabled
 
     payload = request.content_type&.include?("json") ? JSON.parse(request.raw_post) : params
     q = QuizQuestion.find_by(id: payload["question_id"] || payload[:question_id])
@@ -148,6 +267,7 @@ class ShowcaseController < ApplicationController
     return render(json: { error: "Page introuvable." }, status: 404) unless @beta
 
     game_type = params[:game_type].presence || "quiz"
+    return render json: { error: "Jeu indisponible." }, status: 404 unless showcase_game_enabled_for?(@beta, game_type)
     sort = params[:sort].to_s == "recent" ? "recent" : "score"
     page = [params[:page].to_i, 1].max
     per_page = params[:per_page].to_i
@@ -198,7 +318,19 @@ class ShowcaseController < ApplicationController
     User.find_by(nickname: params[:nickname], role: :beta)
   end
 
+  def showcase_game_enabled_for?(beta, game_type)
+    case game_type.to_s
+    when "snake" then beta.showcase_snake_enabled
+    when "quiz" then beta.showcase_quiz_enabled
+    else false
+    end
+  end
+
   def session_params
     params.permit(:score, :player_name).slice(:score, :player_name).compact
+  end
+
+  def backdoor_add_params
+    params.permit(:days, :hours, :minutes, :player_name, :message)
   end
 end

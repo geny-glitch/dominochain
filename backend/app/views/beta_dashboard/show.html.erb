@@ -104,10 +104,10 @@
         </div>
       </div>
       <%= form_with url: beta_backdoor_path, method: :patch, local: true, class: "ds-form", style: "margin-top: 1rem;" do %>
-        <%= hidden_field_tag :backdoor_enabled, "0" %>
+        <%= hidden_field_tag :showcase_backdoor_enabled, "0" %>
         <div class="ds-form-group">
           <label class="ds-form-label">
-            <%= check_box_tag :backdoor_enabled, "1", current_user.backdoor_enabled?, id: "backdoor_enabled" %>
+            <%= check_box_tag :showcase_backdoor_enabled, "1", current_user.showcase_backdoor_enabled?, id: "showcase_backdoor_enabled" %>
             Activer la page backdoor (URL fixe, non affichée sur la vitrine : <%= showcase_backdoor_path(current_user.nickname) %>)
           </label>
         </div>

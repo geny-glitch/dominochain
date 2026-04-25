@@ -424,6 +424,9 @@ html:has(body.snake-page-active) {
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .snake-game {
@@ -472,30 +475,45 @@ html:has(body.snake-page-active) {
   border-radius: 4px;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.snake-controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: $ds-space-lg;
+  width: 100%;
 }
 
 .snake-dpad {
   display: flex;
   justify-content: center;
-  margin-top: $ds-space-lg;
+  flex-shrink: 0;
 }
 
 .snake-dpad-cross {
   position: relative;
-  width: 240px;
-  height: 240px;
-  background: #0a1510;
-  border-radius: 28px;
+  width: 260px;
+  height: 260px;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  overflow: hidden;
+  background:
+    linear-gradient(45deg, transparent calc(50% - 1px), rgba(34, 204, 34, 0.28) calc(50% - 1px), rgba(34, 204, 34, 0.28) calc(50% + 1px), transparent calc(50% + 1px)),
+    linear-gradient(-45deg, transparent calc(50% - 1px), rgba(34, 204, 34, 0.28) calc(50% - 1px), rgba(34, 204, 34, 0.28) calc(50% + 1px), transparent calc(50% + 1px)),
+    radial-gradient(circle at 35% 28%, rgba(51, 255, 51, 0.13), transparent 55%),
+    #0a1510;
+  border: 2px solid rgba(34, 204, 34, 0.55);
+  border-radius: 50%;
   box-shadow:
     inset 0 4px 12px rgba(0, 0, 0, 0.6),
     inset 0 -2px 0 rgba(34, 204, 34, 0.15),
     0 8px 24px rgba(0, 0, 0, 0.4);
-  clip-path: polygon(
-    35% 0%, 65% 0%,
-    65% 35%, 100% 35%, 100% 65%, 65% 65%,
-    65% 100%, 35% 100%,
-    35% 65%, 0% 65%, 0% 35%, 35% 35%
-  );
+  -webkit-tap-highlight-color: transparent;
 }
 
 .snake-dpad-center {
@@ -517,7 +535,7 @@ html:has(body.snake-page-active) {
   border: none;
   background: transparent;
   cursor: pointer;
-  touch-action: manipulation;
+  touch-action: none;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
   transition: opacity $ds-transition;
@@ -536,70 +554,74 @@ html:has(body.snake-page-active) {
   width: 0;
   height: 0;
   border-style: solid;
-  opacity: 0.55;
+  opacity: 0.85;
   transition: opacity $ds-transition;
 }
 
 .snake-dpad-btn--up {
-  top: 8px;
+  top: 0;
   left: 50%;
   transform: translateX(-50%);
-  width: 72px;
-  height: 64px;
+  width: 130px;
+  height: 130px;
   display: flex;
   align-items: flex-start;
   justify-content: center;
+  padding-top: 24px;
 
   .snake-dpad-arrow {
-    border-width: 0 16px 24px 16px;
+    border-width: 0 28px 42px 28px;
     border-color: transparent transparent #22cc22 transparent;
   }
 }
 
 .snake-dpad-btn--down {
-  bottom: 8px;
+  bottom: 0;
   left: 50%;
   transform: translateX(-50%);
-  width: 72px;
-  height: 64px;
+  width: 130px;
+  height: 130px;
   display: flex;
   align-items: flex-end;
   justify-content: center;
+  padding-bottom: 24px;
 
   .snake-dpad-arrow {
-    border-width: 24px 16px 0 16px;
+    border-width: 42px 28px 0 28px;
     border-color: #22cc22 transparent transparent transparent;
   }
 }
 
 .snake-dpad-btn--left {
-  left: 8px;
+  left: 0;
   top: 50%;
   transform: translateY(-50%);
-  width: 64px;
-  height: 72px;
+  width: 130px;
+  height: 130px;
   display: flex;
   align-items: center;
   justify-content: flex-start;
+  padding-left: 24px;
 
   .snake-dpad-arrow {
-    border-width: 16px 24px 16px 0;
+    border-width: 28px 42px 28px 0;
     border-color: transparent #22cc22 transparent transparent;
   }
 }
 
 .snake-dpad-btn--right {
-  right: 8px;
+  right: 0;
   top: 50%;
   transform: translateY(-50%);
-  width: 64px;
-  height: 72px;
+  width: 130px;
+  height: 130px;
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  padding-right: 24px;
 
   .snake-dpad-arrow {
-    border-width: 16px 0 16px 24px;
+    border-width: 28px 0 28px 42px;
     border-color: transparent transparent transparent #22cc22;
   }
 }
@@ -876,5 +898,161 @@ html:has(body.snake-page-active) {
   text-align: center;
   flex: 1;
   opacity: 0.85;
+}
+
+// Backdoor — timer + add time
+.backdoor-page {
+  min-height: 100vh;
+  padding: $ds-space-3xl $ds-space-xl;
+}
+
+.backdoor-container {
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 0 $ds-space-md;
+}
+
+.backdoor-page .ds-header {
+  margin-bottom: $ds-space-md;
+  padding-top: $ds-space-lg;
+}
+
+.backdoor-nav {
+  margin: 0 0 $ds-space-xl;
+  text-align: right;
+}
+
+.backdoor-timer-card,
+.backdoor-form-card {
+  background: $ds-surface-elevated;
+  border: 1px solid $ds-border;
+  border-radius: $ds-radius-lg;
+  padding: $ds-space-xl;
+  margin-bottom: $ds-space-xl;
+}
+
+.backdoor-section-label {
+  font-size: $ds-small-size;
+  color: $ds-text-muted;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0 0 $ds-space-sm;
+}
+
+.backdoor-lock-title {
+  font-size: $ds-body-size;
+  margin: 0 0 $ds-space-md;
+  color: $ds-text;
+}
+
+.backdoor-countdown {
+  font-family: $ds-font-mono;
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: $ds-teal;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.backdoor-hint {
+  font-size: $ds-small-size;
+  margin: $ds-space-md 0 0;
+  line-height: 1.4;
+}
+
+.backdoor-form-title {
+  font-size: 1.2rem;
+  margin: 0 0 $ds-space-sm;
+  color: $ds-text;
+}
+
+.backdoor-form-intro {
+  color: $ds-text-muted;
+  font-size: $ds-body-size;
+  margin: 0 0 $ds-space-xl;
+}
+
+.backdoor-dhm {
+  display: flex;
+  justify-content: center;
+  gap: $ds-space-lg;
+  margin-bottom: $ds-space-xl;
+}
+
+.backdoor-dhm-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $ds-space-xs;
+}
+
+.backdoor-dhm-btn {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  border: 1px solid $ds-border;
+  background: rgba($ds-text, 0.06);
+  color: $ds-text;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: background $ds-transition, border-color $ds-transition;
+
+  &:hover {
+    border-color: $ds-teal;
+    color: $ds-teal;
+  }
+}
+
+.backdoor-dhm-digits {
+  font-family: $ds-font-mono;
+  font-size: 1.5rem;
+  font-weight: 600;
+  min-width: 2.5rem;
+  text-align: center;
+  color: $ds-text;
+  font-variant-numeric: tabular-nums;
+}
+
+.backdoor-dhm-label {
+  font-size: 0.7rem;
+  color: $ds-text-muted;
+  text-transform: lowercase;
+}
+
+.backdoor-dhm-err,
+.backdoor-form-err {
+  color: $ds-error;
+  font-size: $ds-small-size;
+  margin: 0 0 $ds-space-md;
+}
+
+.backdoor-field {
+  margin-bottom: $ds-space-md;
+}
+
+.backdoor-label {
+  display: block;
+  font-size: $ds-small-size;
+  color: $ds-text-muted;
+  margin-bottom: $ds-space-xs;
+}
+
+.backdoor-textarea {
+  width: 100%;
+  min-height: 5rem;
+  resize: vertical;
+}
+
+.backdoor-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: $ds-space-md;
+  margin-top: $ds-space-lg;
 }
 

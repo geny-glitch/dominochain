@@ -1,24 +1,29 @@
 <% content_for :title, "Snake" %>
 <% content_for :body_class, "snake-page-active" %>
+<% content_for :head do %>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<% end %>
 
 <div class="snake-page" data-nickname="<%= @beta.nickname %>">
   <div class="snake-container">
     <div id="snake-intro" class="snake-intro">
       <h1 class="snake-title">Snake</h1>
-      <p class="snake-hint">Flèches, swipe ou croix directionnelle pour diriger</p>
+      <p class="snake-hint">Clavier, swipe sur le terrain ou croix directionnelle pour diriger</p>
       <button type="button" class="snake-btn snake-btn--start" id="snake-start">Jouer</button>
     </div>
 
     <div id="snake-game" class="snake-game" style="display: none;">
       <div class="snake-score">Score: <span id="snake-score">0</span></div>
       <canvas id="snake-canvas" class="snake-canvas" width="300" height="300"></canvas>
-      <div class="snake-dpad" aria-label="Contrôles directionnels">
-        <div class="snake-dpad-cross">
-          <span class="snake-dpad-center"></span>
-          <button type="button" class="snake-dpad-btn snake-dpad-btn--up" data-dir="up" aria-label="Haut"><span class="snake-dpad-arrow"></span></button>
-          <button type="button" class="snake-dpad-btn snake-dpad-btn--down" data-dir="down" aria-label="Bas"><span class="snake-dpad-arrow"></span></button>
-          <button type="button" class="snake-dpad-btn snake-dpad-btn--left" data-dir="left" aria-label="Gauche"><span class="snake-dpad-arrow"></span></button>
-          <button type="button" class="snake-dpad-btn snake-dpad-btn--right" data-dir="right" aria-label="Droite"><span class="snake-dpad-arrow"></span></button>
+      <div class="snake-controls-row" aria-label="Contrôles tactiles">
+        <div class="snake-dpad" aria-label="Croix directionnelle">
+          <div class="snake-dpad-cross">
+            <span class="snake-dpad-center"></span>
+            <button type="button" class="snake-dpad-btn snake-dpad-btn--up" data-dir="up" aria-label="Haut"><span class="snake-dpad-arrow"></span></button>
+            <button type="button" class="snake-dpad-btn snake-dpad-btn--down" data-dir="down" aria-label="Bas"><span class="snake-dpad-arrow"></span></button>
+            <button type="button" class="snake-dpad-btn snake-dpad-btn--left" data-dir="left" aria-label="Gauche"><span class="snake-dpad-arrow"></span></button>
+            <button type="button" class="snake-dpad-btn snake-dpad-btn--right" data-dir="right" aria-label="Droite"><span class="snake-dpad-arrow"></span></button>
+          </div>
         </div>
       </div>
     </div>
@@ -85,7 +90,7 @@
   let food = { x: 0, y: 0 };
   let dir = { x: 1, y: 0 };
   const dirQueue = [];
-  const MAX_QUEUE = 3;
+  const MAX_QUEUE = 5;
   let score = 0;
   let gameLoop = null;
   let gameOver = false;
@@ -350,7 +355,7 @@
     setSnakeLeaderboardUi(false, saved);
   }
 
-  const fps = 12;
+  const fps = 18;
   const interval = 1000 / fps;
   let last = 0;
   function run() {
@@ -421,32 +426,82 @@
   });
 
   const dirMap = { up: { x: 0, y: -1 }, down: { x: 0, y: 1 }, left: { x: -1, y: 0 }, right: { x: 1, y: 0 } };
-  document.querySelectorAll(".snake-dpad-btn").forEach(btn => {
-    const handleDir = (e) => {
-      e.preventDefault();
-      if (gameOver) return;
-      enqueueDir(dirMap[btn.dataset.dir]);
-    };
-    btn.addEventListener("pointerdown", handleDir);
-  });
+  function applyDirFromName(name) {
+    const d = dirMap[name];
+    if (d) enqueueDir(d);
+  }
+  const dpadCross = document.querySelector(".snake-dpad-cross");
+  let dpadPointerId = null;
+  let dpadLastDir = null;
 
-  let touchStart = null;
-  canvas.addEventListener("touchstart", e => {
-    touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-  }, { passive: true });
-  canvas.addEventListener("touchend", e => {
-    if (!touchStart || gameOver) return;
-    const dx = e.changedTouches[0].clientX - touchStart.x;
-    const dy = e.changedTouches[0].clientY - touchStart.y;
+  function dpadDirectionFromPoint(e) {
+    const r = dpadCross.getBoundingClientRect();
+    const dx = e.clientX - (r.left + r.width / 2);
+    const dy = e.clientY - (r.top + r.height / 2);
+    if (Math.abs(dx) > Math.abs(dy)) return dx > 0 ? "right" : "left";
+    return dy > 0 ? "down" : "up";
+  }
+
+  function dpadApplyPointer(e) {
+    if (e.pointerId !== dpadPointerId || gameOver) return;
+    e.preventDefault();
+    const dirName = dpadDirectionFromPoint(e);
+    if (dirName === dpadLastDir) return;
+    dpadLastDir = dirName;
+    applyDirFromName(dirName);
+  }
+
+  dpadCross.addEventListener("pointerdown", (e) => {
+    if (gameOver) return;
+    e.preventDefault();
+    dpadPointerId = e.pointerId;
+    dpadLastDir = null;
+    dpadApplyPointer(e);
+    try { dpadCross.setPointerCapture(e.pointerId); } catch (_) {}
+  });
+  dpadCross.addEventListener("pointermove", dpadApplyPointer);
+  ["pointerup", "pointercancel", "lostpointercapture"].forEach(eventName => {
+    dpadCross.addEventListener(eventName, (e) => {
+      if (e.pointerId !== dpadPointerId && eventName !== "lostpointercapture") return;
+      dpadPointerId = null;
+      dpadLastDir = null;
+      try { dpadCross.releasePointerCapture(e.pointerId); } catch (_) {}
+    });
+  });
+  dpadCross.addEventListener("touchstart", (e) => { e.preventDefault(); }, { passive: false, capture: true });
+
+  const SWIPE_MIN = 14;
+  let swipePointerId = null;
+  let swipeStart = null;
+  canvas.addEventListener("pointerdown", (e) => {
+    if (gameOver) return;
+    swipePointerId = e.pointerId;
+    swipeStart = { x: e.clientX, y: e.clientY };
+    try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
+  });
+  canvas.addEventListener("pointerup", (e) => {
+    if (e.pointerId !== swipePointerId || !swipeStart || gameOver) return;
+    const dx = e.clientX - swipeStart.x;
+    const dy = e.clientY - swipeStart.y;
+    swipePointerId = null;
+    swipeStart = null;
+    if (Math.abs(dx) < SWIPE_MIN && Math.abs(dy) < SWIPE_MIN) return;
     if (Math.abs(dx) > Math.abs(dy)) {
-      if (dx > 20) enqueueDir({ x: 1, y: 0 });
-      else if (dx < -20) enqueueDir({ x: -1, y: 0 });
+      if (dx > 0) enqueueDir({ x: 1, y: 0 });
+      else enqueueDir({ x: -1, y: 0 });
     } else {
-      if (dy > 20) enqueueDir({ x: 0, y: 1 });
-      else if (dy < -20) enqueueDir({ x: 0, y: -1 });
+      if (dy > 0) enqueueDir({ x: 0, y: 1 });
+      else enqueueDir({ x: 0, y: -1 });
     }
-    touchStart = null;
-  }, { passive: true });
+  });
+  canvas.addEventListener("pointercancel", () => {
+    swipePointerId = null;
+    swipeStart = null;
+  });
+  canvas.addEventListener("lostpointercapture", () => {
+    swipePointerId = null;
+    swipeStart = null;
+  });
 
   document.addEventListener("keydown", e => {
     const scrollKeys = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " ", "Space", "PageUp", "PageDown", "Home", "End"];

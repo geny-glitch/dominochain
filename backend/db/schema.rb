@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_04_25_140000) do
+ActiveRecord::Schema[7.2].define(version: 2026_04_25_160000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -184,6 +184,19 @@ ActiveRecord::Schema[7.2].define(version: 2026_04_25_140000) do
     t.index ["question_type"], name: "index_quiz_questions_on_question_type"
   end
 
+  create_table "showcase_time_additions", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.integer "seconds", null: false
+    t.string "player_name", null: false
+    t.text "message", null: false
+    t.boolean "chaster_applied", default: false, null: false
+    t.string "chaster_error"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "created_at"], name: "index_showcase_time_additions_on_user_id_and_created_at"
+    t.index ["user_id"], name: "index_showcase_time_additions_on_user_id"
+  end
+
   create_table "tasks", force: :cascade do |t|
     t.string "name", null: false
     t.text "description"
@@ -219,7 +232,9 @@ ActiveRecord::Schema[7.2].define(version: 2026_04_25_140000) do
     t.string "pishock_username"
     t.string "pishock_share_code"
     t.string "pishock_api_key"
-    t.boolean "backdoor_enabled", default: false, null: false
+    t.boolean "showcase_quiz_enabled", default: true, null: false
+    t.boolean "showcase_snake_enabled", default: true, null: false
+    t.boolean "showcase_backdoor_enabled", default: true, null: false
     t.index ["email"], name: "index_users_on_email"
     t.index ["nickname"], name: "index_users_on_nickname", unique: true
     t.index ["provider", "uid"], name: "index_users_on_provider_and_uid"
@@ -258,6 +273,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_04_25_140000) do
   add_foreign_key "proof_of_completions", "tasks"
   add_foreign_key "punishments", "tasks"
   add_foreign_key "showcase_add_time_events", "users"
+  add_foreign_key "showcase_time_additions", "users"
   add_foreign_key "tasks", "users"
   add_foreign_key "wallpaper_applications", "devices"
   add_foreign_key "wallpaper_applications", "wallpapers"

@@ -7,16 +7,20 @@
     </header>
 
     <div class="showcase-games">
-      <%= link_to showcase_quiz_path(@beta.nickname), class: "showcase-game-card showcase-game-card--quiz" do %>
-        <span class="showcase-game-icon">📻</span>
-        <h2 class="showcase-game-title">Le Jeu des 1000 €</h2>
-        <p class="showcase-game-desc">Quiz culture générale, Banco et Super Banco. Inspiré de France Inter.</p>
+      <% if @showcase_quiz_enabled %>
+        <%= link_to showcase_quiz_path(@beta.nickname), class: "showcase-game-card showcase-game-card--quiz" do %>
+          <span class="showcase-game-icon">📻</span>
+          <h2 class="showcase-game-title">Le Jeu des 1000 €</h2>
+          <p class="showcase-game-desc">Quiz culture générale, Banco et Super Banco. Inspiré de France Inter.</p>
+        <% end %>
       <% end %>
 
-      <%= link_to showcase_snake_path(@beta.nickname), class: "showcase-game-card showcase-game-card--snake" do %>
-        <span class="showcase-game-icon">🐍</span>
-        <h2 class="showcase-game-title">Snake</h2>
-        <p class="showcase-game-desc">Le classique Nokia 3310. Flèches ou swipe pour diriger.</p>
+      <% if @showcase_snake_enabled %>
+        <%= link_to showcase_snake_path(@beta.nickname), class: "showcase-game-card showcase-game-card--snake" do %>
+          <span class="showcase-game-icon">🐍</span>
+          <h2 class="showcase-game-title">Snake</h2>
+          <p class="showcase-game-desc">Le classique Nokia 3310. Flèches ou swipe pour diriger.</p>
+        <% end %>
       <% end %>
     </div>
   </div>

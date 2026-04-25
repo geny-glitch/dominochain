@@ -6,12 +6,12 @@ class BetaDashboardController < ApplicationController
   before_action :set_task, only: [:task, :submit_proof]
 
   def update_backdoor
-    p = params.permit(:backdoor_enabled)
-    enabled = p[:backdoor_enabled] == "1"
-    current_user.update!(backdoor_enabled: enabled)
+    p = params.permit(:showcase_backdoor_enabled)
+    enabled = p[:showcase_backdoor_enabled] == "1"
+    current_user.update!(showcase_backdoor_enabled: enabled)
     if enabled
       redirect_to beta_dashboard_path,
-        notice: "Page backdoor activée. URL fixe (non listée sur la vitrine) : #{request.base_url}#{showcase_backdoor_path(current_user.nickname)}"
+        notice: "Page backdoor activée. URL (non affichée sur la vitrine) : #{request.base_url}#{showcase_backdoor_path(current_user.nickname)}"
     else
       redirect_to beta_dashboard_path, notice: "Page backdoor désactivée."
     end

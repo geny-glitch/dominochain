@@ -4,7 +4,8 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+    <!-- Full-bleed square looked like a "black box" on launchers; circle matches adaptive mask intent. -->
     <path
-        android:fillColor="#000000"
-        android:pathData="M0,0h108v108h-108z" />
+        android:fillColor="@color/ds_bg"
+        android:pathData="M54,54m-54,0a54,54 0,1,1,108,0a54,54 0,1,1,-108,0" />
 </vector>

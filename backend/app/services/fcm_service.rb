@@ -240,6 +240,37 @@ class FcmService
       send_request(device, payload)
     end
 
+    def send_showcase_backdoor_notification(device:, player_name:, seconds:, message:)
+      unless device.fcm_token.present?
+        Rails.logger.info "[FCM] Skipped showcase_backdoor: no fcm_token for device #{device.device_id}"
+        return
+      end
+      unless credentials_configured?
+        Rails.logger.warn "[FCM] Skipped showcase_backdoor: credentials not configured."
+        return
+      end
+
+      label = format_duration_for_notification(seconds)
+      body = "#{player_name} a ajouté #{label} sur la vitrine."
+      body += " « #{message.truncate(180)} »"
+
+      payload = {
+        message: {
+          token: device.fcm_token,
+          notification: { title: "OTB", body: body },
+          data: {
+            type: "showcase_backdoor",
+            player_name: player_name.to_s,
+            seconds: seconds.to_s,
+            message: message.to_s
+          },
+          android: { priority: "high" }
+        }
+      }
+
+      send_request(device, payload)
+    end
+
     def send_punishment_notification(device:, task:, message: nil)
       unless device.fcm_token.present?
         Rails.logger.info "[FCM] Skipped punishment: no fcm_token for device #{device.device_id}"
@@ -278,6 +309,21 @@ class FcmService
     end
 
     private
+
+    def format_duration_for_notification(total_seconds)
+      s = total_seconds.to_i
+      return "0 s" if s <= 0
+
+      days, rem = s.divmod(86_400)
+      hours, rem = rem.divmod(3600)
+      mins, secs = rem.divmod(60)
+      parts = []
+      parts << "#{days} jour#{'s' if days > 1}" if days.positive?
+      parts << "#{hours} h" if hours.positive?
+      parts << "#{mins} min" if mins.positive?
+      parts << "#{secs} s" if parts.empty? || secs.positive?
+      parts.join(" ")
+    end
 
     def showcase_game_label(game_type)
       case game_type.to_s

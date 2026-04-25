@@ -103,6 +103,15 @@
           </div>
         </div>
       </div>
+      <%= form_with url: beta_snake_seconds_path, method: :patch, local: true, class: "ds-form", style: "margin-top: 1rem;" do %>
+        <h3 class="ds-section-title" style="margin-bottom: 0.5rem; font-size: 1rem;">Snake (vitrine)</h3>
+        <p class="ds-beta-control-hint" style="margin-bottom: 0.75rem;">Nombre de secondes ajoutées au lock Chaster à chaque pomme mangée. Tu ne peux pas réduire cette valeur avant 1 h après le dernier changement.</p>
+        <div class="ds-form-group">
+          <%= label_tag :showcase_snake_seconds_per_fruit, "Secondes par pomme", class: "ds-form-label" %>
+          <%= number_field_tag :showcase_snake_seconds_per_fruit, current_user.showcase_snake_seconds_per_fruit, min: 1, max: 86_400 * 365, class: "ds-input", required: true %>
+        </div>
+        <%= submit_tag "Enregistrer le temps Snake", class: "ds-btn ds-btn--secondary ds-btn--sm" %>
+      <% end %>
       <%= form_with url: beta_backdoor_path, method: :patch, local: true, class: "ds-form", style: "margin-top: 1rem;" do %>
         <%= hidden_field_tag :showcase_backdoor_enabled, "0" %>
         <div class="ds-form-group">

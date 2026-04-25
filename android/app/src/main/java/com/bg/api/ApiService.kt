@@ -65,13 +65,15 @@ data class MeResponse(
 data class ShowcaseSettingsResponse(
     val showcase_quiz_enabled: Boolean,
     val showcase_snake_enabled: Boolean,
-    val showcase_backdoor_enabled: Boolean
+    val showcase_backdoor_enabled: Boolean,
+    val showcase_snake_seconds_per_fruit: Int? = null
 )
 
 data class ShowcaseSettingsRequest(
     val showcase_quiz_enabled: Boolean,
     val showcase_snake_enabled: Boolean,
-    val showcase_backdoor_enabled: Boolean
+    val showcase_backdoor_enabled: Boolean,
+    val showcase_snake_seconds_per_fruit: Int
 )
 
 data class ChangePasswordRequest(
@@ -214,7 +216,8 @@ data class ScreenshotResponse(
 data class ChasterLockResponse(
     val lock: ChasterLock?,
     val error: String? = null,
-    val pishock_enabled: Boolean? = null
+    val pishock_enabled: Boolean? = null,
+    val showcase_snake_seconds_per_fruit: Int? = null
 )
 
 data class ChasterLock(

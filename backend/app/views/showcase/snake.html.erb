@@ -4,7 +4,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
 <% end %>
 
-<div class="snake-page" data-nickname="<%= @beta.nickname %>">
+<div class="snake-page" data-nickname="<%= @beta.nickname %>" data-snake-seconds="<%= @snake_seconds_per_fruit %>">
   <div class="snake-container">
     <div id="snake-intro" class="snake-intro">
       <h1 class="snake-title">Snake</h1>
@@ -40,6 +40,7 @@
       </div>
       <button type="button" class="snake-btn snake-btn--ghost" id="snake-replay">Rejouer</button>
     </div>
+    <p class="snake-seconds-foot" id="snake-seconds-foot" aria-hidden="true"></p>
   </div>
 
   <section class="snake-leaderboard" id="snake-leaderboard">
@@ -75,7 +76,11 @@
   const CELL = 20;
   const CANVAS_SIZE = GRID * CELL;
 
-  const nickname = document.querySelector(".snake-page").dataset.nickname;
+  const pageEl = document.querySelector(".snake-page");
+  const nickname = pageEl.dataset.nickname;
+  const snakeSecPerFruit = Math.max(1, parseInt(pageEl.dataset.snakeSeconds || "300", 10) || 300);
+  const snakeSecFoot = document.getElementById("snake-seconds-foot");
+  if (snakeSecFoot) snakeSecFoot.textContent = "S: " + snakeSecPerFruit;
   const LEADERBOARD_PER_PAGE = 10;
   const urls = {
     createSession: `/showcase/${nickname}/sessions`,

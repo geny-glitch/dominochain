@@ -5,6 +5,14 @@ class BetaDashboardController < ApplicationController
   before_action :require_beta_role!
   before_action :set_task, only: [:task, :submit_proof]
 
+  def update_snake_seconds
+    sec = params[:showcase_snake_seconds_per_fruit].to_i
+    current_user.update!(showcase_snake_seconds_per_fruit: sec)
+    redirect_to beta_dashboard_path, notice: "Temps par pomme Snake enregistré (#{current_user.showcase_snake_seconds_per_fruit} s)."
+  rescue ActiveRecord::RecordInvalid => e
+    redirect_to beta_dashboard_path, alert: e.record.errors.full_messages.join(", ")
+  end
+
   def update_backdoor
     p = params.permit(:showcase_backdoor_enabled)
     enabled = p[:showcase_backdoor_enabled] == "1"

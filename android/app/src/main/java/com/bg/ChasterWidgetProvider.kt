@@ -39,7 +39,8 @@ class ChasterWidgetProvider : AppWidgetProvider() {
     private data class WidgetState(
         val remaining: String,
         val endTimeMs: Long?,
-        val pishockEnabled: Boolean
+        val pishockEnabled: Boolean,
+        val snakeSecondsPerFruit: Int?
     )
 
     companion object {
@@ -48,6 +49,7 @@ class ChasterWidgetProvider : AppWidgetProvider() {
         private const val KEY_STATIC = "static_text"
         private const val KEY_END = "end_time_ms"
         private const val KEY_PISH = "pishock"
+        private const val KEY_SNAKE = "snake_seconds"
 
         private fun prefs(context: Context) =
             context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -58,6 +60,7 @@ class ChasterWidgetProvider : AppWidgetProvider() {
                 .putString(KEY_STATIC, state.remaining)
                 .putLong(KEY_END, state.endTimeMs ?: 0L)
                 .putBoolean(KEY_PISH, state.pishockEnabled)
+                .putInt(KEY_SNAKE, state.snakeSecondsPerFruit ?: -1)
                 .apply()
         }
 
@@ -65,10 +68,12 @@ class ChasterWidgetProvider : AppWidgetProvider() {
             val p = prefs(context)
             if (!p.getBoolean(KEY_INIT, false)) return null
             val end = p.getLong(KEY_END, 0L).takeIf { it > 0L }
+            val snakeRaw = p.getInt(KEY_SNAKE, -1)
             return WidgetState(
                 remaining = p.getString(KEY_STATIC, "--") ?: "--",
                 endTimeMs = end,
-                pishockEnabled = p.getBoolean(KEY_PISH, false)
+                pishockEnabled = p.getBoolean(KEY_PISH, false),
+                snakeSecondsPerFruit = snakeRaw.takeIf { it > 0 }
             )
         }
 
@@ -78,11 +83,10 @@ class ChasterWidgetProvider : AppWidgetProvider() {
 
         private fun iconSlotDp(context: Context, pishock: Boolean): Float {
             if (!pishock) return 0f
-            val d = context.resources.displayMetrics.density
             return (
                 context.resources.getDimension(R.dimen.ds_widget_icon_sm) +
                     context.resources.getDimension(R.dimen.ds_space_xs)
-                ) / d
+                ) / context.resources.displayMetrics.density
         }
 
         private fun widgetSizeDp(options: Bundle): Pair<Int, Int> {
@@ -108,12 +112,13 @@ class ChasterWidgetProvider : AppWidgetProvider() {
             widthDp: Int,
             heightDp: Int,
             pishock: Boolean,
-            approximateCharCount: Int
+            approximateCharCount: Int,
+            reserveBottomDp: Float
         ): Float {
             val pad = 2f * pxToDp(context, R.dimen.ds_space_sm)
             val icon = iconSlotDp(context, pishock)
             val usableW = (widthDp - pad - icon).coerceAtLeast(24f)
-            val usableH = (heightDp - pad).coerceAtLeast(16f)
+            val usableH = (heightDp - pad - reserveBottomDp).coerceAtLeast(16f)
             val fromH = usableH * 0.58f
             val chars = approximateCharCount.coerceIn(3, 18)
             val fromW = usableW * 0.92f / chars
@@ -124,7 +129,8 @@ class ChasterWidgetProvider : AppWidgetProvider() {
             context: Context,
             lock: com.bg.api.ChasterLock?,
             error: String?,
-            pishockEnabled: Boolean
+            pishockEnabled: Boolean,
+            snakeSecondsPerFruit: Int?
         ) {
             val remainingSec = lock?.remaining_seconds ?: 0
             val useCountdown = lock != null && !lock.is_frozen && remainingSec > 0
@@ -140,7 +146,7 @@ class ChasterWidgetProvider : AppWidgetProvider() {
                 else -> formatRemaining(lock.remaining_seconds ?: 0)
             }
 
-            updateWidgets(context, staticText, endTimeMs, pishockEnabled)
+            updateWidgets(context, staticText, endTimeMs, pishockEnabled, snakeSecondsPerFruit)
         }
 
         private fun formatRemaining(sec: Int): String {
@@ -161,9 +167,10 @@ class ChasterWidgetProvider : AppWidgetProvider() {
             context: Context,
             remaining: String,
             endTimeMs: Long? = null,
-            pishockEnabled: Boolean = false
+            pishockEnabled: Boolean = false,
+            snakeSecondsPerFruit: Int? = null
         ) {
-            val state = WidgetState(remaining, endTimeMs, pishockEnabled)
+            val state = WidgetState(remaining, endTimeMs, pishockEnabled, snakeSecondsPerFruit)
             persistState(context, state)
             val appWidgetManager = AppWidgetManager.getInstance(context)
             val ids = appWidgetManager.getAppWidgetIds(
@@ -189,6 +196,8 @@ class ChasterWidgetProvider : AppWidgetProvider() {
         ) {
             val options = appWidgetManager.getAppWidgetOptions(appWidgetId)
             val (wDp, hDp) = widgetSizeDp(options)
+            val snake = state.snakeSecondsPerFruit?.takeIf { it > 0 }
+            val reserveBottom = if (snake != null) 11f else 0f
             val charCount = if (state.endTimeMs != null) {
                 10
             } else {
@@ -199,7 +208,8 @@ class ChasterWidgetProvider : AppWidgetProvider() {
                 wDp,
                 hDp,
                 state.pishockEnabled,
-                charCount
+                charCount,
+                reserveBottom
             )
 
             val pendingIntent = PendingIntent.getActivity(
@@ -238,6 +248,13 @@ class ChasterWidgetProvider : AppWidgetProvider() {
                 views.setViewVisibility(R.id.widget_pishock_icon, android.view.View.VISIBLE)
             } else {
                 views.setViewVisibility(R.id.widget_pishock_icon, android.view.View.GONE)
+            }
+
+            if (snake != null) {
+                views.setViewVisibility(R.id.widget_chaster_snake_hint, android.view.View.VISIBLE)
+                views.setTextViewText(R.id.widget_chaster_snake_hint, "S: $snake")
+            } else {
+                views.setViewVisibility(R.id.widget_chaster_snake_hint, android.view.View.GONE)
             }
 
             views.setOnClickPendingIntent(R.id.widget_chaster_root, pendingIntent)

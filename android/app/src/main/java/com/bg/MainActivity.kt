@@ -173,8 +173,16 @@ class MainActivity : AppCompatActivity() {
                     this@MainActivity,
                     response?.lock,
                     response?.error,
-                    response?.pishock_enabled == true
+                    response?.pishock_enabled == true,
+                    response?.showcase_snake_seconds_per_fruit
                 )
+                val snakeSec = response?.showcase_snake_seconds_per_fruit?.takeIf { it > 0 }
+                if (snakeSec != null) {
+                    binding.chasterSnakeSeconds.visibility = android.view.View.VISIBLE
+                    binding.chasterSnakeSeconds.text = "S: $snakeSec"
+                } else {
+                    binding.chasterSnakeSeconds.visibility = android.view.View.GONE
+                }
                 val card = binding.chasterCard
                 val lock = response?.lock
                 val error = response?.error

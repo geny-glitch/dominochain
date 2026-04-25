@@ -36,4 +36,15 @@ RSpec.describe "Showcase add_time rate limit", type: :request do
     expect(response).to have_http_status(:ok)
     expect(ShowcaseAddTimeEvent.where(user_id: beta.id).sum(:seconds)).to eq(ShowcaseController::SNAKE_SECONDS_PER_FRUIT)
   end
+
+  it "uses beta-configured seconds per fruit for snake" do
+    beta.update!(showcase_snake_seconds_per_fruit: 120)
+    post showcase_add_time_path(beta.nickname),
+      params: { game_type: "snake" },
+      headers: { "CONTENT_TYPE" => "application/json" },
+      as: :json
+
+    expect(response).to have_http_status(:ok)
+    expect(ShowcaseAddTimeEvent.where(user_id: beta.id).sum(:seconds)).to eq(120)
+  end
 end

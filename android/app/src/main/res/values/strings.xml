@@ -37,6 +37,12 @@
     <string name="showcase_backdoor_label">Page Backdoor (timer + ajout de temps)</string>
     <string name="showcase_quiz_label">Jeu des 1000 € (quiz)</string>
     <string name="showcase_snake_label">Snake</string>
+    <string name="showcase_snake_seconds_label">Snake — secondes ajoutées par pomme</string>
+    <string name="showcase_snake_seconds_hint">Temps ajouté au lock Chaster à chaque fruit. Réduire cette valeur n\'est possible qu\'1 h après le dernier changement.</string>
+    <string name="showcase_snake_seconds_placeholder">Ex. 300</string>
+    <string name="showcase_snake_seconds_save">Enregistrer</string>
+    <string name="showcase_snake_seconds_saved">Réglage Snake enregistré</string>
+    <string name="showcase_snake_seconds_invalid">Indique un nombre entier positif (secondes).</string>
     <string name="showcase_least_one_game">Garde au moins un jeu ou la page Backdoor activé.</string>
     <string name="showcase_settings_error">Impossible d\'enregistrer les jeux. Réessaie.</string>
 </resources>

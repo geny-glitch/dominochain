@@ -4,14 +4,14 @@ class BackdoorController < ApplicationController
   skip_before_action :verify_authenticity_token, only: [:add_time]
 
   def show
-    @beta = find_beta_from_signed_token
+    @beta = find_beta_if_backdoor_enabled
     return render "showcase/not_found", status: :not_found unless @beta
 
     @remaining_seconds = ShowcaseAddTimeLimiter.remaining_capacity(@beta.id)
   end
 
   def add_time
-    @beta = find_beta_from_signed_token
+    @beta = find_beta_if_backdoor_enabled
     return render(json: { error: "Page introuvable." }, status: 404) unless @beta
 
     seconds = params[:seconds].to_i
@@ -49,19 +49,11 @@ class BackdoorController < ApplicationController
 
   private
 
-  def find_beta_from_signed_token
+  def find_beta_if_backdoor_enabled
     nickname = params[:nickname].to_s
-    token = params[:token].to_s
-    return nil if nickname.blank? || token.blank?
+    return nil if nickname.blank?
 
-    beta = User.find_by(nickname: nickname, role: :beta)
-    return nil unless beta&.backdoor_token_digest.present?
-    return nil unless ActiveSupport::SecurityUtils.secure_compare(
-      beta.backdoor_token_digest,
-      Digest::SHA256.hexdigest(token)
-    )
-
-    beta
+    User.find_by(nickname: nickname, role: :beta, backdoor_enabled: true)
   end
 
   def backdoor_json(status:, **body)

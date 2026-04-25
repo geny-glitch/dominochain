@@ -6,7 +6,7 @@
       <%= image_tag "otb-logo.png", alt: "OTB", class: "ds-header-logo", width: 48, height: 48 %>
       <div>
         <h1 class="ds-title">Backdoor</h1>
-        <p class="ds-subtitle">Ajout de temps Chaster (lien secret)</p>
+        <p class="ds-subtitle">Ajout de temps Chaster (page non listée sur la vitrine)</p>
       </div>
     </header>
 
@@ -20,7 +20,7 @@
     <section class="ds-beta-section">
       <div class="ds-beta-control-card">
         <p class="ds-beta-control-text">Capacité restante sur 5 minutes : <strong id="backdoor-remaining"><%= @remaining_seconds %></strong> s (max <%= ShowcaseAddTimeLimiter::MAX_SECONDS_PER_WINDOW %> s).</p>
-        <%= form_with url: showcase_backdoor_add_time_path(@beta.nickname, params[:token]), method: :post, local: true, id: "backdoor-form", class: "ds-form", data: { turbo: false } do %>
+        <%= form_with url: showcase_backdoor_add_time_path(@beta.nickname), method: :post, local: true, id: "backdoor-form", class: "ds-form", data: { turbo: false } do %>
           <div class="ds-form-group">
             <%= label_tag :seconds, "Secondes à ajouter (1–86400)", class: "ds-form-label" %>
             <%= number_field_tag :seconds, 300, min: 1, max: 86_400, step: 1, class: "ds-input", id: "backdoor-seconds" %>

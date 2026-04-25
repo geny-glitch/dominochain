@@ -6,26 +6,14 @@ class BetaDashboardController < ApplicationController
   before_action :set_task, only: [:task, :submit_proof]
 
   def update_backdoor
-    p = params.permit(:backdoor_enabled, :backdoor_regenerate)
+    p = params.permit(:backdoor_enabled)
     enabled = p[:backdoor_enabled] == "1"
-    regenerate = p[:backdoor_regenerate] == "1"
-
-    unless enabled
-      session.delete(:backdoor_url_once)
-      current_user.update!(backdoor_token_digest: nil)
-      redirect_to beta_dashboard_path, notice: "Page backdoor désactivée."
-      return
-    end
-
-    need_new_token = current_user.backdoor_token_digest.blank? || regenerate
-    if need_new_token
-      raw_token = SecureRandom.urlsafe_base64(32)
-      current_user.update!(backdoor_token_digest: Digest::SHA256.hexdigest(raw_token))
-      session[:backdoor_url_once] = showcase_backdoor_path(current_user.nickname, raw_token)
+    current_user.update!(backdoor_enabled: enabled)
+    if enabled
       redirect_to beta_dashboard_path,
-        notice: "Page backdoor activée. Copie le lien secret ci-dessous (affiché une seule fois) puis garde-le précieusement."
+        notice: "Page backdoor activée. URL fixe (non listée sur la vitrine) : #{request.base_url}#{showcase_backdoor_path(current_user.nickname)}"
     else
-      redirect_to beta_dashboard_path, notice: "Page backdoor toujours active (même lien secret qu’avant)."
+      redirect_to beta_dashboard_path, notice: "Page backdoor désactivée."
     end
   rescue ActiveRecord::RecordInvalid => e
     redirect_to beta_dashboard_path, alert: e.record.errors.full_messages.join(", ")
@@ -73,7 +61,6 @@ class BetaDashboardController < ApplicationController
     @tasks = current_user.tasks.recent.includes(:proof_of_completion)
     @chaster_lock = fetch_chaster_lock
     @showcase_qr = generate_showcase_qr
-    @backdoor_url_once = session.delete(:backdoor_url_once)
   end
 
   def task

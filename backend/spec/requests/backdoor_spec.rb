@@ -3,26 +3,22 @@
 require "rails_helper"
 
 RSpec.describe "Backdoor", type: :request do
-  let(:beta) { create(:user, :beta, nickname: "doorbeta") }
-  let(:raw_token) { "test-secret-token-xyz" }
+  let(:beta) { create(:user, :beta, nickname: "doorbeta", backdoor_enabled: true) }
 
-  before do
-    beta.update!(backdoor_token_digest: Digest::SHA256.hexdigest(raw_token))
-  end
-
-  describe "GET /showcase/:nickname/backdoor/:token" do
-    it "returns 404 when token is wrong" do
-      get showcase_backdoor_path(beta.nickname, "wrong")
+  describe "GET /showcase/:nickname/backdoor" do
+    it "returns 404 when backdoor is disabled" do
+      beta.update!(backdoor_enabled: false)
+      get showcase_backdoor_path(beta.nickname)
       expect(response).to have_http_status(:not_found)
     end
 
-    it "returns 200 when token matches" do
-      get showcase_backdoor_path(beta.nickname, raw_token)
+    it "returns 200 when backdoor is enabled" do
+      get showcase_backdoor_path(beta.nickname)
       expect(response).to have_http_status(:ok)
     end
   end
 
-  describe "POST /showcase/:nickname/backdoor/:token/add_time" do
+  describe "POST /showcase/:nickname/backdoor/add_time" do
     let(:service_double) { instance_double(ChasterService) }
 
     before do
@@ -31,8 +27,18 @@ RSpec.describe "Backdoor", type: :request do
       allow(service_double).to receive(:add_time_to_lock).with("lock-1", 60)
     end
 
+    it "returns 404 when backdoor is disabled" do
+      beta.update!(backdoor_enabled: false)
+      post showcase_backdoor_add_time_path(beta.nickname),
+        params: { seconds: 60 }.to_json,
+        headers: { "CONTENT_TYPE" => "application/json" }
+
+      expect(response).to have_http_status(:not_found)
+      expect(service_double).not_to have_received(:add_time_to_lock)
+    end
+
     it "adds time when under limit" do
-      post showcase_backdoor_add_time_path(beta.nickname, raw_token),
+      post showcase_backdoor_add_time_path(beta.nickname),
         params: { seconds: 60 }.to_json,
         headers: { "CONTENT_TYPE" => "application/json" }
 
@@ -48,7 +54,7 @@ RSpec.describe "Backdoor", type: :request do
         ShowcaseAddTimeEvent.create!(user: beta, seconds: ShowcaseAddTimeLimiter::MAX_SECONDS_PER_WINDOW)
       end
 
-      post showcase_backdoor_add_time_path(beta.nickname, raw_token),
+      post showcase_backdoor_add_time_path(beta.nickname),
         params: { seconds: 1 }.to_json,
         headers: { "CONTENT_TYPE" => "application/json" }
 

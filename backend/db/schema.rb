@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_04_25_120000) do
+ActiveRecord::Schema[7.2].define(version: 2026_04_25_140000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -219,8 +219,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_04_25_120000) do
     t.string "pishock_username"
     t.string "pishock_share_code"
     t.string "pishock_api_key"
-    t.string "backdoor_token_digest"
-    t.index ["backdoor_token_digest"], name: "index_users_on_backdoor_token_digest", unique: true, where: "(backdoor_token_digest IS NOT NULL)"
+    t.boolean "backdoor_enabled", default: false, null: false
     t.index ["email"], name: "index_users_on_email"
     t.index ["nickname"], name: "index_users_on_nickname", unique: true
     t.index ["provider", "uid"], name: "index_users_on_provider_and_uid"

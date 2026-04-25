@@ -31,9 +31,9 @@ Rails.application.routes.draw do
   get "showcase/:nickname/questions", to: "showcase#questions", as: :showcase_questions
   post "showcase/:nickname/check_answer", to: "showcase#check_answer", as: :showcase_check_answer
 
-  # Page secrète (lien avec token, jamais listée sur la vitrine)
-  get "showcase/:nickname/backdoor/:token", to: "backdoor#show", as: :showcase_backdoor
-  post "showcase/:nickname/backdoor/:token/add_time", to: "backdoor#add_time", as: :showcase_backdoor_add_time
+  # Page non référencée sur la vitrine (activable par le beta)
+  get "showcase/:nickname/backdoor", to: "backdoor#show", as: :showcase_backdoor
+  post "showcase/:nickname/backdoor/add_time", to: "backdoor#add_time", as: :showcase_backdoor_add_time
 
   # Chaster OAuth (beta only)
   get "chaster/connect", to: "chaster#connect", as: :chaster_connect

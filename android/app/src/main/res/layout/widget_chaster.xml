@@ -3,48 +3,66 @@
     android:id="@+id/widget_chaster_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="horizontal"
+    android:orientation="vertical"
     android:padding="@dimen/ds_space_sm"
-    android:background="@drawable/widget_chaster_background"
-    android:gravity="center_vertical">
+    android:background="@drawable/widget_chaster_background">
 
-    <FrameLayout
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
         android:layout_weight="1"
-        android:layout_gravity="center_vertical">
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
 
-        <Chronometer
-            android:id="@+id/widget_chaster_chrono"
-            android:layout_width="match_parent"
+        <FrameLayout
+            android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:gravity="center_vertical|start"
-            android:textColor="@color/ds_teal"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:maxLines="1"
+            android:layout_weight="1"
+            android:layout_gravity="center_vertical">
+
+            <Chronometer
+                android:id="@+id/widget_chaster_chrono"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical|start"
+                android:textColor="@color/ds_teal"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:maxLines="1"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/widget_chaster_remaining"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical|start"
+                android:text="--"
+                android:textColor="@color/ds_teal"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:maxLines="1" />
+        </FrameLayout>
+
+        <ImageView
+            android:id="@+id/widget_pishock_icon"
+            android:layout_width="@dimen/ds_widget_icon_sm"
+            android:layout_height="@dimen/ds_widget_icon_sm"
+            android:layout_gravity="center_vertical"
+            android:layout_marginStart="@dimen/ds_space_xs"
+            android:contentDescription="@string/widget_pishock_icon_description"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_widget_lightning"
             android:visibility="gone" />
+    </LinearLayout>
 
-        <TextView
-            android:id="@+id/widget_chaster_remaining"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center_vertical|start"
-            android:text="--"
-            android:textColor="@color/ds_teal"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:maxLines="1" />
-    </FrameLayout>
-
-    <ImageView
-        android:id="@+id/widget_pishock_icon"
-        android:layout_width="@dimen/ds_widget_icon_sm"
-        android:layout_height="@dimen/ds_widget_icon_sm"
-        android:layout_gravity="center_vertical"
-        android:layout_marginStart="@dimen/ds_space_xs"
-        android:contentDescription="@string/widget_pishock_icon_description"
-        android:scaleType="fitCenter"
-        android:src="@drawable/ic_widget_lightning"
+    <TextView
+        android:id="@+id/widget_chaster_snake_hint"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="end|bottom"
+        android:textColor="@color/ds_teal"
+        android:textSize="9sp"
+        android:alpha="0.75"
+        android:maxLines="1"
         android:visibility="gone" />
 </LinearLayout>

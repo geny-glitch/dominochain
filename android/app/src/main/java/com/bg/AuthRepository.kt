@@ -104,14 +104,16 @@ class AuthRepository {
     suspend fun updateShowcaseSettings(
         showcaseQuizEnabled: Boolean,
         showcaseSnakeEnabled: Boolean,
-        showcaseBackdoorEnabled: Boolean
+        showcaseBackdoorEnabled: Boolean,
+        showcaseSnakeSecondsPerFruit: Int
     ): Result<com.bg.api.ShowcaseSettingsResponse> {
         return try {
             val response = api.updateShowcaseSettings(
                 com.bg.api.ShowcaseSettingsRequest(
                     showcase_quiz_enabled = showcaseQuizEnabled,
                     showcase_snake_enabled = showcaseSnakeEnabled,
-                    showcase_backdoor_enabled = showcaseBackdoorEnabled
+                    showcase_backdoor_enabled = showcaseBackdoorEnabled,
+                    showcase_snake_seconds_per_fruit = showcaseSnakeSecondsPerFruit
                 )
             )
             if (response.isSuccessful) {

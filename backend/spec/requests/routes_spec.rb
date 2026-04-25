@@ -437,6 +437,7 @@ RSpec.describe "Routes", type: :request do
         expect(json["showcase_quiz_enabled"]).to be true
         expect(json["showcase_snake_enabled"]).to be true
         expect(json["showcase_backdoor_enabled"]).to be true
+        expect(json["showcase_snake_seconds_per_fruit"]).to eq(300)
       end
     end
 
@@ -488,6 +489,46 @@ RSpec.describe "Routes", type: :request do
         expect(beta.reload.showcase_quiz_enabled).to be false
         expect(beta.showcase_snake_enabled).to be false
         expect(beta.showcase_backdoor_enabled).to be true
+      end
+
+      it "updates showcase_snake_seconds_per_fruit" do
+        beta = create(:user, :beta, showcase_snake_seconds_per_fruit: 300)
+        device = create(:device, user: beta)
+        patch "/api/showcase_settings",
+          params: { showcase_snake_seconds_per_fruit: 600 },
+          headers: { "X-Device-Id" => device.device_id, "X-Device-Token" => device.auth_token }
+        expect(response).to have_http_status(:ok)
+        expect(beta.reload.showcase_snake_seconds_per_fruit).to eq(600)
+        json = JSON.parse(response.body)
+        expect(json["showcase_snake_seconds_per_fruit"]).to eq(600)
+      end
+
+      it "rejects decreasing snake seconds within 1 hour of last change" do
+        beta = create(
+          :user, :beta,
+          showcase_snake_seconds_per_fruit: 600,
+          showcase_snake_seconds_per_fruit_at: 30.minutes.ago
+        )
+        device = create(:device, user: beta)
+        patch "/api/showcase_settings",
+          params: { showcase_snake_seconds_per_fruit: 300 },
+          headers: { "X-Device-Id" => device.device_id, "X-Device-Token" => device.auth_token }
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(beta.reload.showcase_snake_seconds_per_fruit).to eq(600)
+      end
+
+      it "allows decreasing snake seconds after 1 hour" do
+        beta = create(
+          :user, :beta,
+          showcase_snake_seconds_per_fruit: 600,
+          showcase_snake_seconds_per_fruit_at: 61.minutes.ago
+        )
+        device = create(:device, user: beta)
+        patch "/api/showcase_settings",
+          params: { showcase_snake_seconds_per_fruit: 300 },
+          headers: { "X-Device-Id" => device.device_id, "X-Device-Token" => device.auth_token }
+        expect(response).to have_http_status(:ok)
+        expect(beta.reload.showcase_snake_seconds_per_fruit).to eq(300)
       end
     end
 

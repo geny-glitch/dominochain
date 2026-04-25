@@ -433,6 +433,15 @@ html:has(body.snake-page-active) {
   touch-action: none;
 }
 
+.snake-seconds-foot {
+  margin: 0.35rem 0 0;
+  text-align: center;
+  font-size: 0.65rem;
+  line-height: 1.2;
+  color: rgba(255, 255, 255, 0.45);
+  letter-spacing: 0.02em;
+}
+
 .snake-container {
   display: flex;
   flex-direction: column;

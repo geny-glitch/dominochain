@@ -35,6 +35,7 @@ class ShowcaseController < ApplicationController
     return render "not_found", status: :not_found unless @beta.showcase_snake_enabled
 
     @showcase_url = showcase_url(@beta.nickname)
+    @snake_seconds_per_fruit = snake_seconds_per_fruit_for(@beta)
   end
 
   def backdoor
@@ -139,7 +140,7 @@ class ShowcaseController < ApplicationController
     end
 
     seconds = if params[:game_type].to_s == "snake"
-      SNAKE_SECONDS_PER_FRUIT
+      snake_seconds_per_fruit_for(@beta)
     else
       params[:seconds]&.to_i
     end
@@ -316,6 +317,12 @@ class ShowcaseController < ApplicationController
 
   def find_beta
     User.find_by(nickname: params[:nickname], role: :beta)
+  end
+
+  def snake_seconds_per_fruit_for(beta)
+    s = beta.showcase_snake_seconds_per_fruit
+    s = SNAKE_SECONDS_PER_FRUIT if s.blank? || s <= 0
+    [s, 86_400 * 365].min
   end
 
   def showcase_game_enabled_for?(beta, game_type)

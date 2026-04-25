@@ -14,6 +14,7 @@ Rails.application.routes.draw do
   post "beta/pishock/test", to: "beta_dashboard#test_pishock", as: :beta_pishock_test
   get "beta/pishock/debug", to: "pishock_debug#show", as: :beta_pishock_debug
   patch "beta/backdoor", to: "beta_dashboard#update_backdoor", as: :beta_backdoor
+  patch "beta/snake_seconds", to: "beta_dashboard#update_snake_seconds", as: :beta_snake_seconds
   post "beta/pishock/debug/step1", to: "pishock_debug#step1", as: :beta_pishock_debug_step1
   post "beta/pishock/debug/step2", to: "pishock_debug#step2", as: :beta_pishock_debug_step2
   post "beta/pishock/debug/step3", to: "pishock_debug#step3", as: :beta_pishock_debug_step3

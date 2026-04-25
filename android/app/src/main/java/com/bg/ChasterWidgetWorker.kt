@@ -19,7 +19,7 @@ class ChasterWidgetWorker(
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         val sessionManager = SessionManager(applicationContext)
         if (!sessionManager.isLoggedIn) {
-            ChasterWidgetProvider.updateWidgets(applicationContext, "Non connecté", null, false)
+            ChasterWidgetProvider.updateWidgets(applicationContext, "Non connecté", null, false, null)
             return@withContext Result.success()
         }
 
@@ -34,11 +34,12 @@ class ChasterWidgetWorker(
                     applicationContext,
                     response?.lock,
                     response?.error,
-                    pishock
+                    pishock,
+                    response?.showcase_snake_seconds_per_fruit
                 )
             },
             onFailure = {
-                ChasterWidgetProvider.updateWidgets(applicationContext, "--", null, false)
+                ChasterWidgetProvider.updateWidgets(applicationContext, "--", null, false, null)
             }
         )
         Result.success()

@@ -9,8 +9,15 @@ module Api
       lock_info = service.current_lock
       pishock_enabled = current_user.pishock_enabled
 
+      snake_sec = current_user.showcase_snake_seconds_per_fruit
+      snake_sec = ShowcaseController::SNAKE_SECONDS_PER_FRUIT if snake_sec.blank? || snake_sec <= 0
+
       if lock_info.nil?
-        render json: { lock: nil, pishock_enabled: pishock_enabled }
+        render json: {
+          lock: nil,
+          pishock_enabled: pishock_enabled,
+          showcase_snake_seconds_per_fruit: snake_sec
+        }
         return
       end
 
@@ -23,12 +30,27 @@ module Api
           remaining_seconds: lock_info[:remaining_seconds],
           display_remaining_time: lock_info[:display_remaining_time]
         },
-        pishock_enabled: pishock_enabled
+        pishock_enabled: pishock_enabled,
+        showcase_snake_seconds_per_fruit: snake_sec
       }
     rescue ChasterService::Unauthorized
-      render json: { error: "Chaster non connecté", lock: nil, pishock_enabled: current_user.pishock_enabled }, status: :unauthorized
+      snake_sec = current_user.showcase_snake_seconds_per_fruit
+      snake_sec = ShowcaseController::SNAKE_SECONDS_PER_FRUIT if snake_sec.blank? || snake_sec <= 0
+      render json: {
+        error: "Chaster non connecté",
+        lock: nil,
+        pishock_enabled: current_user.pishock_enabled,
+        showcase_snake_seconds_per_fruit: snake_sec
+      }, status: :unauthorized
     rescue ChasterService::Error => e
-      render json: { error: e.message, lock: nil, pishock_enabled: current_user.pishock_enabled }, status: :unprocessable_entity
+      snake_sec = current_user.showcase_snake_seconds_per_fruit
+      snake_sec = ShowcaseController::SNAKE_SECONDS_PER_FRUIT if snake_sec.blank? || snake_sec <= 0
+      render json: {
+        error: e.message,
+        lock: nil,
+        pishock_enabled: current_user.pishock_enabled,
+        showcase_snake_seconds_per_fruit: snake_sec
+      }, status: :unprocessable_entity
     end
 
     def locks

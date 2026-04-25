@@ -19,7 +19,13 @@ class User < ApplicationRecord
 
   validates :nickname, presence: true, uniqueness: true
   validates :nickname, format: { with: /\A[a-zA-Z0-9_]+\z/, message: "ne peut contenir que lettres, chiffres et underscores" }
+  validates :showcase_snake_seconds_per_fruit,
+    numericality: { only_integer: true, greater_than: 0, less_than_or_equal_to: 86_400 * 365 },
+    if: :beta?
   validate :at_least_one_showcase_game_enabled, if: :beta?
+  validate :showcase_snake_seconds_decrease_cooldown, if: :beta?
+
+  before_save :touch_showcase_snake_seconds_changed_at, if: :will_save_change_to_showcase_snake_seconds_per_fruit?
 
   def email_required?
     false
@@ -39,5 +45,26 @@ class User < ApplicationRecord
     return if showcase_quiz_enabled || showcase_snake_enabled || showcase_backdoor_enabled
 
     errors.add(:base, "Au moins un jeu ou la page Backdoor doit rester activé sur la vitrine.")
+  end
+
+  def showcase_snake_seconds_decrease_cooldown
+    return unless showcase_snake_seconds_per_fruit_changed?
+    was = showcase_snake_seconds_per_fruit_was
+    return if was.nil?
+    return if showcase_snake_seconds_per_fruit >= was
+    last_at = showcase_snake_seconds_per_fruit_at_in_database
+    return if last_at.blank?
+
+    return if Time.current >= last_at + 1.hour
+
+    unlock_at = last_at + 1.hour
+    errors.add(
+      :showcase_snake_seconds_per_fruit,
+      "tu ne peux pas réduire ce délai avant 1 h après le dernier changement (réessaie après #{unlock_at.strftime('%d/%m %H:%M')})."
+    )
+  end
+
+  def touch_showcase_snake_seconds_changed_at
+    self.showcase_snake_seconds_per_fruit_at = Time.current
   end
 end

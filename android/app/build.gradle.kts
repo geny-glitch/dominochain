@@ -7,13 +7,24 @@ plugins {
     id("io.sentry.android.gradle") version "4.9.0"
 }
 
+val releaseKeystorePath = System.getenv("KEYSTORE_PATH")
+val releaseKeystorePassword = System.getenv("KEYSTORE_PASSWORD")
+val releaseKeyAlias = System.getenv("KEY_ALIAS")
+val releaseKeyPassword = System.getenv("KEY_PASSWORD")
+val hasReleaseSigning = listOf(
+    releaseKeystorePath,
+    releaseKeystorePassword,
+    releaseKeyAlias,
+    releaseKeyPassword
+).all { !it.isNullOrBlank() }
+
 android {
     namespace = "com.bg"
     compileSdk = 34
 
     defaultConfig {
         applicationId = "com.bg"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -29,9 +40,23 @@ android {
         buildConfigField("String", "SENTRY_DSN", "\"$sentryDsn\"")
     }
 
+    signingConfigs {
+        if (hasReleaseSigning) {
+            create("release") {
+                storeFile = file(releaseKeystorePath!!)
+                storePassword = releaseKeystorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
+            if (hasReleaseSigning) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
     compileOptions {
@@ -80,4 +105,10 @@ dependencies {
 
     // Sentry - sentry-android-core sans NDK (pas de libs natives = pas de pb 16 KB)
     implementation("io.sentry:sentry-android-core:7.18.0")
+}
+
+tasks.register("printVersionCode") {
+    doLast {
+        println(android.defaultConfig.versionCode)
+    }
 }

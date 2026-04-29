@@ -363,6 +363,48 @@ RSpec.describe "Routes", type: :request do
       end
     end
 
+    describe "DELETE /chaster/disconnect" do
+      it "keeps Chaster connected when a lock is active" do
+        beta = create(
+          :user,
+          :beta,
+          chaster_access_token: "access",
+          chaster_refresh_token: "refresh",
+          chaster_token_expires_at: 1.hour.from_now
+        )
+        chaster_service = instance_double(ChasterService, current_lock: { id: "lock-active" })
+        allow(ChasterService).to receive(:new).with(beta).and_return(chaster_service)
+        sign_in beta
+
+        delete chaster_disconnect_path
+
+        expect(response).to redirect_to(beta_dashboard_path)
+        expect(flash[:alert]).to eq("Impossible de déconnecter Chaster tant qu'un lock est actif.")
+        expect(beta.reload.chaster_access_token).to eq("access")
+        expect(beta.chaster_refresh_token).to eq("refresh")
+      end
+
+      it "disconnects Chaster when no lock is active" do
+        beta = create(
+          :user,
+          :beta,
+          chaster_access_token: "access",
+          chaster_refresh_token: "refresh",
+          chaster_token_expires_at: 1.hour.from_now
+        )
+        chaster_service = instance_double(ChasterService, current_lock: nil)
+        allow(ChasterService).to receive(:new).with(beta).and_return(chaster_service)
+        sign_in beta
+
+        delete chaster_disconnect_path
+
+        expect(response).to redirect_to(beta_dashboard_path)
+        expect(flash[:notice]).to eq("Chaster déconnecté.")
+        expect(beta.reload.chaster_access_token).to be_nil
+        expect(beta.chaster_refresh_token).to be_nil
+      end
+    end
+
     describe "Control requests (device auth required)" do
       it "POST /api/control_requests returns 401 without auth" do
         post api_control_requests_path, params: { boss_nickname: "boss" }
@@ -503,11 +545,11 @@ RSpec.describe "Routes", type: :request do
         expect(json["showcase_snake_seconds_per_fruit"]).to eq(600)
       end
 
-      it "rejects decreasing snake seconds within 1 hour of last change" do
+      it "rejects decreasing snake seconds within 24 hours of last change" do
         beta = create(
           :user, :beta,
           showcase_snake_seconds_per_fruit: 600,
-          showcase_snake_seconds_per_fruit_at: 30.minutes.ago
+          showcase_snake_seconds_per_fruit_at: 23.hours.ago
         )
         device = create(:device, user: beta)
         patch "/api/showcase_settings",
@@ -517,11 +559,11 @@ RSpec.describe "Routes", type: :request do
         expect(beta.reload.showcase_snake_seconds_per_fruit).to eq(600)
       end
 
-      it "allows decreasing snake seconds after 1 hour" do
+      it "allows decreasing snake seconds after 24 hours" do
         beta = create(
           :user, :beta,
           showcase_snake_seconds_per_fruit: 600,
-          showcase_snake_seconds_per_fruit_at: 61.minutes.ago
+          showcase_snake_seconds_per_fruit_at: 25.hours.ago
         )
         device = create(:device, user: beta)
         patch "/api/showcase_settings",

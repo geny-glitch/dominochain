@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/ds_bg"
+    android:orientation="vertical"
+    android:padding="@dimen/ds_page_padding">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/ds_space_sm"
+        android:text="@string/tracker_cigarettes_history_title"
+        style="@style/DsTitle" />
+
+    <TextView
+        android:id="@+id/cigarette_history_today_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/tracker_cigarettes_today_label"
+        style="@style/DsBody"
+        android:textColor="@color/ds_text_muted" />
+
+    <TextView
+        android:id="@+id/cigarette_history_today_count"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/ds_space_lg"
+        android:text="0"
+        android:textColor="@color/ds_teal"
+        android:textSize="48sp"
+        android:textStyle="bold" />
+
+    <Button
+        android:id="@+id/cigarette_history_increment"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/ds_space_xl"
+        android:text="@string/tracker_quick_add"
+        style="@style/DsButton" />
+
+    <TextView
+        android:id="@+id/cigarette_history_rows"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:lineSpacingExtra="@dimen/ds_space_sm"
+        style="@style/DsBody" />
+
+</LinearLayout>

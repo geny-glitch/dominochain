@@ -44,6 +44,10 @@
             android:name=".SettingsActivity"
             android:exported="false"
             android:theme="@style/Theme.Bg" />
+        <activity
+            android:name=".CigaretteHistoryActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Bg" />
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
             android:resource="@drawable/ic_notification" />
@@ -84,6 +88,17 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/cigarette_tracker_widget_info" />
+        </receiver>
+        <receiver
+            android:name=".CigaretteQuickAddWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_cigarettes_quick_add_description">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/cigarette_quick_add_widget_info" />
         </receiver>
         <service
             android:name=".BgAccessibilityService"

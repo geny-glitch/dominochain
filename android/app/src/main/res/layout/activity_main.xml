@@ -133,6 +133,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="@dimen/ds_space_xl"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
                 app:cardBackgroundColor="@color/ds_surface"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="2dp">
@@ -188,6 +191,14 @@
                             android:text="@string/tracker_cigarettes_hint"
                             style="@style/DsSmall"
                             android:layout_marginTop="@dimen/ds_space_xs" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/tracker_cigarettes_open_history"
+                            style="@style/DsSmall"
+                            android:textColor="@color/ds_teal"
+                            android:layout_marginTop="@dimen/ds_space_sm" />
                     </LinearLayout>
 
                     <Button

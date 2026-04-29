@@ -1,6 +1,7 @@
 package com.bg
 
 import android.content.Context
+import java.time.LocalDate
 
 enum class TrackerType(
     val id: String,
@@ -12,7 +13,8 @@ enum class TrackerType(
 
 data class TrackerSnapshot(
     val type: TrackerType,
-    val count: Int
+    val count: Int,
+    val date: LocalDate = LocalDate.now()
 )
 
 class TrackerRepository(context: Context) {
@@ -23,24 +25,40 @@ class TrackerRepository(context: Context) {
     }
 
     fun snapshot(type: TrackerType): TrackerSnapshot {
-        return TrackerSnapshot(type, count(type))
+        val today = LocalDate.now()
+        return TrackerSnapshot(type, count(type, today), today)
+    }
+
+    fun dailySnapshots(type: TrackerType, days: Int = DEFAULT_HISTORY_DAYS): List<TrackerSnapshot> {
+        val today = LocalDate.now()
+        return (0 until days).map { offset ->
+            val date = today.minusDays(offset.toLong())
+            TrackerSnapshot(type, count(type, date), date)
+        }
     }
 
     fun increment(type: TrackerType): TrackerSnapshot {
-        val updated = count(type) + 1
+        val today = LocalDate.now()
+        val updated = count(type, today) + 1
         prefs.edit()
-            .putInt(countKey(type), updated)
+            .putInt(dailyCountKey(type, today), updated)
+            .putInt(countKey(type), prefs.getInt(countKey(type), 0) + 1)
             .apply()
-        return TrackerSnapshot(type, updated)
+        return TrackerSnapshot(type, updated, today)
     }
 
-    private fun count(type: TrackerType): Int {
-        return prefs.getInt(countKey(type), 0)
+    private fun count(type: TrackerType, date: LocalDate): Int {
+        return prefs.getInt(dailyCountKey(type, date), 0)
     }
 
     private fun countKey(type: TrackerType): String = "tracker_${type.id}_count"
 
+    private fun dailyCountKey(type: TrackerType, date: LocalDate): String {
+        return "tracker_${type.id}_${date}_count"
+    }
+
     companion object {
         private const val PREFS_NAME = "trackers"
+        private const val DEFAULT_HISTORY_DAYS = 14
     }
 }

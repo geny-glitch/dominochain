@@ -105,6 +105,9 @@ class MainActivity : AppCompatActivity() {
         binding.cigarettesIncrement.setOnClickListener {
             incrementCigarettesTracker()
         }
+        binding.cigarettesCard.setOnClickListener {
+            startActivity(Intent(this, CigaretteHistoryActivity::class.java))
+        }
 
         WallpaperWorker.schedule(this)
         PermissionsWorker.schedule(this)
@@ -176,6 +179,7 @@ class MainActivity : AppCompatActivity() {
         binding.cigarettesCount.text = cigarettes.count.toString()
         binding.cigarettesUnit.text = cigarettes.type.unitLabel
         CigaretteTrackerWidgetProvider.updateWidgets(this)
+        CigaretteQuickAddWidgetProvider.updateWidgets(this)
     }
 
     private fun incrementCigarettesTracker() {
@@ -183,6 +187,7 @@ class MainActivity : AppCompatActivity() {
         binding.cigarettesCount.text = cigarettes.count.toString()
         binding.cigarettesUnit.text = cigarettes.type.unitLabel
         CigaretteTrackerWidgetProvider.updateWidgets(this)
+        CigaretteQuickAddWidgetProvider.updateWidgets(this)
         Toast.makeText(this, "+1 cigarette", Toast.LENGTH_SHORT).show()
     }
 

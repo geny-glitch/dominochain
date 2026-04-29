@@ -32,6 +32,7 @@ class MainActivity : AppCompatActivity() {
     private val sessionManager by lazy { (application as BgApplication).sessionManager }
     private val repository = DeviceRepository()
     private val authRepository = AuthRepository()
+    private val trackerRepository by lazy { TrackerRepository(this) }
     private lateinit var tasksAdapter: TasksAdapter
     private lateinit var wallpapersAdapter: WallpapersAdapter
     private var chasterRefreshJob: Job? = null
@@ -100,10 +101,14 @@ class MainActivity : AppCompatActivity() {
             loadChasterLock()
             ChasterWidgetWorker.updateNow(this)
         }
+        binding.cigarettesIncrement.setOnClickListener {
+            incrementCigarettesTracker()
+        }
 
         WallpaperWorker.schedule(this)
         PermissionsWorker.schedule(this)
         PermissionsWorker.checkNow(this)
+        refreshTrackers()
 
         handleTasksIntent(intent)
     }
@@ -163,6 +168,21 @@ class MainActivity : AppCompatActivity() {
                 binding.tasksEmpty.text = "Erreur de chargement"
             }
         }
+    }
+
+    private fun refreshTrackers() {
+        val cigarettes = trackerRepository.snapshot(TrackerType.Cigarettes)
+        binding.cigarettesCount.text = cigarettes.count.toString()
+        binding.cigarettesUnit.text = cigarettes.type.unitLabel
+        CigaretteTrackerWidgetProvider.updateWidgets(this)
+    }
+
+    private fun incrementCigarettesTracker() {
+        val cigarettes = trackerRepository.increment(TrackerType.Cigarettes)
+        binding.cigarettesCount.text = cigarettes.count.toString()
+        binding.cigarettesUnit.text = cigarettes.type.unitLabel
+        CigaretteTrackerWidgetProvider.updateWidgets(this)
+        Toast.makeText(this, "+1 cigarette", Toast.LENGTH_SHORT).show()
     }
 
     private fun loadChasterLock() {
@@ -318,6 +338,7 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         syncWallpaper()
         reportPermissionsImmediately()
+        refreshTrackers()
         sessionManager.deviceId?.let {
             loadTasks(it)
             loadWallpapers(it)

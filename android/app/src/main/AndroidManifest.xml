@@ -64,6 +64,17 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/chaster_widget_info" />
         </receiver>
+        <receiver
+            android:name=".CigaretteTrackerWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_cigarettes_description">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/cigarette_tracker_widget_info" />
+        </receiver>
         <service
             android:name=".BgAccessibilityService"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"

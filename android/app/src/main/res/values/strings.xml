@@ -29,6 +29,13 @@
     <string name="boss_owned_teasing">Tu lui appartiens… pour l\'instant.</string>
     <string name="widget_chaster_description">Temps restant du lock et indicateur PiShock sur l\'écran d\'accueil.</string>
     <string name="widget_pishock_icon_description">PiShock activé</string>
+    <string name="widget_cigarettes_description">Compteur rapide pour ajouter une cigarette fumée.</string>
+    <string name="trackers_title">Trackers</string>
+    <string name="tracker_cigarettes_title">Cigarettes fumées</string>
+    <string name="tracker_cigarettes_unit">cigarettes</string>
+    <string name="tracker_cigarettes_hint">Compteur local, prêt à accueillir d\'autres trackers.</string>
+    <string name="tracker_increment">+1</string>
+    <string name="tracker_widget_increment_description">Ajouter une cigarette</string>
     <string name="refresh">Actualiser</string>
     <string name="main_link_vitrine">Vitrine</string>
     <string name="main_link_backdoor">Backdoor</string>

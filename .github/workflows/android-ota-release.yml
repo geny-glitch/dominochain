@@ -1,0 +1,91 @@
+name: Android OTA Release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and publish latest APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Decode release keystore
+        run: |
+          echo "${KEYSTORE_FILE}" | base64 --decode > android/app/release.keystore
+        env:
+          KEYSTORE_FILE: ${{ secrets.KEYSTORE_FILE }}
+
+      - name: Build signed release APK
+        working-directory: android
+        run: ./gradlew assembleRelease
+        env:
+          KEYSTORE_PATH: release.keystore
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+
+      - name: Read version code
+        id: version
+        working-directory: android
+        run: |
+          VERSION_CODE="$(./gradlew -q printVersionCode)"
+          echo "code=${VERSION_CODE}" >> "${GITHUB_OUTPUT}"
+
+      - name: Update version.json
+        run: |
+          python - <<'PY'
+          import json
+          import os
+
+          repository = os.environ["GITHUB_REPOSITORY"]
+          version_code = int(os.environ["VERSION_CODE"])
+          payload = {
+              "versionCode": version_code,
+              "url": f"https://github.com/{repository}/releases/download/latest/app.apk",
+          }
+          with open("version.json", "w", encoding="utf-8") as f:
+              json.dump(payload, f, indent=2)
+              f.write("\n")
+          PY
+        env:
+          VERSION_CODE: ${{ steps.version.outputs.code }}
+
+      - name: Commit version metadata
+        run: |
+          if git diff --quiet -- version.json; then
+            echo "version.json is already up to date"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add version.json
+            git commit -m "Update Android OTA version metadata [skip ci]"
+            git push
+          fi
+
+      - name: Prepare APK asset
+        run: cp android/app/build/outputs/apk/release/app-release.apk app.apk
+
+      - name: Publish latest GitHub release
+        run: |
+          if gh release view latest >/dev/null 2>&1; then
+            gh release upload latest app.apk --clobber
+          else
+            gh release create latest app.apk --title "Latest Android APK" --notes "Automated latest Android release."
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}

@@ -1,4 +1,6 @@
 class User < ApplicationRecord
+  SHOWCASE_SNAKE_SECONDS_DECREASE_COOLDOWN = 24.hours
+
   # Include default devise modules. Others available are:
   # :confirmable, :lockable, :timeoutable, :trackable and :omniauthable
   devise :database_authenticatable, :registerable,
@@ -55,12 +57,12 @@ class User < ApplicationRecord
     last_at = showcase_snake_seconds_per_fruit_at_in_database
     return if last_at.blank?
 
-    return if Time.current >= last_at + 1.hour
+    return if Time.current >= last_at + SHOWCASE_SNAKE_SECONDS_DECREASE_COOLDOWN
 
-    unlock_at = last_at + 1.hour
+    unlock_at = last_at + SHOWCASE_SNAKE_SECONDS_DECREASE_COOLDOWN
     errors.add(
       :showcase_snake_seconds_per_fruit,
-      "tu ne peux pas réduire ce délai avant 1 h après le dernier changement (réessaie après #{unlock_at.strftime('%d/%m %H:%M')})."
+      "tu ne peux pas réduire ce délai avant 24 h après le dernier changement (réessaie après #{unlock_at.strftime('%d/%m %H:%M')})."
     )
   end
 

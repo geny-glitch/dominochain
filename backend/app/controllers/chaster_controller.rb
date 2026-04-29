@@ -48,6 +48,11 @@ class ChasterController < ApplicationController
   end
 
   def disconnect
+    if active_chaster_lock?
+      redirect_to beta_dashboard_path, alert: "Impossible de déconnecter Chaster tant qu'un lock est actif."
+      return
+    end
+
     current_user.update!(
       chaster_access_token: nil,
       chaster_refresh_token: nil,
@@ -68,5 +73,11 @@ class ChasterController < ApplicationController
     return if ChasterService.configured?
 
     redirect_to beta_dashboard_path, alert: "Chaster n'est pas configuré. Contactez l'administrateur."
+  end
+
+  def active_chaster_lock?
+    ChasterService.new(current_user).current_lock.present?
+  rescue ChasterService::Unauthorized, ChasterService::Error
+    current_user.chaster_locks.active.exists?
   end
 end

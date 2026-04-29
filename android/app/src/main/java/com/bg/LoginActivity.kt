@@ -22,6 +22,8 @@ class LoginActivity : AppCompatActivity() {
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        AppUpdateManager(this).checkForUpdates()
+
         RetrofitClient.sessionManager = sessionManager
 
         if (sessionManager.deviceId == null) {

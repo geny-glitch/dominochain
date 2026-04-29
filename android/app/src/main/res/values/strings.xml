@@ -52,4 +52,12 @@
     <string name="showcase_snake_seconds_invalid">Indique un nombre entier positif (secondes).</string>
     <string name="showcase_least_one_game">Garde au moins un jeu ou la page Backdoor activé.</string>
     <string name="showcase_settings_error">Impossible d\'enregistrer les jeux. Réessaie.</string>
+    <string name="update_available_title">Mise à jour disponible</string>
+    <string name="update_available_message">Une nouvelle version de l\'application est disponible.</string>
+    <string name="update_download">Télécharger</string>
+    <string name="update_download_title">Mise à jour Bg</string>
+    <string name="update_download_description">Téléchargement de la nouvelle version</string>
+    <string name="update_download_started">Téléchargement de la mise à jour lancé</string>
+    <string name="update_download_failed">Le téléchargement de la mise à jour a échoué</string>
+    <string name="update_install_permission_required">Autorise l\'installation depuis cette app, puis relance la mise à jour.</string>
 </resources>

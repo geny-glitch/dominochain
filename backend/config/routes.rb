@@ -93,6 +93,9 @@ Rails.application.routes.draw do
     get "chaster/lock", to: "chaster#lock", as: :chaster_lock
     get "chaster/locks", to: "chaster#locks", as: :chaster_locks
 
+    get "cigarettes", to: "cigarette_entries#index"
+    post "cigarettes", to: "cigarette_entries#create"
+
     get "showcase_settings", to: "showcase_settings#show"
     patch "showcase_settings", to: "showcase_settings#update"
   end

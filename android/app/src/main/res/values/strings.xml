@@ -38,7 +38,7 @@
     <string name="tracker_cigarettes_open_history">Voir le détail par jour</string>
     <string name="tracker_cigarettes_history_title">Cigarettes par jour</string>
     <string name="tracker_cigarettes_today_label">Fumées %1$s</string>
-    <string name="tracker_cigarettes_history_row">%1$s : %2$d cigarettes</string>
+    <string name="tracker_cigarettes_history_row">%1$s : %2$d cigarettes (+%3$d s Chaster)</string>
     <string name="tracker_cigarettes_empty_day">Aucune cigarette enregistrée</string>
     <string name="tracker_cigarettes_quick_add_count">%1$d aujourd\'hui</string>
     <string name="tracker_cigarettes_quick_add_count_preview">0 aujourd\'hui</string>

@@ -1,9 +1,8 @@
 # frozen_string_literal: true
 
 class ShowcaseController < ApplicationController
-  # Temps ajouté au verrou par fruit mangé (Snake) — appliqué côté serveur dans #add_time, pas via params[:seconds].
+  # Temps ajouté au verrou par action de score (pomme Snake ou obstacle Dino) — appliqué côté serveur dans #add_time.
   SNAKE_SECONDS_PER_FRUIT = 300
-  DINO_SECONDS_PER_POINT = 60
 
   # Backdoor: max duration per submission (aligné avec #add_time)
   BACKDOOR_MAX_SECONDS = 86_400 * 365
@@ -46,7 +45,7 @@ class ShowcaseController < ApplicationController
     return render "not_found", status: :not_found unless @beta.showcase_dino_enabled
 
     @showcase_url = showcase_url(@beta.nickname)
-    @dino_seconds_per_point = DINO_SECONDS_PER_POINT
+    @dino_seconds_per_obstacle = snake_seconds_per_fruit_for(@beta)
   end
 
   def backdoor
@@ -154,10 +153,8 @@ class ShowcaseController < ApplicationController
       return (request.format.json? ? (render(json: { error: "Jeu indisponible." }, status: 404)) : render("not_found", status: :not_found))
     end
 
-    seconds = if game_kind == "snake"
+    seconds = if game_kind == "snake" || game_kind == "dino"
       snake_seconds_per_fruit_for(@beta)
-    elsif game_kind == "dino"
-      DINO_SECONDS_PER_POINT
     else
       params[:seconds]&.to_i
     end

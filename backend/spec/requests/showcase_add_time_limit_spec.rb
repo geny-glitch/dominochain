@@ -48,13 +48,14 @@ RSpec.describe "Showcase add_time rate limit", type: :request do
     expect(ShowcaseAddTimeEvent.where(user_id: beta.id).sum(:seconds)).to eq(120)
   end
 
-  it "adds one minute per dino score point" do
+  it "uses beta-configured seconds per obstacle for dino" do
+    beta.update!(showcase_snake_seconds_per_fruit: 120)
     post showcase_add_time_path(beta.nickname),
       params: { game_type: "dino" },
       headers: { "CONTENT_TYPE" => "application/json" },
       as: :json
 
     expect(response).to have_http_status(:ok)
-    expect(ShowcaseAddTimeEvent.where(user_id: beta.id).sum(:seconds)).to eq(ShowcaseController::DINO_SECONDS_PER_POINT)
+    expect(ShowcaseAddTimeEvent.where(user_id: beta.id).sum(:seconds)).to eq(120)
   end
 end

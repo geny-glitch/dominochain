@@ -7,6 +7,10 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.widget.RemoteViews
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 class CigaretteQuickAddWidgetProvider : AppWidgetProvider() {
 
@@ -20,9 +24,10 @@ class CigaretteQuickAddWidgetProvider : AppWidgetProvider() {
 
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == ACTION_QUICK_ADD_CIGARETTE) {
-            TrackerRepository(context).increment(TrackerType.Cigarettes)
-            CigaretteTrackerWidgetProvider.updateWidgets(context)
-            updateWidgets(context)
+            val pendingResult = goAsync()
+            incrementAndRefresh(context.applicationContext) {
+                pendingResult.finish()
+            }
             return
         }
         super.onReceive(context, intent)
@@ -30,6 +35,25 @@ class CigaretteQuickAddWidgetProvider : AppWidgetProvider() {
 
     companion object {
         private const val ACTION_QUICK_ADD_CIGARETTE = "com.bg.action.QUICK_ADD_CIGARETTE"
+        private val widgetScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+        private fun incrementAndRefresh(context: Context, onFinished: (() -> Unit)? = null) {
+            val appContext = context.applicationContext
+            val repository = TrackerRepository(appContext)
+            widgetScope.launch {
+                try {
+                    if (SessionManager(appContext).isLoggedIn) {
+                        repository.incrementRemote()
+                    } else {
+                        repository.increment(TrackerType.Cigarettes)
+                    }
+                    CigaretteTrackerWidgetProvider.updateWidgets(appContext)
+                    updateWidgets(appContext)
+                } finally {
+                    onFinished?.invoke()
+                }
+            }
+        }
 
         fun updateWidgets(context: Context) {
             val appWidgetManager = AppWidgetManager.getInstance(context)

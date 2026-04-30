@@ -98,6 +98,7 @@ data class FcmTokenRequest(val fcm_token: String)
 
 data class NameRequest(val name: String?)
 data class PermissionsRequest(val permissions_ok: Boolean, val permissions_missing: List<String>? = null)
+data class CigaretteEntryRequest(val count: Int = 1)
 
 interface ApiService {
     @POST("api/auth/login")
@@ -153,6 +154,12 @@ interface ApiService {
 
     @GET("api/chaster/lock")
     suspend fun getChasterLock(): Response<ChasterLockResponse>
+
+    @GET("api/cigarettes")
+    suspend fun getCigarettes(): Response<CigaretteTrackerResponse>
+
+    @POST("api/cigarettes")
+    suspend fun createCigaretteEntry(@Body request: CigaretteEntryRequest): Response<CigaretteTrackerResponse>
 
     @GET("api/devices/{deviceId}/tasks")
     suspend fun getTasks(@Path("deviceId") deviceId: String): Response<List<TaskResponse>>
@@ -227,6 +234,31 @@ data class ChasterLock(
     val is_frozen: Boolean,
     val remaining_seconds: Int?,
     val display_remaining_time: Boolean = true
+)
+
+data class CigaretteTrackerResponse(
+    val today_count: Int? = null,
+    val today: CigaretteHistoryItem? = null,
+    val history: List<CigaretteHistoryItem> = emptyList(),
+    val seconds_per_cigarette: Int? = null,
+    val entry: CigaretteEntryResponse? = null,
+    val latest_entry: CigaretteEntryResponse? = null
+)
+
+data class CigaretteHistoryItem(
+    val date: String,
+    val count: Int,
+    val chaster_seconds: Int? = null
+)
+
+data class CigaretteEntryResponse(
+    val id: Long?,
+    val count: Int,
+    val smoked_on: String?,
+    val smoked_at: String?,
+    val chaster_seconds: Int,
+    val chaster_applied: Boolean,
+    val chaster_error: String?
 )
 
 data class ProofResponse(

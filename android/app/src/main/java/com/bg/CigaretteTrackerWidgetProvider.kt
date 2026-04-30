@@ -7,6 +7,11 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.widget.RemoteViews
+import androidx.goAsync
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 class CigaretteTrackerWidgetProvider : AppWidgetProvider() {
 
@@ -20,9 +25,10 @@ class CigaretteTrackerWidgetProvider : AppWidgetProvider() {
 
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == ACTION_INCREMENT_CIGARETTES) {
-            TrackerRepository(context).increment(TrackerType.Cigarettes)
-            updateWidgets(context)
-            CigaretteQuickAddWidgetProvider.updateWidgets(context)
+            val pendingResult = goAsync()
+            incrementFromWidget(context.applicationContext) {
+                pendingResult.finish()
+            }
             return
         }
         super.onReceive(context, intent)
@@ -30,6 +36,25 @@ class CigaretteTrackerWidgetProvider : AppWidgetProvider() {
 
     companion object {
         private const val ACTION_INCREMENT_CIGARETTES = "com.bg.action.INCREMENT_CIGARETTES"
+        private val widgetScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+        fun incrementFromWidget(context: Context, onFinished: (() -> Unit)? = null) {
+            val appContext = context.applicationContext
+            widgetScope.launch {
+                try {
+                    val repository = TrackerRepository(appContext)
+                    if (SessionManager(appContext).isLoggedIn) {
+                        repository.incrementRemote()
+                    } else {
+                        repository.increment(TrackerType.Cigarettes)
+                    }
+                    updateWidgets(appContext)
+                    CigaretteQuickAddWidgetProvider.updateWidgets(appContext)
+                } finally {
+                    onFinished?.invoke()
+                }
+            }
+        }
 
         fun updateWidgets(context: Context) {
             val appWidgetManager = AppWidgetManager.getInstance(context)

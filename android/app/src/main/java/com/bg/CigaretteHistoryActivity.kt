@@ -2,7 +2,9 @@ package com.bg
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.bg.databinding.ActivityCigaretteHistoryBinding
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -22,18 +24,17 @@ class CigaretteHistoryActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         binding.cigaretteHistoryIncrement.setOnClickListener {
-            trackerRepository.increment(TrackerType.Cigarettes)
-            refreshHistory()
-            CigaretteTrackerWidgetProvider.updateWidgets(this)
-            CigaretteQuickAddWidgetProvider.updateWidgets(this)
+            incrementRemote()
         }
 
         refreshHistory()
+        refreshRemote()
     }
 
     override fun onResume() {
         super.onResume()
         refreshHistory()
+        refreshRemote()
     }
 
     override fun onSupportNavigateUp(): Boolean {
@@ -51,10 +52,12 @@ class CigaretteHistoryActivity : AppCompatActivity() {
             formatDate(todaySnapshot.date, today)
         )
         binding.cigaretteHistoryRows.text = snapshots.joinToString(separator = "\n") { snapshot ->
+            val chasterSeconds = trackerRepository.chasterSeconds(TrackerType.Cigarettes, snapshot.date)
             getString(
                 R.string.tracker_cigarettes_history_row,
                 formatDate(snapshot.date, today),
-                snapshot.count
+                snapshot.count,
+                chasterSeconds
             )
         }
     }
@@ -64,6 +67,28 @@ class CigaretteHistoryActivity : AppCompatActivity() {
             getString(R.string.tracker_today)
         } else {
             date.format(dayFormatter)
+        }
+    }
+
+    private fun refreshRemote() {
+        lifecycleScope.launch {
+            trackerRepository.refreshRemote()
+            refreshHistory()
+            CigaretteTrackerWidgetProvider.updateWidgets(this@CigaretteHistoryActivity)
+            CigaretteQuickAddWidgetProvider.updateWidgets(this@CigaretteHistoryActivity)
+        }
+    }
+
+    private fun incrementRemote() {
+        lifecycleScope.launch {
+            if ((application as BgApplication).sessionManager.isLoggedIn) {
+                trackerRepository.incrementRemote().getOrNull()
+            } else {
+                trackerRepository.increment(TrackerType.Cigarettes)
+            }
+            refreshHistory()
+            CigaretteTrackerWidgetProvider.updateWidgets(this@CigaretteHistoryActivity)
+            CigaretteQuickAddWidgetProvider.updateWidgets(this@CigaretteHistoryActivity)
         }
     }
 }

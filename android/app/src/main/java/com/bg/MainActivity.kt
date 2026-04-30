@@ -180,15 +180,32 @@ class MainActivity : AppCompatActivity() {
         binding.cigarettesUnit.text = cigarettes.type.unitLabel
         CigaretteTrackerWidgetProvider.updateWidgets(this)
         CigaretteQuickAddWidgetProvider.updateWidgets(this)
+
+        lifecycleScope.launch {
+            val remote = trackerRepository.refreshRemote().getOrNull() ?: return@launch
+            binding.cigarettesCount.text = remote.count.toString()
+            binding.cigarettesUnit.text = remote.type.unitLabel
+            CigaretteTrackerWidgetProvider.updateWidgets(this@MainActivity)
+            CigaretteQuickAddWidgetProvider.updateWidgets(this@MainActivity)
+        }
     }
 
     private fun incrementCigarettesTracker() {
-        val cigarettes = trackerRepository.increment(TrackerType.Cigarettes)
-        binding.cigarettesCount.text = cigarettes.count.toString()
-        binding.cigarettesUnit.text = cigarettes.type.unitLabel
-        CigaretteTrackerWidgetProvider.updateWidgets(this)
-        CigaretteQuickAddWidgetProvider.updateWidgets(this)
-        Toast.makeText(this, "+1 cigarette", Toast.LENGTH_SHORT).show()
+        lifecycleScope.launch {
+            val snapshot = if (sessionManager.isLoggedIn) {
+                trackerRepository.incrementRemote().getOrElse {
+                    Toast.makeText(this@MainActivity, "Backend indisponible: cigarette non envoyée", Toast.LENGTH_SHORT).show()
+                    return@launch
+                }
+            } else {
+                trackerRepository.increment(TrackerType.Cigarettes)
+            }
+            binding.cigarettesCount.text = snapshot.count.toString()
+            binding.cigarettesUnit.text = snapshot.type.unitLabel
+            CigaretteTrackerWidgetProvider.updateWidgets(this@MainActivity)
+            CigaretteQuickAddWidgetProvider.updateWidgets(this@MainActivity)
+            Toast.makeText(this@MainActivity, "+1 cigarette", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun loadChasterLock() {

@@ -104,6 +104,7 @@ class AuthRepository {
     suspend fun updateShowcaseSettings(
         showcaseQuizEnabled: Boolean,
         showcaseSnakeEnabled: Boolean,
+        showcaseDinoEnabled: Boolean,
         showcaseBackdoorEnabled: Boolean,
         showcaseSnakeSecondsPerFruit: Int
     ): Result<com.bg.api.ShowcaseSettingsResponse> {
@@ -112,6 +113,7 @@ class AuthRepository {
                 com.bg.api.ShowcaseSettingsRequest(
                     showcase_quiz_enabled = showcaseQuizEnabled,
                     showcase_snake_enabled = showcaseSnakeEnabled,
+                    showcase_dino_enabled = showcaseDinoEnabled,
                     showcase_backdoor_enabled = showcaseBackdoorEnabled,
                     showcase_snake_seconds_per_fruit = showcaseSnakeSecondsPerFruit
                 )

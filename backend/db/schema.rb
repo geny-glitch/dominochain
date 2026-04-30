@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_04_30_063700) do
+ActiveRecord::Schema[7.2].define(version: 2026_04_30_143100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -250,6 +250,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_04_30_063700) do
     t.string "pishock_api_key"
     t.boolean "showcase_quiz_enabled", default: true, null: false
     t.boolean "showcase_snake_enabled", default: true, null: false
+    t.boolean "showcase_dino_enabled", default: true, null: false
     t.boolean "showcase_backdoor_enabled", default: true, null: false
     t.integer "showcase_snake_seconds_per_fruit", default: 300, null: false
     t.datetime "showcase_snake_seconds_per_fruit_at"

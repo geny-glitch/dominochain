@@ -1,0 +1,463 @@
+<% content_for :title, "Dino Run" %>
+<% content_for :body_class, "dino-page-active" %>
+<% content_for :head do %>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<% end %>
+
+<div class="dino-page" data-nickname="<%= @beta.nickname %>" data-dino-seconds-per-point="<%= @dino_seconds_per_point %>">
+  <div class="dino-container">
+    <div id="dino-intro" class="dino-intro">
+      <h1 class="dino-title">Dino Run</h1>
+      <p class="dino-hint">Espace, flèche haut ou tap pour sauter. 1 point = 1 minute.</p>
+      <button type="button" class="dino-btn dino-btn--start" id="dino-start">Jouer</button>
+    </div>
+
+    <div id="dino-game" class="dino-game" style="display: none;">
+      <div class="dino-score">Temps: <span id="dino-score">0 min</span></div>
+      <canvas id="dino-canvas" class="dino-canvas" width="360" height="180"></canvas>
+      <p class="dino-tap-hint">Tape sur le terrain pour sauter</p>
+    </div>
+
+    <div id="dino-gameover" class="dino-gameover" style="display: none;">
+      <h2 class="dino-gameover-title">Game Over</h2>
+      <p class="dino-gameover-score">Temps: <span id="dino-final-score">0 min</span></p>
+      <div class="dino-leaderboard-form" id="dino-lb-name-block">
+        <p id="dino-lb-auto-registered" class="dino-lb-registered" hidden>Score enregistré pour <strong id="dino-lb-registered-name"></strong></p>
+        <div id="dino-lb-name-fields" class="dino-lb-name-fields">
+          <input type="text" id="dino-player-name" class="dino-input" placeholder="Ton pseudo pour le leaderboard" maxlength="30" />
+          <button type="button" class="dino-btn dino-btn--submit" id="dino-save-name">Enregistrer au leaderboard</button>
+        </div>
+      </div>
+      <button type="button" class="dino-btn dino-btn--ghost" id="dino-replay">Rejouer</button>
+    </div>
+  </div>
+
+  <section class="dino-leaderboard" id="dino-leaderboard">
+    <h3 class="dino-leaderboard-title">Leaderboard</h3>
+    <div class="dino-leaderboard-toolbar">
+      <label class="dino-leaderboard-toolbar-label" for="dino-lb-sort">Trier</label>
+      <select id="dino-lb-sort" class="dino-input dino-leaderboard-sort" aria-label="Trier le classement">
+        <option value="score">Meilleur temps</option>
+        <option value="recent">Plus récent</option>
+      </select>
+    </div>
+    <div id="dino-leaderboard-list" class="dino-leaderboard-list">
+      <p class="dino-leaderboard-empty">Aucun score enregistré</p>
+    </div>
+    <div id="dino-leaderboard-pagination" class="dino-leaderboard-pagination" hidden>
+      <button type="button" class="dino-btn dino-btn--ghost dino-btn--sm" id="dino-lb-prev" disabled>Précédent</button>
+      <span class="dino-leaderboard-page-label" id="dino-lb-page-label"></span>
+      <button type="button" class="dino-btn dino-btn--ghost dino-btn--sm" id="dino-lb-next">Suivant</button>
+    </div>
+  </section>
+</div>
+
+<% if flash[:notice] %>
+  <div class="dino-flash dino-flash--success"><%= flash[:notice] %></div>
+<% end %>
+<% if flash[:alert] %>
+  <div class="dino-flash dino-flash--error"><%= flash[:alert] %></div>
+<% end %>
+
+<script>
+(function() {
+  const pageEl = document.querySelector(".dino-page");
+  const nickname = pageEl.dataset.nickname;
+  const secondsPerPoint = Math.max(1, parseInt(pageEl.dataset.dinoSecondsPerPoint || "60", 10) || 60);
+  const LEADERBOARD_PER_PAGE = 10;
+  const urls = {
+    createSession: `/showcase/${nickname}/sessions`,
+    updateSession: (id) => `/showcase/${nickname}/sessions/${id}`,
+    addTime: `/showcase/${nickname}/add_time`
+  };
+
+  const canvas = document.getElementById("dino-canvas");
+  const ctx = canvas.getContext("2d");
+  const intro = document.getElementById("dino-intro");
+  const gameEl = document.getElementById("dino-game");
+  const gameoverEl = document.getElementById("dino-gameover");
+  const scoreEl = document.getElementById("dino-score");
+  const finalScoreEl = document.getElementById("dino-final-score");
+  const playerNameInput = document.getElementById("dino-player-name");
+  const saveNameBtn = document.getElementById("dino-save-name");
+  const leaderboardList = document.getElementById("dino-leaderboard-list");
+  const lbSortEl = document.getElementById("dino-lb-sort");
+  const lbPagEl = document.getElementById("dino-leaderboard-pagination");
+  const lbPrevBtn = document.getElementById("dino-lb-prev");
+  const lbNextBtn = document.getElementById("dino-lb-next");
+  const lbPageLabel = document.getElementById("dino-lb-page-label");
+  const nameFields = document.getElementById("dino-lb-name-fields");
+  const autoReg = document.getElementById("dino-lb-auto-registered");
+  const regName = document.getElementById("dino-lb-registered-name");
+
+  const dino = { x: 42, y: 0, w: 28, h: 34, vy: 0 };
+  const groundY = 142;
+  const gravity = 0.72;
+  const jumpVelocity = -12.4;
+  let cactus = [];
+  let score = 0;
+  let distance = 0;
+  let speed = 4;
+  let last = 0;
+  let spawnIn = 0;
+  let gameLoop = null;
+  let gameOver = false;
+  let currentSessionId = null;
+  let lbPage = 1;
+
+  function fetchJson(url, options = {}) {
+    const opts = {
+      headers: { "Accept": "application/json", "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest", ...options.headers },
+      ...options
+    };
+    return fetch(url, opts);
+  }
+
+  function postForm(url, body) {
+    const formData = new URLSearchParams(body);
+    return fetch(url, {
+      method: "POST",
+      headers: { "Accept": "application/json", "X-Requested-With": "XMLHttpRequest", "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.content || "" },
+      body: formData
+    });
+  }
+
+  function playerCookieKey() {
+    return "bgShowcasePlayer_" + nickname.replace(/[^a-zA-Z0-9]/g, "_");
+  }
+  function getPlayerCookie() {
+    const prefix = playerCookieKey() + "=";
+    const parts = document.cookie.split(";");
+    for (let c of parts) {
+      c = c.trim();
+      if (c.startsWith(prefix)) return decodeURIComponent(c.slice(prefix.length).replace(/\+/g, " "));
+    }
+    return "";
+  }
+  function setPlayerCookie(value) {
+    const maxAge = 365 * 24 * 60 * 60;
+    document.cookie = playerCookieKey() + "=" + encodeURIComponent(value) + ";path=/;max-age=" + maxAge + ";SameSite=Lax";
+  }
+  function parsePlayedAt(iso) {
+    if (!iso) return null;
+    const d = new Date(iso);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  function formatPlayedDate(iso) {
+    const d = parsePlayedAt(iso);
+    if (!d) return "—";
+    const dd = String(d.getDate()).padStart(2, "0");
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    return dd + "/" + mm + "/" + d.getFullYear();
+  }
+  function formatPlayedTime(iso) {
+    const d = parsePlayedAt(iso);
+    if (!d) return "—";
+    return d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+  }
+  function formatMinutes(value) {
+    const minutes = Math.max(0, parseInt(value || 0, 10) || 0);
+    return minutes + " minute" + (minutes > 1 ? "s" : "");
+  }
+  function buildLeaderboardUrl() {
+    const p = new URLSearchParams({
+      game_type: "dino",
+      sort: lbSortEl.value,
+      page: String(lbPage),
+      per_page: String(LEADERBOARD_PER_PAGE)
+    });
+    return "/showcase/" + nickname + "/leaderboard?" + p.toString();
+  }
+  function escapeHtml(s) {
+    const div = document.createElement("div");
+    div.textContent = s;
+    return div.innerHTML;
+  }
+
+  async function addMinuteForPoint() {
+    if (!currentSessionId) return;
+    const updatePromise = fetchJson(urls.updateSession(currentSessionId), {
+      method: "PATCH",
+      body: JSON.stringify({ score: score })
+    }).catch(() => {});
+    const addTimePromise = secondsPerPoint > 0 ? postForm(urls.addTime, { game_type: "dino" }).catch(() => {}) : Promise.resolve();
+    await Promise.all([updatePromise, addTimePromise]);
+  }
+
+  function setDinoLeaderboardUi(showRegistered, nameForForm) {
+    if (showRegistered && nameForForm) {
+      nameFields.hidden = true;
+      autoReg.hidden = false;
+      regName.textContent = nameForForm;
+    } else {
+      nameFields.hidden = false;
+      autoReg.hidden = true;
+      playerNameInput.value = (nameForForm != null && nameForForm !== "") ? nameForForm : (getPlayerCookie() || "");
+    }
+  }
+
+  function renderLeaderboardPagination(meta) {
+    const { page, total_pages: totalPages, total } = meta;
+    if (total === 0 || !totalPages || totalPages <= 1) {
+      lbPagEl.hidden = true;
+      return;
+    }
+    lbPagEl.hidden = false;
+    lbPrevBtn.disabled = page <= 1;
+    lbNextBtn.disabled = page >= totalPages;
+    lbPageLabel.textContent = "Page " + page + " / " + totalPages;
+  }
+
+  async function loadLeaderboard() {
+    try {
+      const res = await fetchJson(buildLeaderboardUrl());
+      const data = await res.json();
+      if (data.error) {
+        leaderboardList.innerHTML = "<p class=\"dino-leaderboard-empty\">Aucun score enregistré</p>";
+        lbPagEl.hidden = true;
+        return;
+      }
+      const entries = data.entries;
+      if (Array.isArray(entries) && entries.length > 0) {
+        leaderboardList.innerHTML =
+          '<div class="dino-leaderboard-table-wrap">' +
+          '<table class="dino-leaderboard-table" aria-label="Classement Dino">' +
+          "<thead><tr>" +
+          '<th scope="col" class="dino-leaderboard-th dino-leaderboard-th--num">#</th>' +
+          '<th scope="col" class="dino-leaderboard-th">Joueur</th>' +
+          '<th scope="col" class="dino-leaderboard-th dino-leaderboard-th--score">Temps</th>' +
+          '<th scope="col" class="dino-leaderboard-th dino-leaderboard-th--meta">Date</th>' +
+          '<th scope="col" class="dino-leaderboard-th dino-leaderboard-th--meta">Heure</th>' +
+          "</tr></thead><tbody>" +
+          entries.map(s =>
+            "<tr>" +
+            `<td class="dino-leaderboard-td dino-leaderboard-td--num">${s.rank}</td>` +
+            `<td class="dino-leaderboard-td dino-leaderboard-td--name">` +
+              `<strong class="dino-lb-name">${escapeHtml(s.player_name)}</strong></td>` +
+            `<td class="dino-leaderboard-td dino-leaderboard-td--score">` +
+              `<strong class="dino-lb-score">${escapeHtml(formatMinutes(s.score))}</strong></td>` +
+            `<td class="dino-leaderboard-td dino-leaderboard-td--date dino-lb-meta"><time datetime="${escapeHtml(s.played_at || "")}">${escapeHtml(formatPlayedDate(s.played_at))}</time></td>` +
+            `<td class="dino-leaderboard-td dino-leaderboard-td--time dino-lb-meta">${escapeHtml(formatPlayedTime(s.played_at))}</td>` +
+            "</tr>"
+          ).join("") +
+          "</tbody></table></div>";
+        renderLeaderboardPagination(data);
+      } else {
+        leaderboardList.innerHTML = "<p class=\"dino-leaderboard-empty\">Aucun score enregistré</p>";
+        lbPagEl.hidden = true;
+      }
+    } catch {
+      leaderboardList.innerHTML = "<p class=\"dino-leaderboard-empty\">Aucun score enregistré</p>";
+      lbPagEl.hidden = true;
+    }
+  }
+
+  function resetGame() {
+    dino.y = groundY - dino.h;
+    dino.vy = 0;
+    cactus = [];
+    score = 0;
+    distance = 0;
+    speed = 4;
+    last = 0;
+    spawnIn = 52;
+    gameOver = false;
+    currentSessionId = null;
+    scoreEl.textContent = formatMinutes(score);
+  }
+
+  function jump() {
+    if (gameOver) return;
+    if (dino.y >= groundY - dino.h - 0.5) {
+      dino.vy = jumpVelocity;
+    }
+  }
+
+  function spawnCactus() {
+    const tall = Math.random() > 0.65;
+    const w = tall ? 16 : 22;
+    const h = tall ? 36 : 28;
+    cactus.push({ x: canvas.width + 6, y: groundY - h, w: w, h: h });
+    spawnIn = Math.floor(54 + Math.random() * 46 - Math.min(speed, 9) * 2);
+  }
+
+  function intersects(a, b) {
+    return a.x < b.x + b.w - 4 && a.x + a.w - 5 > b.x && a.y < b.y + b.h - 3 && a.y + a.h - 2 > b.y;
+  }
+
+  function drawDino() {
+    ctx.fillStyle = "#4f4f4f";
+    ctx.fillRect(dino.x, dino.y + 8, 22, 24);
+    ctx.fillRect(dino.x + 16, dino.y, 16, 16);
+    ctx.fillRect(dino.x + 2, dino.y + 29, 6, 9);
+    ctx.fillRect(dino.x + 17, dino.y + 29, 6, 9);
+    ctx.fillRect(dino.x - 7, dino.y + 14, 10, 5);
+    ctx.fillStyle = "#f7f7f7";
+    ctx.fillRect(dino.x + 25, dino.y + 4, 3, 3);
+  }
+
+  function draw() {
+    ctx.fillStyle = "#f7f7f7";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#777";
+    ctx.fillRect(0, groundY, canvas.width, 2);
+    for (let i = 0; i < canvas.width; i += 34) {
+      const x = (i - Math.floor(distance * 0.6) % 34);
+      ctx.fillRect(x, groundY + 13, 14, 2);
+    }
+
+    drawDino();
+    ctx.fillStyle = "#555";
+    cactus.forEach(c => {
+      ctx.fillRect(c.x, c.y, c.w, c.h);
+      ctx.fillRect(c.x - 5, c.y + 11, 6, 5);
+      ctx.fillRect(c.x + c.w - 1, c.y + 16, 6, 5);
+    });
+  }
+
+  function update() {
+    dino.vy += gravity;
+    dino.y += dino.vy;
+    if (dino.y > groundY - dino.h) {
+      dino.y = groundY - dino.h;
+      dino.vy = 0;
+    }
+
+    speed = Math.min(9.5, 4 + score * 0.1);
+    distance += speed;
+    spawnIn--;
+    if (spawnIn <= 0) spawnCactus();
+    cactus.forEach(c => { c.x -= speed; });
+    cactus = cactus.filter(c => c.x + c.w > -10);
+
+    const nextScore = Math.floor(distance / 420);
+    if (nextScore > score) {
+      score = nextScore;
+      scoreEl.textContent = formatMinutes(score);
+      addMinuteForPoint();
+    }
+
+    const dinoBox = { x: dino.x, y: dino.y, w: dino.w, h: dino.h };
+    if (cactus.some(c => intersects(dinoBox, c))) {
+      endGame();
+    }
+  }
+
+  function run(now) {
+    if (gameOver) return;
+    if (!last) last = now;
+    const elapsed = now - last;
+    if (elapsed >= 16) {
+      last = now;
+      update();
+      draw();
+    }
+    if (!gameOver) gameLoop = requestAnimationFrame(run);
+  }
+
+  async function endGame() {
+    gameOver = true;
+    if (gameLoop) cancelAnimationFrame(gameLoop);
+    gameEl.style.display = "none";
+    gameoverEl.style.display = "block";
+    finalScoreEl.textContent = formatMinutes(score);
+
+    const saved = getPlayerCookie().trim();
+    if (currentSessionId) {
+      if (saved) {
+        try {
+          const res = await fetchJson(urls.updateSession(currentSessionId), {
+            method: "PATCH",
+            body: JSON.stringify({ score: score, player_name: saved })
+          });
+          if (res.ok) {
+            setPlayerCookie(saved);
+            setDinoLeaderboardUi(true, saved);
+            lbPage = 1;
+            lbSortEl.value = "score";
+            loadLeaderboard();
+            return;
+          }
+        } catch (_) {}
+      }
+      fetchJson(urls.updateSession(currentSessionId), {
+        method: "PATCH",
+        body: JSON.stringify({ score: score })
+      }).catch(() => {});
+    }
+    setDinoLeaderboardUi(false, saved);
+  }
+
+  async function startGame() {
+    resetGame();
+    intro.style.display = "none";
+    gameEl.style.display = "block";
+    gameoverEl.style.display = "none";
+    setDinoLeaderboardUi(false, getPlayerCookie() || "");
+
+    try {
+      const res = await fetchJson(urls.createSession, {
+        method: "POST",
+        body: JSON.stringify({ game_type: "dino" })
+      });
+      const data = await res.json();
+      if (data.id) currentSessionId = data.id;
+    } catch (_) {}
+
+    draw();
+    gameLoop = requestAnimationFrame(run);
+  }
+
+  saveNameBtn.addEventListener("click", async () => {
+    const name = (playerNameInput.value || "").trim();
+    if (!name || !currentSessionId) return;
+    saveNameBtn.disabled = true;
+    try {
+      const res = await fetchJson(urls.updateSession(currentSessionId), {
+        method: "PATCH",
+        body: JSON.stringify({ player_name: name })
+      });
+      if (res.ok) {
+        setPlayerCookie(name);
+        setDinoLeaderboardUi(true, name);
+        lbPage = 1;
+        lbSortEl.value = "score";
+        loadLeaderboard();
+      }
+    } finally {
+      saveNameBtn.disabled = false;
+    }
+  });
+
+  document.getElementById("dino-start").addEventListener("click", startGame);
+  document.getElementById("dino-replay").addEventListener("click", startGame);
+  lbSortEl.addEventListener("change", () => {
+    lbPage = 1;
+    loadLeaderboard();
+  });
+  lbPrevBtn.addEventListener("click", () => {
+    if (lbPage > 1) { lbPage--; loadLeaderboard(); }
+  });
+  lbNextBtn.addEventListener("click", () => {
+    if (lbNextBtn.disabled) return;
+    lbPage++;
+    loadLeaderboard();
+  });
+
+  canvas.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    jump();
+  });
+  document.addEventListener("keydown", e => {
+    const jumpKeys = ["ArrowUp", " ", "Space"];
+    if (jumpKeys.includes(e.key)) {
+      e.preventDefault();
+      if (!e.repeat) jump();
+    }
+  }, { passive: false });
+
+  resetGame();
+  draw();
+  loadLeaderboard();
+})();
+</script>

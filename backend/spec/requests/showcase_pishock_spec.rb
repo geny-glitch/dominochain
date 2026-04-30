@@ -16,6 +16,16 @@ RSpec.describe "Showcase PiShock hooks", type: :request do
         post showcase_add_time_path(beta.nickname), params: { game_type: "snake" }
       end.to have_enqueued_job(PishockShockJob).with(beta.id, 1, 1)
     end
+
+    it "does not enqueue PishockShockJob for dino minute scoring" do
+      service_double = instance_double(ChasterService, current_lock: { id: "lock-1" })
+      allow(service_double).to receive(:add_time_to_lock)
+      allow(ChasterService).to receive(:new).with(beta).and_return(service_double)
+
+      expect do
+        post showcase_add_time_path(beta.nickname), params: { game_type: "dino" }
+      end.not_to have_enqueued_job(PishockShockJob)
+    end
   end
 
   describe "PATCH /showcase/:nickname/sessions/:id" do

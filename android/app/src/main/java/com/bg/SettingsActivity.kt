@@ -63,7 +63,7 @@ class SettingsActivity : AppCompatActivity() {
     private fun setupShowcaseVitrine() {
         binding.showcaseQuizSwitch.setOnCheckedChangeListener { view, checked ->
             if (showcaseListenerQuiet) return@setOnCheckedChangeListener
-            if (!checked && !binding.showcaseSnakeSwitch.isChecked && !binding.showcaseBackdoorSwitch.isChecked) {
+            if (!checked && !binding.showcaseSnakeSwitch.isChecked && !binding.showcaseDinoSwitch.isChecked && !binding.showcaseBackdoorSwitch.isChecked) {
                 showcaseListenerQuiet = true
                 view.isChecked = true
                 showcaseListenerQuiet = false
@@ -74,7 +74,18 @@ class SettingsActivity : AppCompatActivity() {
         }
         binding.showcaseSnakeSwitch.setOnCheckedChangeListener { view, checked ->
             if (showcaseListenerQuiet) return@setOnCheckedChangeListener
-            if (!checked && !binding.showcaseQuizSwitch.isChecked && !binding.showcaseBackdoorSwitch.isChecked) {
+            if (!checked && !binding.showcaseQuizSwitch.isChecked && !binding.showcaseDinoSwitch.isChecked && !binding.showcaseBackdoorSwitch.isChecked) {
+                showcaseListenerQuiet = true
+                view.isChecked = true
+                showcaseListenerQuiet = false
+                Toast.makeText(this, R.string.showcase_least_one_game, Toast.LENGTH_SHORT).show()
+                return@setOnCheckedChangeListener
+            }
+            saveShowcaseSettings()
+        }
+        binding.showcaseDinoSwitch.setOnCheckedChangeListener { view, checked ->
+            if (showcaseListenerQuiet) return@setOnCheckedChangeListener
+            if (!checked && !binding.showcaseQuizSwitch.isChecked && !binding.showcaseSnakeSwitch.isChecked && !binding.showcaseBackdoorSwitch.isChecked) {
                 showcaseListenerQuiet = true
                 view.isChecked = true
                 showcaseListenerQuiet = false
@@ -85,7 +96,7 @@ class SettingsActivity : AppCompatActivity() {
         }
         binding.showcaseBackdoorSwitch.setOnCheckedChangeListener { view, checked ->
             if (showcaseListenerQuiet) return@setOnCheckedChangeListener
-            if (!checked && !binding.showcaseQuizSwitch.isChecked && !binding.showcaseSnakeSwitch.isChecked) {
+            if (!checked && !binding.showcaseQuizSwitch.isChecked && !binding.showcaseSnakeSwitch.isChecked && !binding.showcaseDinoSwitch.isChecked) {
                 showcaseListenerQuiet = true
                 view.isChecked = true
                 showcaseListenerQuiet = false
@@ -105,8 +116,9 @@ class SettingsActivity : AppCompatActivity() {
                 RetrofitClient.sessionManager = sessionManager
                 val q = binding.showcaseQuizSwitch.isChecked
                 val s = binding.showcaseSnakeSwitch.isChecked
+                val d = binding.showcaseDinoSwitch.isChecked
                 val b = binding.showcaseBackdoorSwitch.isChecked
-                authRepository.updateShowcaseSettings(q, s, b, v)
+                authRepository.updateShowcaseSettings(q, s, d, b, v)
                     .onSuccess {
                         Toast.makeText(this@SettingsActivity, R.string.showcase_snake_seconds_saved, Toast.LENGTH_SHORT).show()
                         loadShowcaseSettings()
@@ -131,6 +143,7 @@ class SettingsActivity : AppCompatActivity() {
                     showcaseListenerQuiet = true
                     binding.showcaseQuizSwitch.isChecked = st.showcase_quiz_enabled
                     binding.showcaseSnakeSwitch.isChecked = st.showcase_snake_enabled
+                    binding.showcaseDinoSwitch.isChecked = st.showcase_dino_enabled ?: true
                     binding.showcaseBackdoorSwitch.isChecked = st.showcase_backdoor_enabled
                     val sec = st.showcase_snake_seconds_per_fruit?.takeIf { it > 0 } ?: 300
                     lastLoadedSnakeSecondsPerFruit = sec
@@ -143,12 +156,13 @@ class SettingsActivity : AppCompatActivity() {
     private fun saveShowcaseSettings() {
         val q = binding.showcaseQuizSwitch.isChecked
         val s = binding.showcaseSnakeSwitch.isChecked
+        val d = binding.showcaseDinoSwitch.isChecked
         val b = binding.showcaseBackdoorSwitch.isChecked
         val rawSnake = binding.showcaseSnakeSecondsInput.text.toString().trim()
         val snakeSec = rawSnake.toIntOrNull()?.takeIf { it > 0 } ?: lastLoadedSnakeSecondsPerFruit
         lifecycleScope.launch {
             RetrofitClient.sessionManager = sessionManager
-            authRepository.updateShowcaseSettings(q, s, b, snakeSec)
+            authRepository.updateShowcaseSettings(q, s, d, b, snakeSec)
                 .onFailure { err ->
                     Toast.makeText(
                         this@SettingsActivity,

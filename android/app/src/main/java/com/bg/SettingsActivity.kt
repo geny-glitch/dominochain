@@ -143,7 +143,7 @@ class SettingsActivity : AppCompatActivity() {
                     showcaseListenerQuiet = true
                     binding.showcaseQuizSwitch.isChecked = st.showcase_quiz_enabled
                     binding.showcaseSnakeSwitch.isChecked = st.showcase_snake_enabled
-                    binding.showcaseDinoSwitch.isChecked = st.showcase_dino_enabled
+                    binding.showcaseDinoSwitch.isChecked = st.showcase_dino_enabled ?: true
                     binding.showcaseBackdoorSwitch.isChecked = st.showcase_backdoor_enabled
                     val sec = st.showcase_snake_seconds_per_fruit?.takeIf { it > 0 } ?: 300
                     lastLoadedSnakeSecondsPerFruit = sec

@@ -32,7 +32,7 @@ RSpec.describe "Showcase leaderboard", type: :request do
       expect(json["entries"].first["player_name"]).to eq("New")
     end
 
-    it "returns a separate dino ladder ordered by minutes" do
+    it "returns a separate dino ladder ordered by score" do
       create(:game_session, user: beta, game_type: "snake", player_name: "Snake", score: 999, played_at: Time.current)
       create(:game_session, user: beta, game_type: "dino", player_name: "Short", score: 3, played_at: 2.days.ago)
       create(:game_session, user: beta, game_type: "dino", player_name: "Long", score: 12, played_at: 1.day.ago)

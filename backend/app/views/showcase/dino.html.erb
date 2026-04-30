@@ -4,23 +4,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
 <% end %>
 
-<div class="dino-page" data-nickname="<%= @beta.nickname %>" data-dino-seconds-per-point="<%= @dino_seconds_per_point %>">
+<div class="dino-page" data-nickname="<%= @beta.nickname %>" data-dino-seconds-per-obstacle="<%= @dino_seconds_per_obstacle %>">
   <div class="dino-container">
     <div id="dino-intro" class="dino-intro">
       <h1 class="dino-title">Dino Run</h1>
-      <p class="dino-hint">Espace, flèche haut ou tap pour sauter. 1 point = 1 minute.</p>
+      <p class="dino-hint">Espace, flèche haut ou tap pour sauter. Chaque cactus franchi ajoute le même temps qu'une pomme Snake.</p>
       <button type="button" class="dino-btn dino-btn--start" id="dino-start">Jouer</button>
     </div>
 
     <div id="dino-game" class="dino-game" style="display: none;">
-      <div class="dino-score">Temps: <span id="dino-score">0 min</span></div>
-      <canvas id="dino-canvas" class="dino-canvas" width="360" height="180"></canvas>
+      <div class="dino-score">Temps: <span id="dino-score">0 seconde</span></div>
+      <canvas id="dino-canvas" class="dino-canvas" width="720" height="260"></canvas>
       <p class="dino-tap-hint">Tape sur le terrain pour sauter</p>
     </div>
 
     <div id="dino-gameover" class="dino-gameover" style="display: none;">
       <h2 class="dino-gameover-title">Game Over</h2>
-      <p class="dino-gameover-score">Temps: <span id="dino-final-score">0 min</span></p>
+      <p class="dino-gameover-score">Temps: <span id="dino-final-score">0 seconde</span></p>
       <div class="dino-leaderboard-form" id="dino-lb-name-block">
         <p id="dino-lb-auto-registered" class="dino-lb-registered" hidden>Score enregistré pour <strong id="dino-lb-registered-name"></strong></p>
         <div id="dino-lb-name-fields" class="dino-lb-name-fields">
@@ -37,7 +37,7 @@
     <div class="dino-leaderboard-toolbar">
       <label class="dino-leaderboard-toolbar-label" for="dino-lb-sort">Trier</label>
       <select id="dino-lb-sort" class="dino-input dino-leaderboard-sort" aria-label="Trier le classement">
-        <option value="score">Meilleur temps</option>
+        <option value="score">Plus de temps ajouté</option>
         <option value="recent">Plus récent</option>
       </select>
     </div>
@@ -63,7 +63,7 @@
 (function() {
   const pageEl = document.querySelector(".dino-page");
   const nickname = pageEl.dataset.nickname;
-  const secondsPerPoint = Math.max(1, parseInt(pageEl.dataset.dinoSecondsPerPoint || "60", 10) || 60);
+  const secondsPerObstacle = Math.max(1, parseInt(pageEl.dataset.dinoSecondsPerObstacle || "300", 10) || 300);
   const LEADERBOARD_PER_PAGE = 10;
   const urls = {
     createSession: `/showcase/${nickname}/sessions`,
@@ -90,20 +90,23 @@
   const autoReg = document.getElementById("dino-lb-auto-registered");
   const regName = document.getElementById("dino-lb-registered-name");
 
-  const dino = { x: 42, y: 0, w: 28, h: 34, vy: 0 };
-  const groundY = 142;
-  const gravity = 0.72;
-  const jumpVelocity = -12.4;
-  let cactus = [];
+  const WORLD_WIDTH = 720;
+  const WORLD_HEIGHT = 260;
+  const groundY = 202;
+  const dino = { x: 70, y: 0, w: 44, h: 52, vy: 0 };
+  const gravity = 0.82;
+  const jumpVelocity = -15.2;
+  let obstacles = [];
   let score = 0;
   let distance = 0;
-  let speed = 4;
+  let speed = 6;
   let last = 0;
   let spawnIn = 0;
   let gameLoop = null;
   let gameOver = false;
   let currentSessionId = null;
   let lbPage = 1;
+  let runFrame = 0;
 
   function fetchJson(url, options = {}) {
     const opts = {
@@ -155,9 +158,13 @@
     if (!d) return "—";
     return d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
   }
-  function formatMinutes(value) {
-    const minutes = Math.max(0, parseInt(value || 0, 10) || 0);
-    return minutes + " minute" + (minutes > 1 ? "s" : "");
+  function formatAddedTime(points) {
+    const totalSeconds = Math.max(0, (parseInt(points || 0, 10) || 0) * secondsPerObstacle);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    if (minutes > 0 && seconds > 0) return minutes + " min " + seconds + " s";
+    if (minutes > 0) return minutes + " minute" + (minutes > 1 ? "s" : "");
+    return seconds + " seconde" + (seconds > 1 ? "s" : "");
   }
   function buildLeaderboardUrl() {
     const p = new URLSearchParams({
@@ -174,13 +181,13 @@
     return div.innerHTML;
   }
 
-  async function addMinuteForPoint() {
+  async function addTimeForObstacle() {
     if (!currentSessionId) return;
     const updatePromise = fetchJson(urls.updateSession(currentSessionId), {
       method: "PATCH",
       body: JSON.stringify({ score: score })
     }).catch(() => {});
-    const addTimePromise = secondsPerPoint > 0 ? postForm(urls.addTime, { game_type: "dino" }).catch(() => {}) : Promise.resolve();
+    const addTimePromise = secondsPerObstacle > 0 ? postForm(urls.addTime, { game_type: "dino" }).catch(() => {}) : Promise.resolve();
     await Promise.all([updatePromise, addTimePromise]);
   }
 
@@ -235,7 +242,7 @@
             `<td class="dino-leaderboard-td dino-leaderboard-td--name">` +
               `<strong class="dino-lb-name">${escapeHtml(s.player_name)}</strong></td>` +
             `<td class="dino-leaderboard-td dino-leaderboard-td--score">` +
-              `<strong class="dino-lb-score">${escapeHtml(formatMinutes(s.score))}</strong></td>` +
+              `<strong class="dino-lb-score">${escapeHtml(formatAddedTime(s.score))}</strong></td>` +
             `<td class="dino-leaderboard-td dino-leaderboard-td--date dino-lb-meta"><time datetime="${escapeHtml(s.played_at || "")}">${escapeHtml(formatPlayedDate(s.played_at))}</time></td>` +
             `<td class="dino-leaderboard-td dino-leaderboard-td--time dino-lb-meta">${escapeHtml(formatPlayedTime(s.played_at))}</td>` +
             "</tr>"
@@ -255,15 +262,16 @@
   function resetGame() {
     dino.y = groundY - dino.h;
     dino.vy = 0;
-    cactus = [];
+    obstacles = [];
     score = 0;
     distance = 0;
-    speed = 4;
+    speed = 6;
     last = 0;
-    spawnIn = 52;
+    spawnIn = 92;
+    runFrame = 0;
     gameOver = false;
     currentSessionId = null;
-    scoreEl.textContent = formatMinutes(score);
+    scoreEl.textContent = formatAddedTime(score);
   }
 
   function jump() {
@@ -273,46 +281,108 @@
     }
   }
 
-  function spawnCactus() {
-    const tall = Math.random() > 0.65;
-    const w = tall ? 16 : 22;
-    const h = tall ? 36 : 28;
-    cactus.push({ x: canvas.width + 6, y: groundY - h, w: w, h: h });
-    spawnIn = Math.floor(54 + Math.random() * 46 - Math.min(speed, 9) * 2);
+  function currentDifficulty() {
+    return Math.min(1, score / 18);
+  }
+
+  function spawnObstacle() {
+    const difficulty = currentDifficulty();
+    const count = Math.min(4, 1 + Math.floor(Math.random() * (2 + difficulty * 3)));
+    const group = [];
+    let x = WORLD_WIDTH + 16;
+
+    for (let i = 0; i < count; i++) {
+      const tall = Math.random() < 0.42 + difficulty * 0.24;
+      const w = tall ? 24 : 30;
+      const h = tall ? 62 : 46;
+      group.push({
+        x,
+        y: groundY - h,
+        w,
+        h,
+        scored: false,
+        tall
+      });
+      x += w + 8 + Math.random() * Math.max(6, 18 - difficulty * 12);
+    }
+
+    obstacles.push(...group);
+    const minGap = Math.max(44, 98 - difficulty * 42 - speed * 2);
+    const maxGap = Math.max(minGap + 12, 150 - difficulty * 54 - speed * 2.8);
+    spawnIn = Math.floor(minGap + Math.random() * (maxGap - minGap));
   }
 
   function intersects(a, b) {
-    return a.x < b.x + b.w - 4 && a.x + a.w - 5 > b.x && a.y < b.y + b.h - 3 && a.y + a.h - 2 > b.y;
+    return a.x + 7 < b.x + b.w - 5 && a.x + a.w - 10 > b.x + 5 && a.y + 5 < b.y + b.h - 4 && a.y + a.h - 3 > b.y + 4;
+  }
+
+  function roundedRect(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+  }
+
+  function fillRoundedRect(x, y, w, h, r) {
+    roundedRect(x, y, w, h, r);
+    ctx.fill();
   }
 
   function drawDino() {
-    ctx.fillStyle = "#4f4f4f";
-    ctx.fillRect(dino.x, dino.y + 8, 22, 24);
-    ctx.fillRect(dino.x + 16, dino.y, 16, 16);
-    ctx.fillRect(dino.x + 2, dino.y + 29, 6, 9);
-    ctx.fillRect(dino.x + 17, dino.y + 29, 6, 9);
-    ctx.fillRect(dino.x - 7, dino.y + 14, 10, 5);
+    const x = dino.x;
+    const y = dino.y;
+    const step = runFrame % 24 < 12;
+
+    ctx.fillStyle = "#535353";
+    fillRoundedRect(x + 5, y + 17, 29, 30, 7);
+    fillRoundedRect(x + 28, y + 5, 25, 21, 5);
+    fillRoundedRect(x + 47, y + 15, 11, 8, 3);
+    ctx.fillRect(x + 23, y + 36, 25, 8);
+    ctx.fillRect(x - 8, y + 25, 16, 7);
+
+    ctx.fillRect(x + (step ? 10 : 16), y + 45, 7, 16);
+    ctx.fillRect(x + (step ? 29 : 24), y + 45, 7, 16);
+    ctx.fillRect(x + (step ? 7 : 15), y + 58, 13, 4);
+    ctx.fillRect(x + (step ? 28 : 22), y + 58, 13, 4);
+
     ctx.fillStyle = "#f7f7f7";
-    ctx.fillRect(dino.x + 25, dino.y + 4, 3, 3);
+    ctx.beginPath();
+    ctx.arc(x + 46, y + 12, 2.2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function drawCactus(c) {
+    ctx.fillStyle = "#535353";
+    fillRoundedRect(c.x + c.w * 0.28, c.y, c.w * 0.44, c.h, 5);
+    fillRoundedRect(c.x + c.w * 0.02, c.y + c.h * 0.28, c.w * 0.28, c.h * 0.42, 4);
+    fillRoundedRect(c.x + c.w * 0.68, c.y + c.h * 0.42, c.w * 0.28, c.h * 0.38, 4);
+    ctx.fillRect(c.x + c.w * 0.16, c.y + c.h * 0.28, c.w * 0.22, 6);
+    ctx.fillRect(c.x + c.w * 0.62, c.y + c.h * 0.42, c.w * 0.22, 6);
+    ctx.fillStyle = "#f7f7f7";
+    ctx.fillRect(c.x + c.w * 0.46, c.y + 8, 2, c.h - 16);
+    ctx.fillRect(c.x + c.w * 0.12, c.y + c.h * 0.34, 1.5, c.h * 0.22);
+    ctx.fillRect(c.x + c.w * 0.82, c.y + c.h * 0.48, 1.5, c.h * 0.18);
   }
 
   function draw() {
     ctx.fillStyle = "#f7f7f7";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
     ctx.fillStyle = "#777";
-    ctx.fillRect(0, groundY, canvas.width, 2);
-    for (let i = 0; i < canvas.width; i += 34) {
+    ctx.fillRect(0, groundY, WORLD_WIDTH, 2);
+    for (let i = 0; i < WORLD_WIDTH + 34; i += 34) {
       const x = (i - Math.floor(distance * 0.6) % 34);
-      ctx.fillRect(x, groundY + 13, 14, 2);
+      ctx.fillRect(x, groundY + 18, 14, 2);
     }
 
     drawDino();
-    ctx.fillStyle = "#555";
-    cactus.forEach(c => {
-      ctx.fillRect(c.x, c.y, c.w, c.h);
-      ctx.fillRect(c.x - 5, c.y + 11, 6, 5);
-      ctx.fillRect(c.x + c.w - 1, c.y + 16, 6, 5);
-    });
+    obstacles.forEach(drawCactus);
   }
 
   function update() {
@@ -323,22 +393,24 @@
       dino.vy = 0;
     }
 
-    speed = Math.min(9.5, 4 + score * 0.1);
+    speed = Math.min(13.5, 6 + score * 0.28 + distance / 18000);
     distance += speed;
+    runFrame += speed / 6;
     spawnIn--;
-    if (spawnIn <= 0) spawnCactus();
-    cactus.forEach(c => { c.x -= speed; });
-    cactus = cactus.filter(c => c.x + c.w > -10);
-
-    const nextScore = Math.floor(distance / 420);
-    if (nextScore > score) {
-      score = nextScore;
-      scoreEl.textContent = formatMinutes(score);
-      addMinuteForPoint();
-    }
+    if (spawnIn <= 0) spawnObstacle();
+    obstacles.forEach(c => {
+      c.x -= speed;
+      if (!c.scored && c.x + c.w < dino.x) {
+        c.scored = true;
+        score++;
+        scoreEl.textContent = formatAddedTime(score);
+        addTimeForObstacle();
+      }
+    });
+    obstacles = obstacles.filter(c => c.x + c.w > -20);
 
     const dinoBox = { x: dino.x, y: dino.y, w: dino.w, h: dino.h };
-    if (cactus.some(c => intersects(dinoBox, c))) {
+    if (obstacles.some(c => intersects(dinoBox, c))) {
       endGame();
     }
   }
@@ -360,7 +432,7 @@
     if (gameLoop) cancelAnimationFrame(gameLoop);
     gameEl.style.display = "none";
     gameoverEl.style.display = "block";
-    finalScoreEl.textContent = formatMinutes(score);
+    finalScoreEl.textContent = formatAddedTime(score);
 
     const saved = getPlayerCookie().trim();
     if (currentSessionId) {

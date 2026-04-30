@@ -11,6 +11,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: android-ota-release
+  cancel-in-progress: true
+
 jobs:
   release:
     name: Build and publish latest APK
@@ -33,6 +37,21 @@ jobs:
         env:
           KEYSTORE_FILE: ${{ secrets.KEYSTORE_FILE }}
 
+      - name: Compute next OTA version code
+        id: ota_version
+        run: |
+          NEXT_VERSION_CODE="$(python3 - <<'PY'
+          import json
+          import os
+
+          with open("version.json", encoding="utf-8") as f:
+              current_version_code = int(json.load(f)["versionCode"])
+          run_number = int(os.environ["GITHUB_RUN_NUMBER"])
+          print(max(current_version_code + 1, run_number))
+          PY
+          )"
+          echo "code=${NEXT_VERSION_CODE}" >> "${GITHUB_OUTPUT}"
+
       - name: Build signed release APK
         working-directory: android
         run: ./gradlew assembleRelease
@@ -41,17 +60,20 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          OTA_VERSION_CODE: ${{ steps.ota_version.outputs.code }}
 
       - name: Read version code
         id: version
         working-directory: android
         run: |
-          VERSION_CODE="$(./gradlew -q printVersionCode)"
+          VERSION_CODE="$(OTA_VERSION_CODE="${OTA_VERSION_CODE}" ./gradlew -q printVersionCode)"
           echo "code=${VERSION_CODE}" >> "${GITHUB_OUTPUT}"
+        env:
+          OTA_VERSION_CODE: ${{ steps.ota_version.outputs.code }}
 
       - name: Update version.json
         run: |
-          python - <<'PY'
+          python3 - <<'PY'
           import json
           import os
 

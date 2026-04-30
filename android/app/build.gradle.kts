@@ -17,6 +17,10 @@ val hasReleaseSigning = listOf(
     releaseKeyAlias,
     releaseKeyPassword
 ).all { !it.isNullOrBlank() }
+val otaVersionCode = System.getenv("OTA_VERSION_CODE")?.let { value ->
+    value.toIntOrNull() ?: error("OTA_VERSION_CODE must be a positive integer")
+} ?: 1
+require(otaVersionCode > 0) { "OTA_VERSION_CODE must be a positive integer" }
 
 android {
     namespace = "com.bg"
@@ -26,7 +30,7 @@ android {
         applicationId = "com.bg"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
+        versionCode = otaVersionCode
         versionName = "1.0"
 
         val localProperties = Properties()

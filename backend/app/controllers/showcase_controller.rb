@@ -3,6 +3,7 @@
 class ShowcaseController < ApplicationController
   # Temps ajouté au verrou par fruit mangé (Snake) — appliqué côté serveur dans #add_time, pas via params[:seconds].
   SNAKE_SECONDS_PER_FRUIT = 300
+  DINO_SECONDS_PER_POINT = 60
 
   # Backdoor: max duration per submission (aligné avec #add_time)
   BACKDOOR_MAX_SECONDS = 86_400 * 365
@@ -18,6 +19,7 @@ class ShowcaseController < ApplicationController
     @showcase_url = showcase_url(@beta.nickname)
     @showcase_quiz_enabled = @beta.showcase_quiz_enabled
     @showcase_snake_enabled = @beta.showcase_snake_enabled
+    @showcase_dino_enabled = @beta.showcase_dino_enabled
     @showcase_backdoor_enabled = @beta.showcase_backdoor_enabled
   end
 
@@ -36,6 +38,15 @@ class ShowcaseController < ApplicationController
 
     @showcase_url = showcase_url(@beta.nickname)
     @snake_seconds_per_fruit = snake_seconds_per_fruit_for(@beta)
+  end
+
+  def dino
+    @beta = User.find_by(nickname: params[:nickname], role: :beta)
+    return render "not_found", status: :not_found unless @beta
+    return render "not_found", status: :not_found unless @beta.showcase_dino_enabled
+
+    @showcase_url = showcase_url(@beta.nickname)
+    @dino_seconds_per_point = DINO_SECONDS_PER_POINT
   end
 
   def backdoor
@@ -134,13 +145,19 @@ class ShowcaseController < ApplicationController
     @beta = find_beta
     return render(json: { error: "Page introuvable." }, status: 404) unless @beta
 
-    game_kind = params[:game_type].to_s == "snake" ? "snake" : "quiz"
+    requested_game_type = params[:game_type].to_s
+    game_kind = case requested_game_type
+    when "snake", "dino" then requested_game_type
+    else "quiz"
+    end
     unless showcase_game_enabled_for?(@beta, game_kind)
       return (request.format.json? ? (render(json: { error: "Jeu indisponible." }, status: 404)) : render("not_found", status: :not_found))
     end
 
-    seconds = if params[:game_type].to_s == "snake"
+    seconds = if game_kind == "snake"
       snake_seconds_per_fruit_for(@beta)
+    elsif game_kind == "dino"
+      DINO_SECONDS_PER_POINT
     else
       params[:seconds]&.to_i
     end
@@ -154,7 +171,7 @@ class ShowcaseController < ApplicationController
       return (request.format.json? ? (render(json: { error: msg }, status: 429)) : redirect_to(showcase_path(@beta.nickname), alert: msg))
     end
 
-    if params[:game_type].to_s == "snake"
+    if game_kind == "snake"
       PishockShockJob.perform_later(@beta.id, 1, 1)
     end
 
@@ -178,7 +195,7 @@ class ShowcaseController < ApplicationController
     return render(json: { error: "Page introuvable." }, status: 404) unless @beta
 
     gt = (params[:game_type].presence || "quiz").to_s
-    gt = "quiz" unless %w[quiz snake].include?(gt)
+    gt = "quiz" unless %w[quiz snake dino].include?(gt)
     unless showcase_game_enabled_for?(@beta, gt)
       return render json: { error: "Jeu indisponible." }, status: 404
     end
@@ -328,6 +345,7 @@ class ShowcaseController < ApplicationController
   def showcase_game_enabled_for?(beta, game_type)
     case game_type.to_s
     when "snake" then beta.showcase_snake_enabled
+    when "dino" then beta.showcase_dino_enabled
     when "quiz" then beta.showcase_quiz_enabled
     else false
     end

@@ -45,7 +45,7 @@ class User < ApplicationRecord
   private
 
   def at_least_one_showcase_game_enabled
-    return if showcase_quiz_enabled || showcase_snake_enabled || showcase_backdoor_enabled
+    return if showcase_quiz_enabled || showcase_snake_enabled || showcase_dino_enabled || showcase_backdoor_enabled
 
     errors.add(:base, "Au moins un jeu ou la page Backdoor doit rester activé sur la vitrine.")
   end

@@ -65,6 +65,7 @@ data class MeResponse(
 data class ShowcaseSettingsResponse(
     val showcase_quiz_enabled: Boolean,
     val showcase_snake_enabled: Boolean,
+    val showcase_dino_enabled: Boolean = true,
     val showcase_backdoor_enabled: Boolean,
     val showcase_snake_seconds_per_fruit: Int? = null
 )
@@ -72,6 +73,7 @@ data class ShowcaseSettingsResponse(
 data class ShowcaseSettingsRequest(
     val showcase_quiz_enabled: Boolean,
     val showcase_snake_enabled: Boolean,
+    val showcase_dino_enabled: Boolean,
     val showcase_backdoor_enabled: Boolean,
     val showcase_snake_seconds_per_fruit: Int
 )

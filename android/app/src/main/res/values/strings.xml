@@ -54,6 +54,7 @@
     <string name="showcase_backdoor_label">Page Backdoor (timer + ajout de temps)</string>
     <string name="showcase_quiz_label">Jeu des 1000 € (quiz)</string>
     <string name="showcase_snake_label">Snake</string>
+    <string name="showcase_dino_label">Dino Run</string>
     <string name="showcase_snake_seconds_label">Snake — secondes ajoutées par pomme</string>
     <string name="showcase_snake_seconds_hint">Temps ajouté au lock Chaster à chaque fruit. Réduire cette valeur n\'est possible que 24 h après le dernier changement.</string>
     <string name="showcase_snake_seconds_placeholder">Ex. 300</string>

@@ -470,7 +470,7 @@ RSpec.describe "Routes", type: :request do
       end
 
       it "returns game flags for beta" do
-        beta = create(:user, :beta, showcase_quiz_enabled: true, showcase_snake_enabled: true)
+        beta = create(:user, :beta, showcase_quiz_enabled: true, showcase_snake_enabled: true, showcase_dino_enabled: true)
         device = create(:device, user: beta)
         get "/api/showcase_settings",
           headers: { "X-Device-Id" => device.device_id, "X-Device-Token" => device.auth_token }
@@ -478,17 +478,19 @@ RSpec.describe "Routes", type: :request do
         json = JSON.parse(response.body)
         expect(json["showcase_quiz_enabled"]).to be true
         expect(json["showcase_snake_enabled"]).to be true
+        expect(json["showcase_dino_enabled"]).to be true
         expect(json["showcase_backdoor_enabled"]).to be true
         expect(json["showcase_snake_seconds_per_fruit"]).to eq(300)
       end
     end
 
     describe "PATCH /api/showcase_settings" do
-      it "rejects when quiz, snake and backdoor would all be disabled" do
+      it "rejects when all showcase entries would be disabled" do
         beta = create(
           :user, :beta,
           showcase_quiz_enabled: true,
           showcase_snake_enabled: true,
+          showcase_dino_enabled: true,
           showcase_backdoor_enabled: true
         )
         device = create(:device, user: beta)
@@ -496,12 +498,14 @@ RSpec.describe "Routes", type: :request do
           params: {
             showcase_quiz_enabled: false,
             showcase_snake_enabled: false,
+            showcase_dino_enabled: false,
             showcase_backdoor_enabled: false
           },
           headers: { "X-Device-Id" => device.device_id, "X-Device-Token" => device.auth_token }
         expect(response).to have_http_status(:unprocessable_entity)
         expect(beta.reload.showcase_quiz_enabled).to be true
         expect(beta.showcase_snake_enabled).to be true
+        expect(beta.showcase_dino_enabled).to be true
         expect(beta.showcase_backdoor_enabled).to be true
       end
 
@@ -516,20 +520,22 @@ RSpec.describe "Routes", type: :request do
         expect(beta.showcase_snake_enabled).to be false
       end
 
-      it "allows disabling both games when backdoor stays enabled" do
+      it "allows disabling visible games when backdoor stays enabled" do
         beta = create(
           :user, :beta,
           showcase_quiz_enabled: true,
           showcase_snake_enabled: true,
+          showcase_dino_enabled: true,
           showcase_backdoor_enabled: true
         )
         device = create(:device, user: beta)
         patch "/api/showcase_settings",
-          params: { showcase_quiz_enabled: false, showcase_snake_enabled: false },
+          params: { showcase_quiz_enabled: false, showcase_snake_enabled: false, showcase_dino_enabled: false },
           headers: { "X-Device-Id" => device.device_id, "X-Device-Token" => device.auth_token }
         expect(response).to have_http_status(:ok)
         expect(beta.reload.showcase_quiz_enabled).to be false
         expect(beta.showcase_snake_enabled).to be false
+        expect(beta.showcase_dino_enabled).to be false
         expect(beta.showcase_backdoor_enabled).to be true
       end
 

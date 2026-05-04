@@ -3,6 +3,8 @@ package com.bg
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.bg.databinding.ActivityCigaretteHistoryBinding
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -16,12 +18,31 @@ class CigaretteHistoryActivity : AppCompatActivity() {
     private val dayFormatter by lazy {
         DateTimeFormatter.ofPattern("EEEE d MMMM", Locale.FRENCH)
     }
+    private lateinit var historyAdapter: CigaretteHistoryAdapter
+    private var loadingMoreHistory = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityCigaretteHistoryBinding.inflate(layoutInflater)
         setContentView(binding.root)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
+
+        historyAdapter = CigaretteHistoryAdapter(trackerRepository, TrackerType.Cigarettes)
+        binding.cigaretteHistoryRecycler.layoutManager = LinearLayoutManager(this)
+        binding.cigaretteHistoryRecycler.adapter = historyAdapter
+        val lm = binding.cigaretteHistoryRecycler.layoutManager as LinearLayoutManager
+        binding.cigaretteHistoryRecycler.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                if (dy <= 0 || loadingMoreHistory) return
+                val lastVisible = lm.findLastVisibleItemPosition()
+                val total = historyAdapter.itemCount
+                if (total > 0 && lastVisible >= total - 4 && historyAdapter.canLoadMore()) {
+                    loadingMoreHistory = true
+                    historyAdapter.appendNextPage()
+                    binding.cigaretteHistoryRecycler.post { loadingMoreHistory = false }
+                }
+            }
+        })
 
         binding.cigaretteHistoryIncrement.setOnClickListener {
             incrementRemote()
@@ -43,23 +64,25 @@ class CigaretteHistoryActivity : AppCompatActivity() {
     }
 
     private fun refreshHistory() {
-        val snapshots = trackerRepository.dailySnapshots(TrackerType.Cigarettes)
         val today = LocalDate.now()
-        val todaySnapshot = snapshots.first()
+        val todaySnapshot = trackerRepository.snapshot(TrackerType.Cigarettes)
         binding.cigaretteHistoryTodayCount.text = todaySnapshot.count.toString()
         binding.cigaretteHistoryTodayLabel.text = getString(
             R.string.tracker_cigarettes_today_label,
             formatDate(todaySnapshot.date, today)
         )
-        binding.cigaretteHistoryRows.text = snapshots.joinToString(separator = "\n") { snapshot ->
-            val chasterSeconds = trackerRepository.chasterSeconds(TrackerType.Cigarettes, snapshot.date)
-            getString(
-                R.string.tracker_cigarettes_history_row,
-                formatDate(snapshot.date, today),
-                snapshot.count,
-                chasterSeconds
+
+        val last7 = trackerRepository.dailySnapshots(TrackerType.Cigarettes, 7)
+        val chartEntries = last7.reversed().map { snap ->
+            CigaretteHistoryBarChartView.BarEntry(
+                snap.date,
+                snap.count,
+                snap.date == today
             )
         }
+        binding.cigaretteHistoryChart.setEntries(chartEntries)
+
+        historyAdapter.resetAndLoadFirstPage()
     }
 
     private fun formatDate(date: LocalDate, today: LocalDate): String {

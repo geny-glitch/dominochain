@@ -41,6 +41,17 @@ class TrackerRepository(context: Context) {
         }
     }
 
+    /** Jours consécutifs en partant d’aujourd’hui : page 0 = j0…j[pageSize-1], page 1 = la suite, etc. */
+    fun dailySnapshotsPage(type: TrackerType, pageIndex: Int, pageSize: Int): List<TrackerSnapshot> {
+        val today = LocalDate.now()
+        val startOffset = pageIndex * pageSize
+        return (0 until pageSize).map { i ->
+            val dayOffset = startOffset + i
+            val date = today.minusDays(dayOffset.toLong())
+            TrackerSnapshot(type, count(type, date), date)
+        }
+    }
+
     fun increment(type: TrackerType): TrackerSnapshot {
         val today = LocalDate.now()
         val updated = count(type, today) + 1

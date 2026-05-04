@@ -35,15 +35,80 @@
         android:id="@+id/cigarette_history_increment"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="@dimen/ds_space_xl"
+        android:layout_marginBottom="@dimen/ds_space_lg"
         android:text="@string/tracker_quick_add"
         style="@style/DsButton" />
 
     <TextView
-        android:id="@+id/cigarette_history_rows"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/ds_space_sm"
+        android:text="@string/tracker_cigarettes_chart_7d_title"
+        style="@style/DsSectionTitle" />
+
+    <com.bg.CigaretteHistoryBarChartView
+        android:id="@+id/cigarette_history_chart"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:lineSpacingExtra="@dimen/ds_space_sm"
-        style="@style/DsBody" />
+        android:layout_marginBottom="@dimen/ds_space_xl"
+        android:minHeight="168dp"
+        android:background="@drawable/ds_card_background"
+        android:padding="@dimen/ds_space_md" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/ds_space_sm"
+        android:text="@string/tracker_cigarettes_table_section"
+        style="@style/DsSectionTitle" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingBottom="@dimen/ds_space_sm"
+        android:paddingTop="@dimen/ds_space_xs">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1.2"
+            android:text="@string/tracker_cigarettes_col_date"
+            style="@style/DsSmall"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.5"
+            android:gravity="end"
+            android:text="@string/tracker_cigarettes_col_count"
+            style="@style/DsSmall"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.55"
+            android:gravity="end"
+            android:text="@string/tracker_cigarettes_col_chaster"
+            style="@style/DsSmall"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginBottom="@dimen/ds_space_xs"
+        android:background="@color/ds_border" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/cigarette_history_recycler"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:nestedScrollingEnabled="true"
+        android:overScrollMode="ifContentScrolls" />
 
 </LinearLayout>

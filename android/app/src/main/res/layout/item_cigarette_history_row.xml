@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:paddingTop="@dimen/ds_space_sm"
+    android:paddingBottom="@dimen/ds_space_sm"
+    android:paddingStart="0dp"
+    android:paddingEnd="0dp"
+    android:gravity="center_vertical">
+
+    <TextView
+        android:id="@+id/cigarette_row_date"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1.2"
+        style="@style/DsBody"
+        android:maxLines="2"
+        android:ellipsize="end" />
+
+    <TextView
+        android:id="@+id/cigarette_row_count"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="0.5"
+        android:gravity="end"
+        android:fontFamily="sans-serif-medium"
+        android:textColor="@color/ds_teal"
+        style="@style/DsBody" />
+
+    <TextView
+        android:id="@+id/cigarette_row_chaster"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="0.55"
+        android:gravity="end"
+        style="@style/DsBody" />
+
+</LinearLayout>

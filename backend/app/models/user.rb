@@ -1,5 +1,5 @@
 class User < ApplicationRecord
-  SHOWCASE_SNAKE_SECONDS_DECREASE_COOLDOWN = 24.hours
+  SHOWCASE_SECONDS_DECREASE_COOLDOWN = 24.hours
 
   # Include default devise modules. Others available are:
   # :confirmable, :lockable, :timeoutable, :trackable and :omniauthable
@@ -22,13 +22,19 @@ class User < ApplicationRecord
 
   validates :nickname, presence: true, uniqueness: true
   validates :nickname, format: { with: /\A[a-zA-Z0-9_]+\z/, message: "ne peut contenir que lettres, chiffres et underscores" }
-  validates :showcase_snake_seconds_per_fruit,
+  validates :showcase_quiz_seconds_per_point,
+    :showcase_snake_seconds_per_fruit,
+    :showcase_dino_seconds_per_obstacle,
     numericality: { only_integer: true, greater_than: 0, less_than_or_equal_to: 86_400 * 365 },
     if: :beta?
   validate :at_least_one_showcase_game_enabled, if: :beta?
+  validate :showcase_quiz_seconds_decrease_cooldown, if: :beta?
   validate :showcase_snake_seconds_decrease_cooldown, if: :beta?
+  validate :showcase_dino_seconds_decrease_cooldown, if: :beta?
 
+  before_save :touch_showcase_quiz_seconds_changed_at, if: :will_save_change_to_showcase_quiz_seconds_per_point?
   before_save :touch_showcase_snake_seconds_changed_at, if: :will_save_change_to_showcase_snake_seconds_per_fruit?
+  before_save :touch_showcase_dino_seconds_changed_at, if: :will_save_change_to_showcase_dino_seconds_per_obstacle?
 
   def email_required?
     false
@@ -50,24 +56,57 @@ class User < ApplicationRecord
     errors.add(:base, "Au moins un jeu ou la page Backdoor doit rester activé sur la vitrine.")
   end
 
-  def showcase_snake_seconds_decrease_cooldown
-    return unless showcase_snake_seconds_per_fruit_changed?
-    was = showcase_snake_seconds_per_fruit_was
-    return if was.nil?
-    return if showcase_snake_seconds_per_fruit >= was
-    last_at = showcase_snake_seconds_per_fruit_at_in_database
-    return if last_at.blank?
-
-    return if Time.current >= last_at + SHOWCASE_SNAKE_SECONDS_DECREASE_COOLDOWN
-
-    unlock_at = last_at + SHOWCASE_SNAKE_SECONDS_DECREASE_COOLDOWN
-    errors.add(
-      :showcase_snake_seconds_per_fruit,
-      "tu ne peux pas réduire ce délai avant 24 h après le dernier changement (réessaie après #{unlock_at.strftime('%d/%m %H:%M')})."
+  def showcase_quiz_seconds_decrease_cooldown
+    enforce_showcase_seconds_decrease_cooldown(
+      :showcase_quiz_seconds_per_point,
+      showcase_quiz_seconds_per_point_was,
+      showcase_quiz_seconds_per_point,
+      showcase_quiz_seconds_per_point_at_in_database
     )
+  end
+
+  def showcase_snake_seconds_decrease_cooldown
+    enforce_showcase_seconds_decrease_cooldown(
+      :showcase_snake_seconds_per_fruit,
+      showcase_snake_seconds_per_fruit_was,
+      showcase_snake_seconds_per_fruit,
+      showcase_snake_seconds_per_fruit_at_in_database
+    )
+  end
+
+  def showcase_dino_seconds_decrease_cooldown
+    enforce_showcase_seconds_decrease_cooldown(
+      :showcase_dino_seconds_per_obstacle,
+      showcase_dino_seconds_per_obstacle_was,
+      showcase_dino_seconds_per_obstacle,
+      showcase_dino_seconds_per_obstacle_at_in_database
+    )
+  end
+
+  def touch_showcase_quiz_seconds_changed_at
+    self.showcase_quiz_seconds_per_point_at = Time.current
   end
 
   def touch_showcase_snake_seconds_changed_at
     self.showcase_snake_seconds_per_fruit_at = Time.current
+  end
+
+  def touch_showcase_dino_seconds_changed_at
+    self.showcase_dino_seconds_per_obstacle_at = Time.current
+  end
+
+  def enforce_showcase_seconds_decrease_cooldown(attribute, previous_value, current_value, last_changed_at)
+    return unless public_send("#{attribute}_changed?")
+    return if previous_value.nil?
+    return if current_value >= previous_value
+    return if last_changed_at.blank?
+
+    return if Time.current >= last_changed_at + SHOWCASE_SECONDS_DECREASE_COOLDOWN
+
+    unlock_at = last_changed_at + SHOWCASE_SECONDS_DECREASE_COOLDOWN
+    errors.add(
+      attribute,
+      "tu ne peux pas réduire ce délai avant 24 h après le dernier changement (réessaie après #{unlock_at.strftime('%d/%m %H:%M')})."
+    )
   end
 end

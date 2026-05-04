@@ -252,8 +252,12 @@ ActiveRecord::Schema[7.2].define(version: 2026_04_30_143100) do
     t.boolean "showcase_snake_enabled", default: true, null: false
     t.boolean "showcase_dino_enabled", default: true, null: false
     t.boolean "showcase_backdoor_enabled", default: true, null: false
+    t.integer "showcase_quiz_seconds_per_point", default: 1, null: false
+    t.datetime "showcase_quiz_seconds_per_point_at"
     t.integer "showcase_snake_seconds_per_fruit", default: 300, null: false
     t.datetime "showcase_snake_seconds_per_fruit_at"
+    t.integer "showcase_dino_seconds_per_obstacle", default: 300, null: false
+    t.datetime "showcase_dino_seconds_per_obstacle_at"
     t.index ["email"], name: "index_users_on_email"
     t.index ["nickname"], name: "index_users_on_nickname", unique: true
     t.index ["provider", "uid"], name: "index_users_on_provider_and_uid"

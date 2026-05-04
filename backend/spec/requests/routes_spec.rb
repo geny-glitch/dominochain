@@ -480,7 +480,9 @@ RSpec.describe "Routes", type: :request do
         expect(json["showcase_snake_enabled"]).to be true
         expect(json["showcase_dino_enabled"]).to be true
         expect(json["showcase_backdoor_enabled"]).to be true
+        expect(json["showcase_quiz_seconds_per_point"]).to eq(1)
         expect(json["showcase_snake_seconds_per_fruit"]).to eq(300)
+        expect(json["showcase_dino_seconds_per_obstacle"]).to eq(300)
       end
     end
 
@@ -551,6 +553,27 @@ RSpec.describe "Routes", type: :request do
         expect(json["showcase_snake_seconds_per_fruit"]).to eq(600)
       end
 
+      it "updates per-game showcase seconds independently" do
+        beta = create(
+          :user, :beta,
+          showcase_quiz_seconds_per_point: 1,
+          showcase_snake_seconds_per_fruit: 300,
+          showcase_dino_seconds_per_obstacle: 300
+        )
+        device = create(:device, user: beta)
+        patch "/api/showcase_settings",
+          params: { showcase_quiz_seconds_per_point: 2, showcase_dino_seconds_per_obstacle: 120 },
+          headers: { "X-Device-Id" => device.device_id, "X-Device-Token" => device.auth_token }
+        expect(response).to have_http_status(:ok)
+        expect(beta.reload.showcase_quiz_seconds_per_point).to eq(2)
+        expect(beta.showcase_snake_seconds_per_fruit).to eq(300)
+        expect(beta.showcase_dino_seconds_per_obstacle).to eq(120)
+        json = JSON.parse(response.body)
+        expect(json["showcase_quiz_seconds_per_point"]).to eq(2)
+        expect(json["showcase_snake_seconds_per_fruit"]).to eq(300)
+        expect(json["showcase_dino_seconds_per_obstacle"]).to eq(120)
+      end
+
       it "rejects decreasing snake seconds within 24 hours of last change" do
         beta = create(
           :user, :beta,
@@ -577,6 +600,34 @@ RSpec.describe "Routes", type: :request do
           headers: { "X-Device-Id" => device.device_id, "X-Device-Token" => device.auth_token }
         expect(response).to have_http_status(:ok)
         expect(beta.reload.showcase_snake_seconds_per_fruit).to eq(300)
+      end
+
+      it "rejects decreasing dino seconds within 24 hours of last change" do
+        beta = create(
+          :user, :beta,
+          showcase_dino_seconds_per_obstacle: 600,
+          showcase_dino_seconds_per_obstacle_at: 23.hours.ago
+        )
+        device = create(:device, user: beta)
+        patch "/api/showcase_settings",
+          params: { showcase_dino_seconds_per_obstacle: 300 },
+          headers: { "X-Device-Id" => device.device_id, "X-Device-Token" => device.auth_token }
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(beta.reload.showcase_dino_seconds_per_obstacle).to eq(600)
+      end
+
+      it "rejects decreasing quiz seconds within 24 hours of last change" do
+        beta = create(
+          :user, :beta,
+          showcase_quiz_seconds_per_point: 3,
+          showcase_quiz_seconds_per_point_at: 23.hours.ago
+        )
+        device = create(:device, user: beta)
+        patch "/api/showcase_settings",
+          params: { showcase_quiz_seconds_per_point: 1 },
+          headers: { "X-Device-Id" => device.device_id, "X-Device-Token" => device.auth_token }
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(beta.reload.showcase_quiz_seconds_per_point).to eq(3)
       end
     end
 

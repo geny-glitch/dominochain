@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
 class ShowcaseController < ApplicationController
-  # Temps ajouté au verrou par action de score (pomme Snake ou obstacle Dino) — appliqué côté serveur dans #add_time.
+  # Temps ajouté au verrou par action de score — appliqué côté serveur dans #add_time.
+  QUIZ_SECONDS_PER_POINT = 1
   SNAKE_SECONDS_PER_FRUIT = 300
+  DINO_SECONDS_PER_OBSTACLE = 300
 
   # Backdoor: max duration per submission (aligné avec #add_time)
   BACKDOOR_MAX_SECONDS = 86_400 * 365
@@ -28,6 +30,7 @@ class ShowcaseController < ApplicationController
     return render "not_found", status: :not_found unless @beta.showcase_quiz_enabled
 
     @showcase_url = showcase_url(@beta.nickname)
+    @quiz_seconds_per_point = quiz_seconds_per_point_for(@beta)
   end
 
   def snake
@@ -45,7 +48,7 @@ class ShowcaseController < ApplicationController
     return render "not_found", status: :not_found unless @beta.showcase_dino_enabled
 
     @showcase_url = showcase_url(@beta.nickname)
-    @dino_seconds_per_obstacle = snake_seconds_per_fruit_for(@beta)
+    @dino_seconds_per_obstacle = dino_seconds_per_obstacle_for(@beta)
   end
 
   def backdoor
@@ -153,11 +156,7 @@ class ShowcaseController < ApplicationController
       return (request.format.json? ? (render(json: { error: "Jeu indisponible." }, status: 404)) : render("not_found", status: :not_found))
     end
 
-    seconds = if game_kind == "snake" || game_kind == "dino"
-      snake_seconds_per_fruit_for(@beta)
-    else
-      params[:seconds]&.to_i
-    end
+    seconds = showcase_seconds_for(@beta, game_kind, params[:seconds])
     unless seconds.present? && seconds.positive? && seconds <= 86_400 * 365 # max 1 an
       return (request.format.json? ? (render(json: { error: "Score invalide." }, status: 422)) : redirect_to(showcase_path(@beta.nickname), alert: "Score invalide."))
     end
@@ -337,6 +336,30 @@ class ShowcaseController < ApplicationController
     s = beta.showcase_snake_seconds_per_fruit
     s = SNAKE_SECONDS_PER_FRUIT if s.blank? || s <= 0
     [s, 86_400 * 365].min
+  end
+
+  def quiz_seconds_per_point_for(beta)
+    s = beta.showcase_quiz_seconds_per_point
+    s = QUIZ_SECONDS_PER_POINT if s.blank? || s <= 0
+    [s, 86_400 * 365].min
+  end
+
+  def dino_seconds_per_obstacle_for(beta)
+    s = beta.showcase_dino_seconds_per_obstacle
+    s = DINO_SECONDS_PER_OBSTACLE if s.blank? || s <= 0
+    [s, 86_400 * 365].min
+  end
+
+  def showcase_seconds_for(beta, game_kind, requested_seconds)
+    case game_kind
+    when "snake" then snake_seconds_per_fruit_for(beta)
+    when "dino" then dino_seconds_per_obstacle_for(beta)
+    else
+      points = requested_seconds&.to_i
+      return nil if points.blank?
+
+      points * quiz_seconds_per_point_for(beta)
+    end
   end
 
   def showcase_game_enabled_for?(beta, game_type)

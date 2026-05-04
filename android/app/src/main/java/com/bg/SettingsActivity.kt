@@ -58,7 +58,9 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     private var showcaseListenerQuiet = false
+    private var lastLoadedQuizSecondsPerPoint = 1
     private var lastLoadedSnakeSecondsPerFruit = 300
+    private var lastLoadedDinoSecondsPerObstacle = 300
 
     private fun setupShowcaseVitrine() {
         binding.showcaseQuizSwitch.setOnCheckedChangeListener { view, checked ->
@@ -105,33 +107,44 @@ class SettingsActivity : AppCompatActivity() {
             }
             saveShowcaseSettings()
         }
+        binding.showcaseQuizSecondsSave.setOnClickListener {
+            saveShowcaseSecondsInputs()
+        }
         binding.showcaseSnakeSecondsSave.setOnClickListener {
-            val raw = binding.showcaseSnakeSecondsInput.text.toString().trim()
-            val v = raw.toIntOrNull()
-            if (v == null || v <= 0) {
-                Toast.makeText(this, R.string.showcase_snake_seconds_invalid, Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-            lifecycleScope.launch {
-                RetrofitClient.sessionManager = sessionManager
-                val q = binding.showcaseQuizSwitch.isChecked
-                val s = binding.showcaseSnakeSwitch.isChecked
-                val d = binding.showcaseDinoSwitch.isChecked
-                val b = binding.showcaseBackdoorSwitch.isChecked
-                authRepository.updateShowcaseSettings(q, s, d, b, v)
-                    .onSuccess {
-                        Toast.makeText(this@SettingsActivity, R.string.showcase_snake_seconds_saved, Toast.LENGTH_SHORT).show()
-                        loadShowcaseSettings()
-                    }
-                    .onFailure { err ->
-                        Toast.makeText(
-                            this@SettingsActivity,
-                            err.message ?: getString(R.string.showcase_settings_error),
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        loadShowcaseSettings()
-                    }
-            }
+            saveShowcaseSecondsInputs()
+        }
+        binding.showcaseDinoSecondsSave.setOnClickListener {
+            saveShowcaseSecondsInputs()
+        }
+    }
+
+    private fun saveShowcaseSecondsInputs() {
+        val quizSeconds = binding.showcaseQuizSecondsInput.text.toString().trim().toIntOrNull()
+        val snakeSeconds = binding.showcaseSnakeSecondsInput.text.toString().trim().toIntOrNull()
+        val dinoSeconds = binding.showcaseDinoSecondsInput.text.toString().trim().toIntOrNull()
+        if (quizSeconds == null || quizSeconds <= 0 || snakeSeconds == null || snakeSeconds <= 0 || dinoSeconds == null || dinoSeconds <= 0) {
+            Toast.makeText(this, R.string.showcase_seconds_invalid, Toast.LENGTH_SHORT).show()
+            return
+        }
+        lifecycleScope.launch {
+            RetrofitClient.sessionManager = sessionManager
+            val q = binding.showcaseQuizSwitch.isChecked
+            val s = binding.showcaseSnakeSwitch.isChecked
+            val d = binding.showcaseDinoSwitch.isChecked
+            val b = binding.showcaseBackdoorSwitch.isChecked
+            authRepository.updateShowcaseSettings(q, s, d, b, quizSeconds, snakeSeconds, dinoSeconds)
+                .onSuccess {
+                    Toast.makeText(this@SettingsActivity, R.string.showcase_seconds_saved, Toast.LENGTH_SHORT).show()
+                    loadShowcaseSettings()
+                }
+                .onFailure { err ->
+                    Toast.makeText(
+                        this@SettingsActivity,
+                        err.message ?: getString(R.string.showcase_settings_error),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    loadShowcaseSettings()
+                }
         }
     }
 
@@ -145,9 +158,15 @@ class SettingsActivity : AppCompatActivity() {
                     binding.showcaseSnakeSwitch.isChecked = st.showcase_snake_enabled
                     binding.showcaseDinoSwitch.isChecked = st.showcase_dino_enabled ?: true
                     binding.showcaseBackdoorSwitch.isChecked = st.showcase_backdoor_enabled
-                    val sec = st.showcase_snake_seconds_per_fruit?.takeIf { it > 0 } ?: 300
-                    lastLoadedSnakeSecondsPerFruit = sec
-                    binding.showcaseSnakeSecondsInput.setText(sec.toString())
+                    val quizSec = st.showcase_quiz_seconds_per_point?.takeIf { it > 0 } ?: 1
+                    val snakeSec = st.showcase_snake_seconds_per_fruit?.takeIf { it > 0 } ?: 300
+                    val dinoSec = st.showcase_dino_seconds_per_obstacle?.takeIf { it > 0 } ?: 300
+                    lastLoadedQuizSecondsPerPoint = quizSec
+                    lastLoadedSnakeSecondsPerFruit = snakeSec
+                    lastLoadedDinoSecondsPerObstacle = dinoSec
+                    binding.showcaseQuizSecondsInput.setText(quizSec.toString())
+                    binding.showcaseSnakeSecondsInput.setText(snakeSec.toString())
+                    binding.showcaseDinoSecondsInput.setText(dinoSec.toString())
                     showcaseListenerQuiet = false
                 }
         }
@@ -158,11 +177,15 @@ class SettingsActivity : AppCompatActivity() {
         val s = binding.showcaseSnakeSwitch.isChecked
         val d = binding.showcaseDinoSwitch.isChecked
         val b = binding.showcaseBackdoorSwitch.isChecked
+        val rawQuiz = binding.showcaseQuizSecondsInput.text.toString().trim()
+        val quizSec = rawQuiz.toIntOrNull()?.takeIf { it > 0 } ?: lastLoadedQuizSecondsPerPoint
         val rawSnake = binding.showcaseSnakeSecondsInput.text.toString().trim()
         val snakeSec = rawSnake.toIntOrNull()?.takeIf { it > 0 } ?: lastLoadedSnakeSecondsPerFruit
+        val rawDino = binding.showcaseDinoSecondsInput.text.toString().trim()
+        val dinoSec = rawDino.toIntOrNull()?.takeIf { it > 0 } ?: lastLoadedDinoSecondsPerObstacle
         lifecycleScope.launch {
             RetrofitClient.sessionManager = sessionManager
-            authRepository.updateShowcaseSettings(q, s, d, b, snakeSec)
+            authRepository.updateShowcaseSettings(q, s, d, b, quizSec, snakeSec, dinoSec)
                 .onFailure { err ->
                     Toast.makeText(
                         this@SettingsActivity,

@@ -217,12 +217,21 @@ class MainActivity : AppCompatActivity() {
                     response?.lock,
                     response?.error,
                     response?.pishock_enabled == true,
-                    response?.showcase_snake_seconds_per_fruit
+                    response?.showcase_quiz_seconds_per_point,
+                    response?.showcase_snake_seconds_per_fruit,
+                    response?.showcase_dino_seconds_per_obstacle
                 )
+                val quizSec = response?.showcase_quiz_seconds_per_point?.takeIf { it > 0 }
                 val snakeSec = response?.showcase_snake_seconds_per_fruit?.takeIf { it > 0 }
-                if (snakeSec != null) {
+                val dinoSec = response?.showcase_dino_seconds_per_obstacle?.takeIf { it > 0 }
+                val gameSecondsText = listOfNotNull(
+                    quizSec?.let { "Q: $it" },
+                    snakeSec?.let { "S: $it" },
+                    dinoSec?.let { "D: $it" }
+                ).joinToString("  ")
+                if (gameSecondsText.isNotEmpty()) {
                     binding.chasterSnakeSeconds.visibility = android.view.View.VISIBLE
-                    binding.chasterSnakeSeconds.text = "S: $snakeSec"
+                    binding.chasterSnakeSeconds.text = gameSecondsText
                 } else {
                     binding.chasterSnakeSeconds.visibility = android.view.View.GONE
                 }

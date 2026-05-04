@@ -6,9 +6,13 @@ class BetaDashboardController < ApplicationController
   before_action :set_task, only: [:task, :submit_proof]
 
   def update_snake_seconds
-    sec = params[:showcase_snake_seconds_per_fruit].to_i
-    current_user.update!(showcase_snake_seconds_per_fruit: sec)
-    redirect_to beta_dashboard_path, notice: "Temps par point vitrine enregistré (#{current_user.showcase_snake_seconds_per_fruit} s)."
+    current_user.update!(
+      showcase_quiz_seconds_per_point: params[:showcase_quiz_seconds_per_point].to_i,
+      showcase_snake_seconds_per_fruit: params[:showcase_snake_seconds_per_fruit].to_i,
+      showcase_dino_seconds_per_obstacle: params[:showcase_dino_seconds_per_obstacle].to_i
+    )
+    redirect_to beta_dashboard_path,
+      notice: "Temps des jeux enregistré (Quiz #{current_user.showcase_quiz_seconds_per_point} s/pt, Snake #{current_user.showcase_snake_seconds_per_fruit} s, Dino #{current_user.showcase_dino_seconds_per_obstacle} s)."
   rescue ActiveRecord::RecordInvalid => e
     redirect_to beta_dashboard_path, alert: e.record.errors.full_messages.join(", ")
   end

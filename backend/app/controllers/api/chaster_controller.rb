@@ -9,14 +9,13 @@ module Api
       lock_info = service.current_lock
       pishock_enabled = current_user.pishock_enabled
 
-      snake_sec = current_user.showcase_snake_seconds_per_fruit
-      snake_sec = ShowcaseController::SNAKE_SECONDS_PER_FRUIT if snake_sec.blank? || snake_sec <= 0
+      game_seconds = showcase_game_seconds
 
       if lock_info.nil?
         render json: {
           lock: nil,
           pishock_enabled: pishock_enabled,
-          showcase_snake_seconds_per_fruit: snake_sec
+          **game_seconds
         }
         return
       end
@@ -31,25 +30,23 @@ module Api
           display_remaining_time: lock_info[:display_remaining_time]
         },
         pishock_enabled: pishock_enabled,
-        showcase_snake_seconds_per_fruit: snake_sec
+        **game_seconds
       }
     rescue ChasterService::Unauthorized
-      snake_sec = current_user.showcase_snake_seconds_per_fruit
-      snake_sec = ShowcaseController::SNAKE_SECONDS_PER_FRUIT if snake_sec.blank? || snake_sec <= 0
+      game_seconds = showcase_game_seconds
       render json: {
         error: "Chaster non connecté",
         lock: nil,
         pishock_enabled: current_user.pishock_enabled,
-        showcase_snake_seconds_per_fruit: snake_sec
+        **game_seconds
       }, status: :unauthorized
     rescue ChasterService::Error => e
-      snake_sec = current_user.showcase_snake_seconds_per_fruit
-      snake_sec = ShowcaseController::SNAKE_SECONDS_PER_FRUIT if snake_sec.blank? || snake_sec <= 0
+      game_seconds = showcase_game_seconds
       render json: {
         error: e.message,
         lock: nil,
         pishock_enabled: current_user.pishock_enabled,
-        showcase_snake_seconds_per_fruit: snake_sec
+        **game_seconds
       }, status: :unprocessable_entity
     end
 
@@ -61,6 +58,21 @@ module Api
     end
 
     private
+
+    def showcase_game_seconds
+      quiz_sec = current_user.showcase_quiz_seconds_per_point
+      quiz_sec = ShowcaseController::QUIZ_SECONDS_PER_POINT if quiz_sec.blank? || quiz_sec <= 0
+      snake_sec = current_user.showcase_snake_seconds_per_fruit
+      snake_sec = ShowcaseController::SNAKE_SECONDS_PER_FRUIT if snake_sec.blank? || snake_sec <= 0
+      dino_sec = current_user.showcase_dino_seconds_per_obstacle
+      dino_sec = ShowcaseController::DINO_SECONDS_PER_OBSTACLE if dino_sec.blank? || dino_sec <= 0
+
+      {
+        showcase_quiz_seconds_per_point: quiz_sec,
+        showcase_snake_seconds_per_fruit: snake_sec,
+        showcase_dino_seconds_per_obstacle: dino_sec
+      }
+    end
 
     def lock_to_json(lock)
       remaining = if lock.status == "locked" && !lock.is_frozen && lock.end_date

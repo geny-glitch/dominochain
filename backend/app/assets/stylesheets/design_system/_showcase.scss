@@ -1510,6 +1510,63 @@ html:has(body.tetris-page-active) {
 
 .tetris-board-wrap {
   flex: 0 0 auto;
+  position: relative;
+}
+
+.tetris-fx {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.tetris-fx-tetris {
+  font-family: $ds-font-mono;
+  font-weight: 800;
+  font-size: clamp(1.25rem, 6vw, 2.25rem);
+  letter-spacing: 0.12em;
+  color: #f0f9ff;
+  text-shadow:
+    0 0 12px rgba(56, 189, 248, 0.95),
+    0 0 28px rgba(167, 139, 250, 0.85);
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity 0.35s ease, transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.tetris-fx-tetris--show {
+  opacity: 1;
+  transform: scale(1);
+}
+
+@keyframes tetris-board-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  20% {
+    transform: translateX(-4px);
+  }
+
+  40% {
+    transform: translateX(4px);
+  }
+
+  60% {
+    transform: translateX(-3px);
+  }
+
+  80% {
+    transform: translateX(3px);
+  }
+}
+
+.tetris-board-wrap--shake {
+  animation: tetris-board-shake 0.45s ease-in-out 2;
 }
 
 .tetris-preview-aside {

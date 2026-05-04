@@ -1300,6 +1300,126 @@ html:has(body.tetris-page-active) {
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
+
+  &:fullscreen {
+    padding: 0;
+    overflow: hidden;
+    justify-content: stretch;
+  }
+
+  &:-webkit-full-screen {
+    padding: 0;
+    overflow: hidden;
+    justify-content: stretch;
+  }
+}
+
+.tetris-page--play {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  min-height: 100dvh;
+  height: 100dvh;
+  padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
+  overflow: hidden;
+  justify-content: flex-start;
+
+  .tetris-leaderboard {
+    display: none;
+  }
+
+  .tetris-container {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    max-width: none;
+    width: 100%;
+    margin: 0;
+    gap: 0;
+    align-self: stretch;
+  }
+
+  .tetris-intro {
+    display: none;
+  }
+
+  .tetris-gameover:not([hidden]) {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-top: $ds-space-md;
+    padding: 0 $ds-space-md $ds-space-xl;
+  }
+
+  .tetris-game {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    padding: 0 $ds-space-sm;
+    box-sizing: border-box;
+  }
+
+  .tetris-play-layout {
+    flex: 1 1 0;
+    min-height: 0;
+    align-items: stretch;
+    justify-content: center;
+    width: 100%;
+    gap: $ds-space-sm;
+    padding-bottom: $ds-space-xs;
+  }
+
+  .tetris-board-wrap {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+  }
+
+  .tetris-canvas {
+    max-width: 100%;
+    width: auto;
+    height: 100%;
+    max-height: 100%;
+    aspect-ratio: 10 / 20;
+    object-fit: contain;
+  }
+
+  .tetris-preview-aside {
+    flex: 0 0 auto;
+    align-self: flex-start;
+    max-width: 42%;
+    min-width: 5.5rem;
+  }
+
+  .tetris-next-canvas {
+    width: 100%;
+    max-width: 6.5rem;
+    height: auto;
+    aspect-ratio: 1;
+  }
+
+  .tetris-score-row {
+    width: 100%;
+    text-align: left;
+    align-items: flex-start;
+    margin-top: $ds-space-sm;
+    margin-bottom: 0;
+  }
+
+  .tetris-touch-controls {
+    flex-shrink: 0;
+    margin-top: auto;
+    padding: $ds-space-sm 0 calc(#{$ds-space-sm} + env(safe-area-inset-bottom, 0));
+    width: 100%;
+    box-sizing: border-box;
+  }
 }
 
 .tetris-container {

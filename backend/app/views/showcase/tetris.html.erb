@@ -8,7 +8,7 @@
   <div class="tetris-container">
     <div id="tetris-intro" class="tetris-intro">
       <h1 class="tetris-title">Tétris</h1>
-      <p class="tetris-hint">Clavier : flèches pour déplacer et tourner, bas pour descendre, espace pour poser. Tactile : deux zones gauche/droite, puis poser et tourner.</p>
+      <p class="tetris-hint">Clavier : flèches pour déplacer et tourner, bas pour descendre, espace pour poser. Tactile : deux zones gauche/droite, puis tourner et poser.</p>
       <div class="tetris-start-speed">
         <label class="tetris-start-speed-label" for="tetris-start-speed">Vitesse de départ</label>
         <select id="tetris-start-speed" class="tetris-input tetris-start-speed-select" aria-label="Vitesse de départ">
@@ -21,19 +21,19 @@
       <button type="button" class="tetris-btn tetris-btn--start" id="tetris-start">Jouer</button>
     </div>
 
-    <div id="tetris-game" class="tetris-game" style="display: none;">
-      <div class="tetris-score-row">
-        <span class="tetris-score">Lignes : <span id="tetris-lines">0</span></span>
-        <span class="tetris-score tetris-score--speed">Vitesse : <span id="tetris-speed-label">—</span></span>
-        <span class="tetris-score tetris-score--time">Temps ajouté : <span id="tetris-time-added">0 seconde</span></span>
-      </div>
+    <div id="tetris-game" class="tetris-game" hidden>
       <div class="tetris-play-layout">
         <div class="tetris-board-wrap">
           <canvas id="tetris-canvas" class="tetris-canvas" width="200" height="400"></canvas>
         </div>
-        <aside class="tetris-preview-aside" aria-label="Prochaine pièce">
+        <aside class="tetris-preview-aside" aria-label="Prochaine pièce et score">
           <p class="tetris-preview-title">Suivante</p>
           <canvas id="tetris-next-canvas" class="tetris-next-canvas" width="80" height="80"></canvas>
+          <div class="tetris-score-row" aria-live="polite">
+            <span class="tetris-score">Lignes : <span id="tetris-lines">0</span></span>
+            <span class="tetris-score tetris-score--speed">Vitesse : <span id="tetris-speed-label">—</span></span>
+            <span class="tetris-score tetris-score--time">Temps ajouté : <span id="tetris-time-added">0 seconde</span></span>
+          </div>
         </aside>
       </div>
       <div class="tetris-touch-controls" aria-label="Contrôles tactiles">
@@ -42,13 +42,13 @@
           <button type="button" class="tetris-btn tetris-btn--zone" id="tetris-btn-right" aria-label="Droite">→</button>
         </div>
         <div class="tetris-touch-row tetris-touch-row--actions">
-          <button type="button" class="tetris-btn tetris-btn--action tetris-btn--harddrop" id="tetris-btn-harddrop" aria-label="Poser tout de suite">Poser</button>
           <button type="button" class="tetris-btn tetris-btn--action tetris-btn--rotate" id="tetris-btn-rotate" aria-label="Tourner">Tourner</button>
+          <button type="button" class="tetris-btn tetris-btn--action tetris-btn--harddrop" id="tetris-btn-harddrop" aria-label="Poser tout de suite">Poser</button>
         </div>
       </div>
     </div>
 
-    <div id="tetris-gameover" class="tetris-gameover" style="display: none;">
+    <div id="tetris-gameover" class="tetris-gameover" hidden>
       <h2 class="tetris-gameover-title">Game Over</h2>
       <p class="tetris-gameover-score">Lignes : <span id="tetris-final-lines">0</span></p>
       <p class="tetris-gameover-score">Temps ajouté : <span id="tetris-final-time">0 seconde</span></p>
@@ -95,15 +95,15 @@
   const COLS = 10;
   const ROWS = 22;
   const VISIBLE_ROWS = 20;
-  const CELL = 20;
-  const CANVAS_W = COLS * CELL;
-  const CANVAS_H = VISIBLE_ROWS * CELL;
-  const BASE_DROP_MS = 520;
+  let cellSize = 20;
+  let CANVAS_W = COLS * cellSize;
+  let CANVAS_H = VISIBLE_ROWS * cellSize;
+  const BASE_DROP_MS = 555;
   const MIN_DROP_MS = 72;
   const DROP_PER_LINE_MULT = 0.965;
   const SPAWN_ROW_OFFSET = 2;
   const NEXT_CANVAS = 80;
-  const NEXT_CELL = 18;
+  let nextCellSize = 18;
 
   const SHAPES = {
     I: [
@@ -191,6 +191,17 @@
   const nameFields = document.getElementById("tetris-lb-name-fields");
   const autoReg = document.getElementById("tetris-lb-auto-registered");
   const regName = document.getElementById("tetris-lb-registered-name");
+  const boardWrap = document.querySelector(".tetris-board-wrap");
+  const previewAside = document.querySelector(".tetris-preview-aside");
+  let tetrisLayoutRaf = null;
+
+  function useMobileTetrisChrome() {
+    try {
+      return window.matchMedia("(max-width: 640px), (pointer: coarse)").matches;
+    } catch (_) {
+      return window.innerWidth <= 640;
+    }
+  }
 
   let board = [];
   let bag = [];
@@ -280,6 +291,86 @@
     return div.innerHTML;
   }
 
+  function coarsenCell(px, cols) {
+    return Math.max(8, Math.min(36, Math.floor(px / cols)));
+  }
+
+  function updateNextPreviewCellSize() {
+    const dpr = window.devicePixelRatio || 1;
+    const lw = nextCanvas.clientWidth || NEXT_CANVAS;
+    nextCellSize = Math.max(8, Math.min(24, Math.floor((lw - 16) / 4)));
+    const px = Math.round(lw * dpr);
+    if (px > 0) {
+      nextCanvas.width = px;
+      nextCanvas.height = px;
+      nextCtx.setTransform(1, 0, 0, 1, 0, 0);
+      nextCtx.scale(dpr, dpr);
+    }
+  }
+
+  function updateTetrisPlayLayout() {
+    if (!boardWrap || !previewAside || !canvas) return;
+    const isPlay = pageEl.classList.contains("tetris-page--play");
+    if (!isPlay) {
+      cellSize = 20;
+      CANVAS_W = COLS * cellSize;
+      CANVAS_H = VISIBLE_ROWS * cellSize;
+      canvas.width = CANVAS_W;
+      canvas.height = CANVAS_H;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      updateNextPreviewCellSize();
+      return;
+    }
+    const controls = document.querySelector(".tetris-touch-controls");
+    const controlsH = controls ? controls.offsetHeight : 0;
+    const gap = 12;
+    const padX = 16;
+    const padTop = 8;
+    const vv = window.visualViewport;
+    const viewW = vv ? vv.width : window.innerWidth;
+    const viewH = vv ? vv.height : window.innerHeight;
+    const asideW = previewAside.offsetWidth || 0;
+    const availW = Math.max(0, viewW - padX * 2 - asideW - gap);
+    const availH = Math.max(0, viewH - controlsH - padTop - gap);
+    const cellW = coarsenCell(availW, COLS);
+    const cellH = coarsenCell(availH, VISIBLE_ROWS);
+    const nextCell = Math.min(cellW, cellH);
+    cellSize = nextCell;
+    CANVAS_W = COLS * cellSize;
+    CANVAS_H = VISIBLE_ROWS * cellSize;
+    const dpr = window.devicePixelRatio || 1;
+    const bufW = Math.round(CANVAS_W * dpr);
+    const bufH = Math.round(CANVAS_H * dpr);
+    canvas.width = bufW;
+    canvas.height = bufH;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    updateNextPreviewCellSize();
+  }
+
+  function scheduleTetrisLayout() {
+    if (tetrisLayoutRaf != null) cancelAnimationFrame(tetrisLayoutRaf);
+    tetrisLayoutRaf = requestAnimationFrame(() => {
+      tetrisLayoutRaf = null;
+      updateTetrisPlayLayout();
+      draw();
+      refreshNextPreview();
+    });
+  }
+
+  function setPlayModeUi(active) {
+    if (active && useMobileTetrisChrome()) {
+      pageEl.classList.add("tetris-page--play");
+    } else {
+      pageEl.classList.remove("tetris-page--play");
+    }
+    if (active) {
+      intro.hidden = true;
+      gameEl.hidden = false;
+      gameoverEl.hidden = true;
+    }
+    scheduleTetrisLayout();
+  }
+
   function shuffleBag() {
     bag = BAG_TYPES.slice();
     for (let i = bag.length - 1; i > 0; i--) {
@@ -311,18 +402,20 @@
 
   function drawNextBlock(offsetX, offsetY, gridR, gridC, color) {
     const pad = 1;
-    const x = offsetX + gridC * NEXT_CELL;
-    const y = offsetY + gridR * NEXT_CELL;
+    const cs = nextCellSize;
+    const x = offsetX + gridC * cs;
+    const y = offsetY + gridR * cs;
     nextCtx.fillStyle = color;
-    nextCtx.fillRect(x + pad, y + pad, NEXT_CELL - pad * 2, NEXT_CELL - pad * 2);
+    nextCtx.fillRect(x + pad, y + pad, cs - pad * 2, cs - pad * 2);
     nextCtx.strokeStyle = "rgba(255,255,255,0.35)";
     nextCtx.lineWidth = 1;
-    nextCtx.strokeRect(x + pad, y + pad, NEXT_CELL - pad * 2, NEXT_CELL - pad * 2);
+    nextCtx.strokeRect(x + pad, y + pad, cs - pad * 2, cs - pad * 2);
   }
 
   function refreshNextPreview() {
+    const lw = nextCanvas.clientWidth || NEXT_CANVAS;
     nextCtx.fillStyle = "#020617";
-    nextCtx.fillRect(0, 0, NEXT_CANVAS, NEXT_CANVAS);
+    nextCtx.fillRect(0, 0, lw, lw);
     if (gameOver) return;
     const t = peekNextPieceType();
     if (!t) return;
@@ -334,8 +427,8 @@
     });
     const gh = maxR - minR + 1;
     const gw = maxC - minC + 1;
-    const offsetX = (NEXT_CANVAS - gw * NEXT_CELL) / 2;
-    const offsetY = (NEXT_CANVAS - gh * NEXT_CELL) / 2;
+    const offsetX = (lw - gw * nextCellSize) / 2;
+    const offsetY = (lw - gh * nextCellSize) / 2;
     const col = COLORS[t] || "#94a3b8";
     cells.forEach(([r, c]) => {
       drawNextBlock(offsetX, offsetY, r - minR, c - minC, col);
@@ -481,14 +574,15 @@
     const vr = r - (ROWS - VISIBLE_ROWS);
     if (vr < 0 || vr >= VISIBLE_ROWS) return;
     ctx.globalAlpha = alpha;
-    const x = c * CELL;
-    const y = vr * CELL;
+    const cs = cellSize;
+    const x = c * cs;
+    const y = vr * cs;
     const pad = 1;
     ctx.fillStyle = color;
-    ctx.fillRect(x + pad, y + pad, CELL - pad * 2, CELL - pad * 2);
+    ctx.fillRect(x + pad, y + pad, cs - pad * 2, cs - pad * 2);
     ctx.strokeStyle = "rgba(255,255,255,0.35)";
     ctx.lineWidth = 1;
-    ctx.strokeRect(x + pad, y + pad, CELL - pad * 2, CELL - pad * 2);
+    ctx.strokeRect(x + pad, y + pad, cs - pad * 2, cs - pad * 2);
     ctx.globalAlpha = 1;
   }
 
@@ -613,17 +707,28 @@
     }
   }
 
+  function leavePlayViewport() {
+    const doc = document;
+    const ex = doc.exitFullscreen || doc.webkitExitFullscreen || doc.msExitFullscreen;
+    const fsEl = doc.fullscreenElement || doc.webkitFullscreenElement;
+    if (fsEl && typeof ex === "function") {
+      ex.call(doc).catch(() => {});
+    }
+    pageEl.classList.remove("tetris-page--play");
+    scheduleTetrisLayout();
+  }
+
   async function endGame() {
     if (gameOver) return;
     gameOver = true;
     if (gameLoop) cancelAnimationFrame(gameLoop);
-    gameEl.style.display = "none";
-    gameoverEl.style.display = "block";
+    const saved = getPlayerCookie().trim();
+    gameEl.hidden = true;
+    gameoverEl.hidden = false;
     finalLinesEl.textContent = String(linesTotal);
     finalTimeEl.textContent = formatAddedTime(linesTotal);
     refreshNextPreview();
 
-    const saved = getPlayerCookie().trim();
     if (currentSessionId) {
       if (saved) {
         try {
@@ -637,6 +742,7 @@
             lbPage = 1;
             lbSortEl.value = "score";
             loadLeaderboard();
+            leavePlayViewport();
             return;
           }
         } catch (_) {}
@@ -646,6 +752,7 @@
         body: JSON.stringify({ score: linesTotal })
       }).catch(() => {});
     }
+    leavePlayViewport();
     setTetrisLeaderboardUi(false, saved);
   }
 
@@ -653,9 +760,15 @@
     const m = parseFloat(startSpeedSelect && startSpeedSelect.value ? startSpeedSelect.value : "1", 10);
     startSpeedMultiplier = Number.isFinite(m) && m > 0 ? Math.min(4, m) : 1;
     resetGame();
-    intro.style.display = "none";
-    gameEl.style.display = "block";
-    gameoverEl.style.display = "none";
+    if (useMobileTetrisChrome()) {
+      const fsEl = pageEl;
+      const tryFs = fsEl.requestFullscreen || fsEl.webkitRequestFullscreen || fsEl.msRequestFullscreen;
+      if (typeof tryFs === "function") {
+        tryFs.call(fsEl).catch(() => {});
+      }
+    }
+    setPlayModeUi(true);
+    gameoverEl.hidden = true;
     setTetrisLeaderboardUi(false, getPlayerCookie() || "");
 
     try {
@@ -715,16 +828,17 @@
     loadLeaderboard();
   });
 
-  document.addEventListener("keydown", e => {
-    const keys = ["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," ","Space"];
-    if (keys.includes(e.key)) e.preventDefault();
-    if (gameOver || e.repeat) return;
-    if (e.key === "ArrowLeft") tryMove(0, -1);
-    else if (e.key === "ArrowRight") tryMove(0, 1);
-    else if (e.key === "ArrowDown") softDropStep();
-    else if (e.key === "ArrowUp") tryRotate();
-    else if (e.key === " " || e.key === "Space") hardDrop();
-  }, { passive: false });
+  document.addEventListener("fullscreenchange", () => {
+    if (!document.fullscreenElement) scheduleTetrisLayout();
+  });
+  document.addEventListener("webkitfullscreenchange", () => {
+    if (!document.webkitFullscreenElement) scheduleTetrisLayout();
+  });
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener("resize", scheduleTetrisLayout);
+    window.visualViewport.addEventListener("scroll", scheduleTetrisLayout);
+  }
+  window.addEventListener("resize", scheduleTetrisLayout);
 
   resetGame();
   draw();

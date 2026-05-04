@@ -42,6 +42,7 @@ class SettingsActivity : AppCompatActivity() {
         val deviceId = sessionManager.deviceId ?: return
         binding.debugDeviceId.text = deviceId
         binding.debugServerUrl.text = com.bg.BuildConfig.API_BASE_URL
+        binding.buildNumber.text = getString(R.string.build_number, com.bg.BuildConfig.VERSION_CODE)
         binding.accountNickname.text = sessionManager.nickname ?: "-"
         binding.accountDeviceName.setText(getDeviceName() ?: "")
 

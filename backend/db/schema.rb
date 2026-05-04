@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_04_30_143100) do
+ActiveRecord::Schema[7.2].define(version: 2026_05_04_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -179,15 +179,6 @@ ActiveRecord::Schema[7.2].define(version: 2026_04_30_143100) do
     t.index ["task_id"], name: "index_punishments_on_task_id"
   end
 
-  create_table "showcase_add_time_events", force: :cascade do |t|
-    t.bigint "user_id", null: false
-    t.integer "seconds", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["user_id", "created_at"], name: "index_showcase_add_time_events_on_user_id_and_created_at"
-    t.index ["user_id"], name: "index_showcase_add_time_events_on_user_id"
-  end
-
   create_table "quiz_questions", force: :cascade do |t|
     t.text "question", null: false
     t.jsonb "answers", default: [], null: false
@@ -198,6 +189,15 @@ ActiveRecord::Schema[7.2].define(version: 2026_04_30_143100) do
     t.datetime "updated_at", null: false
     t.index ["difficulty"], name: "index_quiz_questions_on_difficulty"
     t.index ["question_type"], name: "index_quiz_questions_on_question_type"
+  end
+
+  create_table "showcase_add_time_events", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.integer "seconds", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "created_at"], name: "index_showcase_add_time_events_on_user_id_and_created_at"
+    t.index ["user_id"], name: "index_showcase_add_time_events_on_user_id"
   end
 
   create_table "showcase_time_additions", force: :cascade do |t|
@@ -250,15 +250,15 @@ ActiveRecord::Schema[7.2].define(version: 2026_04_30_143100) do
     t.string "pishock_api_key"
     t.boolean "showcase_quiz_enabled", default: true, null: false
     t.boolean "showcase_snake_enabled", default: true, null: false
-    t.boolean "showcase_dino_enabled", default: true, null: false
-    t.boolean "showcase_tetris_enabled", default: true, null: false
     t.boolean "showcase_backdoor_enabled", default: true, null: false
-    t.integer "showcase_quiz_seconds_per_point", default: 1, null: false
-    t.datetime "showcase_quiz_seconds_per_point_at"
     t.integer "showcase_snake_seconds_per_fruit", default: 300, null: false
     t.datetime "showcase_snake_seconds_per_fruit_at"
+    t.boolean "showcase_dino_enabled", default: true, null: false
     t.integer "showcase_dino_seconds_per_obstacle", default: 300, null: false
     t.datetime "showcase_dino_seconds_per_obstacle_at"
+    t.integer "showcase_quiz_seconds_per_point", default: 1, null: false
+    t.datetime "showcase_quiz_seconds_per_point_at"
+    t.boolean "showcase_tetris_enabled", default: true, null: false
     t.integer "showcase_tetris_seconds_per_line", default: 60, null: false
     t.datetime "showcase_tetris_seconds_per_line_at"
     t.index ["email"], name: "index_users_on_email"

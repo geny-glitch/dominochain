@@ -78,4 +78,5 @@
     <string name="update_download_started">Téléchargement de la mise à jour lancé</string>
     <string name="update_download_failed">Le téléchargement de la mise à jour a échoué</string>
     <string name="update_install_permission_required">Autorise l\'installation depuis cette app, puis relance la mise à jour.</string>
+    <string name="build_number">Build %1$d</string>
 </resources>

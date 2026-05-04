@@ -647,5 +647,14 @@
                 android:fontFamily="monospace" />
         </LinearLayout>
 
+        <TextView
+            android:id="@+id/build_number"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/ds_space_xl"
+            android:gravity="center"
+            style="@style/DsSmall"
+            android:alpha="0.4" />
+
     </LinearLayout>
 </ScrollView>

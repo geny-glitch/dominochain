@@ -81,7 +81,8 @@
           </div>
           <div class="ds-form-group">
             <%= label_tag :pishock_intensity_factor, "Facteur d'intensité Z", class: "ds-form-label" %>
-            <%= number_field_tag :pishock_intensity_factor, current_user.pishock_intensity_factor, min: 0.01, max: 100, step: 0.1, class: "ds-input" %>
+            <% pif = current_user.pishock_intensity_factor.to_f; pif_display = pif % 1 == 0 ? pif.to_i : pif %>
+            <%= number_field_tag :pishock_intensity_factor, pif_display, min: 0.01, max: 100, step: "any", class: "ds-input" %>
             <p class="ds-beta-control-hint" style="margin-top: 0.25rem;">Multiplie l'intensité de tous les chocs. Z=1 = normal · Z=10 → 1 ligne Tétris = intensité 10 · Z=0.5 → moitié moins fort. Max 100.</p>
           </div>
           <%= submit_tag "Enregistrer PiShock", class: "ds-btn ds-btn--primary ds-btn--sm" %>

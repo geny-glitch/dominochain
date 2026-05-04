@@ -8,21 +8,43 @@
   <div class="tetris-container">
     <div id="tetris-intro" class="tetris-intro">
       <h1 class="tetris-title">Tétris</h1>
-      <p class="tetris-hint">Flèches ou boutons : gauche/droite, bas pour descendre, tourner pour pivoter. Espace pour poser tout de suite.</p>
+      <p class="tetris-hint">Clavier : flèches pour déplacer et tourner, bas pour descendre, espace pour poser. Tactile : deux zones gauche/droite, puis poser et tourner.</p>
+      <div class="tetris-start-speed">
+        <label class="tetris-start-speed-label" for="tetris-start-speed">Vitesse de départ</label>
+        <select id="tetris-start-speed" class="tetris-input tetris-start-speed-select" aria-label="Vitesse de départ">
+          <option value="1">Normale</option>
+          <option value="1.4">Rapide</option>
+          <option value="1.9">Très rapide</option>
+          <option value="2.5">Extrême</option>
+        </select>
+      </div>
       <button type="button" class="tetris-btn tetris-btn--start" id="tetris-start">Jouer</button>
     </div>
 
     <div id="tetris-game" class="tetris-game" style="display: none;">
       <div class="tetris-score-row">
         <span class="tetris-score">Lignes : <span id="tetris-lines">0</span></span>
+        <span class="tetris-score tetris-score--speed">Vitesse : <span id="tetris-speed-label">—</span></span>
         <span class="tetris-score tetris-score--time">Temps ajouté : <span id="tetris-time-added">0 seconde</span></span>
       </div>
-      <canvas id="tetris-canvas" class="tetris-canvas" width="200" height="400"></canvas>
-      <div class="tetris-controls-row" aria-label="Contrôles tactiles">
-        <button type="button" class="tetris-btn tetris-btn--pad" id="tetris-btn-left" aria-label="Gauche">←</button>
-        <button type="button" class="tetris-btn tetris-btn--pad" id="tetris-btn-down" aria-label="Bas">↓</button>
-        <button type="button" class="tetris-btn tetris-btn--pad" id="tetris-btn-right" aria-label="Droite">→</button>
-        <button type="button" class="tetris-btn tetris-btn--pad tetris-btn--rotate" id="tetris-btn-rotate" aria-label="Tourner">⟳</button>
+      <div class="tetris-play-layout">
+        <div class="tetris-board-wrap">
+          <canvas id="tetris-canvas" class="tetris-canvas" width="200" height="400"></canvas>
+        </div>
+        <aside class="tetris-preview-aside" aria-label="Prochaine pièce">
+          <p class="tetris-preview-title">Suivante</p>
+          <canvas id="tetris-next-canvas" class="tetris-next-canvas" width="80" height="80"></canvas>
+        </aside>
+      </div>
+      <div class="tetris-touch-controls" aria-label="Contrôles tactiles">
+        <div class="tetris-touch-row tetris-touch-row--lr">
+          <button type="button" class="tetris-btn tetris-btn--zone" id="tetris-btn-left" aria-label="Gauche">←</button>
+          <button type="button" class="tetris-btn tetris-btn--zone" id="tetris-btn-right" aria-label="Droite">→</button>
+        </div>
+        <div class="tetris-touch-row tetris-touch-row--actions">
+          <button type="button" class="tetris-btn tetris-btn--action tetris-btn--harddrop" id="tetris-btn-harddrop" aria-label="Poser tout de suite">Poser</button>
+          <button type="button" class="tetris-btn tetris-btn--action tetris-btn--rotate" id="tetris-btn-rotate" aria-label="Tourner">Tourner</button>
+        </div>
       </div>
     </div>
 
@@ -76,6 +98,12 @@
   const CELL = 20;
   const CANVAS_W = COLS * CELL;
   const CANVAS_H = VISIBLE_ROWS * CELL;
+  const BASE_DROP_MS = 520;
+  const MIN_DROP_MS = 72;
+  const DROP_PER_LINE_MULT = 0.965;
+  const SPAWN_ROW_OFFSET = 2;
+  const NEXT_CANVAS = 80;
+  const NEXT_CELL = 18;
 
   const SHAPES = {
     I: [
@@ -141,11 +169,15 @@
 
   const canvas = document.getElementById("tetris-canvas");
   const ctx = canvas.getContext("2d");
+  const nextCanvas = document.getElementById("tetris-next-canvas");
+  const nextCtx = nextCanvas.getContext("2d");
   const intro = document.getElementById("tetris-intro");
   const gameEl = document.getElementById("tetris-game");
   const gameoverEl = document.getElementById("tetris-gameover");
   const linesEl = document.getElementById("tetris-lines");
+  const speedLabelEl = document.getElementById("tetris-speed-label");
   const timeAddedEl = document.getElementById("tetris-time-added");
+  const startSpeedSelect = document.getElementById("tetris-start-speed");
   const finalLinesEl = document.getElementById("tetris-final-lines");
   const finalTimeEl = document.getElementById("tetris-final-time");
   const playerNameInput = document.getElementById("tetris-player-name");
@@ -167,7 +199,8 @@
   let pr = 0;
   let pc = 0;
   let linesTotal = 0;
-  let dropMs = 720;
+  let dropMs = BASE_DROP_MS;
+  let startSpeedMultiplier = 1;
   let lastDrop = 0;
   let gameLoop = null;
   let gameOver = false;
@@ -255,9 +288,58 @@
     }
   }
 
-  function nextPieceType() {
+  function ensureBagNonEmpty() {
     if (!bag.length) shuffleBag();
+  }
+
+  function pullNextFromBag() {
+    ensureBagNonEmpty();
     return bag.pop();
+  }
+
+  function peekNextPieceType() {
+    ensureBagNonEmpty();
+    return bag[bag.length - 1];
+  }
+
+  function updateSpeedLabel() {
+    if (!speedLabelEl) return;
+    const sec = dropMs / 1000;
+    const secStr = sec.toLocaleString("fr-FR", { maximumFractionDigits: sec >= 1 ? 1 : 2, minimumFractionDigits: 0 });
+    speedLabelEl.textContent = secStr + " s / pas";
+  }
+
+  function drawNextBlock(offsetX, offsetY, gridR, gridC, color) {
+    const pad = 1;
+    const x = offsetX + gridC * NEXT_CELL;
+    const y = offsetY + gridR * NEXT_CELL;
+    nextCtx.fillStyle = color;
+    nextCtx.fillRect(x + pad, y + pad, NEXT_CELL - pad * 2, NEXT_CELL - pad * 2);
+    nextCtx.strokeStyle = "rgba(255,255,255,0.35)";
+    nextCtx.lineWidth = 1;
+    nextCtx.strokeRect(x + pad, y + pad, NEXT_CELL - pad * 2, NEXT_CELL - pad * 2);
+  }
+
+  function refreshNextPreview() {
+    nextCtx.fillStyle = "#020617";
+    nextCtx.fillRect(0, 0, NEXT_CANVAS, NEXT_CANVAS);
+    if (gameOver) return;
+    const t = peekNextPieceType();
+    if (!t) return;
+    const cells = getCells(t, 0);
+    let minR = 99, maxR = -99, minC = 99, maxC = -99;
+    cells.forEach(([r, c]) => {
+      minR = Math.min(minR, r); maxR = Math.max(maxR, r);
+      minC = Math.min(minC, c); maxC = Math.max(maxC, c);
+    });
+    const gh = maxR - minR + 1;
+    const gw = maxC - minC + 1;
+    const offsetX = (NEXT_CANVAS - gw * NEXT_CELL) / 2;
+    const offsetY = (NEXT_CANVAS - gh * NEXT_CELL) / 2;
+    const col = COLORS[t] || "#94a3b8";
+    cells.forEach(([r, c]) => {
+      drawNextBlock(offsetX, offsetY, r - minR, c - minC, col);
+    });
   }
 
   function getCells(type, rIndex) {
@@ -280,7 +362,7 @@
   }
 
   function spawnPiece() {
-    pieceType = nextPieceType();
+    pieceType = pullNextFromBag();
     rot = 0;
     const cells = getCells(pieceType, rot);
     let minR = 99, maxR = -99, minC = 99, maxC = -99;
@@ -289,9 +371,11 @@
       minC = Math.min(minC, c); maxC = Math.max(maxC, c);
     });
     pc = Math.floor((COLS - (maxC - minC + 1)) / 2) - minC;
-    pr = -minR;
+    pr = -minR + SPAWN_ROW_OFFSET;
     if (!validPosition(pr, pc, rot)) {
       endGame();
+    } else {
+      refreshNextPreview();
     }
   }
 
@@ -329,7 +413,10 @@
       linesTotal += cleared;
       linesEl.textContent = linesTotal;
       timeAddedEl.textContent = formatAddedTime(linesTotal);
-      dropMs = Math.max(160, 720 - Math.floor(linesTotal * 12));
+      for (let i = 0; i < cleared; i++) {
+        dropMs = Math.max(MIN_DROP_MS, Math.floor(dropMs * DROP_PER_LINE_MULT));
+      }
+      updateSpeedLabel();
       onLinesCleared(cleared);
     }
   }
@@ -499,12 +586,14 @@
     pr = 0;
     pc = 0;
     linesTotal = 0;
-    dropMs = 720;
+    dropMs = Math.max(MIN_DROP_MS, Math.floor(BASE_DROP_MS / startSpeedMultiplier));
     lastDrop = 0;
     gameOver = false;
     currentSessionId = null;
     linesEl.textContent = "0";
     timeAddedEl.textContent = formatAddedTime(0);
+    updateSpeedLabel();
+    refreshNextPreview();
   }
 
   function tick(now) {
@@ -532,6 +621,7 @@
     gameoverEl.style.display = "block";
     finalLinesEl.textContent = String(linesTotal);
     finalTimeEl.textContent = formatAddedTime(linesTotal);
+    refreshNextPreview();
 
     const saved = getPlayerCookie().trim();
     if (currentSessionId) {
@@ -560,6 +650,8 @@
   }
 
   async function startGame() {
+    const m = parseFloat(startSpeedSelect && startSpeedSelect.value ? startSpeedSelect.value : "1", 10);
+    startSpeedMultiplier = Number.isFinite(m) && m > 0 ? Math.min(4, m) : 1;
     resetGame();
     intro.style.display = "none";
     gameEl.style.display = "block";
@@ -607,7 +699,7 @@
 
   document.getElementById("tetris-btn-left").addEventListener("click", () => tryMove(0, -1));
   document.getElementById("tetris-btn-right").addEventListener("click", () => tryMove(0, 1));
-  document.getElementById("tetris-btn-down").addEventListener("click", () => softDropStep());
+  document.getElementById("tetris-btn-harddrop").addEventListener("click", () => hardDrop());
   document.getElementById("tetris-btn-rotate").addEventListener("click", () => tryRotate());
 
   lbSortEl.addEventListener("change", () => {

@@ -238,8 +238,8 @@
   let downNextAt = 0;
   let lockDeadline = 0;
   let lineClearAnim = null;
-  /** After a rotation on the floor, no further rotations until the next gravity tick (see tryRotate). */
-  let nextRotateAllowedAt = 0;
+  /** After rotating while the piece cannot fall, block further rotations until it moves (slide/drop). */
+  let rotationFloorLock = false;
 
   function syncHorizontalAutoshift() {
     if (leftHeld && rightHeld) {
@@ -516,6 +516,7 @@
     if (!validPosition(pr, pc, rot)) {
       endGame();
     } else {
+      rotationFloorLock = false;
       refreshLockDelay();
       refreshNextPreview();
     }
@@ -551,10 +552,14 @@
   }
 
   function applyLineClearToBoard(rowsSortedHighToLow) {
-    for (const r of rowsSortedHighToLow) {
-      board.splice(r, 1);
-      board.unshift(Array(COLS).fill(null));
+    if (!rowsSortedHighToLow.length) return;
+    const drop = new Set(rowsSortedHighToLow);
+    const kept = [];
+    for (let r = 0; r < ROWS; r++) {
+      if (!drop.has(r)) kept.push(board[r]);
     }
+    while (kept.length < ROWS) kept.unshift(Array(COLS).fill(null));
+    for (let r = 0; r < ROWS; r++) board[r] = kept[r];
   }
 
   function scoreAndRegisterLineClear(cleared, isTetris) {
@@ -607,7 +612,7 @@
     pr = 0;
     pc = 0;
     lockDeadline = 0;
-    nextRotateAllowedAt = 0;
+    rotationFloorLock = false;
     const rows = findCompleteRowIndices();
     if (rows.length) {
       const sorted = rows.slice().sort((a, b) => b - a);
@@ -628,7 +633,7 @@
     if (validPosition(nr, nc, rot)) {
       pr = nr;
       pc = nc;
-      if (dCol !== 0) nextRotateAllowedAt = 0;
+      rotationFloorLock = false;
       refreshLockDelay();
       return true;
     }
@@ -637,8 +642,7 @@
 
   function tryRotate() {
     if (gameOver || !pieceType) return;
-    const now = performance.now();
-    if (pieceOnGround() && now < nextRotateAllowedAt) return;
+    if (rotationFloorLock && !validPosition(pr + 1, pc, rot)) return;
     const rots = SHAPES[pieceType];
     const nextRot = (rot + 1) % rots.length;
     let applied = false;
@@ -657,14 +661,14 @@
     }
     if (!applied) return;
     refreshLockDelay();
-    if (pieceOnGround()) nextRotateAllowedAt = lastDrop + dropMs;
+    rotationFloorLock = !validPosition(pr + 1, pc, rot);
   }
 
   function tryGravityStep() {
     if (gameOver || !pieceType) return false;
     if (validPosition(pr + 1, pc, rot)) {
       pr++;
-      nextRotateAllowedAt = 0;
+      rotationFloorLock = false;
       refreshLockDelay();
       return true;
     }
@@ -675,7 +679,7 @@
     if (gameOver || !pieceType) return;
     if (validPosition(pr + 1, pc, rot)) {
       pr++;
-      nextRotateAllowedAt = 0;
+      rotationFloorLock = false;
       lastDrop = performance.now();
       refreshLockDelay();
     }
@@ -873,7 +877,7 @@
     downNextAt = 0;
     lockDeadline = 0;
     lineClearAnim = null;
-    nextRotateAllowedAt = 0;
+    rotationFloorLock = false;
     if (fxRoot) fxRoot.hidden = true;
     if (fxTetris) {
       fxTetris.hidden = true;

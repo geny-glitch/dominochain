@@ -123,17 +123,17 @@ jobs:
             git push
           fi
 
+      - name: Prepare APK asset
+        run: cp android/app/build/outputs/apk/release/app-release.apk app.apk
+
       - name: Notify backend of new version
         run: |
           curl --fail -s -X POST https://bg-backend.fly.dev/android/version \
-            -H "Content-Type: application/json" \
             -H "Authorization: Bearer ${DEPLOY_SECRET}" \
-            -d "{\"versionCode\": ${{ steps.version.outputs.code }}, \"url\": \"https://github.com/${{ github.repository }}/releases/download/latest/app.apk\"}"
+            -F "versionCode=${{ steps.version.outputs.code }}" \
+            -F "apk=@app.apk;type=application/vnd.android.package-archive"
         env:
           DEPLOY_SECRET: ${{ secrets.DEPLOY_SECRET }}
-
-      - name: Prepare APK asset
-        run: cp android/app/build/outputs/apk/release/app-release.apk app.apk
 
       - name: Publish versioned GitHub release
         run: |

@@ -12,7 +12,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
-class CigaretteTrackerWidgetProvider : AppWidgetProvider() {
+class CigaretteQuickAddWidgetProvider : AppWidgetProvider() {
 
     override fun onUpdate(
         context: Context,
@@ -23,9 +23,9 @@ class CigaretteTrackerWidgetProvider : AppWidgetProvider() {
     }
 
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action == ACTION_INCREMENT_CIGARETTES) {
+        if (intent.action == ACTION_QUICK_ADD_CIGARETTE) {
             val pendingResult = goAsync()
-            incrementFromWidget(context.applicationContext) {
+            incrementAndRefresh(context.applicationContext) {
                 pendingResult.finish()
             }
             return
@@ -34,21 +34,21 @@ class CigaretteTrackerWidgetProvider : AppWidgetProvider() {
     }
 
     companion object {
-        private const val ACTION_INCREMENT_CIGARETTES = "com.bg.action.INCREMENT_CIGARETTES"
+        private const val ACTION_QUICK_ADD_CIGARETTE = "com.bg.action.QUICK_ADD_CIGARETTE"
         private val widgetScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-        fun incrementFromWidget(context: Context, onFinished: (() -> Unit)? = null) {
+        private fun incrementAndRefresh(context: Context, onFinished: (() -> Unit)? = null) {
             val appContext = context.applicationContext
+            val repository = TrackerRepository(appContext)
             widgetScope.launch {
                 try {
-                    val repository = TrackerRepository(appContext)
                     if (SessionManager(appContext).isLoggedIn) {
                         repository.incrementRemote()
                     } else {
                         repository.increment(TrackerType.Cigarettes)
                     }
+                    CigaretteTrackerWidgetProvider.updateWidgets(appContext)
                     updateWidgets(appContext)
-                    CigaretteQuickAddWidgetProvider.updateWidgets(appContext)
                 } finally {
                     onFinished?.invoke()
                 }
@@ -58,7 +58,7 @@ class CigaretteTrackerWidgetProvider : AppWidgetProvider() {
         fun updateWidgets(context: Context) {
             val appWidgetManager = AppWidgetManager.getInstance(context)
             val ids = appWidgetManager.getAppWidgetIds(
-                ComponentName(context, CigaretteTrackerWidgetProvider::class.java)
+                ComponentName(context, CigaretteQuickAddWidgetProvider::class.java)
             )
             val snapshot = TrackerRepository(context).snapshot(TrackerType.Cigarettes)
             ids.forEach { appWidgetId ->
@@ -67,26 +67,22 @@ class CigaretteTrackerWidgetProvider : AppWidgetProvider() {
         }
 
         private fun remoteViews(context: Context, snapshot: TrackerSnapshot): RemoteViews {
-            val openAppIntent = PendingIntent.getActivity(
+            val addIntent = PendingIntent.getBroadcast(
                 context,
-                10,
-                Intent(context, MainActivity::class.java),
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-            val incrementIntent = PendingIntent.getBroadcast(
-                context,
-                11,
-                Intent(context, CigaretteTrackerWidgetProvider::class.java).apply {
-                    action = ACTION_INCREMENT_CIGARETTES
+                21,
+                Intent(context, CigaretteQuickAddWidgetProvider::class.java).apply {
+                    action = ACTION_QUICK_ADD_CIGARETTE
                 },
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
 
-            return RemoteViews(context.packageName, R.layout.widget_tracker_cigarettes).apply {
-                setTextViewText(R.id.widget_cigarettes_count, snapshot.count.toString())
-                setTextViewText(R.id.widget_cigarettes_unit, snapshot.type.unitLabel)
-                setOnClickPendingIntent(R.id.widget_cigarettes_root, openAppIntent)
-                setOnClickPendingIntent(R.id.widget_cigarettes_increment, incrementIntent)
+            return RemoteViews(context.packageName, R.layout.widget_cigarette_quick_add).apply {
+                setTextViewText(
+                    R.id.widget_cigarette_quick_add_count,
+                    context.getString(R.string.tracker_cigarettes_quick_add_count, snapshot.count)
+                )
+                setOnClickPendingIntent(R.id.widget_cigarette_quick_add_root, addIntent)
+                setOnClickPendingIntent(R.id.widget_cigarette_quick_add_button, addIntent)
             }
         }
     }

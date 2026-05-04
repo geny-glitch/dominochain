@@ -105,6 +105,9 @@ class MainActivity : AppCompatActivity() {
         binding.cigarettesIncrement.setOnClickListener {
             incrementCigarettesTracker()
         }
+        binding.cigarettesCard.setOnClickListener {
+            startActivity(Intent(this, CigaretteHistoryActivity::class.java))
+        }
 
         WallpaperWorker.schedule(this)
         PermissionsWorker.schedule(this)
@@ -176,14 +179,33 @@ class MainActivity : AppCompatActivity() {
         binding.cigarettesCount.text = cigarettes.count.toString()
         binding.cigarettesUnit.text = cigarettes.type.unitLabel
         CigaretteTrackerWidgetProvider.updateWidgets(this)
+        CigaretteQuickAddWidgetProvider.updateWidgets(this)
+
+        lifecycleScope.launch {
+            val remote = trackerRepository.refreshRemote().getOrNull() ?: return@launch
+            binding.cigarettesCount.text = remote.count.toString()
+            binding.cigarettesUnit.text = remote.type.unitLabel
+            CigaretteTrackerWidgetProvider.updateWidgets(this@MainActivity)
+            CigaretteQuickAddWidgetProvider.updateWidgets(this@MainActivity)
+        }
     }
 
     private fun incrementCigarettesTracker() {
-        val cigarettes = trackerRepository.increment(TrackerType.Cigarettes)
-        binding.cigarettesCount.text = cigarettes.count.toString()
-        binding.cigarettesUnit.text = cigarettes.type.unitLabel
-        CigaretteTrackerWidgetProvider.updateWidgets(this)
-        Toast.makeText(this, "+1 cigarette", Toast.LENGTH_SHORT).show()
+        lifecycleScope.launch {
+            val snapshot = if (sessionManager.isLoggedIn) {
+                trackerRepository.incrementRemote().getOrElse {
+                    Toast.makeText(this@MainActivity, "Backend indisponible: cigarette non envoyée", Toast.LENGTH_SHORT).show()
+                    return@launch
+                }
+            } else {
+                trackerRepository.increment(TrackerType.Cigarettes)
+            }
+            binding.cigarettesCount.text = snapshot.count.toString()
+            binding.cigarettesUnit.text = snapshot.type.unitLabel
+            CigaretteTrackerWidgetProvider.updateWidgets(this@MainActivity)
+            CigaretteQuickAddWidgetProvider.updateWidgets(this@MainActivity)
+            Toast.makeText(this@MainActivity, "+1 cigarette", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun loadChasterLock() {
@@ -195,12 +217,24 @@ class MainActivity : AppCompatActivity() {
                     response?.lock,
                     response?.error,
                     response?.pishock_enabled == true,
-                    response?.showcase_snake_seconds_per_fruit
+                    response?.showcase_quiz_seconds_per_point,
+                    response?.showcase_snake_seconds_per_fruit,
+                    response?.showcase_dino_seconds_per_obstacle,
+                    response?.showcase_tetris_seconds_per_line
                 )
+                val quizSec = response?.showcase_quiz_seconds_per_point?.takeIf { it > 0 }
                 val snakeSec = response?.showcase_snake_seconds_per_fruit?.takeIf { it > 0 }
-                if (snakeSec != null) {
+                val dinoSec = response?.showcase_dino_seconds_per_obstacle?.takeIf { it > 0 }
+                val tetrisSec = response?.showcase_tetris_seconds_per_line?.takeIf { it > 0 }
+                val gameSecondsText = listOfNotNull(
+                    quizSec?.let { "Q: $it" },
+                    snakeSec?.let { "S: $it" },
+                    dinoSec?.let { "D: $it" },
+                    tetrisSec?.let { "T: $it" }
+                ).joinToString("  ")
+                if (gameSecondsText.isNotEmpty()) {
                     binding.chasterSnakeSeconds.visibility = android.view.View.VISIBLE
-                    binding.chasterSnakeSeconds.text = "S: $snakeSec"
+                    binding.chasterSnakeSeconds.text = gameSecondsText
                 } else {
                     binding.chasterSnakeSeconds.visibility = android.view.View.GONE
                 }

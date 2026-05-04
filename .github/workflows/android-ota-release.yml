@@ -4,9 +4,16 @@ on:
   push:
     branches:
       - main
+    paths:
+      - "android/**"
+      - ".github/workflows/android-ota-release.yml"
 
 permissions:
   contents: write
+
+concurrency:
+  group: android-ota-release
+  cancel-in-progress: true
 
 jobs:
   release:
@@ -23,6 +30,10 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
+          cache: gradle
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Decode release keystore
         run: |
@@ -30,25 +41,60 @@ jobs:
         env:
           KEYSTORE_FILE: ${{ secrets.KEYSTORE_FILE }}
 
+      - name: Compute next OTA version code
+        id: ota_version
+        run: |
+          NEXT_VERSION_CODE="$(python3 - <<'PY'
+          import json
+          import os
+
+          with open("version.json", encoding="utf-8") as f:
+              current_version_code = int(json.load(f)["versionCode"])
+          run_number = int(os.environ["GITHUB_RUN_NUMBER"])
+          print(max(current_version_code + 1, run_number))
+          PY
+          )"
+          echo "code=${NEXT_VERSION_CODE}" >> "${GITHUB_OUTPUT}"
+
       - name: Build signed release APK
         working-directory: android
-        run: ./gradlew assembleRelease
+        run: |
+          for attempt in 1 2 3; do
+            if ./gradlew --no-daemon assembleRelease; then
+              exit 0
+            fi
+            if [ "${attempt}" -eq 3 ]; then
+              exit 1
+            fi
+            sleep "$((attempt * 10))"
+          done
         env:
           KEYSTORE_PATH: release.keystore
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          OTA_VERSION_CODE: ${{ steps.ota_version.outputs.code }}
 
       - name: Read version code
         id: version
         working-directory: android
         run: |
-          VERSION_CODE="$(./gradlew -q printVersionCode)"
-          echo "code=${VERSION_CODE}" >> "${GITHUB_OUTPUT}"
+          for attempt in 1 2 3; do
+            if VERSION_CODE="$(OTA_VERSION_CODE="${OTA_VERSION_CODE}" ./gradlew --no-daemon -q printVersionCode)"; then
+              echo "code=${VERSION_CODE}" >> "${GITHUB_OUTPUT}"
+              exit 0
+            fi
+            if [ "${attempt}" -eq 3 ]; then
+              exit 1
+            fi
+            sleep "$((attempt * 10))"
+          done
+        env:
+          OTA_VERSION_CODE: ${{ steps.ota_version.outputs.code }}
 
       - name: Update version.json
         run: |
-          python - <<'PY'
+          python3 - <<'PY'
           import json
           import os
 

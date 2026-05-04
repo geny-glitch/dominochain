@@ -329,6 +329,8 @@ class FcmService
       case game_type.to_s
       when "snake" then "Snake"
       when "quiz" then "Quiz"
+      when "dino" then "Dino Run"
+      when "tetris" then "Tétris"
       else game_type.to_s.presence || "jeu"
       end
     end

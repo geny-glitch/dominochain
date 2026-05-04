@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_cigarette_quick_add_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_chaster_background"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="@dimen/ds_space_sm">
+
+    <TextView
+        android:id="@+id/widget_cigarette_quick_add_button"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:background="@drawable/widget_tracker_increment_background"
+        android:contentDescription="@string/tracker_widget_increment_description"
+        android:gravity="center"
+        android:text="@string/tracker_increment"
+        android:textColor="@color/ds_bg"
+        android:textSize="24sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/widget_cigarette_quick_add_count"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/ds_space_xs"
+        android:gravity="center"
+        android:text="@string/tracker_cigarettes_quick_add_count_preview"
+        android:textColor="@color/ds_text_muted"
+        android:textSize="10sp" />
+</LinearLayout>

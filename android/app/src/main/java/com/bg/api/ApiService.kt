@@ -65,15 +65,25 @@ data class MeResponse(
 data class ShowcaseSettingsResponse(
     val showcase_quiz_enabled: Boolean,
     val showcase_snake_enabled: Boolean,
+    val showcase_dino_enabled: Boolean? = true,
+    val showcase_tetris_enabled: Boolean? = true,
     val showcase_backdoor_enabled: Boolean,
-    val showcase_snake_seconds_per_fruit: Int? = null
+    val showcase_quiz_seconds_per_point: Int? = null,
+    val showcase_snake_seconds_per_fruit: Int? = null,
+    val showcase_dino_seconds_per_obstacle: Int? = null,
+    val showcase_tetris_seconds_per_line: Int? = null
 )
 
 data class ShowcaseSettingsRequest(
     val showcase_quiz_enabled: Boolean,
     val showcase_snake_enabled: Boolean,
+    val showcase_dino_enabled: Boolean,
+    val showcase_tetris_enabled: Boolean,
     val showcase_backdoor_enabled: Boolean,
-    val showcase_snake_seconds_per_fruit: Int
+    val showcase_quiz_seconds_per_point: Int,
+    val showcase_snake_seconds_per_fruit: Int,
+    val showcase_dino_seconds_per_obstacle: Int,
+    val showcase_tetris_seconds_per_line: Int
 )
 
 data class ChangePasswordRequest(
@@ -98,6 +108,7 @@ data class FcmTokenRequest(val fcm_token: String)
 
 data class NameRequest(val name: String?)
 data class PermissionsRequest(val permissions_ok: Boolean, val permissions_missing: List<String>? = null)
+data class CigaretteEntryRequest(val count: Int = 1)
 
 interface ApiService {
     @POST("api/auth/login")
@@ -153,6 +164,12 @@ interface ApiService {
 
     @GET("api/chaster/lock")
     suspend fun getChasterLock(): Response<ChasterLockResponse>
+
+    @GET("api/cigarettes")
+    suspend fun getCigarettes(): Response<CigaretteTrackerResponse>
+
+    @POST("api/cigarettes")
+    suspend fun createCigaretteEntry(@Body request: CigaretteEntryRequest): Response<CigaretteTrackerResponse>
 
     @GET("api/devices/{deviceId}/tasks")
     suspend fun getTasks(@Path("deviceId") deviceId: String): Response<List<TaskResponse>>
@@ -217,7 +234,10 @@ data class ChasterLockResponse(
     val lock: ChasterLock?,
     val error: String? = null,
     val pishock_enabled: Boolean? = null,
-    val showcase_snake_seconds_per_fruit: Int? = null
+    val showcase_quiz_seconds_per_point: Int? = null,
+    val showcase_snake_seconds_per_fruit: Int? = null,
+    val showcase_dino_seconds_per_obstacle: Int? = null,
+    val showcase_tetris_seconds_per_line: Int? = null
 )
 
 data class ChasterLock(
@@ -227,6 +247,31 @@ data class ChasterLock(
     val is_frozen: Boolean,
     val remaining_seconds: Int?,
     val display_remaining_time: Boolean = true
+)
+
+data class CigaretteTrackerResponse(
+    val today_count: Int? = null,
+    val today: CigaretteHistoryItem? = null,
+    val history: List<CigaretteHistoryItem> = emptyList(),
+    val seconds_per_cigarette: Int? = null,
+    val entry: CigaretteEntryResponse? = null,
+    val latest_entry: CigaretteEntryResponse? = null
+)
+
+data class CigaretteHistoryItem(
+    val date: String,
+    val count: Int,
+    val chaster_seconds: Int? = null
+)
+
+data class CigaretteEntryResponse(
+    val id: Long?,
+    val count: Int,
+    val smoked_on: String?,
+    val smoked_at: String?,
+    val chaster_seconds: Int,
+    val chaster_applied: Boolean,
+    val chaster_error: String?
 )
 
 data class ProofResponse(

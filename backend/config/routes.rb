@@ -25,6 +25,8 @@ Rails.application.routes.draw do
   get "showcase/:nickname", to: "showcase#show", as: :showcase
   get "showcase/:nickname/quiz", to: "showcase#quiz", as: :showcase_quiz
   get "showcase/:nickname/snake", to: "showcase#snake", as: :showcase_snake
+  get "showcase/:nickname/dino", to: "showcase#dino", as: :showcase_dino
+  get "showcase/:nickname/tetris", to: "showcase#tetris", as: :showcase_tetris
   get "showcase/:nickname/backdoor", to: "showcase#backdoor", as: :showcase_backdoor
   get "showcase/:nickname/backdoor/lock", to: "showcase#backdoor_chaster_lock", as: :showcase_backdoor_lock
   post "showcase/:nickname/backdoor/add_time", to: "showcase#backdoor_add_time", as: :showcase_backdoor_add_time
@@ -92,6 +94,9 @@ Rails.application.routes.draw do
 
     get "chaster/lock", to: "chaster#lock", as: :chaster_lock
     get "chaster/locks", to: "chaster#locks", as: :chaster_locks
+
+    get "cigarettes", to: "cigarette_entries#index"
+    post "cigarettes", to: "cigarette_entries#create"
 
     get "showcase_settings", to: "showcase_settings#show"
     patch "showcase_settings", to: "showcase_settings#update"

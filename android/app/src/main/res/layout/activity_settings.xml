@@ -81,6 +81,94 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/ds_card_background"
+                android:padding="@dimen/ds_space_md"
+                android:layout_marginBottom="@dimen/ds_space_sm">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/showcase_dino_label"
+                    style="@style/DsBody" />
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/showcase_dino_switch"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:useMaterialThemeColors="true" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/ds_card_background"
+                android:padding="@dimen/ds_space_md"
+                android:layout_marginBottom="@dimen/ds_space_sm">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/showcase_tetris_label"
+                    style="@style/DsBody" />
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/showcase_tetris_switch"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:useMaterialThemeColors="true" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/ds_card_background"
+                android:padding="@dimen/ds_space_md"
+                android:layout_marginBottom="@dimen/ds_space_sm">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/showcase_quiz_seconds_label"
+                    style="@style/DsBody" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/showcase_seconds_hint"
+                    style="@style/DsSmall"
+                    android:layout_marginTop="@dimen/ds_space_xs"
+                    android:layout_marginBottom="@dimen/ds_space_sm" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+                    <EditText
+                        android:id="@+id/showcase_quiz_seconds_input"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:inputType="number"
+                        android:maxLines="1"
+                        style="@style/DsEditText"
+                        android:hint="@string/showcase_quiz_seconds_placeholder" />
+                    <Button
+                        android:id="@+id/showcase_quiz_seconds_save"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/ds_space_sm"
+                        android:text="@string/showcase_seconds_save"
+                        style="@style/DsButton" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:background="@drawable/ds_card_background"
                 android:padding="@dimen/ds_space_md"
@@ -94,7 +182,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/showcase_snake_seconds_hint"
+                    android:text="@string/showcase_seconds_hint"
                     style="@style/DsSmall"
                     android:layout_marginTop="@dimen/ds_space_xs"
                     android:layout_marginBottom="@dimen/ds_space_sm" />
@@ -117,7 +205,95 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="@dimen/ds_space_sm"
-                        android:text="@string/showcase_snake_seconds_save"
+                        android:text="@string/showcase_seconds_save"
+                        style="@style/DsButton" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/ds_card_background"
+                android:padding="@dimen/ds_space_md"
+                android:layout_marginBottom="@dimen/ds_space_sm">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/showcase_dino_seconds_label"
+                    style="@style/DsBody" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/showcase_seconds_hint"
+                    style="@style/DsSmall"
+                    android:layout_marginTop="@dimen/ds_space_xs"
+                    android:layout_marginBottom="@dimen/ds_space_sm" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+                    <EditText
+                        android:id="@+id/showcase_dino_seconds_input"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:inputType="number"
+                        android:maxLines="1"
+                        style="@style/DsEditText"
+                        android:hint="@string/showcase_dino_seconds_placeholder" />
+                    <Button
+                        android:id="@+id/showcase_dino_seconds_save"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/ds_space_sm"
+                        android:text="@string/showcase_seconds_save"
+                        style="@style/DsButton" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/ds_card_background"
+                android:padding="@dimen/ds_space_md"
+                android:layout_marginBottom="@dimen/ds_space_sm">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/showcase_tetris_seconds_label"
+                    style="@style/DsBody" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/showcase_seconds_hint"
+                    style="@style/DsSmall"
+                    android:layout_marginTop="@dimen/ds_space_xs"
+                    android:layout_marginBottom="@dimen/ds_space_sm" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+                    <EditText
+                        android:id="@+id/showcase_tetris_seconds_input"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:inputType="number"
+                        android:maxLines="1"
+                        style="@style/DsEditText"
+                        android:hint="@string/showcase_tetris_seconds_placeholder" />
+                    <Button
+                        android:id="@+id/showcase_tetris_seconds_save"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/ds_space_sm"
+                        android:text="@string/showcase_seconds_save"
                         style="@style/DsButton" />
                 </LinearLayout>
             </LinearLayout>

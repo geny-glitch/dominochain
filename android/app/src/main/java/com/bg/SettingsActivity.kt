@@ -58,12 +58,15 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     private var showcaseListenerQuiet = false
+    private var lastLoadedQuizSecondsPerPoint = 1
     private var lastLoadedSnakeSecondsPerFruit = 300
+    private var lastLoadedDinoSecondsPerObstacle = 300
+    private var lastLoadedTetrisSecondsPerLine = 60
 
     private fun setupShowcaseVitrine() {
         binding.showcaseQuizSwitch.setOnCheckedChangeListener { view, checked ->
             if (showcaseListenerQuiet) return@setOnCheckedChangeListener
-            if (!checked && !binding.showcaseSnakeSwitch.isChecked && !binding.showcaseBackdoorSwitch.isChecked) {
+            if (!checked && !binding.showcaseSnakeSwitch.isChecked && !binding.showcaseDinoSwitch.isChecked && !binding.showcaseTetrisSwitch.isChecked && !binding.showcaseBackdoorSwitch.isChecked) {
                 showcaseListenerQuiet = true
                 view.isChecked = true
                 showcaseListenerQuiet = false
@@ -74,7 +77,29 @@ class SettingsActivity : AppCompatActivity() {
         }
         binding.showcaseSnakeSwitch.setOnCheckedChangeListener { view, checked ->
             if (showcaseListenerQuiet) return@setOnCheckedChangeListener
-            if (!checked && !binding.showcaseQuizSwitch.isChecked && !binding.showcaseBackdoorSwitch.isChecked) {
+            if (!checked && !binding.showcaseQuizSwitch.isChecked && !binding.showcaseDinoSwitch.isChecked && !binding.showcaseTetrisSwitch.isChecked && !binding.showcaseBackdoorSwitch.isChecked) {
+                showcaseListenerQuiet = true
+                view.isChecked = true
+                showcaseListenerQuiet = false
+                Toast.makeText(this, R.string.showcase_least_one_game, Toast.LENGTH_SHORT).show()
+                return@setOnCheckedChangeListener
+            }
+            saveShowcaseSettings()
+        }
+        binding.showcaseDinoSwitch.setOnCheckedChangeListener { view, checked ->
+            if (showcaseListenerQuiet) return@setOnCheckedChangeListener
+            if (!checked && !binding.showcaseQuizSwitch.isChecked && !binding.showcaseSnakeSwitch.isChecked && !binding.showcaseTetrisSwitch.isChecked && !binding.showcaseBackdoorSwitch.isChecked) {
+                showcaseListenerQuiet = true
+                view.isChecked = true
+                showcaseListenerQuiet = false
+                Toast.makeText(this, R.string.showcase_least_one_game, Toast.LENGTH_SHORT).show()
+                return@setOnCheckedChangeListener
+            }
+            saveShowcaseSettings()
+        }
+        binding.showcaseTetrisSwitch.setOnCheckedChangeListener { view, checked ->
+            if (showcaseListenerQuiet) return@setOnCheckedChangeListener
+            if (!checked && !binding.showcaseQuizSwitch.isChecked && !binding.showcaseSnakeSwitch.isChecked && !binding.showcaseDinoSwitch.isChecked && !binding.showcaseBackdoorSwitch.isChecked) {
                 showcaseListenerQuiet = true
                 view.isChecked = true
                 showcaseListenerQuiet = false
@@ -85,7 +110,7 @@ class SettingsActivity : AppCompatActivity() {
         }
         binding.showcaseBackdoorSwitch.setOnCheckedChangeListener { view, checked ->
             if (showcaseListenerQuiet) return@setOnCheckedChangeListener
-            if (!checked && !binding.showcaseQuizSwitch.isChecked && !binding.showcaseSnakeSwitch.isChecked) {
+            if (!checked && !binding.showcaseQuizSwitch.isChecked && !binding.showcaseSnakeSwitch.isChecked && !binding.showcaseDinoSwitch.isChecked && !binding.showcaseTetrisSwitch.isChecked) {
                 showcaseListenerQuiet = true
                 view.isChecked = true
                 showcaseListenerQuiet = false
@@ -94,32 +119,49 @@ class SettingsActivity : AppCompatActivity() {
             }
             saveShowcaseSettings()
         }
+        binding.showcaseQuizSecondsSave.setOnClickListener {
+            saveShowcaseSecondsInputs()
+        }
         binding.showcaseSnakeSecondsSave.setOnClickListener {
-            val raw = binding.showcaseSnakeSecondsInput.text.toString().trim()
-            val v = raw.toIntOrNull()
-            if (v == null || v <= 0) {
-                Toast.makeText(this, R.string.showcase_snake_seconds_invalid, Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-            lifecycleScope.launch {
-                RetrofitClient.sessionManager = sessionManager
-                val q = binding.showcaseQuizSwitch.isChecked
-                val s = binding.showcaseSnakeSwitch.isChecked
-                val b = binding.showcaseBackdoorSwitch.isChecked
-                authRepository.updateShowcaseSettings(q, s, b, v)
-                    .onSuccess {
-                        Toast.makeText(this@SettingsActivity, R.string.showcase_snake_seconds_saved, Toast.LENGTH_SHORT).show()
-                        loadShowcaseSettings()
-                    }
-                    .onFailure { err ->
-                        Toast.makeText(
-                            this@SettingsActivity,
-                            err.message ?: getString(R.string.showcase_settings_error),
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        loadShowcaseSettings()
-                    }
-            }
+            saveShowcaseSecondsInputs()
+        }
+        binding.showcaseDinoSecondsSave.setOnClickListener {
+            saveShowcaseSecondsInputs()
+        }
+        binding.showcaseTetrisSecondsSave.setOnClickListener {
+            saveShowcaseSecondsInputs()
+        }
+    }
+
+    private fun saveShowcaseSecondsInputs() {
+        val quizSeconds = binding.showcaseQuizSecondsInput.text.toString().trim().toIntOrNull()
+        val snakeSeconds = binding.showcaseSnakeSecondsInput.text.toString().trim().toIntOrNull()
+        val dinoSeconds = binding.showcaseDinoSecondsInput.text.toString().trim().toIntOrNull()
+        val tetrisSeconds = binding.showcaseTetrisSecondsInput.text.toString().trim().toIntOrNull()
+        if (quizSeconds == null || quizSeconds <= 0 || snakeSeconds == null || snakeSeconds <= 0 || dinoSeconds == null || dinoSeconds <= 0 || tetrisSeconds == null || tetrisSeconds <= 0) {
+            Toast.makeText(this, R.string.showcase_seconds_invalid, Toast.LENGTH_SHORT).show()
+            return
+        }
+        lifecycleScope.launch {
+            RetrofitClient.sessionManager = sessionManager
+            val q = binding.showcaseQuizSwitch.isChecked
+            val s = binding.showcaseSnakeSwitch.isChecked
+            val d = binding.showcaseDinoSwitch.isChecked
+            val t = binding.showcaseTetrisSwitch.isChecked
+            val b = binding.showcaseBackdoorSwitch.isChecked
+            authRepository.updateShowcaseSettings(q, s, d, t, b, quizSeconds, snakeSeconds, dinoSeconds, tetrisSeconds)
+                .onSuccess {
+                    Toast.makeText(this@SettingsActivity, R.string.showcase_seconds_saved, Toast.LENGTH_SHORT).show()
+                    loadShowcaseSettings()
+                }
+                .onFailure { err ->
+                    Toast.makeText(
+                        this@SettingsActivity,
+                        err.message ?: getString(R.string.showcase_settings_error),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    loadShowcaseSettings()
+                }
         }
     }
 
@@ -131,10 +173,21 @@ class SettingsActivity : AppCompatActivity() {
                     showcaseListenerQuiet = true
                     binding.showcaseQuizSwitch.isChecked = st.showcase_quiz_enabled
                     binding.showcaseSnakeSwitch.isChecked = st.showcase_snake_enabled
+                    binding.showcaseDinoSwitch.isChecked = st.showcase_dino_enabled ?: true
+                    binding.showcaseTetrisSwitch.isChecked = st.showcase_tetris_enabled ?: true
                     binding.showcaseBackdoorSwitch.isChecked = st.showcase_backdoor_enabled
-                    val sec = st.showcase_snake_seconds_per_fruit?.takeIf { it > 0 } ?: 300
-                    lastLoadedSnakeSecondsPerFruit = sec
-                    binding.showcaseSnakeSecondsInput.setText(sec.toString())
+                    val quizSec = st.showcase_quiz_seconds_per_point?.takeIf { it > 0 } ?: 1
+                    val snakeSec = st.showcase_snake_seconds_per_fruit?.takeIf { it > 0 } ?: 300
+                    val dinoSec = st.showcase_dino_seconds_per_obstacle?.takeIf { it > 0 } ?: 300
+                    val tetrisSec = st.showcase_tetris_seconds_per_line?.takeIf { it > 0 } ?: 60
+                    lastLoadedQuizSecondsPerPoint = quizSec
+                    lastLoadedSnakeSecondsPerFruit = snakeSec
+                    lastLoadedDinoSecondsPerObstacle = dinoSec
+                    lastLoadedTetrisSecondsPerLine = tetrisSec
+                    binding.showcaseQuizSecondsInput.setText(quizSec.toString())
+                    binding.showcaseSnakeSecondsInput.setText(snakeSec.toString())
+                    binding.showcaseDinoSecondsInput.setText(dinoSec.toString())
+                    binding.showcaseTetrisSecondsInput.setText(tetrisSec.toString())
                     showcaseListenerQuiet = false
                 }
         }
@@ -143,12 +196,20 @@ class SettingsActivity : AppCompatActivity() {
     private fun saveShowcaseSettings() {
         val q = binding.showcaseQuizSwitch.isChecked
         val s = binding.showcaseSnakeSwitch.isChecked
+        val d = binding.showcaseDinoSwitch.isChecked
+        val t = binding.showcaseTetrisSwitch.isChecked
         val b = binding.showcaseBackdoorSwitch.isChecked
+        val rawQuiz = binding.showcaseQuizSecondsInput.text.toString().trim()
+        val quizSec = rawQuiz.toIntOrNull()?.takeIf { it > 0 } ?: lastLoadedQuizSecondsPerPoint
         val rawSnake = binding.showcaseSnakeSecondsInput.text.toString().trim()
         val snakeSec = rawSnake.toIntOrNull()?.takeIf { it > 0 } ?: lastLoadedSnakeSecondsPerFruit
+        val rawDino = binding.showcaseDinoSecondsInput.text.toString().trim()
+        val dinoSec = rawDino.toIntOrNull()?.takeIf { it > 0 } ?: lastLoadedDinoSecondsPerObstacle
+        val rawTetris = binding.showcaseTetrisSecondsInput.text.toString().trim()
+        val tetrisSec = rawTetris.toIntOrNull()?.takeIf { it > 0 } ?: lastLoadedTetrisSecondsPerLine
         lifecycleScope.launch {
             RetrofitClient.sessionManager = sessionManager
-            authRepository.updateShowcaseSettings(q, s, b, snakeSec)
+            authRepository.updateShowcaseSettings(q, s, d, t, b, quizSec, snakeSec, dinoSec, tetrisSec)
                 .onFailure { err ->
                     Toast.makeText(
                         this@SettingsActivity,

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_04_25_180000) do
+ActiveRecord::Schema[7.2].define(version: 2026_04_30_143100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -66,6 +66,22 @@ ActiveRecord::Schema[7.2].define(version: 2026_04_25_180000) do
     t.index ["user_id", "end_date"], name: "index_chaster_locks_on_user_id_and_end_date"
     t.index ["user_id", "status"], name: "index_chaster_locks_on_user_id_and_status"
     t.index ["user_id"], name: "index_chaster_locks_on_user_id"
+  end
+
+  create_table "cigarette_entries", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.integer "count", default: 1, null: false
+    t.date "smoked_on", null: false
+    t.datetime "smoked_at", null: false
+    t.integer "chaster_seconds", default: 0, null: false
+    t.string "chaster_lock_id"
+    t.boolean "chaster_applied", default: false, null: false
+    t.string "chaster_error"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "smoked_at"], name: "index_cigarette_entries_on_user_id_and_smoked_at"
+    t.index ["user_id", "smoked_on"], name: "index_cigarette_entries_on_user_id_and_smoked_on"
+    t.index ["user_id"], name: "index_cigarette_entries_on_user_id"
   end
 
   create_table "control_requests", force: :cascade do |t|
@@ -234,9 +250,17 @@ ActiveRecord::Schema[7.2].define(version: 2026_04_25_180000) do
     t.string "pishock_api_key"
     t.boolean "showcase_quiz_enabled", default: true, null: false
     t.boolean "showcase_snake_enabled", default: true, null: false
+    t.boolean "showcase_dino_enabled", default: true, null: false
+    t.boolean "showcase_tetris_enabled", default: true, null: false
     t.boolean "showcase_backdoor_enabled", default: true, null: false
+    t.integer "showcase_quiz_seconds_per_point", default: 1, null: false
+    t.datetime "showcase_quiz_seconds_per_point_at"
     t.integer "showcase_snake_seconds_per_fruit", default: 300, null: false
     t.datetime "showcase_snake_seconds_per_fruit_at"
+    t.integer "showcase_dino_seconds_per_obstacle", default: 300, null: false
+    t.datetime "showcase_dino_seconds_per_obstacle_at"
+    t.integer "showcase_tetris_seconds_per_line", default: 60, null: false
+    t.datetime "showcase_tetris_seconds_per_line_at"
     t.index ["email"], name: "index_users_on_email"
     t.index ["nickname"], name: "index_users_on_nickname", unique: true
     t.index ["provider", "uid"], name: "index_users_on_provider_and_uid"
@@ -265,6 +289,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_04_25_180000) do
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "chaster_locks", "users"
+  add_foreign_key "cigarette_entries", "users"
   add_foreign_key "control_requests", "users", column: "beta_id"
   add_foreign_key "control_requests", "users", column: "boss_id"
   add_foreign_key "controls", "users", column: "beta_id"

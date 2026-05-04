@@ -102,48 +102,57 @@
   const MIN_DROP_MS = 72;
   const DROP_PER_LINE_MULT = 0.965;
   const SPAWN_ROW_OFFSET = 2;
+  const DAS_DELAY_MS = 170;
+  const DAS_REPEAT_MS = 50;
   const NEXT_CANVAS = 80;
   let nextCellSize = 18;
 
-  const SHAPES = {
-    I: [
-      [[1,0],[1,1],[1,2],[1,3]],
-      [[0,2],[1,2],[2,2],[3,2]],
-      [[2,0],[2,1],[2,2],[2,3]],
-      [[0,1],[1,1],[2,1],[3,1]]
-    ],
-    O: [[[0,0],[0,1],[1,0],[1,1]]],
-    T: [
-      [[1,0],[0,1],[1,1],[2,1]],
-      [[1,0],[1,1],[2,1],[1,2]],
-      [[0,1],[1,1],[2,1],[1,2]],
-      [[1,0],[0,1],[1,1],[1,2]]
-    ],
-    S: [
-      [[1,0],[2,0],[0,1],[1,1]],
-      [[1,0],[1,1],[2,1],[1,2]],
-      [[1,1],[2,1],[0,2],[1,2]],
-      [[0,1],[1,0],[1,1],[1,2]]
-    ],
-    Z: [
-      [[0,0],[1,0],[1,1],[2,1]],
-      [[2,0],[1,1],[2,1],[1,2]],
-      [[0,1],[1,1],[2,2],[1,2]],
-      [[1,0],[0,1],[1,1],[0,2]]
-    ],
-    J: [
-      [[0,0],[0,1],[1,1],[2,1]],
-      [[1,0],[2,0],[1,1],[1,2]],
-      [[0,1],[1,1],[2,1],[2,2]],
-      [[1,0],[1,1],[0,2],[1,2]]
-    ],
-    L: [
-      [[2,0],[0,1],[1,1],[2,1]],
-      [[1,0],[1,1],[1,2],[2,2]],
-      [[0,1],[1,1],[2,1],[0,2]],
-      [[0,0],[1,0],[1,1],[1,2]]
-    ]
+  const BAG_TYPES = ["I","O","T","S","Z","J","L"];
+
+  function normalizePieceCells(cells) {
+    const minR = Math.min(...cells.map(([r]) => r));
+    const minC = Math.min(...cells.map(([, c]) => c));
+    return cells.map(([r, c]) => [r - minR, c - minC]);
+  }
+
+  function rotatePieceCells90CW(cells) {
+    return cells.map(([r, c]) => [c, -r]);
+  }
+
+  function pieceCanonicalKey(cells) {
+    const n = normalizePieceCells(cells);
+    const sorted = n.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+    return sorted.map(([r, c]) => r + "," + c).join("|");
+  }
+
+  function buildClockwiseRotations(baseCells) {
+    let cur = normalizePieceCells(baseCells);
+    const rots = [];
+    const seen = new Set();
+    for (let i = 0; i < 4; i++) {
+      const key = pieceCanonicalKey(cur);
+      if (seen.has(key)) break;
+      seen.add(key);
+      rots.push(cur.map(([r, c]) => [r, c]));
+      cur = normalizePieceCells(rotatePieceCells90CW(cur));
+    }
+    return rots;
+  }
+
+  const BASE_SHAPES = {
+    I: [[0, 0], [0, 1], [0, 2], [0, 3]],
+    O: [[0, 0], [0, 1], [1, 0], [1, 1]],
+    T: [[1, 0], [0, 1], [1, 1], [2, 1]],
+    S: [[0, 1], [0, 2], [1, 0], [1, 1]],
+    Z: [[0, 0], [1, 0], [1, 1], [2, 1]],
+    J: [[0, 0], [0, 1], [1, 1], [2, 1]],
+    L: [[2, 0], [0, 1], [1, 1], [2, 1]]
   };
+
+  const SHAPES = {};
+  for (const t of BAG_TYPES) {
+    SHAPES[t] = buildClockwiseRotations(BASE_SHAPES[t]);
+  }
 
   const COLORS = {
     I: "#22d3ee",
@@ -154,8 +163,6 @@
     J: "#60a5fa",
     L: "#fb923c"
   };
-
-  const BAG_TYPES = ["I","O","T","S","Z","J","L"];
 
   const pageEl = document.querySelector(".tetris-page");
   const nickname = pageEl.dataset.nickname;
@@ -217,6 +224,26 @@
   let gameOver = false;
   let currentSessionId = null;
   let lbPage = 1;
+  let hShiftDir = 0;
+  let hShiftNextAt = 0;
+  let leftHeld = false;
+  let rightHeld = false;
+
+  function syncHorizontalAutoshift() {
+    if (leftHeld && rightHeld) {
+      hShiftDir = 0;
+      hShiftNextAt = 0;
+    } else if (leftHeld) {
+      hShiftDir = -1;
+      hShiftNextAt = 0;
+    } else if (rightHeld) {
+      hShiftDir = 1;
+      hShiftNextAt = 0;
+    } else {
+      hShiftDir = 0;
+      hShiftNextAt = 0;
+    }
+  }
 
   function fetchJson(url, options = {}) {
     const opts = {
@@ -515,13 +542,15 @@
   }
 
   function tryMove(dRow, dCol) {
-    if (gameOver || !pieceType) return;
+    if (gameOver || !pieceType) return false;
     const nr = pr + dRow;
     const nc = pc + dCol;
     if (validPosition(nr, nc, rot)) {
       pr = nr;
       pc = nc;
+      return true;
     }
+    return false;
   }
 
   function tryRotate() {
@@ -570,6 +599,36 @@
     spawnPiece();
   }
 
+  function ghostLandingCells() {
+    if (gameOver || !pieceType) return [];
+    let gr = pr;
+    while (validPosition(gr + 1, pc, rot)) gr++;
+    return getCells(pieceType, rot).map(([dr, dc]) => [gr + dr, pc + dc]);
+  }
+
+  function drawGhostCell(r, c, color) {
+    const vr = r - (ROWS - VISIBLE_ROWS);
+    if (vr < 0 || vr >= VISIBLE_ROWS) return;
+    const cs = cellSize;
+    const x = c * cs;
+    const y = vr * cs;
+    const pad = 1;
+    const w = cs - pad * 2;
+    const h = cs - pad * 2;
+    const dash = Math.max(3, Math.round(cs * 0.18));
+    const lw = Math.max(1, cs * 0.08);
+    ctx.save();
+    ctx.globalAlpha = 0.4;
+    ctx.fillStyle = color;
+    ctx.fillRect(x + pad, y + pad, w, h);
+    ctx.globalAlpha = 0.9;
+    ctx.strokeStyle = "rgba(255,255,255,0.7)";
+    ctx.lineWidth = lw;
+    ctx.setLineDash([dash, dash]);
+    ctx.strokeRect(x + pad + lw / 2, y + pad + lw / 2, w - lw, h - lw);
+    ctx.restore();
+  }
+
   function drawBlock(r, c, color, alpha = 1) {
     const vr = r - (ROWS - VISIBLE_ROWS);
     if (vr < 0 || vr >= VISIBLE_ROWS) return;
@@ -596,6 +655,12 @@
       }
     }
     if (pieceType && !gameOver) {
+      const live = new Set(cellsAbsolute().map(([r, c]) => r + "," + c));
+      ghostLandingCells().forEach(([r, c]) => {
+        if (!live.has(r + "," + c)) {
+          drawGhostCell(r, c, COLORS[pieceType] || "#94a3b8");
+        }
+      });
       cellsAbsolute().forEach(([r, c]) => {
         drawBlock(r, c, COLORS[pieceType] || "#94a3b8");
       });
@@ -684,6 +749,10 @@
     lastDrop = 0;
     gameOver = false;
     currentSessionId = null;
+    hShiftDir = 0;
+    hShiftNextAt = 0;
+    leftHeld = false;
+    rightHeld = false;
     linesEl.textContent = "0";
     timeAddedEl.textContent = formatAddedTime(0);
     updateSpeedLabel();
@@ -696,6 +765,13 @@
     if (now - lastDrop >= dropMs) {
       lastDrop = now;
       softDropStep();
+    }
+    if (hShiftDir !== 0) {
+      if (!hShiftNextAt) hShiftNextAt = now + DAS_DELAY_MS;
+      if (now >= hShiftNextAt) {
+        tryMove(0, hShiftDir);
+        hShiftNextAt = now + DAS_REPEAT_MS;
+      }
     }
   }
 
@@ -807,11 +883,37 @@
     }
   });
 
+  function bindRepeatMove(btn, dir) {
+    if (!btn) return;
+    const start = e => {
+      if (e.cancelable) e.preventDefault();
+      try {
+        if (e.pointerId != null) btn.setPointerCapture(e.pointerId);
+      } catch (_) {}
+      if (dir < 0) leftHeld = true;
+      else rightHeld = true;
+      syncHorizontalAutoshift();
+      tryMove(0, dir);
+    };
+    const end = e => {
+      try {
+        if (e.pointerId != null && btn.hasPointerCapture(e.pointerId)) btn.releasePointerCapture(e.pointerId);
+      } catch (_) {}
+      if (dir < 0) leftHeld = false;
+      else rightHeld = false;
+      syncHorizontalAutoshift();
+    };
+    btn.addEventListener("pointerdown", start);
+    btn.addEventListener("pointerup", end);
+    btn.addEventListener("pointercancel", end);
+    btn.addEventListener("lostpointercapture", end);
+  }
+
   document.getElementById("tetris-start").addEventListener("click", startGame);
   document.getElementById("tetris-replay").addEventListener("click", startGame);
 
-  document.getElementById("tetris-btn-left").addEventListener("click", () => tryMove(0, -1));
-  document.getElementById("tetris-btn-right").addEventListener("click", () => tryMove(0, 1));
+  bindRepeatMove(document.getElementById("tetris-btn-left"), -1);
+  bindRepeatMove(document.getElementById("tetris-btn-right"), 1);
   document.getElementById("tetris-btn-harddrop").addEventListener("click", () => hardDrop());
   document.getElementById("tetris-btn-rotate").addEventListener("click", () => tryRotate());
 
@@ -839,6 +941,42 @@
     window.visualViewport.addEventListener("scroll", scheduleTetrisLayout);
   }
   window.addEventListener("resize", scheduleTetrisLayout);
+
+  document.addEventListener("keydown", e => {
+    const keys = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " ", "Space"];
+    if (keys.includes(e.key)) e.preventDefault();
+    if (gameOver) return;
+    if (e.key === "ArrowLeft") {
+      if (e.repeat) return;
+      leftHeld = true;
+      syncHorizontalAutoshift();
+      tryMove(0, -1);
+    } else if (e.key === "ArrowRight") {
+      if (e.repeat) return;
+      rightHeld = true;
+      syncHorizontalAutoshift();
+      tryMove(0, 1);
+    } else if (e.repeat) return;
+    else if (e.key === "ArrowDown") softDropStep();
+    else if (e.key === "ArrowUp") tryRotate();
+    else if (e.key === " " || e.key === "Space") hardDrop();
+  }, { passive: false });
+
+  document.addEventListener("keyup", e => {
+    if (e.key === "ArrowLeft") {
+      leftHeld = false;
+      syncHorizontalAutoshift();
+    } else if (e.key === "ArrowRight") {
+      rightHeld = false;
+      syncHorizontalAutoshift();
+    }
+  });
+
+  window.addEventListener("blur", () => {
+    leftHeld = false;
+    rightHeld = false;
+    syncHorizontalAutoshift();
+  });
 
   resetGame();
   draw();

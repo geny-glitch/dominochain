@@ -57,7 +57,6 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        AppUpdateManager(this).checkForUpdates()
         requestNotificationPermission()
 
         tasksAdapter = TasksAdapter { task ->
@@ -371,6 +370,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        AppUpdateManager(this).checkForUpdates()
         syncWallpaper()
         reportPermissionsImmediately()
         refreshTrackers()

@@ -1,0 +1,23 @@
+{
+  "name": "bg-puryfi-ws",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/src/index.js",
+    "dev": "tsx src/index.ts",
+    "setup": "tsx src/setup.ts"
+  },
+  "dependencies": {
+    "@pury-fi/plugin-sdk": "^1.0.0",
+    "dotenv": "^16.4.5",
+    "ws": "^8.20.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "@types/ws": "^8.18.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

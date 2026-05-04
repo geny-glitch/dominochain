@@ -68,12 +68,40 @@ class BetaDashboardController < ApplicationController
   end
 
   def show
+    current_user.ensure_puryfi_plugin_token!
     @control = current_user.control
     @invite_url = control_accept_from_link_url(current_user.nickname)
     @devices = current_user.devices.order(created_at: :desc)
     @tasks = current_user.tasks.recent.includes(:proof_of_completion)
     @chaster_lock = fetch_chaster_lock
     @showcase_qr = generate_showcase_qr
+    @puryfi_ws_url = current_user.puryfi_ws_url
+    @puryfi_label_ids = (0..25).to_a
+  end
+
+  def regenerate_puryfi_token
+    current_user.regenerate_puryfi_plugin_token!
+    redirect_to beta_dashboard_path, notice: "Nouvelle URL WebSocket PuryFi générée. Mets à jour le plugin avec la nouvelle adresse."
+  end
+
+  def update_puryfi
+    attrs = { puryfi_min_score: params[:puryfi_min_score].to_f }
+    raw = params[:puryfi_seconds_per_label]
+    if raw.is_a?(ActionController::Parameters) || raw.is_a?(Hash)
+      h = raw.is_a?(ActionController::Parameters) ? raw.to_unsafe_h : raw
+      merged = current_user.puryfi_seconds_per_label.stringify_keys
+      (0..25).each do |i|
+        key = i.to_s
+        next unless h.key?(key)
+
+        merged[key] = h[key].to_i
+      end
+      attrs[:puryfi_seconds_per_label] = merged
+    end
+    current_user.update!(attrs)
+    redirect_to beta_dashboard_path, notice: "Réglages PuryFi enregistrés."
+  rescue ActiveRecord::RecordInvalid => e
+    redirect_to beta_dashboard_path, alert: e.record.errors.full_messages.join(", ")
   end
 
   def task

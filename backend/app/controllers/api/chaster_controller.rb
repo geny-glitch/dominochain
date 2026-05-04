@@ -57,6 +57,24 @@ module Api
       }
     end
 
+    def add_time
+      seconds = params[:seconds].to_i
+      service = ChasterService.new(current_user)
+      lock_info = service.current_lock
+      return render json: { error: "Aucun lock actif" }, status: :unprocessable_entity if lock_info.nil?
+
+      service.add_time_to_lock(lock_info[:id], seconds)
+      render json: {
+        ok: true,
+        added_seconds: seconds,
+        lock_id: lock_info[:id]
+      }
+    rescue ChasterService::Unauthorized
+      render json: { error: "Chaster non connecté" }, status: :unauthorized
+    rescue ChasterService::Error => e
+      render json: { error: e.message }, status: :unprocessable_entity
+    end
+
     private
 
     def showcase_game_seconds

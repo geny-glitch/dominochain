@@ -16,7 +16,9 @@ module Api
         showcase_quiz_seconds_per_point: current_user.showcase_quiz_seconds_per_point,
         showcase_snake_seconds_per_fruit: current_user.showcase_snake_seconds_per_fruit,
         showcase_dino_seconds_per_obstacle: current_user.showcase_dino_seconds_per_obstacle,
-        showcase_tetris_seconds_per_line: current_user.showcase_tetris_seconds_per_line
+        showcase_tetris_seconds_per_line: current_user.showcase_tetris_seconds_per_line,
+        puryfi_min_score: current_user.puryfi_min_score,
+        puryfi_seconds_per_label: current_user.puryfi_seconds_per_label
       }
     end
 
@@ -47,6 +49,12 @@ module Api
       if params.key?(:showcase_tetris_seconds_per_line)
         attrs[:showcase_tetris_seconds_per_line] = params[:showcase_tetris_seconds_per_line].to_i
       end
+      if params.key?(:puryfi_min_score)
+        attrs[:puryfi_min_score] = params[:puryfi_min_score].to_f
+      end
+      if params.key?(:puryfi_seconds_per_label)
+        attrs[:puryfi_seconds_per_label] = sanitize_puryfi_seconds_per_label(params[:puryfi_seconds_per_label])
+      end
       current_user.update!(attrs)
       render json: {
         showcase_quiz_enabled: current_user.showcase_quiz_enabled,
@@ -57,7 +65,9 @@ module Api
         showcase_quiz_seconds_per_point: current_user.showcase_quiz_seconds_per_point,
         showcase_snake_seconds_per_fruit: current_user.showcase_snake_seconds_per_fruit,
         showcase_dino_seconds_per_obstacle: current_user.showcase_dino_seconds_per_obstacle,
-        showcase_tetris_seconds_per_line: current_user.showcase_tetris_seconds_per_line
+        showcase_tetris_seconds_per_line: current_user.showcase_tetris_seconds_per_line,
+        puryfi_min_score: current_user.puryfi_min_score,
+        puryfi_seconds_per_label: current_user.puryfi_seconds_per_label
       }
     rescue ActiveRecord::RecordInvalid => e
       render json: { error: e.record.errors.full_messages.join(" ") }, status: :unprocessable_entity
@@ -67,6 +77,21 @@ module Api
 
     def cast_bool(value)
       ActiveModel::Type::Boolean.new.cast(value)
+    end
+
+    def sanitize_puryfi_seconds_per_label(raw)
+      h = raw.is_a?(ActionController::Parameters) ? raw.to_unsafe_h : raw
+      h = {} unless h.is_a?(Hash)
+      out = {}
+      (0..25).each do |i|
+        key = i.to_s
+        next unless h.key?(key) || h.key?(i)
+
+        v = h[key] || h[i]
+        n = v.to_i
+        out[key] = n if n >= 0
+      end
+      current_user.puryfi_seconds_per_label.merge(out)
     end
   end
 end

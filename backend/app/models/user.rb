@@ -22,6 +22,8 @@ class User < ApplicationRecord
 
   validates :nickname, presence: true, uniqueness: true
   validates :nickname, format: { with: /\A[a-zA-Z0-9_]+\z/, message: "ne peut contenir que lettres, chiffres et underscores" }
+  validates :pishock_intensity_factor,
+    numericality: { greater_than: 0, less_than_or_equal_to: 100 }
   validates :showcase_quiz_seconds_per_point,
     :showcase_snake_seconds_per_fruit,
     :showcase_dino_seconds_per_obstacle,

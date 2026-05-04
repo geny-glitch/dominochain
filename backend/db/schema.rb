@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_05_04_150000) do
+ActiveRecord::Schema[7.2].define(version: 2026_05_04_190000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -263,9 +263,14 @@ ActiveRecord::Schema[7.2].define(version: 2026_05_04_150000) do
     t.boolean "showcase_tetris_enabled", default: true, null: false
     t.integer "showcase_tetris_seconds_per_line", default: 60, null: false
     t.datetime "showcase_tetris_seconds_per_line_at"
+    t.string "puryfi_plugin_token"
+    t.jsonb "puryfi_seconds_per_label", default: {}, null: false
+    t.float "puryfi_min_score", default: 0.5, null: false
+    t.decimal "pishock_intensity_factor", precision: 5, scale: 2, default: "1.0", null: false
     t.index ["email"], name: "index_users_on_email"
     t.index ["nickname"], name: "index_users_on_nickname", unique: true
     t.index ["provider", "uid"], name: "index_users_on_provider_and_uid"
+    t.index ["puryfi_plugin_token"], name: "index_users_on_puryfi_plugin_token", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
 

@@ -179,10 +179,10 @@ class ShowcaseController < ApplicationController
     end
 
     if game_kind == "snake"
-      PishockShockJob.perform_later(@beta.id, 1, 1)
+      PishockShockJob.perform_later(@beta.id, pishock_intensity(1, @beta), 1)
     elsif game_kind == "tetris"
       lines = params[:lines].to_i.clamp(1, 8)
-      PishockShockJob.perform_later(@beta.id, lines, lines)
+      PishockShockJob.perform_later(@beta.id, pishock_intensity(lines, @beta), lines)
     end
 
     service = ChasterService.new(@beta)
@@ -235,8 +235,7 @@ class ShowcaseController < ApplicationController
     game_session.update!(permitted)
 
     if first_name_submission && game_session.player_name.present?
-      intensity = [game_session.score, 100].min
-      intensity = 1 if intensity < 1
+      intensity = pishock_intensity(game_session.score, @beta)
       duration = game_session.game_type == "tetris" ? [game_session.score, 15].min.clamp(1, 15) : 1
       PishockShockJob.perform_later(@beta.id, intensity, duration)
       ShowcaseBetaNotifyJob.perform_later(
@@ -400,6 +399,11 @@ class ShowcaseController < ApplicationController
     when "quiz" then beta.showcase_quiz_enabled
     else false
     end
+  end
+
+  def pishock_intensity(base, user)
+    factor = [user.pishock_intensity_factor.to_f, 0.01].max
+    (base * factor).round.clamp(1, 100)
   end
 
   def session_params

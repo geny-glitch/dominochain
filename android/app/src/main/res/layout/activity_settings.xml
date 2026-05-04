@@ -647,11 +647,21 @@
                 android:fontFamily="monospace" />
         </LinearLayout>
 
+        <Button
+            android:id="@+id/check_updates_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="@dimen/ds_space_xl"
+            android:layout_marginBottom="@dimen/ds_space_sm"
+            android:text="@string/update_check_updates"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+
         <TextView
             android:id="@+id/build_number"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/ds_space_xl"
+            android:layout_marginBottom="@dimen/ds_space_md"
             android:gravity="center"
             style="@style/DsSmall"
             android:alpha="0.4" />

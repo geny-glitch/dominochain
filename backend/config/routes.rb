@@ -61,6 +61,9 @@ Rails.application.routes.draw do
   post "admin/review/images/:id/like", to: "admin#review_like", as: :admin_review_like
   post "admin/review/images/:id/dislike", to: "admin#review_dislike", as: :admin_review_dislike
 
+  get  "android/version", to: "android_version#show"
+  post "android/version", to: "android_version#update"
+
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   get "up" => "rails/health#show", as: :rails_health_check
 

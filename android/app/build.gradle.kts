@@ -19,7 +19,15 @@ val hasReleaseSigning = listOf(
 ).all { !it.isNullOrBlank() }
 val otaVersionCode = System.getenv("OTA_VERSION_CODE")?.let { value ->
     value.toIntOrNull() ?: error("OTA_VERSION_CODE must be a positive integer")
-} ?: 1
+} ?: run {
+    val versionJsonFile = rootProject.file("../version.json")
+    if (versionJsonFile.exists()) {
+        Regex("\"versionCode\"\\s*:\\s*(\\d+)").find(versionJsonFile.readText())
+            ?.groupValues?.get(1)?.toIntOrNull() ?: 1
+    } else {
+        1
+    }
+}
 require(otaVersionCode > 0) { "OTA_VERSION_CODE must be a positive integer" }
 
 android {

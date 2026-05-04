@@ -43,6 +43,9 @@ class SettingsActivity : AppCompatActivity() {
         binding.debugDeviceId.text = deviceId
         binding.debugServerUrl.text = com.bg.BuildConfig.API_BASE_URL
         binding.buildNumber.text = getString(R.string.build_number, com.bg.BuildConfig.VERSION_CODE)
+        binding.checkUpdatesButton.setOnClickListener {
+            AppUpdateManager(this).checkForUpdates(force = true)
+        }
         binding.accountNickname.text = sessionManager.nickname ?: "-"
         binding.accountDeviceName.setText(getDeviceName() ?: "")
 

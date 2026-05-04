@@ -16,6 +16,10 @@ backend/storage/*
 !backend/storage/.keep
 backend/config/master.key
 
+# puryfi-ws (Node)
+puryfi-ws/node_modules/
+puryfi-ws/dist/
+
 # IDE
 .idea/
 *.iml
@@ -25,5 +29,3 @@ backend/config/master.key
 .DS_Store
 *.swp
 *~
-
-# Open source release

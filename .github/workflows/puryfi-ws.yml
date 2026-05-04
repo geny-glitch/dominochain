@@ -1,0 +1,30 @@
+# Deploy PuryFi WebSocket bridge (Node) to Fly.io
+name: PuryFi WebSocket
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "puryfi-ws/**"
+      - "Dockerfile.puryfi-ws"
+      - "fly.puryfi-ws.toml"
+      - ".github/workflows/puryfi-ws.yml"
+
+concurrency:
+  group: puryfi-ws
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Fly.io
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Deploy
+        run: flyctl deploy -c fly.puryfi-ws.toml --remote-only
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

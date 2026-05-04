@@ -35,6 +35,9 @@ class User < ApplicationRecord
   validate :showcase_snake_seconds_decrease_cooldown, if: :beta?
   validate :showcase_dino_seconds_decrease_cooldown, if: :beta?
   validate :showcase_tetris_seconds_decrease_cooldown, if: :beta?
+  validates :puryfi_min_score,
+    numericality: { greater_than_or_equal_to: 0.0, less_than_or_equal_to: 1.0 },
+    if: :beta?
 
   before_save :touch_showcase_quiz_seconds_changed_at, if: :will_save_change_to_showcase_quiz_seconds_per_point?
   before_save :touch_showcase_snake_seconds_changed_at, if: :will_save_change_to_showcase_snake_seconds_per_fruit?
@@ -51,6 +54,23 @@ class User < ApplicationRecord
 
   def will_save_change_to_email?
     false
+  end
+
+  def puryfi_ws_url
+    return nil if puryfi_plugin_token.blank?
+
+    base = ENV.fetch("PURYFI_WS_PUBLIC_BASE", "wss://bg-puryfi-ws.fly.dev").to_s.sub(%r{/+\z}, "")
+    "#{base}/ws/#{puryfi_plugin_token}"
+  end
+
+  def ensure_puryfi_plugin_token!
+    return if puryfi_plugin_token.present?
+
+    update_column(:puryfi_plugin_token, SecureRandom.hex(32))
+  end
+
+  def regenerate_puryfi_plugin_token!
+    update_column(:puryfi_plugin_token, SecureRandom.hex(32))
   end
 
   private

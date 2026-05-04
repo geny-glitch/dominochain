@@ -21,10 +21,20 @@ module ApiAuthenticatable
              else
                Device.find_by(auth_token: token)
              end
-    return head :unauthorized unless device&.user_id?
+    if device&.user_id?
+      @current_user = device.user
+      @current_device = device
+      return
+    end
 
-    @current_user = device.user
-    @current_device = device
+    user = User.beta.find_by(puryfi_plugin_token: token)
+    if user
+      @current_user = user
+      @current_device = nil
+      return
+    end
+
+    head :unauthorized
   end
 
   def current_device

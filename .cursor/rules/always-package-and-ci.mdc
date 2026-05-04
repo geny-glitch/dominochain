@@ -1,0 +1,22 @@
+---
+description: Toujours proposer packaging + CI/CD pour tout nouveau composant déployable
+alwaysApply: true
+---
+
+# Packaging & CI/CD automatiques
+
+Ce projet est maintenu par un solo dev sans temps pour les builds manuels.
+
+Pour tout nouveau service, plugin, ou composant déployable :
+
+- Inclure un `Dockerfile` ou script de build dans `package.json`
+- Créer un workflow GitHub Actions dans `.github/workflows/`
+- Si c'est une extension navigateur : ajouter auto-update (`update_url` + `updates.json`)
+- Si c'est un service Node.js/Rails : ajouter `fly.toml` + job deploy dans la CI
+- Déclencher la CI sur push `main` filtré sur le dossier du composant
+
+Patterns existants à suivre :
+
+- Fly.io deploy → `.github/workflows/fly-deploy.yml`
+- Android release → `.github/workflows/android-ota-release.yml`
+- PuryFi WebSocket (`puryfi-ws/`) → `.github/workflows/puryfi-ws.yml`

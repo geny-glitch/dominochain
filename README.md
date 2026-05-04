@@ -10,6 +10,8 @@ Android app + Rails backend. Register your device, upload an image via the web, 
 bg/
 ├── android/     # Kotlin Android app
 ├── backend/    # Rails 7 API + web upload UI
+├── puryfi-ws/  # Pont WebSocket PuryFi → API BG (Fly.io)
+├── docs/       # GitHub Pages (site statique optionnel)
 └── README.md
 ```
 

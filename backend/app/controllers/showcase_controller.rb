@@ -371,7 +371,15 @@ class ShowcaseController < ApplicationController
     case game_kind
     when "snake" then snake_seconds_per_fruit_for(beta)
     when "dino" then dino_seconds_per_obstacle_for(beta)
-    when "tetris" then tetris_seconds_per_line_for(beta)
+    when "tetris"
+      per = tetris_seconds_per_line_for(beta)
+      lines = params[:lines].to_i
+      if lines.positive?
+        lines = [[lines, 1].max, 8].min
+        lines * per
+      else
+        per
+      end
     else
       points = requested_seconds&.to_i
       return nil if points.blank?

@@ -147,7 +147,7 @@
     O: [[0, 0], [0, 1], [1, 0], [1, 1]],
     T: [[1, 0], [0, 1], [1, 1], [2, 1]],
     S: [[0, 1], [0, 2], [1, 0], [1, 1]],
-    Z: [[0, 0], [1, 0], [1, 1], [2, 1]],
+    Z: [[0, 0], [0, 1], [1, 1], [1, 2]],
     J: [[0, 0], [0, 1], [1, 1], [2, 1]],
     L: [[2, 0], [0, 1], [1, 1], [2, 1]]
   };
@@ -529,12 +529,12 @@
       method: "PATCH",
       body: JSON.stringify({ score: linesTotal })
     }).catch(() => {});
-    const addCount = doubleTime ? n * 2 : n;
-    const addPromises = [];
-    for (let i = 0; i < addCount; i++) {
-      addPromises.push(postForm(urls.addTime, { game_type: "tetris" }).catch(() => {}));
-    }
-    await Promise.all([updatePromise, ...addPromises]);
+    const lineUnits = doubleTime ? n * 2 : n;
+    const addPromise = postForm(urls.addTime, {
+      game_type: "tetris",
+      lines: String(Math.min(8, Math.max(1, lineUnits)))
+    }).catch(() => {});
+    await Promise.all([updatePromise, addPromise]);
   }
 
   function findCompleteRowIndices() {

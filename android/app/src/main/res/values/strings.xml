@@ -55,13 +55,16 @@
     <string name="showcase_quiz_label">Jeu des 1000 € (quiz)</string>
     <string name="showcase_snake_label">Snake</string>
     <string name="showcase_dino_label">Dino Run</string>
+    <string name="showcase_tetris_label">Tétris</string>
     <string name="showcase_quiz_seconds_label">Quiz — secondes ajoutées par point</string>
     <string name="showcase_snake_seconds_label">Snake — secondes ajoutées par pomme</string>
     <string name="showcase_dino_seconds_label">Dino Run — secondes ajoutées par obstacle</string>
+    <string name="showcase_tetris_seconds_label">Tétris — secondes ajoutées par ligne complète</string>
     <string name="showcase_seconds_hint">Réduire une valeur n\'est possible que 24 h après son dernier changement.</string>
     <string name="showcase_quiz_seconds_placeholder">Ex. 1</string>
     <string name="showcase_snake_seconds_placeholder">Ex. 300</string>
     <string name="showcase_dino_seconds_placeholder">Ex. 300</string>
+    <string name="showcase_tetris_seconds_placeholder">Ex. 60</string>
     <string name="showcase_seconds_save">Enregistrer</string>
     <string name="showcase_seconds_saved">Réglages des temps enregistrés</string>
     <string name="showcase_seconds_invalid">Indique des nombres entiers positifs (secondes).</string>

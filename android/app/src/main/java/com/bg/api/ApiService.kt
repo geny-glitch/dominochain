@@ -66,20 +66,24 @@ data class ShowcaseSettingsResponse(
     val showcase_quiz_enabled: Boolean,
     val showcase_snake_enabled: Boolean,
     val showcase_dino_enabled: Boolean? = true,
+    val showcase_tetris_enabled: Boolean? = true,
     val showcase_backdoor_enabled: Boolean,
     val showcase_quiz_seconds_per_point: Int? = null,
     val showcase_snake_seconds_per_fruit: Int? = null,
-    val showcase_dino_seconds_per_obstacle: Int? = null
+    val showcase_dino_seconds_per_obstacle: Int? = null,
+    val showcase_tetris_seconds_per_line: Int? = null
 )
 
 data class ShowcaseSettingsRequest(
     val showcase_quiz_enabled: Boolean,
     val showcase_snake_enabled: Boolean,
     val showcase_dino_enabled: Boolean,
+    val showcase_tetris_enabled: Boolean,
     val showcase_backdoor_enabled: Boolean,
     val showcase_quiz_seconds_per_point: Int,
     val showcase_snake_seconds_per_fruit: Int,
-    val showcase_dino_seconds_per_obstacle: Int
+    val showcase_dino_seconds_per_obstacle: Int,
+    val showcase_tetris_seconds_per_line: Int
 )
 
 data class ChangePasswordRequest(
@@ -232,7 +236,8 @@ data class ChasterLockResponse(
     val pishock_enabled: Boolean? = null,
     val showcase_quiz_seconds_per_point: Int? = null,
     val showcase_snake_seconds_per_fruit: Int? = null,
-    val showcase_dino_seconds_per_obstacle: Int? = null
+    val showcase_dino_seconds_per_obstacle: Int? = null,
+    val showcase_tetris_seconds_per_line: Int? = null
 )
 
 data class ChasterLock(

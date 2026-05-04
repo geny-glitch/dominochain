@@ -42,7 +42,8 @@ class ChasterWidgetProvider : AppWidgetProvider() {
         val pishockEnabled: Boolean,
         val quizSecondsPerPoint: Int?,
         val snakeSecondsPerFruit: Int?,
-        val dinoSecondsPerObstacle: Int?
+        val dinoSecondsPerObstacle: Int?,
+        val tetrisSecondsPerLine: Int?
     )
 
     companion object {
@@ -54,6 +55,7 @@ class ChasterWidgetProvider : AppWidgetProvider() {
         private const val KEY_QUIZ = "quiz_seconds"
         private const val KEY_SNAKE = "snake_seconds"
         private const val KEY_DINO = "dino_seconds"
+        private const val KEY_TETRIS = "tetris_seconds"
 
         private fun prefs(context: Context) =
             context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -67,6 +69,7 @@ class ChasterWidgetProvider : AppWidgetProvider() {
                 .putInt(KEY_QUIZ, state.quizSecondsPerPoint ?: -1)
                 .putInt(KEY_SNAKE, state.snakeSecondsPerFruit ?: -1)
                 .putInt(KEY_DINO, state.dinoSecondsPerObstacle ?: -1)
+                .putInt(KEY_TETRIS, state.tetrisSecondsPerLine ?: -1)
                 .apply()
         }
 
@@ -77,13 +80,15 @@ class ChasterWidgetProvider : AppWidgetProvider() {
             val quizRaw = p.getInt(KEY_QUIZ, -1)
             val snakeRaw = p.getInt(KEY_SNAKE, -1)
             val dinoRaw = p.getInt(KEY_DINO, -1)
+            val tetrisRaw = p.getInt(KEY_TETRIS, -1)
             return WidgetState(
                 remaining = p.getString(KEY_STATIC, "--") ?: "--",
                 endTimeMs = end,
                 pishockEnabled = p.getBoolean(KEY_PISH, false),
                 quizSecondsPerPoint = quizRaw.takeIf { it > 0 },
                 snakeSecondsPerFruit = snakeRaw.takeIf { it > 0 },
-                dinoSecondsPerObstacle = dinoRaw.takeIf { it > 0 }
+                dinoSecondsPerObstacle = dinoRaw.takeIf { it > 0 },
+                tetrisSecondsPerLine = tetrisRaw.takeIf { it > 0 }
             )
         }
 
@@ -142,7 +147,8 @@ class ChasterWidgetProvider : AppWidgetProvider() {
             pishockEnabled: Boolean,
             quizSecondsPerPoint: Int?,
             snakeSecondsPerFruit: Int?,
-            dinoSecondsPerObstacle: Int?
+            dinoSecondsPerObstacle: Int?,
+            tetrisSecondsPerLine: Int?
         ) {
             val remainingSec = lock?.remaining_seconds ?: 0
             val useCountdown = lock != null && !lock.is_frozen && remainingSec > 0
@@ -165,7 +171,8 @@ class ChasterWidgetProvider : AppWidgetProvider() {
                 pishockEnabled,
                 quizSecondsPerPoint,
                 snakeSecondsPerFruit,
-                dinoSecondsPerObstacle
+                dinoSecondsPerObstacle,
+                tetrisSecondsPerLine
             )
         }
 
@@ -190,7 +197,8 @@ class ChasterWidgetProvider : AppWidgetProvider() {
             pishockEnabled: Boolean = false,
             quizSecondsPerPoint: Int? = null,
             snakeSecondsPerFruit: Int? = null,
-            dinoSecondsPerObstacle: Int? = null
+            dinoSecondsPerObstacle: Int? = null,
+            tetrisSecondsPerLine: Int? = null
         ) {
             val state = WidgetState(
                 remaining,
@@ -198,7 +206,8 @@ class ChasterWidgetProvider : AppWidgetProvider() {
                 pishockEnabled,
                 quizSecondsPerPoint,
                 snakeSecondsPerFruit,
-                dinoSecondsPerObstacle
+                dinoSecondsPerObstacle,
+                tetrisSecondsPerLine
             )
             persistState(context, state)
             val appWidgetManager = AppWidgetManager.getInstance(context)
@@ -228,7 +237,8 @@ class ChasterWidgetProvider : AppWidgetProvider() {
             val quiz = state.quizSecondsPerPoint?.takeIf { it > 0 }
             val snake = state.snakeSecondsPerFruit?.takeIf { it > 0 }
             val dino = state.dinoSecondsPerObstacle?.takeIf { it > 0 }
-            val reserveBottom = if (quiz != null || snake != null || dino != null) 16f else 0f
+            val tetris = state.tetrisSecondsPerLine?.takeIf { it > 0 }
+            val reserveBottom = if (quiz != null || snake != null || dino != null || tetris != null) 16f else 0f
             val charCount = if (state.endTimeMs != null) {
                 10
             } else {
@@ -284,7 +294,8 @@ class ChasterWidgetProvider : AppWidgetProvider() {
             val gameSecondsText = listOfNotNull(
                 quiz?.let { "Q: $it" },
                 snake?.let { "S: $it" },
-                dino?.let { "D: $it" }
+                dino?.let { "D: $it" },
+                tetris?.let { "T: $it" }
             ).joinToString("  ")
             if (gameSecondsText.isNotEmpty()) {
                 views.setViewVisibility(R.id.widget_chaster_snake_hint, android.view.View.VISIBLE)

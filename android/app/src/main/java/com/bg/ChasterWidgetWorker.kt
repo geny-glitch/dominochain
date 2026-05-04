@@ -37,7 +37,8 @@ class ChasterWidgetWorker(
                     pishock,
                     response?.showcase_quiz_seconds_per_point,
                     response?.showcase_snake_seconds_per_fruit,
-                    response?.showcase_dino_seconds_per_obstacle
+                    response?.showcase_dino_seconds_per_obstacle,
+                    response?.showcase_tetris_seconds_per_line
                 )
             },
             onFailure = {

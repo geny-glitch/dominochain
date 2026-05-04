@@ -470,7 +470,7 @@ RSpec.describe "Routes", type: :request do
       end
 
       it "returns game flags for beta" do
-        beta = create(:user, :beta, showcase_quiz_enabled: true, showcase_snake_enabled: true, showcase_dino_enabled: true)
+        beta = create(:user, :beta, showcase_quiz_enabled: true, showcase_snake_enabled: true, showcase_dino_enabled: true, showcase_tetris_enabled: true)
         device = create(:device, user: beta)
         get "/api/showcase_settings",
           headers: { "X-Device-Id" => device.device_id, "X-Device-Token" => device.auth_token }
@@ -479,10 +479,12 @@ RSpec.describe "Routes", type: :request do
         expect(json["showcase_quiz_enabled"]).to be true
         expect(json["showcase_snake_enabled"]).to be true
         expect(json["showcase_dino_enabled"]).to be true
+        expect(json["showcase_tetris_enabled"]).to be true
         expect(json["showcase_backdoor_enabled"]).to be true
         expect(json["showcase_quiz_seconds_per_point"]).to eq(1)
         expect(json["showcase_snake_seconds_per_fruit"]).to eq(300)
         expect(json["showcase_dino_seconds_per_obstacle"]).to eq(300)
+        expect(json["showcase_tetris_seconds_per_line"]).to eq(60)
       end
     end
 
@@ -493,6 +495,7 @@ RSpec.describe "Routes", type: :request do
           showcase_quiz_enabled: true,
           showcase_snake_enabled: true,
           showcase_dino_enabled: true,
+          showcase_tetris_enabled: true,
           showcase_backdoor_enabled: true
         )
         device = create(:device, user: beta)
@@ -501,6 +504,7 @@ RSpec.describe "Routes", type: :request do
             showcase_quiz_enabled: false,
             showcase_snake_enabled: false,
             showcase_dino_enabled: false,
+            showcase_tetris_enabled: false,
             showcase_backdoor_enabled: false
           },
           headers: { "X-Device-Id" => device.device_id, "X-Device-Token" => device.auth_token }
@@ -508,6 +512,7 @@ RSpec.describe "Routes", type: :request do
         expect(beta.reload.showcase_quiz_enabled).to be true
         expect(beta.showcase_snake_enabled).to be true
         expect(beta.showcase_dino_enabled).to be true
+        expect(beta.showcase_tetris_enabled).to be true
         expect(beta.showcase_backdoor_enabled).to be true
       end
 
@@ -528,16 +533,18 @@ RSpec.describe "Routes", type: :request do
           showcase_quiz_enabled: true,
           showcase_snake_enabled: true,
           showcase_dino_enabled: true,
+          showcase_tetris_enabled: true,
           showcase_backdoor_enabled: true
         )
         device = create(:device, user: beta)
         patch "/api/showcase_settings",
-          params: { showcase_quiz_enabled: false, showcase_snake_enabled: false, showcase_dino_enabled: false },
+          params: { showcase_quiz_enabled: false, showcase_snake_enabled: false, showcase_dino_enabled: false, showcase_tetris_enabled: false },
           headers: { "X-Device-Id" => device.device_id, "X-Device-Token" => device.auth_token }
         expect(response).to have_http_status(:ok)
         expect(beta.reload.showcase_quiz_enabled).to be false
         expect(beta.showcase_snake_enabled).to be false
         expect(beta.showcase_dino_enabled).to be false
+        expect(beta.showcase_tetris_enabled).to be false
         expect(beta.showcase_backdoor_enabled).to be true
       end
 
@@ -558,20 +565,23 @@ RSpec.describe "Routes", type: :request do
           :user, :beta,
           showcase_quiz_seconds_per_point: 1,
           showcase_snake_seconds_per_fruit: 300,
-          showcase_dino_seconds_per_obstacle: 300
+          showcase_dino_seconds_per_obstacle: 300,
+          showcase_tetris_seconds_per_line: 60
         )
         device = create(:device, user: beta)
         patch "/api/showcase_settings",
-          params: { showcase_quiz_seconds_per_point: 2, showcase_dino_seconds_per_obstacle: 120 },
+          params: { showcase_quiz_seconds_per_point: 2, showcase_dino_seconds_per_obstacle: 120, showcase_tetris_seconds_per_line: 90 },
           headers: { "X-Device-Id" => device.device_id, "X-Device-Token" => device.auth_token }
         expect(response).to have_http_status(:ok)
         expect(beta.reload.showcase_quiz_seconds_per_point).to eq(2)
         expect(beta.showcase_snake_seconds_per_fruit).to eq(300)
         expect(beta.showcase_dino_seconds_per_obstacle).to eq(120)
+        expect(beta.showcase_tetris_seconds_per_line).to eq(90)
         json = JSON.parse(response.body)
         expect(json["showcase_quiz_seconds_per_point"]).to eq(2)
         expect(json["showcase_snake_seconds_per_fruit"]).to eq(300)
         expect(json["showcase_dino_seconds_per_obstacle"]).to eq(120)
+        expect(json["showcase_tetris_seconds_per_line"]).to eq(90)
       end
 
       it "rejects decreasing snake seconds within 24 hours of last change" do
@@ -614,6 +624,34 @@ RSpec.describe "Routes", type: :request do
           headers: { "X-Device-Id" => device.device_id, "X-Device-Token" => device.auth_token }
         expect(response).to have_http_status(:unprocessable_entity)
         expect(beta.reload.showcase_dino_seconds_per_obstacle).to eq(600)
+      end
+
+      it "rejects decreasing tetris seconds within 24 hours of last change" do
+        beta = create(
+          :user, :beta,
+          showcase_tetris_seconds_per_line: 120,
+          showcase_tetris_seconds_per_line_at: 23.hours.ago
+        )
+        device = create(:device, user: beta)
+        patch "/api/showcase_settings",
+          params: { showcase_tetris_seconds_per_line: 60 },
+          headers: { "X-Device-Id" => device.device_id, "X-Device-Token" => device.auth_token }
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(beta.reload.showcase_tetris_seconds_per_line).to eq(120)
+      end
+
+      it "allows decreasing tetris seconds after 24 hours" do
+        beta = create(
+          :user, :beta,
+          showcase_tetris_seconds_per_line: 120,
+          showcase_tetris_seconds_per_line_at: 25.hours.ago
+        )
+        device = create(:device, user: beta)
+        patch "/api/showcase_settings",
+          params: { showcase_tetris_seconds_per_line: 60 },
+          headers: { "X-Device-Id" => device.device_id, "X-Device-Token" => device.auth_token }
+        expect(response).to have_http_status(:ok)
+        expect(beta.reload.showcase_tetris_seconds_per_line).to eq(60)
       end
 
       it "rejects decreasing quiz seconds within 24 hours of last change" do

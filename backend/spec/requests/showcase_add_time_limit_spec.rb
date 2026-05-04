@@ -69,4 +69,15 @@ RSpec.describe "Showcase add_time rate limit", type: :request do
     expect(response).to have_http_status(:ok)
     expect(ShowcaseAddTimeEvent.where(user_id: beta.id).sum(:seconds)).to eq(45)
   end
+
+  it "uses beta-configured seconds per line for tetris" do
+    beta.update!(showcase_tetris_seconds_per_line: 90)
+    post showcase_add_time_path(beta.nickname),
+      params: { game_type: "tetris" },
+      headers: { "CONTENT_TYPE" => "application/json" },
+      as: :json
+
+    expect(response).to have_http_status(:ok)
+    expect(ShowcaseAddTimeEvent.where(user_id: beta.id).sum(:seconds)).to eq(90)
+  end
 end

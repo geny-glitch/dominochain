@@ -1,0 +1,641 @@
+<% content_for :title, "Tétris" %>
+<% content_for :body_class, "tetris-page-active" %>
+<% content_for :head do %>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<% end %>
+
+<div class="tetris-page" data-nickname="<%= @beta.nickname %>" data-tetris-seconds-per-line="<%= @tetris_seconds_per_line %>">
+  <div class="tetris-container">
+    <div id="tetris-intro" class="tetris-intro">
+      <h1 class="tetris-title">Tétris</h1>
+      <p class="tetris-hint">Flèches ou boutons : gauche/droite, bas pour descendre, tourner pour pivoter. Espace pour poser tout de suite.</p>
+      <button type="button" class="tetris-btn tetris-btn--start" id="tetris-start">Jouer</button>
+    </div>
+
+    <div id="tetris-game" class="tetris-game" style="display: none;">
+      <div class="tetris-score-row">
+        <span class="tetris-score">Lignes : <span id="tetris-lines">0</span></span>
+        <span class="tetris-score tetris-score--time">Temps ajouté : <span id="tetris-time-added">0 seconde</span></span>
+      </div>
+      <canvas id="tetris-canvas" class="tetris-canvas" width="200" height="400"></canvas>
+      <div class="tetris-controls-row" aria-label="Contrôles tactiles">
+        <button type="button" class="tetris-btn tetris-btn--pad" id="tetris-btn-left" aria-label="Gauche">←</button>
+        <button type="button" class="tetris-btn tetris-btn--pad" id="tetris-btn-down" aria-label="Bas">↓</button>
+        <button type="button" class="tetris-btn tetris-btn--pad" id="tetris-btn-right" aria-label="Droite">→</button>
+        <button type="button" class="tetris-btn tetris-btn--pad tetris-btn--rotate" id="tetris-btn-rotate" aria-label="Tourner">⟳</button>
+      </div>
+    </div>
+
+    <div id="tetris-gameover" class="tetris-gameover" style="display: none;">
+      <h2 class="tetris-gameover-title">Game Over</h2>
+      <p class="tetris-gameover-score">Lignes : <span id="tetris-final-lines">0</span></p>
+      <p class="tetris-gameover-score">Temps ajouté : <span id="tetris-final-time">0 seconde</span></p>
+      <div class="tetris-leaderboard-form" id="tetris-lb-name-block">
+        <p id="tetris-lb-auto-registered" class="tetris-lb-registered" hidden>Score enregistré pour <strong id="tetris-lb-registered-name"></strong></p>
+        <div id="tetris-lb-name-fields" class="tetris-lb-name-fields">
+          <input type="text" id="tetris-player-name" class="tetris-input" placeholder="Ton pseudo pour le leaderboard" maxlength="30" />
+          <button type="button" class="tetris-btn tetris-btn--submit" id="tetris-save-name">Enregistrer au leaderboard</button>
+        </div>
+      </div>
+      <button type="button" class="tetris-btn tetris-btn--ghost" id="tetris-replay">Rejouer</button>
+    </div>
+  </div>
+
+  <section class="tetris-leaderboard" id="tetris-leaderboard">
+    <h3 class="tetris-leaderboard-title">Leaderboard</h3>
+    <div class="tetris-leaderboard-toolbar">
+      <label class="tetris-leaderboard-toolbar-label" for="tetris-lb-sort">Trier</label>
+      <select id="tetris-lb-sort" class="tetris-input tetris-leaderboard-sort" aria-label="Trier le classement">
+        <option value="score">Plus de lignes</option>
+        <option value="recent">Plus récent</option>
+      </select>
+    </div>
+    <div id="tetris-leaderboard-list" class="tetris-leaderboard-list">
+      <p class="tetris-leaderboard-empty">Aucun score enregistré</p>
+    </div>
+    <div id="tetris-leaderboard-pagination" class="tetris-leaderboard-pagination" hidden>
+      <button type="button" class="tetris-btn tetris-btn--ghost tetris-btn--sm" id="tetris-lb-prev" disabled>Précédent</button>
+      <span class="tetris-leaderboard-page-label" id="tetris-lb-page-label"></span>
+      <button type="button" class="tetris-btn tetris-btn--ghost tetris-btn--sm" id="tetris-lb-next">Suivant</button>
+    </div>
+  </section>
+</div>
+
+<% if flash[:notice] %>
+  <div class="tetris-flash tetris-flash--success"><%= flash[:notice] %></div>
+<% end %>
+<% if flash[:alert] %>
+  <div class="tetris-flash tetris-flash--error"><%= flash[:alert] %></div>
+<% end %>
+
+<script>
+(function() {
+  const COLS = 10;
+  const ROWS = 22;
+  const VISIBLE_ROWS = 20;
+  const CELL = 20;
+  const CANVAS_W = COLS * CELL;
+  const CANVAS_H = VISIBLE_ROWS * CELL;
+
+  const SHAPES = {
+    I: [
+      [[1,0],[1,1],[1,2],[1,3]],
+      [[0,2],[1,2],[2,2],[3,2]],
+      [[2,0],[2,1],[2,2],[2,3]],
+      [[0,1],[1,1],[2,1],[3,1]]
+    ],
+    O: [[[0,0],[0,1],[1,0],[1,1]]],
+    T: [
+      [[1,0],[0,1],[1,1],[2,1]],
+      [[1,0],[1,1],[2,1],[1,2]],
+      [[0,1],[1,1],[2,1],[1,2]],
+      [[1,0],[0,1],[1,1],[1,2]]
+    ],
+    S: [
+      [[1,0],[2,0],[0,1],[1,1]],
+      [[1,0],[1,1],[2,1],[1,2]],
+      [[1,1],[2,1],[0,2],[1,2]],
+      [[0,1],[1,0],[1,1],[1,2]]
+    ],
+    Z: [
+      [[0,0],[1,0],[1,1],[2,1]],
+      [[2,0],[1,1],[2,1],[1,2]],
+      [[0,1],[1,1],[2,2],[1,2]],
+      [[1,0],[0,1],[1,1],[0,2]]
+    ],
+    J: [
+      [[0,0],[0,1],[1,1],[2,1]],
+      [[1,0],[2,0],[1,1],[1,2]],
+      [[0,1],[1,1],[2,1],[2,2]],
+      [[1,0],[1,1],[0,2],[1,2]]
+    ],
+    L: [
+      [[2,0],[0,1],[1,1],[2,1]],
+      [[1,0],[1,1],[1,2],[2,2]],
+      [[0,1],[1,1],[2,1],[0,2]],
+      [[0,0],[1,0],[1,1],[1,2]]
+    ]
+  };
+
+  const COLORS = {
+    I: "#22d3ee",
+    O: "#fbbf24",
+    T: "#a78bfa",
+    S: "#4ade80",
+    Z: "#f87171",
+    J: "#60a5fa",
+    L: "#fb923c"
+  };
+
+  const BAG_TYPES = ["I","O","T","S","Z","J","L"];
+
+  const pageEl = document.querySelector(".tetris-page");
+  const nickname = pageEl.dataset.nickname;
+  const secondsPerLine = Math.max(1, parseInt(pageEl.dataset.tetrisSecondsPerLine || "60", 10) || 60);
+  const LEADERBOARD_PER_PAGE = 10;
+  const urls = {
+    createSession: `/showcase/${nickname}/sessions`,
+    updateSession: (id) => `/showcase/${nickname}/sessions/${id}`,
+    addTime: `/showcase/${nickname}/add_time`
+  };
+
+  const canvas = document.getElementById("tetris-canvas");
+  const ctx = canvas.getContext("2d");
+  const intro = document.getElementById("tetris-intro");
+  const gameEl = document.getElementById("tetris-game");
+  const gameoverEl = document.getElementById("tetris-gameover");
+  const linesEl = document.getElementById("tetris-lines");
+  const timeAddedEl = document.getElementById("tetris-time-added");
+  const finalLinesEl = document.getElementById("tetris-final-lines");
+  const finalTimeEl = document.getElementById("tetris-final-time");
+  const playerNameInput = document.getElementById("tetris-player-name");
+  const saveNameBtn = document.getElementById("tetris-save-name");
+  const leaderboardList = document.getElementById("tetris-leaderboard-list");
+  const lbSortEl = document.getElementById("tetris-lb-sort");
+  const lbPagEl = document.getElementById("tetris-leaderboard-pagination");
+  const lbPrevBtn = document.getElementById("tetris-lb-prev");
+  const lbNextBtn = document.getElementById("tetris-lb-next");
+  const lbPageLabel = document.getElementById("tetris-lb-page-label");
+  const nameFields = document.getElementById("tetris-lb-name-fields");
+  const autoReg = document.getElementById("tetris-lb-auto-registered");
+  const regName = document.getElementById("tetris-lb-registered-name");
+
+  let board = [];
+  let bag = [];
+  let pieceType = null;
+  let rot = 0;
+  let pr = 0;
+  let pc = 0;
+  let linesTotal = 0;
+  let dropMs = 720;
+  let lastDrop = 0;
+  let gameLoop = null;
+  let gameOver = false;
+  let currentSessionId = null;
+  let lbPage = 1;
+
+  function fetchJson(url, options = {}) {
+    const opts = {
+      headers: { "Accept": "application/json", "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest", ...options.headers },
+      ...options
+    };
+    return fetch(url, opts);
+  }
+
+  function postForm(url, body) {
+    const formData = new URLSearchParams(body);
+    return fetch(url, {
+      method: "POST",
+      headers: { "Accept": "application/json", "X-Requested-With": "XMLHttpRequest", "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.content || "" },
+      body: formData
+    });
+  }
+
+  function playerCookieKey() {
+    return "bgShowcasePlayer_" + nickname.replace(/[^a-zA-Z0-9]/g, "_");
+  }
+  function getPlayerCookie() {
+    const prefix = playerCookieKey() + "=";
+    const parts = document.cookie.split(";");
+    for (let c of parts) {
+      c = c.trim();
+      if (c.startsWith(prefix)) return decodeURIComponent(c.slice(prefix.length).replace(/\+/g, " "));
+    }
+    return "";
+  }
+  function setPlayerCookie(value) {
+    const maxAge = 365 * 24 * 60 * 60;
+    document.cookie = playerCookieKey() + "=" + encodeURIComponent(value) + ";path=/;max-age=" + maxAge + ";SameSite=Lax";
+  }
+  function parsePlayedAt(iso) {
+    if (!iso) return null;
+    const d = new Date(iso);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  function formatPlayedDate(iso) {
+    const d = parsePlayedAt(iso);
+    if (!d) return "—";
+    const dd = String(d.getDate()).padStart(2, "0");
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    return dd + "/" + mm + "/" + d.getFullYear();
+  }
+  function formatPlayedTime(iso) {
+    const d = parsePlayedAt(iso);
+    if (!d) return "—";
+    return d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+  }
+  function formatAddedTime(lineCount) {
+    const totalSeconds = Math.max(0, (parseInt(lineCount || 0, 10) || 0) * secondsPerLine);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    if (minutes > 0 && seconds > 0) return minutes + " min " + seconds + " s";
+    if (minutes > 0) return minutes + " minute" + (minutes > 1 ? "s" : "");
+    return seconds + " seconde" + (seconds > 1 ? "s" : "");
+  }
+  function buildLeaderboardUrl() {
+    const p = new URLSearchParams({
+      game_type: "tetris",
+      sort: lbSortEl.value,
+      page: String(lbPage),
+      per_page: String(LEADERBOARD_PER_PAGE)
+    });
+    return "/showcase/" + nickname + "/leaderboard?" + p.toString();
+  }
+  function escapeHtml(s) {
+    const div = document.createElement("div");
+    div.textContent = s;
+    return div.innerHTML;
+  }
+
+  function shuffleBag() {
+    bag = BAG_TYPES.slice();
+    for (let i = bag.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [bag[i], bag[j]] = [bag[j], bag[i]];
+    }
+  }
+
+  function nextPieceType() {
+    if (!bag.length) shuffleBag();
+    return bag.pop();
+  }
+
+  function getCells(type, rIndex) {
+    const rots = SHAPES[type];
+    return rots[rIndex % rots.length];
+  }
+
+  function cellsAbsolute() {
+    const cells = getCells(pieceType, rot);
+    return cells.map(([dr, dc]) => [pr + dr, pc + dc]);
+  }
+
+  function validPosition(testR, testC, testRot) {
+    const cells = getCells(pieceType, testRot).map(([dr, dc]) => [testR + dr, testC + dc]);
+    for (const [r, c] of cells) {
+      if (c < 0 || c >= COLS || r >= ROWS) return false;
+      if (r >= 0 && board[r][c]) return false;
+    }
+    return true;
+  }
+
+  function spawnPiece() {
+    pieceType = nextPieceType();
+    rot = 0;
+    const cells = getCells(pieceType, rot);
+    let minR = 99, maxR = -99, minC = 99, maxC = -99;
+    cells.forEach(([r, c]) => {
+      minR = Math.min(minR, r); maxR = Math.max(maxR, r);
+      minC = Math.min(minC, c); maxC = Math.max(maxC, c);
+    });
+    pc = Math.floor((COLS - (maxC - minC + 1)) / 2) - minC;
+    pr = -minR;
+    if (!validPosition(pr, pc, rot)) {
+      endGame();
+    }
+  }
+
+  function mergePiece() {
+    const cells = cellsAbsolute();
+    for (const [r, c] of cells) {
+      if (r >= 0 && r < ROWS && c >= 0 && c < COLS) board[r][c] = pieceType;
+    }
+  }
+
+  async function onLinesCleared(n) {
+    if (!currentSessionId || n <= 0) return;
+    const updatePromise = fetchJson(urls.updateSession(currentSessionId), {
+      method: "PATCH",
+      body: JSON.stringify({ score: linesTotal })
+    }).catch(() => {});
+    const addPromises = [];
+    for (let i = 0; i < n; i++) {
+      addPromises.push(postForm(urls.addTime, { game_type: "tetris" }).catch(() => {}));
+    }
+    await Promise.all([updatePromise, ...addPromises]);
+  }
+
+  function clearLines() {
+    let cleared = 0;
+    for (let r = ROWS - 1; r >= 0; r--) {
+      if (board[r].every(cell => cell)) {
+        board.splice(r, 1);
+        board.unshift(Array(COLS).fill(null));
+        cleared++;
+        r++;
+      }
+    }
+    if (cleared) {
+      linesTotal += cleared;
+      linesEl.textContent = linesTotal;
+      timeAddedEl.textContent = formatAddedTime(linesTotal);
+      dropMs = Math.max(160, 720 - Math.floor(linesTotal * 12));
+      onLinesCleared(cleared);
+    }
+  }
+
+  function tryMove(dRow, dCol) {
+    if (gameOver || !pieceType) return;
+    const nr = pr + dRow;
+    const nc = pc + dCol;
+    if (validPosition(nr, nc, rot)) {
+      pr = nr;
+      pc = nc;
+    }
+  }
+
+  function tryRotate() {
+    if (gameOver || !pieceType) return;
+    const rots = SHAPES[pieceType];
+    const nextRot = (rot + 1) % rots.length;
+    if (validPosition(pr, pc, nextRot)) {
+      rot = nextRot;
+      return;
+    }
+    for (const kick of [-1, 1, -2, 2]) {
+      if (validPosition(pr, pc + kick, nextRot)) {
+        pc += kick;
+        rot = nextRot;
+        return;
+      }
+    }
+  }
+
+  function softDropStep() {
+    if (gameOver || !pieceType) return;
+    if (validPosition(pr + 1, pc, rot)) {
+      pr++;
+    } else {
+      const cells = cellsAbsolute();
+      if (cells.some(([r]) => r < 0)) {
+        endGame();
+        return;
+      }
+      mergePiece();
+      clearLines();
+      spawnPiece();
+    }
+  }
+
+  function hardDrop() {
+    if (gameOver || !pieceType) return;
+    while (validPosition(pr + 1, pc, rot)) pr++;
+    const cells = cellsAbsolute();
+    if (cells.some(([r]) => r < 0)) {
+      endGame();
+      return;
+    }
+    mergePiece();
+    clearLines();
+    spawnPiece();
+  }
+
+  function drawBlock(r, c, color, alpha = 1) {
+    const vr = r - (ROWS - VISIBLE_ROWS);
+    if (vr < 0 || vr >= VISIBLE_ROWS) return;
+    ctx.globalAlpha = alpha;
+    const x = c * CELL;
+    const y = vr * CELL;
+    const pad = 1;
+    ctx.fillStyle = color;
+    ctx.fillRect(x + pad, y + pad, CELL - pad * 2, CELL - pad * 2);
+    ctx.strokeStyle = "rgba(255,255,255,0.35)";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x + pad, y + pad, CELL - pad * 2, CELL - pad * 2);
+    ctx.globalAlpha = 1;
+  }
+
+  function draw() {
+    ctx.fillStyle = "#0f172a";
+    ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        const t = board[r][c];
+        if (t) drawBlock(r, c, COLORS[t] || "#64748b");
+      }
+    }
+    if (pieceType && !gameOver) {
+      cellsAbsolute().forEach(([r, c]) => {
+        drawBlock(r, c, COLORS[pieceType] || "#94a3b8");
+      });
+    }
+  }
+
+  function setTetrisLeaderboardUi(showRegistered, nameForForm) {
+    if (showRegistered && nameForForm) {
+      nameFields.hidden = true;
+      autoReg.hidden = false;
+      regName.textContent = nameForForm;
+    } else {
+      nameFields.hidden = false;
+      autoReg.hidden = true;
+      playerNameInput.value = (nameForForm != null && nameForForm !== "") ? nameForForm : (getPlayerCookie() || "");
+    }
+  }
+
+  function renderLeaderboardPagination(meta) {
+    const { page, total_pages: totalPages, total } = meta;
+    if (total === 0 || !totalPages || totalPages <= 1) {
+      lbPagEl.hidden = true;
+      return;
+    }
+    lbPagEl.hidden = false;
+    lbPrevBtn.disabled = page <= 1;
+    lbNextBtn.disabled = page >= totalPages;
+    lbPageLabel.textContent = "Page " + page + " / " + totalPages;
+  }
+
+  async function loadLeaderboard() {
+    try {
+      const res = await fetchJson(buildLeaderboardUrl());
+      const data = await res.json();
+      if (data.error) {
+        leaderboardList.innerHTML = "<p class=\"tetris-leaderboard-empty\">Aucun score enregistré</p>";
+        lbPagEl.hidden = true;
+        return;
+      }
+      const entries = data.entries;
+      if (Array.isArray(entries) && entries.length > 0) {
+        leaderboardList.innerHTML =
+          '<div class="tetris-leaderboard-table-wrap">' +
+          '<table class="tetris-leaderboard-table" aria-label="Classement Tétris">' +
+          "<thead><tr>" +
+          '<th scope="col" class="tetris-leaderboard-th tetris-leaderboard-th--num">#</th>' +
+          '<th scope="col" class="tetris-leaderboard-th">Joueur</th>' +
+          '<th scope="col" class="tetris-leaderboard-th tetris-leaderboard-th--score">Lignes</th>' +
+          '<th scope="col" class="tetris-leaderboard-th tetris-leaderboard-th--meta">Temps</th>' +
+          '<th scope="col" class="tetris-leaderboard-th tetris-leaderboard-th--meta">Date</th>' +
+          '<th scope="col" class="tetris-leaderboard-th tetris-leaderboard-th--meta">Heure</th>' +
+          "</tr></thead><tbody>" +
+          entries.map(s =>
+            "<tr>" +
+            `<td class="tetris-leaderboard-td tetris-leaderboard-td--num">${s.rank}</td>` +
+            `<td class="tetris-leaderboard-td tetris-leaderboard-td--name">` +
+              `<strong class="tetris-lb-name">${escapeHtml(s.player_name)}</strong></td>` +
+            `<td class="tetris-leaderboard-td tetris-leaderboard-td--score">` +
+              `<strong class="tetris-lb-score">${s.score}</strong></td>` +
+            `<td class="tetris-leaderboard-td tetris-leaderboard-td--time-meta">${escapeHtml(formatAddedTime(s.score))}</td>` +
+            `<td class="tetris-leaderboard-td tetris-leaderboard-td--date tetris-lb-meta"><time datetime="${escapeHtml(s.played_at || "")}">${escapeHtml(formatPlayedDate(s.played_at))}</time></td>` +
+            `<td class="tetris-leaderboard-td tetris-leaderboard-td--time tetris-lb-meta">${escapeHtml(formatPlayedTime(s.played_at))}</td>` +
+            "</tr>"
+          ).join("") +
+          "</tbody></table></div>";
+        renderLeaderboardPagination(data);
+      } else {
+        leaderboardList.innerHTML = "<p class=\"tetris-leaderboard-empty\">Aucun score enregistré</p>";
+        lbPagEl.hidden = true;
+      }
+    } catch {
+      leaderboardList.innerHTML = "<p class=\"tetris-leaderboard-empty\">Aucun score enregistré</p>";
+      lbPagEl.hidden = true;
+    }
+  }
+
+  function resetGame() {
+    board = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+    bag = [];
+    pieceType = null;
+    rot = 0;
+    pr = 0;
+    pc = 0;
+    linesTotal = 0;
+    dropMs = 720;
+    lastDrop = 0;
+    gameOver = false;
+    currentSessionId = null;
+    linesEl.textContent = "0";
+    timeAddedEl.textContent = formatAddedTime(0);
+  }
+
+  function tick(now) {
+    if (gameOver || !pieceType) return;
+    if (!lastDrop) lastDrop = now;
+    if (now - lastDrop >= dropMs) {
+      lastDrop = now;
+      softDropStep();
+    }
+  }
+
+  function run(now) {
+    if (!gameOver) {
+      tick(now);
+      draw();
+      gameLoop = requestAnimationFrame(run);
+    }
+  }
+
+  async function endGame() {
+    if (gameOver) return;
+    gameOver = true;
+    if (gameLoop) cancelAnimationFrame(gameLoop);
+    gameEl.style.display = "none";
+    gameoverEl.style.display = "block";
+    finalLinesEl.textContent = String(linesTotal);
+    finalTimeEl.textContent = formatAddedTime(linesTotal);
+
+    const saved = getPlayerCookie().trim();
+    if (currentSessionId) {
+      if (saved) {
+        try {
+          const res = await fetchJson(urls.updateSession(currentSessionId), {
+            method: "PATCH",
+            body: JSON.stringify({ score: linesTotal, player_name: saved })
+          });
+          if (res.ok) {
+            setPlayerCookie(saved);
+            setTetrisLeaderboardUi(true, saved);
+            lbPage = 1;
+            lbSortEl.value = "score";
+            loadLeaderboard();
+            return;
+          }
+        } catch (_) {}
+      }
+      fetchJson(urls.updateSession(currentSessionId), {
+        method: "PATCH",
+        body: JSON.stringify({ score: linesTotal })
+      }).catch(() => {});
+    }
+    setTetrisLeaderboardUi(false, saved);
+  }
+
+  async function startGame() {
+    resetGame();
+    intro.style.display = "none";
+    gameEl.style.display = "block";
+    gameoverEl.style.display = "none";
+    setTetrisLeaderboardUi(false, getPlayerCookie() || "");
+
+    try {
+      const res = await fetchJson(urls.createSession, {
+        method: "POST",
+        body: JSON.stringify({ game_type: "tetris" })
+      });
+      const data = await res.json();
+      if (data.id) currentSessionId = data.id;
+    } catch (_) {}
+
+    spawnPiece();
+    lastDrop = performance.now();
+    draw();
+    gameLoop = requestAnimationFrame(run);
+  }
+
+  saveNameBtn.addEventListener("click", async () => {
+    const name = (playerNameInput.value || "").trim();
+    if (!name || !currentSessionId) return;
+    saveNameBtn.disabled = true;
+    try {
+      const res = await fetchJson(urls.updateSession(currentSessionId), {
+        method: "PATCH",
+        body: JSON.stringify({ player_name: name })
+      });
+      if (res.ok) {
+        setPlayerCookie(name);
+        setTetrisLeaderboardUi(true, name);
+        lbPage = 1;
+        lbSortEl.value = "score";
+        loadLeaderboard();
+      }
+    } finally {
+      saveNameBtn.disabled = false;
+    }
+  });
+
+  document.getElementById("tetris-start").addEventListener("click", startGame);
+  document.getElementById("tetris-replay").addEventListener("click", startGame);
+
+  document.getElementById("tetris-btn-left").addEventListener("click", () => tryMove(0, -1));
+  document.getElementById("tetris-btn-right").addEventListener("click", () => tryMove(0, 1));
+  document.getElementById("tetris-btn-down").addEventListener("click", () => softDropStep());
+  document.getElementById("tetris-btn-rotate").addEventListener("click", () => tryRotate());
+
+  lbSortEl.addEventListener("change", () => {
+    lbPage = 1;
+    loadLeaderboard();
+  });
+  lbPrevBtn.addEventListener("click", () => {
+    if (lbPage > 1) { lbPage--; loadLeaderboard(); }
+  });
+  lbNextBtn.addEventListener("click", () => {
+    if (lbNextBtn.disabled) return;
+    lbPage++;
+    loadLeaderboard();
+  });
+
+  document.addEventListener("keydown", e => {
+    const keys = ["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," ","Space"];
+    if (keys.includes(e.key)) e.preventDefault();
+    if (gameOver || e.repeat) return;
+    if (e.key === "ArrowLeft") tryMove(0, -1);
+    else if (e.key === "ArrowRight") tryMove(0, 1);
+    else if (e.key === "ArrowDown") softDropStep();
+    else if (e.key === "ArrowUp") tryRotate();
+    else if (e.key === " " || e.key === "Space") hardDrop();
+  }, { passive: false });
+
+  resetGame();
+  draw();
+  loadLeaderboard();
+})();
+</script>

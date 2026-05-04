@@ -30,6 +30,14 @@
           <p class="showcase-game-desc">Le dinosaure hors-ligne de Google. Saute les cactus pour ajouter du temps.</p>
         <% end %>
       <% end %>
+
+      <% if @showcase_tetris_enabled %>
+        <%= link_to showcase_tetris_path(@beta.nickname), class: "showcase-game-card showcase-game-card--tetris" do %>
+          <span class="showcase-game-icon">🧱</span>
+          <h2 class="showcase-game-title">Tétris</h2>
+          <p class="showcase-game-desc">Empile les pièces : chaque ligne complète ajoute du temps au verrou.</p>
+        <% end %>
+      <% end %>
     </div>
   </div>
 </div>

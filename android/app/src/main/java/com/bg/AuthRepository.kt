@@ -105,10 +105,12 @@ class AuthRepository {
         showcaseQuizEnabled: Boolean,
         showcaseSnakeEnabled: Boolean,
         showcaseDinoEnabled: Boolean,
+        showcaseTetrisEnabled: Boolean,
         showcaseBackdoorEnabled: Boolean,
         showcaseQuizSecondsPerPoint: Int,
         showcaseSnakeSecondsPerFruit: Int,
-        showcaseDinoSecondsPerObstacle: Int
+        showcaseDinoSecondsPerObstacle: Int,
+        showcaseTetrisSecondsPerLine: Int
     ): Result<com.bg.api.ShowcaseSettingsResponse> {
         return try {
             val response = api.updateShowcaseSettings(
@@ -116,10 +118,12 @@ class AuthRepository {
                     showcase_quiz_enabled = showcaseQuizEnabled,
                     showcase_snake_enabled = showcaseSnakeEnabled,
                     showcase_dino_enabled = showcaseDinoEnabled,
+                    showcase_tetris_enabled = showcaseTetrisEnabled,
                     showcase_backdoor_enabled = showcaseBackdoorEnabled,
                     showcase_quiz_seconds_per_point = showcaseQuizSecondsPerPoint,
                     showcase_snake_seconds_per_fruit = showcaseSnakeSecondsPerFruit,
-                    showcase_dino_seconds_per_obstacle = showcaseDinoSecondsPerObstacle
+                    showcase_dino_seconds_per_obstacle = showcaseDinoSecondsPerObstacle,
+                    showcase_tetris_seconds_per_line = showcaseTetrisSecondsPerLine
                 )
             )
             if (response.isSuccessful) {

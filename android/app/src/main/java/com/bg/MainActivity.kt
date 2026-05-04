@@ -219,15 +219,18 @@ class MainActivity : AppCompatActivity() {
                     response?.pishock_enabled == true,
                     response?.showcase_quiz_seconds_per_point,
                     response?.showcase_snake_seconds_per_fruit,
-                    response?.showcase_dino_seconds_per_obstacle
+                    response?.showcase_dino_seconds_per_obstacle,
+                    response?.showcase_tetris_seconds_per_line
                 )
                 val quizSec = response?.showcase_quiz_seconds_per_point?.takeIf { it > 0 }
                 val snakeSec = response?.showcase_snake_seconds_per_fruit?.takeIf { it > 0 }
                 val dinoSec = response?.showcase_dino_seconds_per_obstacle?.takeIf { it > 0 }
+                val tetrisSec = response?.showcase_tetris_seconds_per_line?.takeIf { it > 0 }
                 val gameSecondsText = listOfNotNull(
                     quizSec?.let { "Q: $it" },
                     snakeSec?.let { "S: $it" },
-                    dinoSec?.let { "D: $it" }
+                    dinoSec?.let { "D: $it" },
+                    tetrisSec?.let { "T: $it" }
                 ).joinToString("  ")
                 if (gameSecondsText.isNotEmpty()) {
                     binding.chasterSnakeSeconds.visibility = android.view.View.VISIBLE

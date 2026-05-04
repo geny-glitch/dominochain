@@ -118,6 +118,10 @@
           <%= label_tag :showcase_dino_seconds_per_obstacle, "Dino Run - secondes par obstacle", class: "ds-form-label" %>
           <%= number_field_tag :showcase_dino_seconds_per_obstacle, current_user.showcase_dino_seconds_per_obstacle, min: 1, max: 86_400 * 365, class: "ds-input", required: true %>
         </div>
+        <div class="ds-form-group">
+          <%= label_tag :showcase_tetris_seconds_per_line, "Tétris - secondes par ligne complète", class: "ds-form-label" %>
+          <%= number_field_tag :showcase_tetris_seconds_per_line, current_user.showcase_tetris_seconds_per_line, min: 1, max: 86_400 * 365, class: "ds-input", required: true %>
+        </div>
         <%= submit_tag "Enregistrer le temps des jeux", class: "ds-btn ds-btn--secondary ds-btn--sm" %>
       <% end %>
       <%= form_with url: beta_backdoor_path, method: :patch, local: true, class: "ds-form", style: "margin-top: 1rem;" do %>

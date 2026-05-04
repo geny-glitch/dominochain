@@ -25,16 +25,19 @@ class User < ApplicationRecord
   validates :showcase_quiz_seconds_per_point,
     :showcase_snake_seconds_per_fruit,
     :showcase_dino_seconds_per_obstacle,
+    :showcase_tetris_seconds_per_line,
     numericality: { only_integer: true, greater_than: 0, less_than_or_equal_to: 86_400 * 365 },
     if: :beta?
   validate :at_least_one_showcase_game_enabled, if: :beta?
   validate :showcase_quiz_seconds_decrease_cooldown, if: :beta?
   validate :showcase_snake_seconds_decrease_cooldown, if: :beta?
   validate :showcase_dino_seconds_decrease_cooldown, if: :beta?
+  validate :showcase_tetris_seconds_decrease_cooldown, if: :beta?
 
   before_save :touch_showcase_quiz_seconds_changed_at, if: :will_save_change_to_showcase_quiz_seconds_per_point?
   before_save :touch_showcase_snake_seconds_changed_at, if: :will_save_change_to_showcase_snake_seconds_per_fruit?
   before_save :touch_showcase_dino_seconds_changed_at, if: :will_save_change_to_showcase_dino_seconds_per_obstacle?
+  before_save :touch_showcase_tetris_seconds_changed_at, if: :will_save_change_to_showcase_tetris_seconds_per_line?
 
   def email_required?
     false
@@ -51,7 +54,7 @@ class User < ApplicationRecord
   private
 
   def at_least_one_showcase_game_enabled
-    return if showcase_quiz_enabled || showcase_snake_enabled || showcase_dino_enabled || showcase_backdoor_enabled
+    return if showcase_quiz_enabled || showcase_snake_enabled || showcase_dino_enabled || showcase_tetris_enabled || showcase_backdoor_enabled
 
     errors.add(:base, "Au moins un jeu ou la page Backdoor doit rester activé sur la vitrine.")
   end
@@ -83,6 +86,15 @@ class User < ApplicationRecord
     )
   end
 
+  def showcase_tetris_seconds_decrease_cooldown
+    enforce_showcase_seconds_decrease_cooldown(
+      :showcase_tetris_seconds_per_line,
+      showcase_tetris_seconds_per_line_was,
+      showcase_tetris_seconds_per_line,
+      showcase_tetris_seconds_per_line_at_in_database
+    )
+  end
+
   def touch_showcase_quiz_seconds_changed_at
     self.showcase_quiz_seconds_per_point_at = Time.current
   end
@@ -93,6 +105,10 @@ class User < ApplicationRecord
 
   def touch_showcase_dino_seconds_changed_at
     self.showcase_dino_seconds_per_obstacle_at = Time.current
+  end
+
+  def touch_showcase_tetris_seconds_changed_at
+    self.showcase_tetris_seconds_per_line_at = Time.current
   end
 
   def enforce_showcase_seconds_decrease_cooldown(attribute, previous_value, current_value, last_changed_at)

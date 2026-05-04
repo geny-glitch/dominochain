@@ -9,10 +9,11 @@ class BetaDashboardController < ApplicationController
     current_user.update!(
       showcase_quiz_seconds_per_point: params[:showcase_quiz_seconds_per_point].to_i,
       showcase_snake_seconds_per_fruit: params[:showcase_snake_seconds_per_fruit].to_i,
-      showcase_dino_seconds_per_obstacle: params[:showcase_dino_seconds_per_obstacle].to_i
+      showcase_dino_seconds_per_obstacle: params[:showcase_dino_seconds_per_obstacle].to_i,
+      showcase_tetris_seconds_per_line: params[:showcase_tetris_seconds_per_line].to_i
     )
     redirect_to beta_dashboard_path,
-      notice: "Temps des jeux enregistré (Quiz #{current_user.showcase_quiz_seconds_per_point} s/pt, Snake #{current_user.showcase_snake_seconds_per_fruit} s, Dino #{current_user.showcase_dino_seconds_per_obstacle} s)."
+      notice: "Temps des jeux enregistré (Quiz #{current_user.showcase_quiz_seconds_per_point} s/pt, Snake #{current_user.showcase_snake_seconds_per_fruit} s, Dino #{current_user.showcase_dino_seconds_per_obstacle} s, Tétris #{current_user.showcase_tetris_seconds_per_line} s/ligne)."
   rescue ActiveRecord::RecordInvalid => e
     redirect_to beta_dashboard_path, alert: e.record.errors.full_messages.join(", ")
   end

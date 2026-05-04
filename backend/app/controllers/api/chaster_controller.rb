@@ -66,11 +66,14 @@ module Api
       snake_sec = ShowcaseController::SNAKE_SECONDS_PER_FRUIT if snake_sec.blank? || snake_sec <= 0
       dino_sec = current_user.showcase_dino_seconds_per_obstacle
       dino_sec = ShowcaseController::DINO_SECONDS_PER_OBSTACLE if dino_sec.blank? || dino_sec <= 0
+      tetris_sec = current_user.showcase_tetris_seconds_per_line
+      tetris_sec = ShowcaseController::TETRIS_SECONDS_PER_LINE if tetris_sec.blank? || tetris_sec <= 0
 
       {
         showcase_quiz_seconds_per_point: quiz_sec,
         showcase_snake_seconds_per_fruit: snake_sec,
-        showcase_dino_seconds_per_obstacle: dino_sec
+        showcase_dino_seconds_per_obstacle: dino_sec,
+        showcase_tetris_seconds_per_line: tetris_sec
       }
     end
 

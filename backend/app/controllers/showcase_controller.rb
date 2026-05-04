@@ -5,6 +5,7 @@ class ShowcaseController < ApplicationController
   QUIZ_SECONDS_PER_POINT = 1
   SNAKE_SECONDS_PER_FRUIT = 300
   DINO_SECONDS_PER_OBSTACLE = 300
+  TETRIS_SECONDS_PER_LINE = 60
 
   # Backdoor: max duration per submission (aligné avec #add_time)
   BACKDOOR_MAX_SECONDS = 86_400 * 365
@@ -21,6 +22,7 @@ class ShowcaseController < ApplicationController
     @showcase_quiz_enabled = @beta.showcase_quiz_enabled
     @showcase_snake_enabled = @beta.showcase_snake_enabled
     @showcase_dino_enabled = @beta.showcase_dino_enabled
+    @showcase_tetris_enabled = @beta.showcase_tetris_enabled
     @showcase_backdoor_enabled = @beta.showcase_backdoor_enabled
   end
 
@@ -49,6 +51,15 @@ class ShowcaseController < ApplicationController
 
     @showcase_url = showcase_url(@beta.nickname)
     @dino_seconds_per_obstacle = dino_seconds_per_obstacle_for(@beta)
+  end
+
+  def tetris
+    @beta = User.find_by(nickname: params[:nickname], role: :beta)
+    return render "not_found", status: :not_found unless @beta
+    return render "not_found", status: :not_found unless @beta.showcase_tetris_enabled
+
+    @showcase_url = showcase_url(@beta.nickname)
+    @tetris_seconds_per_line = tetris_seconds_per_line_for(@beta)
   end
 
   def backdoor
@@ -149,7 +160,7 @@ class ShowcaseController < ApplicationController
 
     requested_game_type = params[:game_type].to_s
     game_kind = case requested_game_type
-    when "snake", "dino" then requested_game_type
+    when "snake", "dino", "tetris" then requested_game_type
     else "quiz"
     end
     unless showcase_game_enabled_for?(@beta, game_kind)
@@ -191,7 +202,7 @@ class ShowcaseController < ApplicationController
     return render(json: { error: "Page introuvable." }, status: 404) unless @beta
 
     gt = (params[:game_type].presence || "quiz").to_s
-    gt = "quiz" unless %w[quiz snake dino].include?(gt)
+    gt = "quiz" unless %w[quiz snake dino tetris].include?(gt)
     unless showcase_game_enabled_for?(@beta, gt)
       return render json: { error: "Jeu indisponible." }, status: 404
     end
@@ -350,10 +361,17 @@ class ShowcaseController < ApplicationController
     [s, 86_400 * 365].min
   end
 
+  def tetris_seconds_per_line_for(beta)
+    s = beta.showcase_tetris_seconds_per_line
+    s = TETRIS_SECONDS_PER_LINE if s.blank? || s <= 0
+    [s, 86_400 * 365].min
+  end
+
   def showcase_seconds_for(beta, game_kind, requested_seconds)
     case game_kind
     when "snake" then snake_seconds_per_fruit_for(beta)
     when "dino" then dino_seconds_per_obstacle_for(beta)
+    when "tetris" then tetris_seconds_per_line_for(beta)
     else
       points = requested_seconds&.to_i
       return nil if points.blank?
@@ -366,6 +384,7 @@ class ShowcaseController < ApplicationController
     case game_type.to_s
     when "snake" then beta.showcase_snake_enabled
     when "dino" then beta.showcase_dino_enabled
+    when "tetris" then beta.showcase_tetris_enabled
     when "quiz" then beta.showcase_quiz_enabled
     else false
     end

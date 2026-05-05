@@ -218,8 +218,12 @@ ActiveRecord::Schema[7.2].define(version: 2026_05_05_094500) do
   create_table "strava_goal_checks", force: :cascade do |t|
     t.bigint "strava_goal_id", null: false
     t.bigint "user_id", null: false
-    t.date "week_start_on", null: false
-    t.date "week_end_on", null: false
+    t.datetime "due_at", null: false
+    t.datetime "period_start_at", null: false
+    t.datetime "period_end_at", null: false
+    t.integer "window_days", null: false
+    t.integer "check_time_minutes", null: false
+    t.string "time_zone", null: false
     t.integer "required_count", null: false
     t.integer "valid_count", default: 0, null: false
     t.integer "total_count", default: 0, null: false
@@ -232,9 +236,9 @@ ActiveRecord::Schema[7.2].define(version: 2026_05_05_094500) do
     t.datetime "checked_at", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["strava_goal_id", "week_start_on"], name: "index_strava_goal_checks_on_strava_goal_id_and_week_start_on", unique: true
+    t.index ["strava_goal_id", "due_at"], name: "index_strava_goal_checks_on_strava_goal_id_and_due_at", unique: true
     t.index ["strava_goal_id"], name: "index_strava_goal_checks_on_strava_goal_id"
-    t.index ["user_id", "week_start_on"], name: "index_strava_goal_checks_on_user_id_and_week_start_on"
+    t.index ["user_id", "due_at"], name: "index_strava_goal_checks_on_user_id_and_due_at"
     t.index ["user_id"], name: "index_strava_goal_checks_on_user_id"
   end
 
@@ -242,13 +246,18 @@ ActiveRecord::Schema[7.2].define(version: 2026_05_05_094500) do
     t.bigint "user_id", null: false
     t.string "name", null: false
     t.boolean "enabled", default: true, null: false
-    t.integer "weekly_required_count", default: 1, null: false
+    t.integer "required_activity_count", default: 1, null: false
+    t.integer "window_days", default: 7, null: false
+    t.integer "check_time_minutes", default: 0, null: false
+    t.string "time_zone", default: "Europe/Paris", null: false
     t.integer "min_duration_seconds"
     t.integer "min_calories"
     t.jsonb "activity_types", default: [], null: false
     t.jsonb "device_names", default: [], null: false
     t.integer "chaster_penalty_seconds", null: false
-    t.date "last_checked_week_start_on"
+    t.datetime "last_check_due_at"
+    t.datetime "last_check_period_start_at"
+    t.datetime "last_check_period_end_at"
     t.integer "last_check_valid_count"
     t.integer "last_check_total_count"
     t.string "last_check_status"

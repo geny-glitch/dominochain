@@ -1,25 +1,22 @@
 # frozen_string_literal: true
 
 class StravaGoalEvaluator
-  def self.previous_week_start_on
-    Date.current.beginning_of_week(:monday) - 1.week
-  end
-
   def initialize(user, strava_service: StravaService.new(user), chaster_service: ChasterService.new(user))
     @user = user
     @strava_service = strava_service
     @chaster_service = chaster_service
   end
 
-  def evaluate_goal!(goal, week_start_on: self.class.previous_week_start_on)
-    week_start_on = week_start_on.to_date
-    week_end_on = week_start_on + 6.days
-    existing = goal.strava_goal_checks.find_by(week_start_on: week_start_on)
+  def evaluate_goal!(goal, due_at: goal.previous_due_at)
+    due_at = normalize_due_at(goal, due_at)
+    existing = goal.strava_goal_checks.find_by(due_at: due_at)
     return existing if existing
 
-    activities = activities_for_week(week_start_on, include_details: goal.min_calories.present? || goal.device_names.present?)
+    period_start_at = goal.period_start_for(due_at)
+    period_end_at = due_at
+    activities = activities_for_period(period_start_at, period_end_at, include_details: detailed_activities_required?([ goal ]))
     matching = activities.select { |activity| activity_matches_goal?(activity, goal) }
-    status = matching.count >= goal.weekly_required_count ? "passed" : "failed"
+    status = matching.count >= goal.required_count ? "passed" : "failed"
     chaster_applied = false
     chaster_error = nil
     chaster_lock_id = nil
@@ -45,8 +42,9 @@ class StravaGoalEvaluator
     if defined?(activities) && defined?(matching) && status.present?
       check = create_check!(
         goal,
-        week_start_on: week_start_on,
-        week_end_on: week_end_on,
+        due_at: due_at,
+        period_start_at: period_start_at,
+        period_end_at: period_end_at,
         activities: activities,
         matching: matching,
         status: status,
@@ -59,21 +57,26 @@ class StravaGoalEvaluator
     end
   end
 
-  def evaluate_enabled_goals!(week_start_on: self.class.previous_week_start_on)
-    @user.strava_goals.enabled.order(:id).map do |goal|
-      evaluate_goal!(goal, week_start_on: week_start_on)
+  def evaluate_due_goals!(now: Time.current)
+    @user.strava_goals.enabled.order(:id).filter_map do |goal|
+      due_at = goal.due_at_or_before(now)
+      next unless due_at
+
+      evaluate_goal!(goal, due_at: due_at)
     end
   end
 
-  def preview_goal(goal, week_start_on: Date.current.beginning_of_week(:monday))
-    week_start_on = week_start_on.to_date
-    activities = activities_for_week(week_start_on, include_details: detailed_activities_required?([ goal ]))
+  def preview_goal(goal, due_at: Time.current)
+    due_at = normalize_due_at(goal, due_at)
+    period_start_at = goal.period_start_for(due_at)
+    activities = activities_for_period(period_start_at, due_at, include_details: detailed_activities_required?([ goal ]))
     matching = activities.select { |activity| activity_matches_goal?(activity, goal) }
 
     {
-      week_start_on: week_start_on,
-      week_end_on: [ week_start_on + 6.days, Date.current ].min,
-      required_count: goal.weekly_required_count,
+      due_at: due_at,
+      period_start_at: period_start_at,
+      period_end_at: due_at,
+      required_count: goal.required_count,
       valid_count: matching.count,
       total_count: activities.count,
       activity_ids: activities.map { |activity| activity[:id] },
@@ -83,10 +86,13 @@ class StravaGoalEvaluator
 
   private
 
-  def activities_for_week(week_start_on, include_details:)
-    after = week_start_on.beginning_of_day
-    before = (week_start_on + 1.week).beginning_of_day
-    @strava_service.activities_between(start_time: after, end_time: before, include_details: include_details)
+  def normalize_due_at(goal, due_at)
+    zone = goal.time_zone_object
+    due_at.in_time_zone(zone).change(sec: 0).utc
+  end
+
+  def activities_for_period(period_start_at, period_end_at, include_details:)
+    @strava_service.activities_between(start_time: period_start_at, end_time: period_end_at, include_details: include_details)
   end
 
   def detailed_activities_required?(goals)
@@ -113,7 +119,7 @@ class StravaGoalEvaluator
     expected_device_names.any? { |expected| name.include?(expected.to_s.downcase) }
   end
 
-  def create_check!(goal, week_start_on:, week_end_on:, activities:, matching:, status:, chaster_applied:, chaster_error:, chaster_lock_id:)
+  def create_check!(goal, due_at:, period_start_at:, period_end_at:, activities:, matching:, status:, chaster_applied:, chaster_error:, chaster_lock_id:)
     details = {
       activity_ids: activities.map { |activity| activity[:id] },
       matching_activity_ids: matching.map { |activity| activity[:id] },
@@ -122,14 +128,23 @@ class StravaGoalEvaluator
         min_calories: goal.min_calories,
         activity_types: goal.activity_types,
         device_names: goal.device_names
+      },
+      window: {
+        days: goal.window_days,
+        check_time: goal.check_time_label,
+        time_zone: goal.time_zone
       }
     }
 
     goal.strava_goal_checks.create!(
       user: @user,
-      week_start_on: week_start_on,
-      week_end_on: week_end_on,
-      required_count: goal.weekly_required_count,
+      due_at: due_at,
+      period_start_at: period_start_at,
+      period_end_at: period_end_at,
+      window_days: goal.window_days,
+      check_time_minutes: goal.check_time_minutes,
+      time_zone: goal.time_zone,
+      required_count: goal.required_count,
       valid_count: matching.count,
       total_count: activities.count,
       status: status,
@@ -144,7 +159,9 @@ class StravaGoalEvaluator
 
   def sync_goal_last_check!(goal, check)
     goal.update_columns(
-      last_checked_week_start_on: check.week_start_on,
+      last_check_due_at: check.due_at,
+      last_check_period_start_at: check.period_start_at,
+      last_check_period_end_at: check.period_end_at,
       last_check_valid_count: check.valid_count,
       last_check_total_count: check.total_count,
       last_check_status: check.status,

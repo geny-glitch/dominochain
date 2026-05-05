@@ -66,7 +66,7 @@
       <div class="ds-beta-control-card">
         <% if current_user.strava_access_token.present? %>
           <p class="ds-beta-control-text">Strava connecté<%= " · athlete ##{current_user.strava_athlete_id}" if current_user.strava_athlete_id.present? %></p>
-          <p class="ds-beta-control-hint">Chaque objectif compte les activités de la semaine ISO terminée. Si le nombre requis n'est pas atteint, le temps configuré est ajouté une seule fois au lock Chaster actif.</p>
+          <p class="ds-beta-control-hint">Chaque objectif compte les activités sur une fenêtre glissante explicite (quotidienne, hebdomadaire ou X jours). À l'heure choisie dans le fuseau du beta, si le nombre requis n'est pas atteint, le temps configuré est ajouté une seule fois au lock Chaster actif.</p>
           <%= button_to "Déconnecter Strava", strava_disconnect_path, method: :delete, form: { data: { turbo_confirm: "Déconnecter Strava et désactiver les objectifs Strava ?" } }, class: "ds-btn ds-btn--secondary ds-btn--sm", style: "margin-top: 0.5rem;" %>
 
           <% if @strava_goals.any? %>
@@ -87,8 +87,25 @@
                       <%= text_field_tag :name, goal.name, id: "strava_goal_#{goal.id}_name", class: "ds-input", required: true %>
                     </div>
                     <div class="ds-form-group">
-                      <%= label_tag "strava_goal_#{goal.id}_weekly_required_count", "Nombre d'activités par semaine", class: "ds-form-label" %>
-                      <%= number_field_tag :weekly_required_count, goal.weekly_required_count, id: "strava_goal_#{goal.id}_weekly_required_count", min: 1, max: 100, class: "ds-input", required: true %>
+                      <%= label_tag "strava_goal_#{goal.id}_required_count", "Nombre d'activités valides requises", class: "ds-form-label" %>
+                      <%= number_field_tag :required_count, goal.required_count, id: "strava_goal_#{goal.id}_required_count", min: 1, max: 100, class: "ds-input", required: true %>
+                    </div>
+                    <% window_preset = goal.window_days == 1 ? "daily" : (goal.window_days == 7 ? "weekly" : "custom") %>
+                    <div class="ds-form-group">
+                      <%= label_tag "strava_goal_#{goal.id}_window_preset", "Fenêtre glissante", class: "ds-form-label" %>
+                      <%= select_tag :window_preset, options_for_select([["Quotidien — 1 jour glissant", "daily"], ["Hebdomadaire — 7 jours glissants", "weekly"], ["Personnalisé", "custom"]], window_preset), id: "strava_goal_#{goal.id}_window_preset", class: "ds-input" %>
+                    </div>
+                    <div class="ds-form-group">
+                      <%= label_tag "strava_goal_#{goal.id}_window_days", "Nombre de jours glissants (si personnalisé)", class: "ds-form-label" %>
+                      <%= number_field_tag :window_days, goal.window_days, id: "strava_goal_#{goal.id}_window_days", min: StravaGoal::MIN_WINDOW_DAYS, max: StravaGoal::MAX_WINDOW_DAYS, class: "ds-input" %>
+                    </div>
+                    <div class="ds-form-group">
+                      <%= label_tag "strava_goal_#{goal.id}_check_time", "Heure d'évaluation", class: "ds-form-label" %>
+                      <%= time_field_tag :check_time, goal.check_time_label, id: "strava_goal_#{goal.id}_check_time", class: "ds-input", required: true %>
+                    </div>
+                    <div class="ds-form-group">
+                      <%= label_tag "strava_goal_#{goal.id}_time_zone", "Fuseau horaire", class: "ds-form-label" %>
+                      <%= select_tag :time_zone, options_for_select(ActiveSupport::TimeZone.all.map(&:name), goal.time_zone), id: "strava_goal_#{goal.id}_time_zone", class: "ds-input" %>
                     </div>
                     <div class="ds-form-group">
                       <%= label_tag "strava_goal_#{goal.id}_min_duration_minutes", "Durée minimale par activité (minutes, optionnel)", class: "ds-form-label" %>
@@ -113,7 +130,7 @@
                     <p class="ds-beta-control-hint">Critères: <%= goal.criteria_summary.presence || "aucun" %></p>
                     <% if last_check %>
                       <p class="ds-beta-control-hint">
-                        Dernier check: semaine du <%= last_check.week_start_on.strftime("%d/%m/%Y") %> ·
+                        Dernier check: <%= last_check.period_start_at.in_time_zone(goal.time_zone_object).strftime("%d/%m %H:%M") %> → <%= last_check.period_end_at.in_time_zone(goal.time_zone_object).strftime("%d/%m %H:%M") %> ·
                         <%= last_check.valid_count %>/<%= last_check.required_count %> activités ·
                         statut <strong><%= last_check.status %></strong>
                         <% if last_check.chaster_applied? %>
@@ -123,10 +140,13 @@
                         <% end %>
                       </p>
                     <% end %>
+                    <p class="ds-beta-control-hint">
+                      Prochaine évaluation: <%= goal.next_due_at.in_time_zone(goal.time_zone_object).strftime("%d/%m/%Y %H:%M") %> (<%= goal.time_zone %>).
+                    </p>
                     <%= submit_tag "Enregistrer l'objectif", class: "ds-btn ds-btn--primary ds-btn--sm", style: "margin-top: 0.75rem;" %>
                   <% end %>
                   <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem;">
-                    <%= button_to "Vérifier la semaine terminée", beta_strava_goal_check_path(goal), method: :post, class: "ds-btn ds-btn--secondary ds-btn--sm" %>
+                    <%= button_to "Vérifier la dernière fenêtre terminée", beta_strava_goal_check_path(goal), method: :post, class: "ds-btn ds-btn--secondary ds-btn--sm" %>
                     <%= button_to "Supprimer l'objectif", beta_strava_goal_destroy_path(goal), method: :delete, form: { data: { turbo_confirm: "Supprimer définitivement cet objectif Strava et son historique de checks ?" } }, class: "ds-btn ds-btn--ghost ds-btn--sm" %>
                   </div>
                 </div>
@@ -137,7 +157,7 @@
           <% end %>
 
           <%= form_with url: beta_strava_goals_path, method: :post, local: true, class: "ds-form", style: "margin-top: 1rem;" do %>
-            <h3 class="ds-section-title" style="margin-bottom: 0.5rem; font-size: 1rem;">Nouvel objectif hebdomadaire</h3>
+            <h3 class="ds-section-title" style="margin-bottom: 0.5rem; font-size: 1rem;">Nouvel objectif glissant</h3>
             <%= hidden_field_tag :enabled, "0" %>
             <div class="ds-form-group">
               <label class="ds-form-label">
@@ -150,8 +170,24 @@
               <%= text_field_tag :name, nil, class: "ds-input", placeholder: "3 runs cardio", required: true %>
             </div>
             <div class="ds-form-group">
-              <%= label_tag :weekly_required_count, "Nombre d'activités par semaine", class: "ds-form-label" %>
-              <%= number_field_tag :weekly_required_count, 1, min: 1, max: 100, class: "ds-input", required: true %>
+              <%= label_tag :required_count, "Nombre d'activités valides requises", class: "ds-form-label" %>
+              <%= number_field_tag :required_count, 1, min: 1, max: 100, class: "ds-input", required: true %>
+            </div>
+            <div class="ds-form-group">
+              <%= label_tag :window_preset, "Fenêtre glissante", class: "ds-form-label" %>
+              <%= select_tag :window_preset, options_for_select([["Quotidien — 1 jour glissant", "daily"], ["Hebdomadaire — 7 jours glissants", "weekly"], ["Personnalisé", "custom"]], "weekly"), class: "ds-input" %>
+            </div>
+            <div class="ds-form-group">
+              <%= label_tag :window_days, "Nombre de jours glissants (si personnalisé)", class: "ds-form-label" %>
+              <%= number_field_tag :window_days, 7, min: StravaGoal::MIN_WINDOW_DAYS, max: StravaGoal::MAX_WINDOW_DAYS, class: "ds-input" %>
+            </div>
+            <div class="ds-form-group">
+              <%= label_tag :check_time, "Heure d'évaluation", class: "ds-form-label" %>
+              <%= time_field_tag :check_time, "00:00", class: "ds-input", required: true %>
+            </div>
+            <div class="ds-form-group">
+              <%= label_tag :time_zone, "Fuseau horaire", class: "ds-form-label" %>
+              <%= select_tag :time_zone, options_for_select(ActiveSupport::TimeZone.all.map(&:name), Time.zone.name), class: "ds-input" %>
             </div>
             <div class="ds-form-group">
               <%= label_tag :min_duration_minutes, "Durée minimale par activité (minutes, optionnel)", class: "ds-form-label" %>
@@ -177,7 +213,7 @@
             <%= submit_tag "Créer l'objectif Strava", class: "ds-btn ds-btn--primary ds-btn--sm", style: "margin-top: 0.75rem;" %>
           <% end %>
         <% elsif StravaService.configured? %>
-          <p class="ds-beta-control-text">Connecte ton compte Strava pour créer des objectifs hebdomadaires qui ajoutent du temps Chaster en cas d'échec.</p>
+          <p class="ds-beta-control-text">Connecte ton compte Strava pour créer des objectifs sur X jours glissants qui ajoutent du temps Chaster en cas d'échec.</p>
           <%= link_to "Connecter Strava", strava_connect_path, class: "ds-btn ds-btn--primary ds-btn--sm", style: "margin-top: 0.5rem;" %>
         <% else %>
           <p class="ds-text-muted">Strava n'est pas configuré sur ce serveur.</p>

@@ -1,10 +1,13 @@
 # frozen_string_literal: true
 
 namespace :strava do
-  desc "Check enabled Strava goals for the last completed ISO week"
+  desc "Check enabled Strava goals that are due now"
+  task check_due_goals: :environment do
+    StravaGoalCheckJob.perform_now
+  end
+
+  desc "Deprecated alias for strava:check_due_goals"
   task check_weekly_goals: :environment do
-    User.where.not(strava_access_token: nil).find_each do |user|
-      StravaGoalCheckJob.perform_now(user.id)
-    end
+    Rake::Task["strava:check_due_goals"].invoke
   end
 end

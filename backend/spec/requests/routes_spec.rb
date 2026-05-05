@@ -128,7 +128,11 @@ RSpec.describe "Routes", type: :request do
       post beta_strava_goals_path, params: {
         name: "Cardio",
         enabled: "1",
-        weekly_required_count: "2",
+        required_count: "2",
+        window_preset: "custom",
+        window_days: "10",
+        check_time: "06:30",
+        time_zone: "Paris",
         min_duration_minutes: "30",
         activity_types: "Run, Ride",
         device_names: "Garmin",
@@ -138,7 +142,10 @@ RSpec.describe "Routes", type: :request do
       expect(response).to redirect_to(beta_dashboard_path)
       goal = beta.strava_goals.last
       expect(goal.name).to eq("Cardio")
-      expect(goal.weekly_required_count).to eq(2)
+      expect(goal.required_count).to eq(2)
+      expect(goal.window_days).to eq(10)
+      expect(goal.check_time_label).to eq("06:30")
+      expect(goal.time_zone).to eq("Paris")
       expect(goal.min_duration_seconds).to eq(1_800)
       expect(goal.activity_types).to eq(%w[Run Ride])
       expect(goal.device_names).to eq([ "Garmin" ])

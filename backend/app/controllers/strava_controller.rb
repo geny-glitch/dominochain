@@ -71,7 +71,7 @@ class StravaController < ApplicationController
   end
 
   def check_goal
-    check = StravaGoalEvaluator.new(current_user).evaluate_goal!(@goal, week_start_on: check_week_start_on)
+    check = StravaGoalEvaluator.new(current_user).evaluate_goal!(@goal, due_at: check_due_at)
     redirect_to beta_dashboard_path, notice: strava_check_notice(check)
   rescue StravaService::Unauthorized
     redirect_to beta_dashboard_path, alert: "Strava non connecté."
@@ -109,7 +109,11 @@ class StravaController < ApplicationController
     p = params.permit(
       :name,
       :enabled,
-      :weekly_required_count,
+      :required_count,
+      :window_preset,
+      :window_days,
+      :check_time,
+      :time_zone,
       :min_duration_minutes,
       :min_calories,
       :activity_types,
@@ -120,7 +124,10 @@ class StravaController < ApplicationController
     {
       name: p[:name].to_s.strip,
       enabled: p[:enabled] == "1",
-      weekly_required_count: p[:weekly_required_count].to_i,
+      required_activity_count: p[:required_count].to_i,
+      window_days: window_days_param(p),
+      check_time_minutes: check_time_minutes_param(p[:check_time]),
+      time_zone: p[:time_zone].presence || Time.zone.tzinfo.name,
       min_duration_seconds: positive_integer_or_nil(p[:min_duration_minutes])&.*(60),
       min_calories: positive_integer_or_nil(p[:min_calories]),
       activity_types: p[:activity_types].to_s,
@@ -134,18 +141,35 @@ class StravaController < ApplicationController
     n.positive? ? n : nil
   end
 
-  def check_week_start_on
-    params[:week].to_s == "current" ? Date.current.beginning_of_week(:monday) : StravaGoalEvaluator.previous_week_start_on
+  def window_days_param(permitted_params)
+    case permitted_params[:window_preset].to_s
+    when "daily" then 1
+    when "weekly" then 7
+    else
+      positive_integer_or_nil(permitted_params[:window_days]) || 7
+    end
+  end
+
+  def check_time_minutes_param(value)
+    hours, minutes = value.to_s.split(":", 2).map(&:to_i)
+    minutes ||= 0
+    return 0 unless hours.between?(0, 23) && minutes.between?(0, 59)
+
+    hours * 60 + minutes
+  end
+
+  def check_due_at
+    params[:due].to_s == "next" ? @goal.next_due_at : @goal.previous_due_at
   end
 
   def strava_check_notice(check)
     case check.status
     when "passed"
-      "Objectif Strava validé: #{check.valid_count}/#{check.required_count} activités."
+      "Objectif Strava validé: #{check.valid_count}/#{check.required_count} activités sur #{check.window_days} jours."
     when "failed"
-      "Objectif Strava non validé: #{check.valid_count}/#{check.required_count}. #{check.chaster_penalty_seconds / 60} min ajoutées à Chaster."
+      "Objectif Strava non validé: #{check.valid_count}/#{check.required_count} sur #{check.window_days} jours. #{check.chaster_penalty_seconds / 60} min ajoutées à Chaster."
     else
-      "Objectif Strava non validé: #{check.valid_count}/#{check.required_count}. Chaster n'a pas pu être pénalisé: #{check.chaster_error}"
+      "Objectif Strava non validé: #{check.valid_count}/#{check.required_count} sur #{check.window_days} jours. Chaster n'a pas pu être pénalisé: #{check.chaster_error}"
     end
   end
 end

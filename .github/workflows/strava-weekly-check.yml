@@ -1,14 +1,14 @@
-# Runs the Strava weekly goal evaluator against the deployed Rails app.
-name: Strava Weekly Goal Check
+# Runs the Strava rolling-window goal evaluator against the deployed Rails app.
+name: Strava Due Goal Check
 
 on:
   schedule:
-    - cron: "15 5 * * 1"
+    - cron: "5 * * * *"
   workflow_dispatch:
 
 jobs:
   check:
-    name: Check Strava goals
+    name: Check due Strava goals
     runs-on: ubuntu-latest
     concurrency:
       group: strava-weekly-check
@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: superfly/flyctl-actions/setup-flyctl@master
 
-      - name: Run weekly Strava checks on Fly.io
-        run: flyctl ssh console --app bg-backend -C "cd /rails && bin/rails strava:check_weekly_goals"
+      - name: Run due Strava checks on Fly.io
+        run: flyctl ssh console --app bg-backend -C "cd /rails && bin/rails strava:check_due_goals"
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

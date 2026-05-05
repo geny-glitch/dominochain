@@ -1,6 +1,6 @@
 # BG PuryFi — plugin WebSocket
 
-Serveur WebSocket (local ou Fly.io) : PuryFi s’y connecte sur une **URL dédiée** `wss://…/ws/<ton_token>`. Le token provient du **dashboard beta** (section PuryFi) et identifie ton compte — **aucun** `BG_API_TOKEN` / `BG_DEVICE_ID` côté serveur.
+Serveur WebSocket (local ou Fly.io) : PuryFi s’y connecte sur une **URL dédiée** `wss://…/ws/<ton_token>`. Le token provient du **dashboard beta** (section PuryFi) et identifie ton compte.
 
 Le service appelle l’API BG : `GET /api/showcase_settings` (Bearer = token d’URL) et `POST /api/chaster/add_time`.
 
@@ -35,12 +35,6 @@ Secret obligatoire (sans slash final) :
 
 ```bash
 fly secrets set BG_BACKEND_URL="https://bg-backend.fly.dev" -a bg-puryfi-ws
-```
-
-Tu peux retirer d’anciens secrets inutiles :
-
-```bash
-fly secrets unset BG_API_TOKEN BG_DEVICE_ID -a bg-puryfi-ws
 ```
 
 Déploiement depuis la racine du dépôt :

@@ -43,33 +43,62 @@ async function fetchConfig(
 }
 
 async function ensureIntents(connection: WebSocketConnectionType) {
-  const desired = ["requestMediaProcesses"] as const;
+  const desired = ["readMediaProcesses", "requestMediaProcesses"] as const;
 
-  const grantedRes = await connection.sendMessage("getPluginIntents", {});
-  if (grantedRes.type === "error") {
-    throw new Error(grantedRes.message);
-  }
-  let granted = grantedRes.intents;
+  await new Promise<void>((resolve, reject) => {
+    let finished = false;
+    const t = setTimeout(() => {
+      finish(() => reject(new Error("Timeout attente intents PuryFi")));
+    }, 120_000);
 
-  if (!desired.every((i) => granted.includes(i))) {
-    await connection.sendMessage("requestPluginIntents", {
-      intents: [...desired],
-    });
-    await new Promise<void>((resolve, reject) => {
-      const t = setTimeout(
-        () => reject(new Error("Timeout attente intents PuryFi")),
-        120_000,
-      );
-      connection.on("message", "intentsGrant", function listener({ intents }) {
-        granted = intents;
-        if (desired.every((i) => granted.includes(i))) {
-          clearTimeout(t);
-          connection.off("message", "intentsGrant", listener);
-          resolve();
+    const finish = (fn: () => void) => {
+      if (finished) return;
+      finished = true;
+      clearTimeout(t);
+      connection.off("message", "intentsGrant", onGrant);
+      fn();
+    };
+
+    const check = (): void => {
+      void connection
+        .sendMessage("getPluginIntents", {})
+        .then((res) => {
+          if (res.type === "error") {
+            finish(() => reject(new Error(res.message)));
+            return;
+          }
+          if (desired.every((i) => res.intents.includes(i))) {
+            finish(() => resolve());
+          }
+        })
+        .catch((e) => {
+          finish(() =>
+            reject(e instanceof Error ? e : new Error(String(e))),
+          );
+        });
+    };
+
+    function onGrant() {
+      check();
+    }
+
+    connection.on("message", "intentsGrant", onGrant);
+
+    void connection
+      .sendMessage("requestPluginIntents", { intents: [...desired] })
+      .then((req) => {
+        if (req.type === "error") {
+          finish(() => reject(new Error(req.message)));
+          return;
         }
+        check();
+      })
+      .catch((e) => {
+        finish(() =>
+          reject(e instanceof Error ? e : new Error(String(e))),
+        );
       });
-    });
-  }
+  });
 }
 
 async function runPuryFiConnection(
@@ -81,21 +110,7 @@ async function runPuryFiConnection(
     throw new Error("Manque BG_BACKEND_URL dans l'environnement");
   }
 
-  let config = await fetchConfig(
-    baseUrl,
-    pluginToken,
-    mergeRemoteConfig({}),
-  );
-  setInterval(() => {
-    fetchConfig(baseUrl, pluginToken, config)
-      .then((c) => {
-        config = c;
-      })
-      .catch(() => {
-        /* garde la config précédente */
-      });
-  }, 10_000);
-
+  // open() émet « open » tout de suite : enregistrer les listeners avant de l’appeler.
   await new Promise<void>((resolve, reject) => {
     const t = setTimeout(
       () => reject(new Error("Timeout attente open PuryFi")),
@@ -109,9 +124,12 @@ async function runPuryFiConnection(
       clearTimeout(t);
       reject(e);
     });
+    connection.open();
   });
 
-  await new Promise<void>((resolve, reject) => {
+  // Le client envoie « ready » très tôt : même problème que pour open() si on
+  // attend fetchConfig avant d’écouter.
+  const readyPromise = new Promise<void>((resolve, reject) => {
     connection.once("message", "ready", (payload) => {
       const res = connection.handleReadyMessage(payload);
       if (res.type === "ok") resolve();
@@ -126,6 +144,27 @@ async function runPuryFiConnection(
       return res;
     });
   });
+
+  let config = mergeRemoteConfig({});
+  const configPromise = fetchConfig(
+    baseUrl,
+    pluginToken,
+    config,
+  ).then((c) => {
+    config = c;
+  });
+
+  await Promise.all([readyPromise, configPromise]);
+
+  setInterval(() => {
+    fetchConfig(baseUrl, pluginToken, config)
+      .then((c) => {
+        config = c;
+      })
+      .catch(() => {
+        /* garde la config précédente */
+      });
+  }, 10_000);
 
   await connection.sendMessage("setPluginManifest", {
     manifest: {
@@ -151,7 +190,7 @@ async function runPuryFiConnection(
       config,
     );
 
-    if (result.matched.length === 0) return;
+    if (result.totalSeconds < 1) return;
 
     const ts = new Date().toISOString();
     console.log(
@@ -196,7 +235,6 @@ function main() {
     const pluginToken = decodeURIComponent(m[1]);
     wss.handleUpgrade(request, socket, head, (ws) => {
       const connection = new WebSocketConnection(ws);
-      connection.open();
       console.log("Client PuryFi connecté");
       runPuryFiConnection(connection, pluginToken).catch((err) => {
         console.error("Erreur connexion PuryFi:", err);

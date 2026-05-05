@@ -3,9 +3,9 @@
 class StravaController < ApplicationController
   before_action :authenticate_user!
   before_action :require_beta_role!
-  before_action :require_strava_configured!, only: [:connect, :callback]
-  before_action :require_strava_connected!, only: [:create_goal, :update_goal, :check_goal]
-  before_action :set_goal, only: [:update_goal, :destroy_goal, :check_goal]
+  before_action :require_strava_configured!, only: [ :connect, :callback ]
+  before_action :require_strava_connected!, only: [ :create_goal, :update_goal, :check_goal ]
+  before_action :set_goal, only: [ :update_goal, :destroy_goal, :check_goal ]
 
   def connect
     state = SecureRandom.hex(24)

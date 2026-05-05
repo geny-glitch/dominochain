@@ -141,7 +141,7 @@ RSpec.describe "Routes", type: :request do
       expect(goal.weekly_required_count).to eq(2)
       expect(goal.min_duration_seconds).to eq(1_800)
       expect(goal.activity_types).to eq(%w[Run Ride])
-      expect(goal.device_names).to eq(["Garmin"])
+      expect(goal.device_names).to eq([ "Garmin" ])
       expect(goal.chaster_penalty_seconds).to eq(5_400)
     end
 

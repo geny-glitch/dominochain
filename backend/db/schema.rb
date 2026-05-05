@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_05_04_190000) do
+ActiveRecord::Schema[7.2].define(version: 2026_05_05_094500) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -215,6 +215,52 @@ ActiveRecord::Schema[7.2].define(version: 2026_05_04_190000) do
     t.index ["user_id"], name: "index_showcase_time_additions_on_user_id"
   end
 
+  create_table "strava_goal_checks", force: :cascade do |t|
+    t.bigint "strava_goal_id", null: false
+    t.bigint "user_id", null: false
+    t.date "week_start_on", null: false
+    t.date "week_end_on", null: false
+    t.integer "required_count", null: false
+    t.integer "valid_count", default: 0, null: false
+    t.integer "total_count", default: 0, null: false
+    t.string "status", null: false
+    t.integer "chaster_penalty_seconds", null: false
+    t.string "chaster_lock_id"
+    t.boolean "chaster_applied", default: false, null: false
+    t.string "chaster_error"
+    t.jsonb "details", default: {}, null: false
+    t.datetime "checked_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["strava_goal_id", "week_start_on"], name: "index_strava_goal_checks_on_strava_goal_id_and_week_start_on", unique: true
+    t.index ["strava_goal_id"], name: "index_strava_goal_checks_on_strava_goal_id"
+    t.index ["user_id", "week_start_on"], name: "index_strava_goal_checks_on_user_id_and_week_start_on"
+    t.index ["user_id"], name: "index_strava_goal_checks_on_user_id"
+  end
+
+  create_table "strava_goals", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "name", null: false
+    t.boolean "enabled", default: true, null: false
+    t.integer "weekly_required_count", default: 1, null: false
+    t.integer "min_duration_seconds"
+    t.integer "min_calories"
+    t.jsonb "activity_types", default: [], null: false
+    t.jsonb "device_names", default: [], null: false
+    t.integer "chaster_penalty_seconds", null: false
+    t.date "last_checked_week_start_on"
+    t.integer "last_check_valid_count"
+    t.integer "last_check_total_count"
+    t.string "last_check_status"
+    t.boolean "last_check_chaster_applied", default: false, null: false
+    t.string "last_check_chaster_error"
+    t.jsonb "last_check_details", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "enabled"], name: "index_strava_goals_on_user_id_and_enabled"
+    t.index ["user_id"], name: "index_strava_goals_on_user_id"
+  end
+
   create_table "tasks", force: :cascade do |t|
     t.string "name", null: false
     t.text "description"
@@ -267,6 +313,10 @@ ActiveRecord::Schema[7.2].define(version: 2026_05_04_190000) do
     t.jsonb "puryfi_seconds_per_label", default: {}, null: false
     t.float "puryfi_min_score", default: 0.5, null: false
     t.decimal "pishock_intensity_factor", precision: 5, scale: 2, default: "1.0", null: false
+    t.string "strava_access_token"
+    t.string "strava_refresh_token"
+    t.datetime "strava_token_expires_at"
+    t.string "strava_athlete_id"
     t.index ["email"], name: "index_users_on_email"
     t.index ["nickname"], name: "index_users_on_nickname", unique: true
     t.index ["provider", "uid"], name: "index_users_on_provider_and_uid"
@@ -308,6 +358,9 @@ ActiveRecord::Schema[7.2].define(version: 2026_05_04_190000) do
   add_foreign_key "punishments", "tasks"
   add_foreign_key "showcase_add_time_events", "users"
   add_foreign_key "showcase_time_additions", "users"
+  add_foreign_key "strava_goal_checks", "strava_goals"
+  add_foreign_key "strava_goal_checks", "users"
+  add_foreign_key "strava_goals", "users"
   add_foreign_key "tasks", "users"
   add_foreign_key "wallpaper_applications", "devices"
   add_foreign_key "wallpaper_applications", "wallpapers"

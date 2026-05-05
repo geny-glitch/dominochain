@@ -17,8 +17,8 @@ RSpec.describe StravaGoalEvaluator do
         weekly_required_count: 2,
         min_duration_seconds: 30.minutes.to_i,
         min_calories: 300,
-        activity_types: ["Run"],
-        device_names: ["Garmin"],
+        activity_types: [ "Run" ],
+        device_names: [ "Garmin" ],
         chaster_penalty_seconds: 2.hours.to_i
       )
       allow(strava_service).to receive(:activities_between).and_return([

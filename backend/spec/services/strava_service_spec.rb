@@ -18,8 +18,7 @@ RSpec.describe StravaService do
     code_s = code.to_s
     success = code_s.start_with?("2") if success.nil?
     r = instance_double(Net::HTTPResponse, body: body, code: code_s)
-    allow(r).to receive(:is_a?).with(Net::HTTPSuccess).and_return(success)
-    allow(r).to receive(:is_a?).and_call_original
+    allow(r).to receive(:is_a?) { |klass| klass == Net::HTTPSuccess ? success : false }
     r
   end
 
@@ -34,14 +33,14 @@ RSpec.describe StravaService do
           { "id" => 2, "name" => "Ride", "type" => "Ride", "elapsed_time" => 3600, "start_date" => "2026-05-02T08:00:00Z" }
         ].to_json
       )
-      queue << resp(200, body: [{ "id" => 3, "name" => "Walk", "type" => "Walk", "moving_time" => 900 }].to_json)
+      queue << resp(200, body: [ { "id" => 3, "name" => "Walk", "type" => "Walk", "moving_time" => 900 } ].to_json)
 
       activities = described_class.new(user).activities_between(
         start_time: Time.zone.parse("2026-04-27"),
         end_time: Time.zone.parse("2026-05-04")
       )
 
-      expect(activities.map { |a| a[:id] }).to eq([1, 2, 3])
+      expect(activities.map { |a| a[:id] }).to eq([ 1, 2, 3 ])
       expect(activities.first).to include(type: "Run", duration_seconds: 1800)
     end
 

@@ -67,12 +67,12 @@ class StravaGoalEvaluator
 
   def preview_goal(goal, week_start_on: Date.current.beginning_of_week(:monday))
     week_start_on = week_start_on.to_date
-    activities = activities_for_week(week_start_on, include_details: detailed_activities_required?([goal]))
+    activities = activities_for_week(week_start_on, include_details: detailed_activities_required?([ goal ]))
     matching = activities.select { |activity| activity_matches_goal?(activity, goal) }
 
     {
       week_start_on: week_start_on,
-      week_end_on: [week_start_on + 6.days, Date.current].min,
+      week_end_on: [ week_start_on + 6.days, Date.current ].min,
       required_count: goal.weekly_required_count,
       valid_count: matching.count,
       total_count: activities.count,
@@ -103,7 +103,7 @@ class StravaGoalEvaluator
   end
 
   def activity_types_for(activity)
-    [activity[:type], activity[:sport_type]].compact.map(&:to_s)
+    [ activity[:type], activity[:sport_type] ].compact.map(&:to_s)
   end
 
   def device_matches?(activity_device_name, expected_device_names)

@@ -215,6 +215,10 @@ class ShowcaseController < ApplicationController
       played_at: Time.current,
       score: 0
     )
+    notify_args = [@beta.id, session.id, gt]
+    starter_name = showcase_player_name_from_cookie(@beta)
+    notify_args << starter_name if starter_name.present?
+    ShowcaseGameStartedNotifyJob.perform_later(*notify_args)
     render json: { id: session.id }
   rescue ActiveRecord::RecordInvalid => e
     render json: { error: e.message }, status: 422
@@ -344,6 +348,14 @@ class ShowcaseController < ApplicationController
 
   def find_beta
     User.find_by(nickname: params[:nickname], role: :beta)
+  end
+
+  def showcase_player_name_from_cookie(beta)
+    cookies[showcase_player_cookie_key(beta)].to_s.squish.presence&.truncate(80)
+  end
+
+  def showcase_player_cookie_key(beta)
+    "bgShowcasePlayer_#{beta.nickname.to_s.gsub(/[^a-zA-Z0-9]/, "_")}"
   end
 
   def snake_seconds_per_fruit_for(beta)

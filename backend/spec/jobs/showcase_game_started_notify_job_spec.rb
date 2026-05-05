@@ -8,17 +8,19 @@ RSpec.describe ShowcaseGameStartedNotifyJob, type: :job do
     first_device = create(:device, user: user)
     second_device = create(:device, user: user)
 
-    described_class.perform_now(user.id, 123, "snake")
+    described_class.perform_now(user.id, 123, "snake", "Alice")
 
     expect(FcmService).to have_received(:send_showcase_game_started_notification).with(
       device: first_device,
       game_session_id: 123,
-      game_type: "snake"
+      game_type: "snake",
+      player_name: "Alice"
     )
     expect(FcmService).to have_received(:send_showcase_game_started_notification).with(
       device: second_device,
       game_session_id: 123,
-      game_type: "snake"
+      game_type: "snake",
+      player_name: "Alice"
     )
   end
 

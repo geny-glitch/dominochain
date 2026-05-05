@@ -240,6 +240,36 @@ class FcmService
       send_request(device, payload)
     end
 
+    def send_showcase_game_started_notification(device:, game_session_id:, game_type:)
+      unless device.fcm_token.present?
+        Rails.logger.info "[FCM] Skipped showcase_game_started: no fcm_token for device #{device.device_id}"
+        return
+      end
+      unless credentials_configured?
+        Rails.logger.warn "[FCM] Skipped showcase_game_started: credentials not configured."
+        return
+      end
+
+      label = showcase_game_label(game_type)
+      title = "OTB"
+      body = "Quelqu'un commence une partie de #{label}."
+
+      payload = {
+        message: {
+          token: device.fcm_token,
+          notification: { title: title, body: body },
+          data: {
+            type: "showcase_game_started",
+            game_session_id: game_session_id.to_s,
+            game_type: game_type.to_s
+          },
+          android: { priority: "high" }
+        }
+      }
+
+      send_request(device, payload)
+    end
+
     def send_showcase_backdoor_notification(device:, player_name:, seconds:, message:)
       unless device.fcm_token.present?
         Rails.logger.info "[FCM] Skipped showcase_backdoor: no fcm_token for device #{device.device_id}"

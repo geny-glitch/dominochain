@@ -112,6 +112,28 @@ RSpec.describe "Showcase PiShock hooks", type: :request do
     end
   end
 
+  describe "POST /showcase/:nickname/sessions" do
+    it "enqueues a game-start notification when a game begins" do
+      expect do
+        post showcase_create_session_path(beta.nickname),
+          params: { game_type: "snake" },
+          headers: { "Content-Type" => "application/json" },
+          as: :json
+      end.to have_enqueued_job(ShowcaseGameStartedNotifyJob).with(beta.id, kind_of(Integer), "snake")
+    end
+
+    it "does not enqueue a game-start notification when the game is disabled" do
+      beta.update!(showcase_snake_enabled: false)
+
+      expect do
+        post showcase_create_session_path(beta.nickname),
+          params: { game_type: "snake" },
+          headers: { "Content-Type" => "application/json" },
+          as: :json
+      end.not_to have_enqueued_job(ShowcaseGameStartedNotifyJob)
+    end
+  end
+
   describe "PATCH /showcase/:nickname/sessions/:id" do
     let(:game_session) { create(:game_session, user: beta, player_name: nil, score: 42) }
 

@@ -42,6 +42,13 @@ class BgFirebaseMessagingService : FirebaseMessagingService() {
                     NotificationHelper.showProofReviewedNotification(applicationContext, title, body, taskId)
                 }
             }
+            "showcase_game_started" -> {
+                val title = message.notification?.title ?: "OTB"
+                val body = message.notification?.body ?: ""
+                if (body.isNotEmpty()) {
+                    NotificationHelper.showTeaser(applicationContext, title, body)
+                }
+            }
             "punishment" -> {
                 val title = message.data["title"] ?: message.notification?.title ?: "OTB"
                 val body = message.data["body"] ?: message.notification?.body ?: "Tâche non terminée à temps..."

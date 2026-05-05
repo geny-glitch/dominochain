@@ -215,6 +215,7 @@ class ShowcaseController < ApplicationController
       played_at: Time.current,
       score: 0
     )
+    ShowcaseGameStartedNotifyJob.perform_later(@beta.id, session.id, gt)
     render json: { id: session.id }
   rescue ActiveRecord::RecordInvalid => e
     render json: { error: e.message }, status: 422

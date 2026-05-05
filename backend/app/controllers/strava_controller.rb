@@ -1,0 +1,151 @@
+# frozen_string_literal: true
+
+class StravaController < ApplicationController
+  before_action :authenticate_user!
+  before_action :require_beta_role!
+  before_action :require_strava_configured!, only: [:connect, :callback]
+  before_action :require_strava_connected!, only: [:create_goal, :update_goal, :check_goal]
+  before_action :set_goal, only: [:update_goal, :destroy_goal, :check_goal]
+
+  def connect
+    state = SecureRandom.hex(24)
+    session[:strava_oauth_state] = state
+
+    redirect_to StravaService.authorization_url(redirect_uri: strava_callback_url, state: state), allow_other_host: true
+  end
+
+  def callback
+    if params[:state] != session[:strava_oauth_state]
+      redirect_to beta_dashboard_path, alert: "Connexion Strava annulée (état invalide)."
+      return
+    end
+    session.delete(:strava_oauth_state)
+
+    if params[:error].present?
+      redirect_to beta_dashboard_path, alert: "Strava: #{params[:error]}"
+      return
+    end
+
+    code = params[:code].to_s
+    if code.blank?
+      redirect_to beta_dashboard_path, alert: "Code d'autorisation Strava manquant."
+      return
+    end
+
+    tokens = StravaService.exchange_code_for_tokens(code: code)
+    current_user.update!(
+      strava_access_token: tokens[:access_token],
+      strava_refresh_token: tokens[:refresh_token],
+      strava_token_expires_at: tokens[:expires_at],
+      strava_athlete_id: tokens[:athlete_id]
+    )
+
+    redirect_to beta_dashboard_path, notice: "Strava connecté avec succès."
+  rescue StravaService::Error => e
+    redirect_to beta_dashboard_path, alert: "Erreur Strava: #{e.message}"
+  end
+
+  def disconnect
+    StravaService.new(current_user).disconnect!
+    redirect_to beta_dashboard_path, notice: "Strava déconnecté. Les objectifs Strava ont été désactivés."
+  end
+
+  def create_goal
+    goal = current_user.strava_goals.create!(goal_params)
+    redirect_to beta_dashboard_path, notice: "Objectif Strava « #{goal.name} » créé."
+  rescue ActiveRecord::RecordInvalid => e
+    redirect_to beta_dashboard_path, alert: e.record.errors.full_messages.join(", ")
+  end
+
+  def update_goal
+    @goal.update!(goal_params)
+    redirect_to beta_dashboard_path, notice: "Objectif Strava « #{@goal.name} » enregistré."
+  rescue ActiveRecord::RecordInvalid => e
+    redirect_to beta_dashboard_path, alert: e.record.errors.full_messages.join(", ")
+  end
+
+  def destroy_goal
+    name = @goal.name
+    @goal.destroy!
+    redirect_to beta_dashboard_path, notice: "Objectif Strava « #{name} » supprimé."
+  end
+
+  def check_goal
+    check = StravaGoalEvaluator.new(current_user).evaluate_goal!(@goal, week_start_on: check_week_start_on)
+    redirect_to beta_dashboard_path, notice: strava_check_notice(check)
+  rescue StravaService::Unauthorized
+    redirect_to beta_dashboard_path, alert: "Strava non connecté."
+  rescue StravaService::Error, ChasterService::Error => e
+    redirect_to beta_dashboard_path, alert: "Vérification Strava impossible: #{e.message}"
+  end
+
+  private
+
+  def require_beta_role!
+    return if current_user.beta?
+
+    redirect_to dashboard_path, alert: "Accès réservé aux betas."
+  end
+
+  def require_strava_configured!
+    return if StravaService.configured?
+
+    redirect_to beta_dashboard_path, alert: "Strava n'est pas configuré. Contacte l'administrateur."
+  end
+
+  def require_strava_connected!
+    return if current_user.strava_access_token.present?
+
+    redirect_to beta_dashboard_path, alert: "Connecte Strava avant de gérer des objectifs."
+  end
+
+  def set_goal
+    @goal = current_user.strava_goals.find(params[:id])
+  rescue ActiveRecord::RecordNotFound
+    redirect_to beta_dashboard_path, alert: "Objectif Strava introuvable."
+  end
+
+  def goal_params
+    p = params.permit(
+      :name,
+      :enabled,
+      :weekly_required_count,
+      :min_duration_minutes,
+      :min_calories,
+      :activity_types,
+      :device_names,
+      :chaster_penalty_minutes
+    )
+
+    {
+      name: p[:name].to_s.strip,
+      enabled: p[:enabled] == "1",
+      weekly_required_count: p[:weekly_required_count].to_i,
+      min_duration_seconds: positive_integer_or_nil(p[:min_duration_minutes])&.*(60),
+      min_calories: positive_integer_or_nil(p[:min_calories]),
+      activity_types: p[:activity_types].to_s,
+      device_names: p[:device_names].to_s,
+      chaster_penalty_seconds: positive_integer_or_nil(p[:chaster_penalty_minutes]).to_i * 60
+    }
+  end
+
+  def positive_integer_or_nil(value)
+    n = value.to_i
+    n.positive? ? n : nil
+  end
+
+  def check_week_start_on
+    params[:week].to_s == "current" ? Date.current.beginning_of_week(:monday) : StravaGoalEvaluator.previous_week_start_on
+  end
+
+  def strava_check_notice(check)
+    case check.status
+    when "passed"
+      "Objectif Strava validé: #{check.valid_count}/#{check.required_count} activités."
+    when "failed"
+      "Objectif Strava non validé: #{check.valid_count}/#{check.required_count}. #{check.chaster_penalty_seconds / 60} min ajoutées à Chaster."
+    else
+      "Objectif Strava non validé: #{check.valid_count}/#{check.required_count}. Chaster n'a pas pu être pénalisé: #{check.chaster_error}"
+    end
+  end
+end

@@ -43,6 +43,14 @@ Rails.application.routes.draw do
   get "chaster/connect", to: "chaster#connect", as: :chaster_connect
   get "chaster/callback", to: "chaster#callback", as: :chaster_callback
   delete "chaster/disconnect", to: "chaster#disconnect", as: :chaster_disconnect
+  # Strava OAuth + beta weekly goals
+  get "strava/connect", to: "strava#connect", as: :strava_connect
+  get "strava/callback", to: "strava#callback", as: :strava_callback
+  delete "strava/disconnect", to: "strava#disconnect", as: :strava_disconnect
+  post "beta/strava/goals", to: "strava#create_goal", as: :beta_strava_goals
+  patch "beta/strava/goals/:id", to: "strava#update_goal", as: :beta_strava_goal
+  delete "beta/strava/goals/:id", to: "strava#destroy_goal", as: :beta_strava_goal_destroy
+  post "beta/strava/goals/:id/check", to: "strava#check_goal", as: :beta_strava_goal_check
   get "beta/tasks/:id", to: "beta_dashboard#task", as: :beta_task
   post "beta/tasks/:id/proof", to: "beta_dashboard#submit_proof", as: :beta_task_proof
   post "control/release", to: "controls#release", as: :control_release

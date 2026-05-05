@@ -77,6 +77,7 @@ class BetaDashboardController < ApplicationController
     @devices = current_user.devices.order(created_at: :desc)
     @tasks = current_user.tasks.recent.includes(:proof_of_completion)
     @chaster_lock = fetch_chaster_lock
+    @strava_goals = current_user.strava_goals.recent.includes(:strava_goal_checks)
     @showcase_qr = generate_showcase_qr
     @puryfi_ws_url = current_user.puryfi_ws_url
     @puryfi_label_ids = (0..25).to_a
@@ -137,6 +138,46 @@ class BetaDashboardController < ApplicationController
     redirect_to beta_task_path(@task), alert: e.record.errors.full_messages.join(", ")
   end
 
+  def create_strava_goal
+    goal = current_user.strava_goals.create!(strava_goal_params)
+    redirect_to beta_dashboard_path, notice: "Objectif Strava « #{goal.name} » créé."
+  rescue ActiveRecord::RecordInvalid => e
+    redirect_to beta_dashboard_path, alert: e.record.errors.full_messages.join(", ")
+  end
+
+  def update_strava_goal
+    goal = current_user.strava_goals.find(params[:id])
+    goal.update!(strava_goal_params)
+    redirect_to beta_dashboard_path, notice: "Objectif Strava « #{goal.name} » enregistré."
+  rescue ActiveRecord::RecordInvalid => e
+    redirect_to beta_dashboard_path, alert: e.record.errors.full_messages.join(", ")
+  rescue ActiveRecord::RecordNotFound
+    redirect_to beta_dashboard_path, alert: "Objectif Strava introuvable."
+  end
+
+  def destroy_strava_goal
+    goal = current_user.strava_goals.find(params[:id])
+    goal.destroy!
+    redirect_to beta_dashboard_path, notice: "Objectif Strava supprimé."
+  rescue ActiveRecord::RecordNotFound
+    redirect_to beta_dashboard_path, alert: "Objectif Strava introuvable."
+  end
+
+  def check_strava_goal
+    goal = current_user.strava_goals.find(params[:id])
+    check = StravaGoalEvaluator.new(current_user).evaluate_goal!(
+      goal,
+      week_start_on: StravaGoalEvaluator.previous_week_start_on
+    )
+    redirect_to beta_dashboard_path, notice: strava_check_notice(goal, check)
+  rescue ActiveRecord::RecordNotFound
+    redirect_to beta_dashboard_path, alert: "Objectif Strava introuvable."
+  rescue StravaService::Unauthorized
+    redirect_to beta_dashboard_path, alert: "Strava non connecté."
+  rescue StravaService::Error => e
+    redirect_to beta_dashboard_path, alert: "Erreur Strava: #{e.message}"
+  end
+
   private
 
   def require_beta_role!
@@ -149,6 +190,52 @@ class BetaDashboardController < ApplicationController
     @task = current_user.tasks.find(params[:id])
   rescue ActiveRecord::RecordNotFound
     redirect_to beta_dashboard_path, alert: "Tâche non trouvée."
+  end
+
+  def strava_goal_params
+    p = params.require(:strava_goal).permit(
+      :name,
+      :enabled,
+      :weekly_required_count,
+      :min_duration_minutes,
+      :min_calories,
+      :activity_types,
+      :device_names,
+      :chaster_penalty_minutes
+    )
+    {
+      name: p[:name].to_s.strip,
+      enabled: p[:enabled] == "1",
+      weekly_required_count: p[:weekly_required_count].to_i,
+      min_duration_seconds: minutes_to_seconds_or_nil(p[:min_duration_minutes]),
+      min_calories: positive_integer_or_nil(p[:min_calories]),
+      activity_types: p[:activity_types],
+      device_names: p[:device_names],
+      chaster_penalty_seconds: minutes_to_seconds_or_nil(p[:chaster_penalty_minutes]).to_i
+    }
+  end
+
+  def minutes_to_seconds_or_nil(value)
+    minutes = value.to_i
+    return nil unless minutes.positive?
+
+    minutes * 60
+  end
+
+  def positive_integer_or_nil(value)
+    number = value.to_i
+    number.positive? ? number : nil
+  end
+
+  def strava_check_notice(goal, check)
+    case check.status
+    when "passed"
+      "#{goal.name}: objectif validé (#{check.valid_count}/#{check.required_count})."
+    when "failed"
+      "#{goal.name}: objectif non validé (#{check.valid_count}/#{check.required_count}), #{check.chaster_penalty_seconds / 60} min ajoutées à Chaster."
+    else
+      "#{goal.name}: objectif non validé (#{check.valid_count}/#{check.required_count}), mais Chaster n'a pas pu être mis à jour: #{check.chaster_error}."
+    end
   end
 
   def fetch_chaster_lock

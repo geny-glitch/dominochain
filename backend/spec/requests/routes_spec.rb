@@ -115,6 +115,49 @@ RSpec.describe "Routes", type: :request do
     end
   end
 
+  describe "Strava beta routes" do
+    it "redirects to login when not authenticated" do
+      post beta_strava_goals_path
+      expect(response).to redirect_to(new_user_session_path)
+    end
+
+    it "creates a Strava goal for the authenticated beta" do
+      beta = create(:user, :beta, strava_access_token: "access", strava_refresh_token: "refresh")
+      sign_in beta
+
+      post beta_strava_goals_path, params: {
+        name: "Cardio",
+        enabled: "1",
+        weekly_required_count: "2",
+        min_duration_minutes: "30",
+        activity_types: "Run, Ride",
+        device_names: "Garmin",
+        chaster_penalty_minutes: "90"
+      }
+
+      expect(response).to redirect_to(beta_dashboard_path)
+      goal = beta.strava_goals.last
+      expect(goal.name).to eq("Cardio")
+      expect(goal.weekly_required_count).to eq(2)
+      expect(goal.min_duration_seconds).to eq(1_800)
+      expect(goal.activity_types).to eq(%w[Run Ride])
+      expect(goal.device_names).to eq(["Garmin"])
+      expect(goal.chaster_penalty_seconds).to eq(5_400)
+    end
+
+    it "disconnects Strava and disables goals" do
+      beta = create(:user, :beta, strava_access_token: "access", strava_refresh_token: "refresh")
+      create(:strava_goal, user: beta, enabled: true)
+      sign_in beta
+
+      delete strava_disconnect_path
+
+      expect(response).to redirect_to(beta_dashboard_path)
+      expect(beta.reload.strava_access_token).to be_nil
+      expect(beta.strava_goals.first.enabled).to be false
+    end
+  end
+
   describe "Beta task routes" do
     let(:beta) { create(:user, :beta) }
     let(:device) { create(:device, user: beta) }

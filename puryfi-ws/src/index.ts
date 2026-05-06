@@ -1,13 +1,76 @@
 import "dotenv/config";
 import http from "node:http";
+import util from "node:util";
 import { WebSocketServer as WsSocketServer } from "ws";
 import {
   WebSocketConnection,
+  type PluginConfiguration,
   type WebSocketConnection as WebSocketConnectionType,
 } from "@pury-fi/plugin-sdk/websocket";
 import { bgAddTime, bgGetShowcaseSettings } from "../shared/bg-api.js";
 import { analyzeScan, defaultSecondsPerLabel } from "../shared/puryfi-detect.js";
 import type { PluginConfigShape } from "../shared/puryfi-detect.js";
+import {
+  logStaticMediaScanDebug,
+  parseDedupeWindowMs,
+  puryfiLogPluginPayload,
+  StaticScanDedupeLogState,
+} from "../shared/puryfi-scan-debug.js";
+
+/** Ce que PuryFi renvoie avec getPluginConfiguration — uniquement ce déposé via setPluginConfiguration (pas la config censure PuryFi). */
+function secondsPerLabelPreview(
+  secondsPerLabel: PluginConfigShape["secondsPerLabel"],
+  maxPairs = 24,
+): string {
+  const parts: string[] = [];
+  for (const [id, sec] of Object.entries(secondsPerLabel)) {
+    if (typeof sec !== "number" || sec <= 0) continue;
+    parts.push(`${id}:${sec}s`);
+    if (parts.length >= maxPairs) {
+      parts.push("…");
+      break;
+    }
+  }
+  return parts.length ? parts.join(", ") : "(aucune seconde > 0)";
+}
+
+function pluginUiConfigurationFromMerged(
+  merged: PluginConfigShape,
+): PluginConfiguration {
+  if (!puryfiLogPluginPayload()) {
+    return {};
+  }
+  return {
+    bg_doc: {
+      name: "Pont BG — où régler les secondes / score min",
+      type: "string",
+      value:
+        "Dashboard beta → PuryFi. Snapshot pour le debug serveur ; pas la config générale de l’extension.",
+    },
+    bg_min_score: {
+      name: "(debug) Score min utilisé par le pont (snapshot)",
+      type: "number",
+      value: merged.minScore,
+    },
+    bg_seconds_preview: {
+      name: "(debug) Secondes par label > 0 (snapshot)",
+      type: "string",
+      value: secondsPerLabelPreview(merged.secondsPerLabel),
+    },
+  };
+}
+
+async function pushPluginUiConfiguration(
+  connection: WebSocketConnectionType,
+  merged: PluginConfigShape,
+): Promise<void> {
+  const res = await connection.sendMessage("setPluginConfiguration", {
+    configuration: pluginUiConfigurationFromMerged(merged),
+  });
+  if (res.type === "error") {
+    console.warn("setPluginConfiguration:", res.message);
+  }
+}
 
 function mergeRemoteConfig(remote: {
   puryfi_min_score?: number;
@@ -43,32 +106,97 @@ async function fetchConfig(
 }
 
 async function ensureIntents(connection: WebSocketConnectionType) {
-  const desired = ["requestMediaProcesses"] as const;
+  const desired = ["readMediaProcesses", "requestMediaProcesses"] as const;
 
-  const grantedRes = await connection.sendMessage("getPluginIntents", {});
-  if (grantedRes.type === "error") {
-    throw new Error(grantedRes.message);
-  }
-  let granted = grantedRes.intents;
+  await new Promise<void>((resolve, reject) => {
+    let finished = false;
+    const t = setTimeout(() => {
+      finish(() => reject(new Error("Timeout attente intents PuryFi")));
+    }, 120_000);
 
-  if (!desired.every((i) => granted.includes(i))) {
-    await connection.sendMessage("requestPluginIntents", {
-      intents: [...desired],
-    });
-    await new Promise<void>((resolve, reject) => {
-      const t = setTimeout(
-        () => reject(new Error("Timeout attente intents PuryFi")),
-        120_000,
-      );
-      connection.on("message", "intentsGrant", function listener({ intents }) {
-        granted = intents;
-        if (desired.every((i) => granted.includes(i))) {
-          clearTimeout(t);
-          connection.off("message", "intentsGrant", listener);
-          resolve();
+    const finish = (fn: () => void) => {
+      if (finished) return;
+      finished = true;
+      clearTimeout(t);
+      connection.off("message", "intentsGrant", onGrant);
+      fn();
+    };
+
+    const check = (): void => {
+      void connection
+        .sendMessage("getPluginIntents", {})
+        .then((res) => {
+          if (res.type === "error") {
+            finish(() => reject(new Error(res.message)));
+            return;
+          }
+          if (desired.every((i) => res.intents.includes(i))) {
+            finish(() => resolve());
+          }
+        })
+        .catch((e) => {
+          finish(() =>
+            reject(e instanceof Error ? e : new Error(String(e))),
+          );
+        });
+    };
+
+    function onGrant() {
+      check();
+    }
+
+    connection.on("message", "intentsGrant", onGrant);
+
+    void connection
+      .sendMessage("requestPluginIntents", { intents: [...desired] })
+      .then((req) => {
+        if (req.type === "error") {
+          finish(() => reject(new Error(req.message)));
+          return;
         }
+        check();
+      })
+      .catch((e) => {
+        finish(() =>
+          reject(e instanceof Error ? e : new Error(String(e))),
+        );
       });
-    });
+  });
+}
+
+async function logGetPluginConfigurationDebug(
+  connection: WebSocketConnectionType,
+): Promise<void> {
+  const ts = new Date().toISOString();
+  try {
+    const res = await connection.sendMessage("getPluginConfiguration", {});
+    if (res.type === "error") {
+      console.warn(
+        `[${ts}] [PuryFi DEBUG] getPluginConfiguration error:`,
+        res.message,
+      );
+      return;
+    }
+    if (res.configuration == null) {
+      console.log(
+        `[${ts}] [PuryFi DEBUG] getPluginConfiguration → configuration=${util.inspect(res.configuration, { colors: false })} (réponse SDK complète: ${util.inspect(res, { depth: 4, colors: false })})\n`,
+        `[${ts}] [PuryFi DEBUG] ↑ « plugin configuration » = champs que TON plugin déclare (setPluginConfiguration), pas les réglages généraux PuryFi. null si l’extension n’a encore rien stocké.`,
+      );
+      return;
+    }
+    if (
+      Object.keys(res.configuration).length === 0 &&
+      puryfiLogPluginPayload()
+    ) {
+      console.warn(
+        `[${ts}] [PuryFi DEBUG] getPluginConfiguration encore {} alors que DEBUG est actif — setPluginConfiguration a peut‑être été refusé, ou reconnecte / redéploie le pont.`,
+      );
+    }
+    console.log(
+      `[${ts}] [PuryFi DEBUG] getPluginConfiguration:\n${util.inspect(res.configuration, { depth: 8, colors: false })}`,
+    );
+  } catch (e) {
+    console.warn(`[${ts}] [PuryFi DEBUG] getPluginConfiguration:`, e);
   }
 }
 
@@ -76,26 +204,24 @@ async function runPuryFiConnection(
   connection: WebSocketConnectionType,
   pluginToken: string,
 ) {
+  if (puryfiLogPluginPayload()) {
+    connection.setDebug(true);
+    console.log(
+      "[PuryFi DEBUG] PURYFI_LOG_PLUGIN_PAYLOAD activé — journalisation étendue (SDK + staticMediaScan).",
+    );
+  }
+
+  const scanDedupeLog = puryfiLogPluginPayload()
+    ? new StaticScanDedupeLogState()
+    : null;
+  const dedupeWindowMs = parseDedupeWindowMs();
+
   const baseUrl = process.env.BG_BACKEND_URL;
   if (!baseUrl) {
     throw new Error("Manque BG_BACKEND_URL dans l'environnement");
   }
 
-  let config = await fetchConfig(
-    baseUrl,
-    pluginToken,
-    mergeRemoteConfig({}),
-  );
-  setInterval(() => {
-    fetchConfig(baseUrl, pluginToken, config)
-      .then((c) => {
-        config = c;
-      })
-      .catch(() => {
-        /* garde la config précédente */
-      });
-  }, 10_000);
-
+  // open() émet « open » tout de suite : enregistrer les listeners avant de l’appeler.
   await new Promise<void>((resolve, reject) => {
     const t = setTimeout(
       () => reject(new Error("Timeout attente open PuryFi")),
@@ -109,9 +235,12 @@ async function runPuryFiConnection(
       clearTimeout(t);
       reject(e);
     });
+    connection.open();
   });
 
-  await new Promise<void>((resolve, reject) => {
+  // Le client envoie « ready » très tôt : même problème que pour open() si on
+  // attend fetchConfig avant d’écouter.
+  const readyPromise = new Promise<void>((resolve, reject) => {
     connection.once("message", "ready", (payload) => {
       const res = connection.handleReadyMessage(payload);
       if (res.type === "ok") resolve();
@@ -127,6 +256,30 @@ async function runPuryFiConnection(
     });
   });
 
+  let config = mergeRemoteConfig({});
+  const configPromise = fetchConfig(
+    baseUrl,
+    pluginToken,
+    config,
+  ).then((c) => {
+    config = c;
+  });
+
+  await Promise.all([readyPromise, configPromise]);
+
+  setInterval(() => {
+    fetchConfig(baseUrl, pluginToken, config)
+      .then((c) => {
+        config = c;
+        if (puryfiLogPluginPayload()) {
+          void pushPluginUiConfiguration(connection, config);
+        }
+      })
+      .catch(() => {
+        /* garde la config précédente */
+      });
+  }, 10_000);
+
   await connection.sendMessage("setPluginManifest", {
     manifest: {
       name: "BG PuryFi WebSocket",
@@ -137,6 +290,9 @@ async function runPuryFiConnection(
     },
   });
 
+  // Schéma côté PuryFi : {} en prod ; en PURYFI_LOG_PLUGIN_PAYLOAD, snapshot dashboard pour que getPluginConfiguration ne soit pas vide.
+  await pushPluginUiConfiguration(connection, config);
+
   await ensureIntents(connection);
 
   const sub = await connection.sendMessage("subscribeToStaticMediaScans", {});
@@ -144,14 +300,28 @@ async function runPuryFiConnection(
     throw new Error(sub.message);
   }
 
+  if (puryfiLogPluginPayload()) {
+    await logGetPluginConfigurationDebug(connection);
+    const pluginConfigLogInterval = setInterval(() => {
+      void logGetPluginConfigurationDebug(connection);
+    }, 60_000);
+    connection.once("close", () => {
+      clearInterval(pluginConfigLogInterval);
+    });
+  }
+
   connection.on("message", "staticMediaScan", async (payload) => {
+    if (puryfiLogPluginPayload() && scanDedupeLog) {
+      logStaticMediaScanDebug(payload, scanDedupeLog, dedupeWindowMs);
+    }
+
     const { objects } = payload;
     const result = analyzeScan(
       objects.map((o) => ({ label: o.label, score: o.score })),
       config,
     );
 
-    if (result.matched.length === 0) return;
+    if (result.totalSeconds < 1) return;
 
     const ts = new Date().toISOString();
     console.log(
@@ -196,7 +366,6 @@ function main() {
     const pluginToken = decodeURIComponent(m[1]);
     wss.handleUpgrade(request, socket, head, (ws) => {
       const connection = new WebSocketConnection(ws);
-      connection.open();
       console.log("Client PuryFi connecté");
       runPuryFiConnection(connection, pluginToken).catch((err) => {
         console.error("Erreur connexion PuryFi:", err);

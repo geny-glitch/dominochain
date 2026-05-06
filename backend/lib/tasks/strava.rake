@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 namespace :strava do
-  desc "Check enabled Strava goals that are due now"
+  desc "Vérifie les objectifs Strava dus (prod : tâche récurrente Solid Queue dans config/recurring.yml)"
   task check_due_goals: :environment do
     StravaGoalCheckJob.perform_now
   end

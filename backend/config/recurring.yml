@@ -14,3 +14,8 @@ production:
     command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
     # Retention avant purge : SolidQueue.clear_finished_jobs_after (1.week, voir solid_queue initializer)
     schedule: at 4am every day
+
+  # Vérifie les objectifs Strava dus (tokens par utilisateur ; OAuth app dans credentials, voir StravaService)
+  strava_due_goal_checks:
+    class: StravaGoalCheckJob
+    schedule: "5 * * * *"

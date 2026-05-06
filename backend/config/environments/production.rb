@@ -71,8 +71,8 @@ Rails.application.configure do
   # For multi-instance, switch to :mem_cache_store / Redis.
   config.cache_store = :memory_store
 
-  # Use a real queuing backend for Active Job (and separate queues per environment).
-  # config.active_job.queue_adapter = :resque
+  # Solid Queue : tables dans la base Postgres principale (migration create_solid_queue_tables).
+  config.active_job.queue_adapter = :solid_queue
   # config.active_job.queue_name_prefix = "backend_production"
 
   # Disable caching for Action Mailer templates even if Action Controller

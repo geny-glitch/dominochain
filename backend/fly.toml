@@ -42,7 +42,7 @@ console_command = '/rails/bin/rails console'
     [http_service.checks.headers]
       X-Forwarded-Proto = 'https'
 
-# Processus `worker` : Solid Queue (`bin/jobs`). Après le 1er déploiement : `fly scale count worker=1`.
+# Processus `worker` : Solid Queue (`bin/jobs`). Une seule machine (la CI fait `fly scale count worker=1` après déploiement).
 [[vm]]
   processes = ['app']
   memory = '1gb'

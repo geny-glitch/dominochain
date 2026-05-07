@@ -23,6 +23,51 @@
 threads_count = ENV.fetch("RAILS_MAX_THREADS", 3)
 threads threads_count, threads_count
 
+# Puma's default is to wait forever for worker threads during graceful shutdown. If any thread
+# is stuck in app code (or blocked outside Puma's force-shutdown wrapper), Ctrl+C and
+# SIGTERM never finish. Cap wait time; override with PUMA_FORCE_SHUTDOWN_AFTER (seconds),
+# or set to "forever" for the previous behavior.
+# Note: `ENV.fetch("PUMA_FORCE_SHUTDOWN_AFTER", "15")` keeps "" if the key is set but empty
+# (e.g. in .env), which would incorrectly map to :forever — normalize blanks to the default.
+force_shutdown_after(
+  begin
+    v = ENV["PUMA_FORCE_SHUTDOWN_AFTER"].to_s.strip.downcase
+    v = "15" if v.empty?
+    case v
+    when "forever" then :forever
+    when "immediately" then :immediately
+    else Float(v)
+    end
+  end
+)
+
+# iTerm (and some other terminals) occasionally leave SIGINT not reaching Puma, or graceful
+# stop feels wedged. After boot, wrap SIGINT: first interrupt logs and uses Puma's handler;
+# a second within 3s calls halt (immediate teardown via Puma.stats_object → launcher).
+development = (ENV["RAILS_ENV"] || ENV["RACK_ENV"] || "development") == "development"
+if development
+  first_int_deadline = nil
+  after_booted do
+    $stderr.sync = true
+    # If you never see the "interrupt received" line when pressing Ctrl+C, the signal is not
+    # reaching this Ruby process (shell still owns the TTY session). Use kill -INT, or start with
+    # `exec bin/rails s` so the server replaces the shell and Ctrl+C targets Puma.
+    warn "[Puma] Stop if Ctrl+C fails: kill -INT #{Process.pid}  |  reliable Ctrl+C: exec bin/rails s"
+    previous = Signal.trap("INT") do
+      now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      if first_int_deadline && now <= first_int_deadline
+        warn "\n[Puma] second interrupt — halting immediately (PID #{Process.pid})"
+        runner = Puma.stats_object
+        runner&.instance_variable_get(:@launcher)&.halt
+      else
+        first_int_deadline = now + 3
+        warn "\n[Puma] interrupt received — graceful stop (interrupt again within 3s to force quit; or: kill -INT #{Process.pid})"
+        previous.call if previous.respond_to?(:call)
+      end
+    end
+  end
+end
+
 # Bind to all interfaces (0.0.0.0) so Fly.io and Android emulator can reach the server.
 # Fly.io requires binding to 0.0.0.0, not localhost/127.0.0.1.
 bind "tcp://0.0.0.0:#{ENV.fetch("PORT", 3000)}"

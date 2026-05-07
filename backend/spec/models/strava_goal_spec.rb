@@ -31,4 +31,20 @@ RSpec.describe StravaGoal do
     expect(goal.next_due_at(reference)).to eq(Time.zone.parse("2026-05-06 04:30:00 UTC"))
     expect(goal.period_start_for(goal.previous_due_at(reference))).to eq(Time.zone.parse("2026-05-02 04:30:00 UTC"))
   end
+
+  it "exposes sport_type select helpers" do
+    goal = build(:strava_goal, activity_types: %w[TrailRun Ride VirtualFoo])
+
+    expect(StravaGoal::STRAVA_SPORT_TYPES).to include("TrailRun", "Yoga")
+    expect(StravaGoal.strava_sport_type_options_for_select.map(&:last)).to match_array(StravaGoal::STRAVA_SPORT_TYPES)
+    expect(goal.primary_strava_sport_type).to eq("TrailRun")
+    expect(goal.supplemental_activity_types_for_form).to eq(%w[Ride VirtualFoo])
+  end
+
+  it "returns all activity types as supplemental when none match SportType enum" do
+    goal = build(:strava_goal, activity_types: %w[LegacyAlias])
+
+    expect(goal.primary_strava_sport_type).to be_nil
+    expect(goal.supplemental_activity_types_for_form).to eq(%w[LegacyAlias])
+  end
 end

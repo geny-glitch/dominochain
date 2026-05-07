@@ -116,8 +116,12 @@
                       <%= number_field_tag :min_calories, goal.min_calories, id: "strava_goal_#{goal.id}_min_calories", min: 1, max: 1_000_000, class: "ds-input" %>
                     </div>
                     <div class="ds-form-group">
-                      <%= label_tag "strava_goal_#{goal.id}_activity_types", "Types d'activité Strava (optionnel, séparés par virgule)", class: "ds-form-label" %>
-                      <%= text_field_tag :activity_types, goal.activity_types.join(", "), id: "strava_goal_#{goal.id}_activity_types", class: "ds-input", placeholder: "Run, Ride, VirtualRide" %>
+                      <%= label_tag "strava_goal_#{goal.id}_strava_sport_type", "Sport Strava (sport_type API)", class: "ds-form-label" %>
+                      <%= select_tag :strava_sport_type, options_for_select([["— Aucun / saisie libre ci-dessous", ""]] + StravaGoal.strava_sport_type_options_for_select, goal.primary_strava_sport_type), id: "strava_goal_#{goal.id}_strava_sport_type", class: "ds-input" %>
+                    </div>
+                    <div class="ds-form-group">
+                      <%= label_tag "strava_goal_#{goal.id}_activity_types", "Types supplémentaires (optionnel, virgules — type ou sport_type reconnus par Strava)", class: "ds-form-label" %>
+                      <%= text_field_tag :activity_types, goal.supplemental_activity_types_for_form.join(", "), id: "strava_goal_#{goal.id}_activity_types", class: "ds-input", placeholder: "Ride, VirtualRide" %>
                     </div>
                     <div class="ds-form-group">
                       <%= label_tag "strava_goal_#{goal.id}_device_names", "Appareils connectés requis (optionnel, texte contenu)", class: "ds-form-label" %>
@@ -198,8 +202,12 @@
               <%= number_field_tag :min_calories, nil, min: 1, max: 1_000_000, class: "ds-input", placeholder: "300" %>
             </div>
             <div class="ds-form-group">
-              <%= label_tag :activity_types, "Types d'activité Strava (optionnel, séparés par virgule)", class: "ds-form-label" %>
-              <%= text_field_tag :activity_types, nil, class: "ds-input", placeholder: "Run, Ride, VirtualRide" %>
+              <%= label_tag :strava_sport_type, "Sport Strava (sport_type API)", class: "ds-form-label" %>
+              <%= select_tag :strava_sport_type, options_for_select([["— Choisir… (ou saisie libre ci-dessous)", ""]] + StravaGoal.strava_sport_type_options_for_select), id: "new_strava_goal_strava_sport_type", class: "ds-input" %>
+            </div>
+            <div class="ds-form-group">
+              <%= label_tag :activity_types, "Types supplémentaires (optionnel, virgules)", class: "ds-form-label" %>
+              <%= text_field_tag :activity_types, nil, class: "ds-input", placeholder: "VirtualRide, EBikeRide" %>
             </div>
             <div class="ds-form-group">
               <%= label_tag :device_names, "Appareils connectés requis (optionnel, texte contenu)", class: "ds-form-label" %>

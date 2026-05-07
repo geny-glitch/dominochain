@@ -5,6 +5,18 @@ class StravaGoal < ApplicationRecord
   MIN_WINDOW_DAYS = 1
   MAX_WINDOW_DAYS = 365
 
+  # Strava API v3 SportType enum (developers.strava.com/docs/reference)
+  STRAVA_SPORT_TYPES = %w[
+    AlpineSki BackcountrySki Badminton Basketball Canoeing Cricket Crossfit Dance
+    EBikeRide Elliptical EMountainBikeRide Golf GravelRide Handcycle
+    HighIntensityIntervalTraining Hike IceSkate InlineSkate Kayaking Kitesurf
+    MountainBikeRide NordicSki Padel PhysicalTherapy Pickleball Pilates Racquetball
+    Ride RockClimbing RollerSki Rowing Run Sail Skateboard Snowboard Snowshoe Soccer
+    Squash StairStepper StandUpPaddling Surfing Swim TableTennis Tennis TrailRun
+    Velomobile VirtualRide VirtualRow VirtualRun Volleyball Walk WeightTraining
+    Wheelchair Windsurf Workout Yoga
+  ].freeze
+
   belongs_to :user
   has_many :strava_goal_checks, dependent: :destroy
 
@@ -50,6 +62,24 @@ class StravaGoal < ApplicationRecord
     parts << "types: #{activity_types.join(', ')}" if activity_types.present?
     parts << "appareils: #{device_names.join(', ')}" if device_names.present?
     parts.join(" · ")
+  end
+
+  def self.strava_sport_type_options_for_select
+    STRAVA_SPORT_TYPES.sort_by(&:downcase).map do |code|
+      label = code.underscore.humanize.titleize
+      [ "#{label} — #{code}", code ]
+    end
+  end
+
+  def primary_strava_sport_type
+    (activity_types & self.class::STRAVA_SPORT_TYPES).first
+  end
+
+  def supplemental_activity_types_for_form
+    sel = primary_strava_sport_type
+    return activity_types if sel.blank?
+
+    activity_types.reject { |t| t == sel }
   end
 
   def required_count

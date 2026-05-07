@@ -116,6 +116,7 @@ class StravaController < ApplicationController
       :time_zone,
       :min_duration_minutes,
       :min_calories,
+      :strava_sport_type,
       :activity_types,
       :device_names,
       :chaster_penalty_minutes
@@ -130,10 +131,21 @@ class StravaController < ApplicationController
       time_zone: p[:time_zone].presence || Time.zone.tzinfo.name,
       min_duration_seconds: positive_integer_or_nil(p[:min_duration_minutes])&.*(60),
       min_calories: positive_integer_or_nil(p[:min_calories]),
-      activity_types: p[:activity_types].to_s,
+      activity_types: merged_activity_types_param(p),
       device_names: p[:device_names].to_s,
       chaster_penalty_seconds: positive_integer_or_nil(p[:chaster_penalty_minutes]).to_i * 60
     }
+  end
+
+  def merged_activity_types_param(permitted)
+    parts = []
+    st = permitted[:strava_sport_type].to_s.strip
+    parts << st if st.present? && StravaGoal::STRAVA_SPORT_TYPES.include?(st)
+    permitted[:activity_types].to_s.split(/[\n,;]/).each do |segment|
+      s = segment.strip
+      parts << s if s.present?
+    end
+    parts.uniq.join(", ")
   end
 
   def positive_integer_or_nil(value)

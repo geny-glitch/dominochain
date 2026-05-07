@@ -152,6 +152,28 @@ RSpec.describe "Routes", type: :request do
       expect(goal.chaster_penalty_seconds).to eq(5_400)
     end
 
+    it "merges strava_sport_type into activity_types" do
+      beta = create(:user, :beta, strava_access_token: "access", strava_refresh_token: "refresh")
+      sign_in beta
+
+      post beta_strava_goals_path, params: {
+        name: "Trail",
+        enabled: "1",
+        required_count: "1",
+        window_preset: "weekly",
+        check_time: "08:00",
+        time_zone: "Paris",
+        strava_sport_type: "TrailRun",
+        activity_types: "Ride",
+        min_duration_minutes: "20",
+        chaster_penalty_minutes: "30"
+      }
+
+      expect(response).to redirect_to(beta_dashboard_path)
+      goal = beta.strava_goals.last
+      expect(goal.activity_types).to eq(%w[TrailRun Ride])
+    end
+
     it "disconnects Strava and disables goals" do
       beta = create(:user, :beta, strava_access_token: "access", strava_refresh_token: "refresh")
       create(:strava_goal, user: beta, enabled: true)

@@ -19,6 +19,8 @@ class User < ApplicationRecord
   has_many :game_sessions, dependent: :destroy
   has_many :showcase_time_additions, dependent: :destroy
   has_many :cigarette_entries, dependent: :destroy
+  has_many :strava_goals, dependent: :destroy
+  has_many :strava_goal_checks, dependent: :destroy
 
   validates :nickname, presence: true, uniqueness: true
   validates :nickname, format: { with: /\A[a-zA-Z0-9_]+\z/, message: "ne peut contenir que lettres, chiffres et underscores" }

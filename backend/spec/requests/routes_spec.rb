@@ -115,6 +115,78 @@ RSpec.describe "Routes", type: :request do
     end
   end
 
+  describe "Strava beta routes" do
+    it "redirects to login when not authenticated" do
+      post beta_strava_goals_path
+      expect(response).to redirect_to(new_user_session_path)
+    end
+
+    it "creates a Strava goal for the authenticated beta" do
+      beta = create(:user, :beta, strava_access_token: "access", strava_refresh_token: "refresh")
+      sign_in beta
+
+      post beta_strava_goals_path, params: {
+        name: "Cardio",
+        enabled: "1",
+        required_count: "2",
+        window_preset: "custom",
+        window_days: "10",
+        check_time: "06:30",
+        time_zone: "Paris",
+        min_duration_minutes: "30",
+        activity_types: "Run, Ride",
+        device_names: "Garmin",
+        chaster_penalty_minutes: "90"
+      }
+
+      expect(response).to redirect_to(beta_dashboard_path)
+      goal = beta.strava_goals.last
+      expect(goal.name).to eq("Cardio")
+      expect(goal.required_count).to eq(2)
+      expect(goal.window_days).to eq(10)
+      expect(goal.check_time_label).to eq("06:30")
+      expect(goal.time_zone).to eq("Paris")
+      expect(goal.min_duration_seconds).to eq(1_800)
+      expect(goal.activity_types).to eq(%w[Run Ride])
+      expect(goal.device_names).to eq([ "Garmin" ])
+      expect(goal.chaster_penalty_seconds).to eq(5_400)
+    end
+
+    it "merges strava_sport_type into activity_types" do
+      beta = create(:user, :beta, strava_access_token: "access", strava_refresh_token: "refresh")
+      sign_in beta
+
+      post beta_strava_goals_path, params: {
+        name: "Trail",
+        enabled: "1",
+        required_count: "1",
+        window_preset: "weekly",
+        check_time: "08:00",
+        time_zone: "Paris",
+        strava_sport_type: "TrailRun",
+        activity_types: "Ride",
+        min_duration_minutes: "20",
+        chaster_penalty_minutes: "30"
+      }
+
+      expect(response).to redirect_to(beta_dashboard_path)
+      goal = beta.strava_goals.last
+      expect(goal.activity_types).to eq(%w[TrailRun Ride])
+    end
+
+    it "disconnects Strava and disables goals" do
+      beta = create(:user, :beta, strava_access_token: "access", strava_refresh_token: "refresh")
+      create(:strava_goal, user: beta, enabled: true)
+      sign_in beta
+
+      delete strava_disconnect_path
+
+      expect(response).to redirect_to(beta_dashboard_path)
+      expect(beta.reload.strava_access_token).to be_nil
+      expect(beta.strava_goals.first.enabled).to be false
+    end
+  end
+
   describe "Beta task routes" do
     let(:beta) { create(:user, :beta) }
     let(:device) { create(:device, user: beta) }

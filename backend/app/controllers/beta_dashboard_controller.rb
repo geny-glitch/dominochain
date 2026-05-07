@@ -3,7 +3,7 @@
 class BetaDashboardController < ApplicationController
   before_action :authenticate_user!
   before_action :require_beta_role!
-  before_action :set_task, only: [:task, :submit_proof]
+  before_action :set_task, only: [ :task, :submit_proof ]
 
   def update_snake_seconds
     current_user.update!(
@@ -77,6 +77,7 @@ class BetaDashboardController < ApplicationController
     @devices = current_user.devices.order(created_at: :desc)
     @tasks = current_user.tasks.recent.includes(:proof_of_completion)
     @chaster_lock = fetch_chaster_lock
+    @strava_goals = current_user.strava_goals.recent.includes(:strava_goal_checks)
     @showcase_qr = generate_showcase_qr
     @puryfi_ws_url = current_user.puryfi_ws_url
     @puryfi_label_ids = (0..25).to_a

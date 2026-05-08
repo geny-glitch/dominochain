@@ -7,8 +7,9 @@ RSpec.describe FcmService do
     it "uses the staging notification title when BG_ENV is staging" do
       previous_bg_env = ENV["BG_ENV"]
       ENV["BG_ENV"] = "staging"
-      device = build(:device, fcm_token: "fcm-token")
-      task = build(:task, name: "Ranger la chambre")
+      device = instance_double(Device, fcm_token: "fcm-token", device_id: "device-id")
+      task = instance_double(Task, name: "Ranger la chambre", id: 123)
+      allow(described_class).to receive(:send_new_task_notification).and_call_original
       allow(described_class).to receive(:credentials_configured?).and_return(true)
       allow(described_class).to receive(:send_request)
 

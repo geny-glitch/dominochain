@@ -62,16 +62,7 @@ jobs:
           if [ "${GITHUB_REF_NAME}" = "staging" ]; then
             NEXT_VERSION_CODE="${GITHUB_RUN_NUMBER}"
           else
-            NEXT_VERSION_CODE="$(python3 - <<'PY'
-            import json
-            import os
-
-            with open("version.json", encoding="utf-8") as f:
-                current_version_code = int(json.load(f)["versionCode"])
-            run_number = int(os.environ["GITHUB_RUN_NUMBER"])
-            print(max(current_version_code + 1, run_number))
-            PY
-            )"
+            NEXT_VERSION_CODE="$(python3 -c 'import json, os; current_version_code = int(json.load(open("version.json", encoding="utf-8"))["versionCode"]); run_number = int(os.environ["GITHUB_RUN_NUMBER"]); print(max(current_version_code + 1, run_number))')"
           fi
           echo "code=${NEXT_VERSION_CODE}" >> "${GITHUB_OUTPUT}"
 

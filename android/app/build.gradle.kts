@@ -56,6 +56,7 @@ android {
         create("prod") {
             dimension = "environment"
             buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrlProd\"")
+            buildConfigField("String", "NOTIFICATION_TITLE", "\"OTB\"")
             buildConfigField("String", "SENTRY_DSN", "\"$sentryDsnProd\"")
             resValue("string", "app_name", "BG")
         }
@@ -64,6 +65,7 @@ android {
             applicationIdSuffix = ".staging"
             versionNameSuffix = "-staging"
             buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrlStaging\"")
+            buildConfigField("String", "NOTIFICATION_TITLE", "\"OTB dev\"")
             buildConfigField("String", "SENTRY_DSN", "\"$sentryDsnStaging\"")
             resValue("string", "app_name", "BG Staging")
         }

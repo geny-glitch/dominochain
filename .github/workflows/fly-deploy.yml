@@ -33,3 +33,21 @@ jobs:
         run: flyctl scale count worker=1 -y
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      # Safety net: after some deployments, only a stopped standby worker may remain.
+      # Ensure at least one worker machine is actually started to process Solid Queue jobs.
+      - name: Ensure one worker machine is started
+        working-directory: backend
+        run: |
+          worker_started_count=$(flyctl machine list -a bg-backend --json | jq '[.[] | select((.config.processes // []) | index("worker")) | select(.state == "started")] | length')
+          if [ "$worker_started_count" -eq 0 ]; then
+            worker_id=$(flyctl machine list -a bg-backend --json | jq -r '[.[] | select((.config.processes // []) | index("worker"))][0].id // empty')
+            if [ -n "$worker_id" ]; then
+              flyctl machine start "$worker_id" -a bg-backend
+            else
+              echo "No worker machine found after scaling" >&2
+              exit 1
+            fi
+          fi
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

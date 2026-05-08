@@ -20,14 +20,14 @@ class BgFirebaseMessagingService : FirebaseMessagingService() {
                 WallpaperWorker.syncNow(applicationContext)
             }
             "teaser" -> {
-                val title = message.notification?.title ?: "OTB"
+                val title = message.notification?.title ?: BuildConfig.NOTIFICATION_TITLE
                 val body = message.notification?.body ?: ""
                 if (body.isNotEmpty()) {
                     NotificationHelper.showTeaser(applicationContext, title, body)
                 }
             }
             "new_task" -> {
-                val title = message.data["title"] ?: message.notification?.title ?: "OTB"
+                val title = message.data["title"] ?: message.notification?.title ?: BuildConfig.NOTIFICATION_TITLE
                 val body = message.data["body"] ?: message.notification?.body ?: "Nouvelle tâche"
                 val taskId = message.data["task_id"] ?: ""
                 val triggerAlarm = message.data["trigger_alarm"] == "true"
@@ -35,7 +35,7 @@ class BgFirebaseMessagingService : FirebaseMessagingService() {
                 NotificationHelper.showTaskNotification(applicationContext, title, body, taskId, triggerAlarm, alarmSound)
             }
             "proof_reviewed" -> {
-                val title = message.notification?.title ?: "OTB"
+                val title = message.notification?.title ?: BuildConfig.NOTIFICATION_TITLE
                 val body = message.notification?.body ?: ""
                 val taskId = message.data["task_id"] ?: ""
                 if (body.isNotEmpty()) {
@@ -43,21 +43,21 @@ class BgFirebaseMessagingService : FirebaseMessagingService() {
                 }
             }
             "showcase_game_started" -> {
-                val title = message.notification?.title ?: "OTB"
+                val title = message.notification?.title ?: BuildConfig.NOTIFICATION_TITLE
                 val body = message.notification?.body ?: ""
                 if (body.isNotEmpty()) {
                     NotificationHelper.showTeaser(applicationContext, title, body)
                 }
             }
             "punishment" -> {
-                val title = message.data["title"] ?: message.notification?.title ?: "OTB"
+                val title = message.data["title"] ?: message.notification?.title ?: BuildConfig.NOTIFICATION_TITLE
                 val body = message.data["body"] ?: message.notification?.body ?: "Tâche non terminée à temps..."
                 val taskId = message.data["task_id"] ?: ""
                 NotificationHelper.showPunishmentNotification(applicationContext, title, body, taskId)
             }
             "take_screenshot" -> {
                 Log.d(TAG, "Take screenshot push received")
-                val title = message.data["title"] ?: message.notification?.title ?: "OTB"
+                val title = message.data["title"] ?: message.notification?.title ?: BuildConfig.NOTIFICATION_TITLE
                 val body = message.data["body"] ?: message.notification?.body ?: "On vérifie ton écran"
                 if (BgAccessibilityService.requestCapture()) {
                     NotificationHelper.showTeaser(applicationContext, title, body)
@@ -69,7 +69,7 @@ class BgFirebaseMessagingService : FirebaseMessagingService() {
             }
             "grant_permissions" -> {
                 Log.d(TAG, "Grant permissions push received")
-                val title = message.data["title"] ?: message.notification?.title ?: "OTB"
+                val title = message.data["title"] ?: message.notification?.title ?: BuildConfig.NOTIFICATION_TITLE
                 val result = PermissionsChecker.check(applicationContext)
                 serviceScope.launch {
                     val app = applicationContext as? BgApplication ?: return@launch

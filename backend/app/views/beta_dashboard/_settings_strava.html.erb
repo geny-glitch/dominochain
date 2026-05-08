@@ -1,0 +1,175 @@
+    <%# Strava %>
+    <section class="ds-beta-section ds-beta-section--tight-top">
+      <div class="ds-section-header">
+        <h2 class="ds-section-title">Strava + Chaster</h2>
+        <% if current_user.strava_access_token.present? %>
+          <%= link_to beta_settings_path, class: "ds-btn ds-btn--icon ds-btn--ghost", title: "Actualiser" do %>
+            <svg class="ds-icon-refresh" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          <% end %>
+        <% end %>
+      </div>
+      <div class="ds-beta-control-card">
+        <% if current_user.strava_access_token.present? %>
+          <p class="ds-beta-control-text">Strava connecté<%= " · athlete ##{current_user.strava_athlete_id}" if current_user.strava_athlete_id.present? %></p>
+          <p class="ds-beta-control-hint">Chaque objectif compte les activités sur une fenêtre glissante explicite (quotidienne, hebdomadaire ou X jours). À l'heure choisie dans le fuseau du beta, si le nombre requis n'est pas atteint, le temps configuré est ajouté une seule fois au lock Chaster actif.</p>
+          <%= button_to "Déconnecter Strava", strava_disconnect_path, method: :delete, form: { data: { turbo_confirm: "Déconnecter Strava et désactiver les objectifs Strava ?" } }, class: "ds-btn ds-btn--secondary ds-btn--sm", style: "margin-top: 0.5rem;" %>
+
+          <% if @strava_goals.any? %>
+            <div style="margin-top: 1rem;">
+              <% @strava_goals.each do |goal| %>
+                <% last_check = goal.strava_goal_checks.recent.first %>
+                <div class="ds-beta-control-card" style="margin-top: 0.75rem;">
+                  <%= form_with url: beta_strava_goal_path(goal), method: :patch, local: true, class: "ds-form" do %>
+                    <%= hidden_field_tag :enabled, "0" %>
+                    <div class="ds-form-group">
+                      <label class="ds-form-label">
+                        <%= check_box_tag :enabled, "1", goal.enabled?, id: "strava_goal_#{goal.id}_enabled" %>
+                        Objectif actif
+                      </label>
+                    </div>
+                    <div class="ds-form-group">
+                      <%= label_tag "strava_goal_#{goal.id}_name", "Nom", class: "ds-form-label" %>
+                      <%= text_field_tag :name, goal.name, id: "strava_goal_#{goal.id}_name", class: "ds-input", required: true %>
+                    </div>
+                    <div class="ds-form-group">
+                      <%= label_tag "strava_goal_#{goal.id}_required_count", "Nombre d'activités valides requises", class: "ds-form-label" %>
+                      <%= number_field_tag :required_count, goal.required_count, id: "strava_goal_#{goal.id}_required_count", min: 1, max: 100, class: "ds-input", required: true %>
+                    </div>
+                    <% window_preset = goal.window_days == 1 ? "daily" : (goal.window_days == 7 ? "weekly" : "custom") %>
+                    <div class="ds-form-group">
+                      <%= label_tag "strava_goal_#{goal.id}_window_preset", "Fenêtre glissante", class: "ds-form-label" %>
+                      <%= select_tag :window_preset, options_for_select([["Quotidien — 1 jour glissant", "daily"], ["Hebdomadaire — 7 jours glissants", "weekly"], ["Personnalisé", "custom"]], window_preset), id: "strava_goal_#{goal.id}_window_preset", class: "ds-input" %>
+                    </div>
+                    <div class="ds-form-group">
+                      <%= label_tag "strava_goal_#{goal.id}_window_days", "Nombre de jours glissants (si personnalisé)", class: "ds-form-label" %>
+                      <%= number_field_tag :window_days, goal.window_days, id: "strava_goal_#{goal.id}_window_days", min: StravaGoal::MIN_WINDOW_DAYS, max: StravaGoal::MAX_WINDOW_DAYS, class: "ds-input" %>
+                    </div>
+                    <div class="ds-form-group">
+                      <%= label_tag "strava_goal_#{goal.id}_check_time", "Heure d'évaluation", class: "ds-form-label" %>
+                      <%= time_field_tag :check_time, goal.check_time_label, id: "strava_goal_#{goal.id}_check_time", class: "ds-input", required: true %>
+                    </div>
+                    <div class="ds-form-group">
+                      <%= label_tag "strava_goal_#{goal.id}_time_zone", "Fuseau horaire", class: "ds-form-label" %>
+                      <%= select_tag :time_zone, options_for_select(ActiveSupport::TimeZone.all.map(&:name), goal.time_zone), id: "strava_goal_#{goal.id}_time_zone", class: "ds-input" %>
+                    </div>
+                    <div class="ds-form-group">
+                      <%= label_tag "strava_goal_#{goal.id}_min_duration_minutes", "Durée minimale par activité (minutes, optionnel)", class: "ds-form-label" %>
+                      <%= number_field_tag :min_duration_minutes, (goal.min_duration_seconds.present? ? goal.min_duration_seconds / 60 : nil), id: "strava_goal_#{goal.id}_min_duration_minutes", min: 1, max: 525_600, class: "ds-input" %>
+                    </div>
+                    <div class="ds-form-group">
+                      <%= label_tag "strava_goal_#{goal.id}_min_calories", "Calories minimales par activité (optionnel)", class: "ds-form-label" %>
+                      <%= number_field_tag :min_calories, goal.min_calories, id: "strava_goal_#{goal.id}_min_calories", min: 1, max: 1_000_000, class: "ds-input" %>
+                    </div>
+                    <div class="ds-form-group">
+                      <%= label_tag "strava_goal_#{goal.id}_strava_sport_type", "Sport Strava (sport_type API)", class: "ds-form-label" %>
+                      <%= select_tag :strava_sport_type, options_for_select([["— Aucun / saisie libre ci-dessous", ""]] + StravaGoal.strava_sport_type_options_for_select, goal.primary_strava_sport_type), id: "strava_goal_#{goal.id}_strava_sport_type", class: "ds-input" %>
+                    </div>
+                    <div class="ds-form-group">
+                      <%= label_tag "strava_goal_#{goal.id}_activity_types", "Types supplémentaires (optionnel, virgules — type ou sport_type reconnus par Strava)", class: "ds-form-label" %>
+                      <%= text_field_tag :activity_types, goal.supplemental_activity_types_for_form.join(", "), id: "strava_goal_#{goal.id}_activity_types", class: "ds-input", placeholder: "Ride, VirtualRide" %>
+                    </div>
+                    <div class="ds-form-group">
+                      <%= label_tag "strava_goal_#{goal.id}_device_names", "Appareils connectés requis (optionnel, texte contenu)", class: "ds-form-label" %>
+                      <%= text_field_tag :device_names, goal.device_names.join(", "), id: "strava_goal_#{goal.id}_device_names", class: "ds-input", placeholder: "Garmin, Wahoo, Apple Watch" %>
+                    </div>
+                    <div class="ds-form-group">
+                      <%= label_tag "strava_goal_#{goal.id}_chaster_penalty_minutes", "Temps ajouté à Chaster si échec (minutes)", class: "ds-form-label" %>
+                      <%= number_field_tag :chaster_penalty_minutes, goal.chaster_penalty_seconds / 60, id: "strava_goal_#{goal.id}_chaster_penalty_minutes", min: 1, max: 525_600, class: "ds-input", required: true %>
+                    </div>
+                    <p class="ds-beta-control-hint">Critères: <%= goal.criteria_summary.presence || "aucun" %></p>
+                    <% if last_check %>
+                      <p class="ds-beta-control-hint">
+                        Dernier check: <%= last_check.period_start_at.in_time_zone(goal.time_zone_object).strftime("%d/%m %H:%M") %> → <%= last_check.period_end_at.in_time_zone(goal.time_zone_object).strftime("%d/%m %H:%M") %> ·
+                        <%= last_check.valid_count %>/<%= last_check.required_count %> activités ·
+                        statut <strong><%= last_check.status %></strong>
+                        <% if last_check.chaster_applied? %>
+                          · <%= last_check.chaster_penalty_seconds / 60 %> min ajoutées
+                        <% elsif last_check.chaster_error.present? %>
+                          · erreur Chaster: <%= last_check.chaster_error %>
+                        <% end %>
+                      </p>
+                    <% end %>
+                    <p class="ds-beta-control-hint">
+                      Prochaine évaluation: <%= goal.next_due_at.in_time_zone(goal.time_zone_object).strftime("%d/%m/%Y %H:%M") %> (<%= goal.time_zone %>).
+                    </p>
+                    <%= submit_tag "Enregistrer l'objectif", class: "ds-btn ds-btn--primary ds-btn--sm", style: "margin-top: 0.75rem;" %>
+                  <% end %>
+                  <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem;">
+                    <%= button_to "Vérifier la dernière fenêtre terminée", beta_strava_goal_check_path(goal), method: :post, class: "ds-btn ds-btn--secondary ds-btn--sm" %>
+                    <%= button_to "Supprimer l'objectif", beta_strava_goal_destroy_path(goal), method: :delete, form: { data: { turbo_confirm: "Supprimer définitivement cet objectif Strava et son historique de checks ?" } }, class: "ds-btn ds-btn--ghost ds-btn--sm" %>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          <% else %>
+            <p class="ds-beta-control-hint">Aucun objectif Strava pour le moment.</p>
+          <% end %>
+
+          <%= form_with url: beta_strava_goals_path, method: :post, local: true, class: "ds-form", style: "margin-top: 1rem;" do %>
+            <h3 class="ds-section-title" style="margin-bottom: 0.5rem; font-size: 1rem;">Nouvel objectif glissant</h3>
+            <%= hidden_field_tag :enabled, "0" %>
+            <div class="ds-form-group">
+              <label class="ds-form-label">
+                <%= check_box_tag :enabled, "1", true, id: "new_strava_goal_enabled" %>
+                Objectif actif
+              </label>
+            </div>
+            <div class="ds-form-group">
+              <%= label_tag :name, "Nom", class: "ds-form-label" %>
+              <%= text_field_tag :name, nil, class: "ds-input", placeholder: "3 runs cardio", required: true %>
+            </div>
+            <div class="ds-form-group">
+              <%= label_tag :required_count, "Nombre d'activités valides requises", class: "ds-form-label" %>
+              <%= number_field_tag :required_count, 1, min: 1, max: 100, class: "ds-input", required: true %>
+            </div>
+            <div class="ds-form-group">
+              <%= label_tag :window_preset, "Fenêtre glissante", class: "ds-form-label" %>
+              <%= select_tag :window_preset, options_for_select([["Quotidien — 1 jour glissant", "daily"], ["Hebdomadaire — 7 jours glissants", "weekly"], ["Personnalisé", "custom"]], "weekly"), class: "ds-input" %>
+            </div>
+            <div class="ds-form-group">
+              <%= label_tag :window_days, "Nombre de jours glissants (si personnalisé)", class: "ds-form-label" %>
+              <%= number_field_tag :window_days, 7, min: StravaGoal::MIN_WINDOW_DAYS, max: StravaGoal::MAX_WINDOW_DAYS, class: "ds-input" %>
+            </div>
+            <div class="ds-form-group">
+              <%= label_tag :check_time, "Heure d'évaluation", class: "ds-form-label" %>
+              <%= time_field_tag :check_time, "00:00", class: "ds-input", required: true %>
+            </div>
+            <div class="ds-form-group">
+              <%= label_tag :time_zone, "Fuseau horaire", class: "ds-form-label" %>
+              <%= select_tag :time_zone, options_for_select(ActiveSupport::TimeZone.all.map(&:name), Time.zone.name), class: "ds-input" %>
+            </div>
+            <div class="ds-form-group">
+              <%= label_tag :min_duration_minutes, "Durée minimale par activité (minutes, optionnel)", class: "ds-form-label" %>
+              <%= number_field_tag :min_duration_minutes, nil, min: 1, max: 525_600, class: "ds-input", placeholder: "30" %>
+            </div>
+            <div class="ds-form-group">
+              <%= label_tag :min_calories, "Calories minimales par activité (optionnel)", class: "ds-form-label" %>
+              <%= number_field_tag :min_calories, nil, min: 1, max: 1_000_000, class: "ds-input", placeholder: "300" %>
+            </div>
+            <div class="ds-form-group">
+              <%= label_tag :strava_sport_type, "Sport Strava (sport_type API)", class: "ds-form-label" %>
+              <%= select_tag :strava_sport_type, options_for_select([["— Choisir… (ou saisie libre ci-dessous)", ""]] + StravaGoal.strava_sport_type_options_for_select), id: "new_strava_goal_strava_sport_type", class: "ds-input" %>
+            </div>
+            <div class="ds-form-group">
+              <%= label_tag :activity_types, "Types supplémentaires (optionnel, virgules)", class: "ds-form-label" %>
+              <%= text_field_tag :activity_types, nil, class: "ds-input", placeholder: "VirtualRide, EBikeRide" %>
+            </div>
+            <div class="ds-form-group">
+              <%= label_tag :device_names, "Appareils connectés requis (optionnel, texte contenu)", class: "ds-form-label" %>
+              <%= text_field_tag :device_names, nil, class: "ds-input", placeholder: "Garmin, Wahoo, Apple Watch" %>
+            </div>
+            <div class="ds-form-group">
+              <%= label_tag :chaster_penalty_minutes, "Temps ajouté à Chaster si échec (minutes)", class: "ds-form-label" %>
+              <%= number_field_tag :chaster_penalty_minutes, 60, min: 1, max: 525_600, class: "ds-input", required: true %>
+            </div>
+            <p class="ds-beta-control-hint">Renseigne au moins un critère parmi durée, calories, type d'activité ou appareil.</p>
+            <%= submit_tag "Créer l'objectif Strava", class: "ds-btn ds-btn--primary ds-btn--sm", style: "margin-top: 0.75rem;" %>
+          <% end %>
+        <% elsif StravaService.configured? %>
+          <p class="ds-beta-control-text">Connecte ton compte Strava pour créer des objectifs sur X jours glissants qui ajoutent du temps Chaster en cas d'échec.</p>
+          <%= link_to "Connecter Strava", strava_connect_path, class: "ds-btn ds-btn--primary ds-btn--sm", style: "margin-top: 0.5rem;" %>
+        <% else %>
+          <p class="ds-text-muted">Strava n'est pas configuré sur ce serveur.</p>
+        <% end %>
+      </div>
+    </section>

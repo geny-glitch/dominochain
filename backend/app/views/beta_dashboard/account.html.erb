@@ -1,0 +1,24 @@
+<% content_for :title, "Compte — #{current_user.nickname}" %>
+
+<header class="ds-beta-page-head">
+  <h1 class="ds-beta-page-title">Compte</h1>
+  <p class="ds-beta-page-lead">
+    Lien avec ton boss, tâches, appareils et sécurité du compte.
+  </p>
+</header>
+
+<%= render "account_control" %>
+<%= render "account_tasks" %>
+<%= render "account_devices" %>
+
+<section class="ds-beta-section">
+  <h2 class="ds-section-title">Sécurité</h2>
+  <div class="ds-beta-control-card">
+    <p class="ds-beta-control-hint">Mot de passe et email (pseudo) Devise.</p>
+    <%= link_to "Modifier le compte…", edit_user_registration_path, class: "ds-btn ds-btn--secondary ds-btn--sm", style: "margin-top: 0.75rem;" %>
+  </div>
+</section>
+
+<section class="ds-beta-section">
+  <%= button_to "Déconnexion", destroy_user_session_path, method: :delete, class: "ds-btn ds-btn--ghost" %>
+</section>

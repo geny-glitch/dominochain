@@ -6,6 +6,18 @@
   margin-top: $ds-space-2xl;
 }
 
+.ds-beta-section--first {
+  margin-top: 0;
+}
+
+.ds-beta-section--tight-top {
+  margin-top: $ds-space-lg;
+}
+
+.ds-beta-section-spaced {
+  margin-top: $ds-space-lg;
+}
+
 .ds-section-header {
   display: flex;
   align-items: center;
@@ -147,4 +159,216 @@
       text-decoration: underline;
     }
   }
+}
+
+// —— Beta app shell (sidebar + pages) ——
+.ds-beta-app-shell {
+  margin: 0;
+  min-height: 100vh;
+  background: $ds-bg;
+  color: $ds-text;
+}
+
+.ds-beta-app {
+  display: flex;
+  align-items: stretch;
+  min-height: 100vh;
+}
+
+.ds-beta-sidebar {
+  width: 16rem;
+  flex-shrink: 0;
+  padding: $ds-space-lg $ds-space-md;
+  background: $ds-surface;
+  border-right: 1px solid $ds-border;
+}
+
+.ds-beta-sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: $ds-space-md;
+  margin-bottom: $ds-space-xl;
+  padding-bottom: $ds-space-lg;
+  border-bottom: 1px solid $ds-border;
+}
+
+.ds-beta-sidebar-title {
+  display: block;
+  font-size: $ds-small-size;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: $ds-text-muted;
+}
+
+.ds-beta-sidebar-user {
+  display: block;
+  font-size: $ds-body-size;
+  color: $ds-teal;
+  font-weight: 600;
+}
+
+.ds-beta-sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: $ds-space-xs;
+}
+
+.ds-beta-nav-heading {
+  margin: $ds-space-lg 0 $ds-space-sm;
+  font-size: $ds-tiny-size;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: $ds-text-muted;
+
+  &:first-child {
+    margin-top: 0;
+  }
+}
+
+.ds-beta-nav-link {
+  display: block;
+  padding: $ds-space-sm $ds-space-md;
+  border-radius: $ds-radius-md;
+  font-size: $ds-body-size;
+  color: $ds-text-muted;
+  text-decoration: none;
+  transition: background $ds-transition, color $ds-transition;
+
+  &:hover {
+    background: $ds-surface-elevated;
+    color: $ds-text;
+  }
+
+  &--sub {
+    padding-left: $ds-space-xl;
+    font-size: $ds-small-size;
+  }
+
+  &--active {
+    background: rgba($ds-teal, 0.12);
+    color: $ds-teal;
+    font-weight: 600;
+  }
+}
+
+.ds-beta-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.ds-beta-main-inner {
+  max-width: 52rem;
+  margin: 0 auto;
+  padding: $ds-space-xl $ds-space-xl $ds-space-3xl;
+}
+
+@media (max-width: 52rem) {
+  .ds-beta-app {
+    flex-direction: column;
+  }
+
+  .ds-beta-sidebar {
+    width: auto;
+    border-right: none;
+    border-bottom: 1px solid $ds-border;
+    padding-bottom: $ds-space-md;
+  }
+
+  .ds-beta-sidebar-brand {
+    margin-bottom: $ds-space-md;
+    padding-bottom: $ds-space-md;
+  }
+
+  .ds-beta-sidebar-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: $ds-space-sm $ds-space-md;
+    align-items: flex-start;
+
+    .ds-beta-nav-heading {
+      width: 100%;
+      margin-top: $ds-space-sm;
+      margin-bottom: 0;
+
+      &:first-child {
+        margin-top: 0;
+      }
+    }
+
+    .ds-beta-nav-link {
+      flex: 0 0 auto;
+    }
+  }
+
+  .ds-beta-main-inner {
+    padding-left: $ds-space-lg;
+    padding-right: $ds-space-lg;
+  }
+}
+
+.ds-beta-page-head {
+  margin-bottom: $ds-space-xl;
+}
+
+.ds-beta-page-title {
+  margin: 0 0 $ds-space-sm;
+  font-size: 1.75rem;
+  font-weight: 300;
+  letter-spacing: $ds-title-spacing;
+  color: $ds-text;
+}
+
+.ds-beta-page-lead {
+  margin: 0;
+  max-width: 42rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: $ds-text-muted;
+}
+
+.ds-beta-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: $ds-space-md;
+}
+
+.ds-puryfi-label-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+  gap: $ds-space-md $ds-space-xl;
+  padding: $ds-space-sm 0;
+}
+
+.ds-beta-bullet-list {
+  margin: $ds-space-md 0 0;
+  padding-left: 1.15rem;
+  color: $ds-text-muted;
+  font-size: $ds-body-size;
+  line-height: 1.55;
+
+  li + li {
+    margin-top: $ds-space-sm;
+  }
+}
+
+.ds-code-inline {
+  font-family: $ds-font-mono;
+  font-size: 0.85em;
+  color: $ds-teal;
+}
+
+.ds-inline-link {
+  color: $ds-teal;
+  text-decoration: underline;
+
+  &:hover {
+    color: $ds-teal-dim;
+  }
+}
+
+.ds-beta-task-back {
+  display: inline-block;
+  margin-bottom: $ds-space-lg;
 }

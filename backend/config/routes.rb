@@ -9,8 +9,12 @@ Rails.application.routes.draw do
   end
 
   get "dashboard", to: "dashboard#show", as: :dashboard
-  get "beta", to: "beta_dashboard#show", as: :beta_dashboard
-  patch "beta/dashboard_sections", to: "beta_dashboard#update_dashboard_sections", as: :beta_dashboard_sections
+  get "beta", to: "beta_dashboard#home", as: :beta_dashboard
+  get "beta/sources/puryfi", to: "beta_dashboard#sources_puryfi", as: :beta_sources_puryfi
+  get "beta/sources/cigarettes", to: "beta_dashboard#sources_cigarettes", as: :beta_sources_cigarettes
+  get "beta/actions/chaster", to: "beta_dashboard#actions_chaster", as: :beta_actions_chaster
+  get "beta/reglages", to: "beta_dashboard#settings", as: :beta_settings
+  get "beta/compte", to: "beta_dashboard#account", as: :beta_account
   patch "beta/pishock", to: "beta_dashboard#update_pishock", as: :beta_pishock
   post "beta/pishock/test", to: "beta_dashboard#test_pishock", as: :beta_pishock_test
   get "beta/pishock/debug", to: "pishock_debug#show", as: :beta_pishock_debug

@@ -10,6 +10,8 @@ Toujours utiliser les classes du design system pour les pages web. Ne pas écrir
 
 ## Structure de page
 
+### Pages classiques (hors espace beta)
+
 ```erb
 <div class="ds-page">
   <div class="ds-container">
@@ -22,6 +24,12 @@ Toujours utiliser les classes du design system pour les pages web. Ne pas écrir
   </div>
 </div>
 ```
+
+### Espace beta (layout `beta_dashboard`)
+
+- Le layout fournit la **sidebar** (`ds-beta-sidebar`, `ds-beta-nav-link`, etc.) et la zone principale (`ds-beta-main-inner`).
+- Chaque vue beta : `content_for :title`, un **en-tête de page** optionnel (`ds-beta-page-head`, `ds-beta-page-title`, `ds-beta-page-lead`), puis du contenu avec les composants ci-dessous (`ds-beta-section`, `ds-beta-control-card`, formulaires DS).
+- Ne pas envelopper tout le `yield` dans `ds-page` / `ds-container` : ces classes sont pour les pages hors layout beta.
 
 ## Composants
 

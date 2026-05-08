@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_05_06_103000) do
+ActiveRecord::Schema[7.2].define(version: 2026_05_08_093900) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -68,6 +68,21 @@ ActiveRecord::Schema[7.2].define(version: 2026_05_06_103000) do
     t.index ["user_id", "end_date"], name: "index_chaster_locks_on_user_id_and_end_date"
     t.index ["user_id", "status"], name: "index_chaster_locks_on_user_id_and_status"
     t.index ["user_id"], name: "index_chaster_locks_on_user_id"
+  end
+
+  create_table "chaster_time_events", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "chaster_lock_id", null: false
+    t.string "source", default: "api", null: false
+    t.integer "seconds", null: false
+    t.string "summary"
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "occurred_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "chaster_lock_id"], name: "index_chaster_time_events_on_user_id_and_chaster_lock_id"
+    t.index ["user_id", "occurred_at", "id"], name: "index_chaster_time_events_on_user_id_and_occurred_at_and_id"
+    t.index ["user_id"], name: "index_chaster_time_events_on_user_id"
   end
 
   create_table "cigarette_entries", force: :cascade do |t|
@@ -476,6 +491,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_05_06_103000) do
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "chaster_locks", "users"
+  add_foreign_key "chaster_time_events", "users"
   add_foreign_key "cigarette_entries", "users"
   add_foreign_key "control_requests", "users", column: "beta_id"
   add_foreign_key "control_requests", "users", column: "boss_id"

@@ -57,13 +57,37 @@ module Api
       }
     end
 
+    def time_events
+      page = pagination_page
+      per_page = pagination_per_page
+      scope = current_user.chaster_time_events.recent
+      total_count = scope.count
+      events = scope.offset((page - 1) * per_page).limit(per_page)
+
+      render json: {
+        events: events.map { |event| time_event_to_json(event) },
+        meta: {
+          page: page,
+          per_page: per_page,
+          total_count: total_count,
+          total_pages: (total_count.to_f / per_page).ceil,
+          next_page: page * per_page < total_count ? page + 1 : nil
+        }
+      }
+    end
+
     def add_time
       seconds = params[:seconds].to_i
       service = ChasterService.new(current_user)
       lock_info = service.current_lock
       return render json: { error: "Aucun lock actif" }, status: :unprocessable_entity if lock_info.nil?
 
-      service.add_time_to_lock(lock_info[:id], seconds)
+      service.add_time_to_lock(
+        lock_info[:id],
+        seconds,
+        source: current_device.present? ? "api" : "puryfi",
+        summary: current_device.present? ? "Ajout depuis l'app" : "Ajout depuis PuryFi"
+      )
       render json: {
         ok: true,
         added_seconds: seconds,
@@ -93,6 +117,40 @@ module Api
         showcase_dino_seconds_per_obstacle: dino_sec,
         showcase_tetris_seconds_per_line: tetris_sec
       }
+    end
+
+    def pagination_page
+      page = params.fetch(:page, 1).to_i
+      page.positive? ? page : 1
+    end
+
+    def pagination_per_page
+      per_page = params.fetch(:per_page, 20).to_i
+      per_page = 20 unless per_page.positive?
+      [per_page, 50].min
+    end
+
+    def time_event_to_json(event)
+      {
+        id: event.id,
+        lock_id: event.chaster_lock_id,
+        seconds: event.seconds,
+        source: event.source,
+        source_label: source_label(event.source),
+        summary: event.summary,
+        occurred_at: event.occurred_at&.iso8601
+      }
+    end
+
+    def source_label(source)
+      {
+        "api" => "App/API",
+        "puryfi" => "PuryFi",
+        "cigarettes" => "Cigarettes",
+        "showcase_backdoor" => "Backdoor",
+        "showcase_game" => "Vitrine",
+        "strava_goal" => "Strava"
+      }.fetch(source, source.to_s.humanize)
     end
 
     def lock_to_json(lock)

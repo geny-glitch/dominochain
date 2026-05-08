@@ -25,7 +25,13 @@ class StravaGoalEvaluator
       lock = @chaster_service.current_lock
       if lock&.dig(:id).present?
         chaster_lock_id = lock[:id]
-        @chaster_service.add_time_to_lock(lock[:id], goal.chaster_penalty_seconds)
+        @chaster_service.add_time_to_lock(
+          lock[:id],
+          goal.chaster_penalty_seconds,
+          source: "strava_goal",
+          summary: "Objectif Strava manqué: #{goal.name}",
+          metadata: { goal_id: goal.id, due_at: due_at&.iso8601 }
+        )
         chaster_applied = true
       else
         status = "chaster_error"

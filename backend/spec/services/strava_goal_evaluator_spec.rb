@@ -59,7 +59,13 @@ RSpec.describe StravaGoalEvaluator do
       expect(first.status).to eq("failed")
       expect(first.chaster_applied).to be true
       expect(first.chaster_lock_id).to eq("lock-strava")
-      expect(chaster_service).to have_received(:add_time_to_lock).once.with("lock-strava", 90.minutes.to_i)
+      expect(chaster_service).to have_received(:add_time_to_lock).once.with(
+        "lock-strava",
+        90.minutes.to_i,
+        source: "strava_goal",
+        summary: "Objectif Strava manqué: Cardio rolling",
+        metadata: { goal_id: goal.id, due_at: a_string_starting_with(due_at.iso8601.first(19)) }
+      )
       expect(second.id).to eq(first.id)
       expect(goal.strava_goal_checks.count).to eq(1)
     end

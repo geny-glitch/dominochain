@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/ds_bg"
+    android:orientation="vertical"
+    android:padding="@dimen/ds_page_padding">
+
+    <TextView
+        style="@style/DsTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/ds_space_sm"
+        android:text="@string/chaster_history_title" />
+
+    <TextView
+        style="@style/DsBody"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/ds_space_lg"
+        android:text="@string/chaster_history_subtitle"
+        android:textColor="@color/ds_text_muted" />
+
+    <ProgressBar
+        android:id="@+id/chaster_history_progress"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="@dimen/ds_space_md"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/chaster_history_status"
+        style="@style/DsBody"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/ds_space_md"
+        android:textColor="@color/ds_text_muted"
+        android:visibility="gone" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/chaster_history_recycler"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:nestedScrollingEnabled="true"
+        android:overScrollMode="ifContentScrolls"
+        tools:listitem="@layout/item_chaster_time_event" />
+
+</LinearLayout>

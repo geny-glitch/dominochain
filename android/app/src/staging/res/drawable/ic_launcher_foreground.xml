@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Staging launcher icon: teal disc keeps it distinct from the amber production app. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="@color/ds_teal"
+        android:pathData="M54,20c-18.78,0 -34,15.22 -34,34s15.22,34 34,34s34,-15.22 34,-34S72.78,20 54,20z" />
+</vector>

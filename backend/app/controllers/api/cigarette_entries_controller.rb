@@ -97,7 +97,13 @@ module Api
       end
 
       seconds = entry.count * entry.chaster_seconds
-      service.add_time_to_lock(lock[:id], seconds)
+      service.add_time_to_lock(
+        lock[:id],
+        seconds,
+        source: "cigarettes",
+        summary: "#{entry.count} cigarette(s)",
+        metadata: { count: entry.count, smoked_at: entry.smoked_at&.iso8601 }
+      )
       entry.chaster_lock_id = lock[:id]
       entry.chaster_applied = true
       entry.chaster_error = nil

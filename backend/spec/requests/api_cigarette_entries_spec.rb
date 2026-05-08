@@ -45,7 +45,13 @@ RSpec.describe "API cigarette entries", type: :request do
       end
 
       expect(response).to have_http_status(:created)
-      expect(service).to have_received(:add_time_to_lock).with("lock-cig", 120)
+      expect(service).to have_received(:add_time_to_lock).with(
+        "lock-cig",
+        120,
+        source: "cigarettes",
+        summary: "1 cigarette(s)",
+        metadata: hash_including(count: 1, smoked_at: a_string_starting_with("2026-04-30T09:30:00"))
+      )
       entry = beta.cigarette_entries.last
       expect(entry.smoked_on).to eq(Date.new(2026, 4, 30))
       expect(entry.chaster_seconds).to eq(120)

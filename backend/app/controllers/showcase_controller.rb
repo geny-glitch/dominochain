@@ -134,7 +134,13 @@ class ShowcaseController < ApplicationController
       return render json: { error: "Aucun cadenas Chaster actif pour le moment." }, status: 422
     end
 
-    service.add_time_to_lock(lock[:id], seconds)
+    service.add_time_to_lock(
+      lock[:id],
+      seconds,
+      source: "showcase_backdoor",
+      summary: "Backdoor par #{name}",
+      metadata: { player_name: name, message: message }
+    )
     ShowcaseAddTimeLimiter.record!(beta_id: @beta.id, seconds: seconds)
     addition.update!(chaster_applied: true, chaster_error: nil)
     ShowcaseBackdoorNotifyJob.perform_later(@beta.id, name, seconds, message)
@@ -191,7 +197,13 @@ class ShowcaseController < ApplicationController
       return (request.format.json? ? (render(json: { error: "Indisponible." }, status: 422)) : redirect_to(showcase_path(@beta.nickname), alert: "Indisponible pour le moment."))
     end
 
-    service.add_time_to_lock(lock[:id], seconds)
+    service.add_time_to_lock(
+      lock[:id],
+      seconds,
+      source: "showcase_game",
+      summary: showcase_time_event_summary(game_kind),
+      metadata: showcase_time_event_metadata(game_kind)
+    )
     ShowcaseAddTimeLimiter.record!(beta_id: @beta.id, seconds: seconds)
     request.format.json? ? render(json: { ok: true }) : redirect_to(showcase_path(@beta.nickname), notice: "Merci !")
   rescue ChasterService::Unauthorized
@@ -411,6 +423,21 @@ class ShowcaseController < ApplicationController
     when "quiz" then beta.showcase_quiz_enabled
     else false
     end
+  end
+
+  def showcase_time_event_summary(game_kind)
+    {
+      "quiz" => "Quiz vitrine",
+      "snake" => "Snake vitrine",
+      "dino" => "Dino Run vitrine",
+      "tetris" => "Tétris vitrine"
+    }.fetch(game_kind, "Vitrine")
+  end
+
+  def showcase_time_event_metadata(game_kind)
+    data = { game_type: game_kind }
+    data[:lines] = params[:lines].to_i.clamp(1, 8) if game_kind == "tetris"
+    data
   end
 
   def pishock_intensity(base, user)

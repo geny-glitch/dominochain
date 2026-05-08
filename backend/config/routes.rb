@@ -108,6 +108,7 @@ Rails.application.routes.draw do
 
     get "chaster/lock", to: "chaster#lock", as: :chaster_lock
     get "chaster/locks", to: "chaster#locks", as: :chaster_locks
+    get "chaster/time_events", to: "chaster#time_events", as: :chaster_time_events
     post "chaster/add_time", to: "chaster#add_time", as: :chaster_add_time
 
     get "cigarettes", to: "cigarette_entries#index"

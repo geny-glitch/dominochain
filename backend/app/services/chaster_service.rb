@@ -163,7 +163,7 @@ class ChasterService
     client_id.present? && client_secret.present?
   end
 
-  def add_time_to_lock(lock_id, seconds)
+  def add_time_to_lock(lock_id, seconds, source: "api", summary: nil, metadata: {})
     ensure_valid_token!
     raise Unauthorized, "Chaster non connecté" unless @user.chaster_access_token.present?
 
@@ -177,16 +177,31 @@ class ChasterService
 
     if res.code == "401"
       refresh_tokens!
-      return add_time_to_lock(lock_id, seconds)
+      return add_time_to_lock(lock_id, seconds, source: source, summary: summary, metadata: metadata)
     end
 
     raise Error, "Chaster: #{res.body}" unless res.is_a?(Net::HTTPSuccess)
+
+    record_time_event(lock_id, seconds, source: source, summary: summary, metadata: metadata)
 
     # Invalider le cache pour forcer un refresh
     @user.chaster_locks.where(chaster_lock_id: lock_id).update_all(updated_at: 2.hours.ago)
   end
 
   private
+
+  def record_time_event(lock_id, seconds, source:, summary:, metadata:)
+    @user.chaster_time_events.create!(
+      chaster_lock_id: lock_id,
+      seconds: seconds,
+      source: source,
+      summary: summary,
+      metadata: metadata.presence || {},
+      occurred_at: Time.current
+    )
+  rescue ActiveRecord::ActiveRecordError => e
+    Rails.logger.warn("Chaster time event not recorded for user=#{@user.id} lock=#{lock_id}: #{e.class}: #{e.message}")
+  end
 
   def upsert_lock(lock_data)
     end_date_str = lock_data["endDate"]

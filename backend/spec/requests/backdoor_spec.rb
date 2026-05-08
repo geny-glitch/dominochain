@@ -26,7 +26,13 @@ RSpec.describe "Showcase backdoor (legacy spec path)", type: :request do
     before do
       allow(ChasterService).to receive(:new).with(beta).and_return(service)
       allow(service).to receive(:current_lock).and_return({ id: "lock123" })
-      allow(service).to receive(:add_time_to_lock).with("lock123", 3_660)
+      allow(service).to receive(:add_time_to_lock).with(
+        "lock123",
+        3_660,
+        source: "showcase_backdoor",
+        summary: "Backdoor par Visitor",
+        metadata: { player_name: "Visitor", message: "Hello beta" }
+      )
     end
 
     it "stores addition, calls Chaster and enqueues FCM job" do

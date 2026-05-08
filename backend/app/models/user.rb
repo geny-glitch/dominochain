@@ -16,6 +16,7 @@ class User < ApplicationRecord
   has_many :control_requests_sent, class_name: "ControlRequest", foreign_key: :beta_id, dependent: :destroy
   has_many :control_requests_received, class_name: "ControlRequest", foreign_key: :boss_id, dependent: :destroy
   has_many :chaster_locks, dependent: :destroy
+  has_many :chaster_time_events, dependent: :destroy
   has_many :game_sessions, dependent: :destroy
   has_many :showcase_time_additions, dependent: :destroy
   has_many :cigarette_entries, dependent: :destroy

@@ -70,8 +70,24 @@ class BetaDashboardController < ApplicationController
     end
   end
 
+  def update_dashboard_sections
+    visible = Array(params[:visible_sections]).map(&:to_s) & BetaCapabilities::SECTION_IDS
+    if visible.empty?
+      redirect_to beta_dashboard_path, alert: "Garde au moins une section affichée."
+      return
+    end
+
+    hidden = BetaCapabilities::SECTION_IDS - visible
+    prefs = (current_user.beta_ui_prefs || {}).stringify_keys.merge("hidden_sections" => hidden)
+    current_user.update!(beta_ui_prefs: prefs)
+    redirect_to beta_dashboard_path, notice: "Sections du dashboard mises à jour."
+  rescue ActiveRecord::RecordInvalid => e
+    redirect_to beta_dashboard_path, alert: e.record.errors.full_messages.join(", ")
+  end
+
   def show
     current_user.ensure_puryfi_plugin_token!
+    @capabilities = BetaCapabilities.for(current_user)
     @control = current_user.control
     @invite_url = control_accept_from_link_url(current_user.nickname)
     @devices = current_user.devices.order(created_at: :desc)

@@ -123,7 +123,7 @@ RSpec.describe "Showcase PiShock hooks", type: :request do
     end
 
     it "passes the showcase player cookie to the game-start notification" do
-      beta.update!(nickname: "pi-beta")
+      beta.update!(nickname: "pi_beta")
       cookies["bgShowcasePlayer_pi_beta"] = "  Alice  "
 
       expect do

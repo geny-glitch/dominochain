@@ -10,6 +10,7 @@ Rails.application.routes.draw do
 
   get "dashboard", to: "dashboard#show", as: :dashboard
   get "beta", to: "beta_dashboard#show", as: :beta_dashboard
+  patch "beta/dashboard_sections", to: "beta_dashboard#update_dashboard_sections", as: :beta_dashboard_sections
   patch "beta/pishock", to: "beta_dashboard#update_pishock", as: :beta_pishock
   post "beta/pishock/test", to: "beta_dashboard#test_pishock", as: :beta_pishock_test
   get "beta/pishock/debug", to: "pishock_debug#show", as: :beta_pishock_debug

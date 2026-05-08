@@ -462,6 +462,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_05_08_093900) do
     t.string "strava_refresh_token"
     t.datetime "strava_token_expires_at"
     t.string "strava_athlete_id"
+    t.jsonb "beta_ui_prefs", default: {}, null: false
     t.index ["email"], name: "index_users_on_email"
     t.index ["nickname"], name: "index_users_on_nickname", unique: true
     t.index ["provider", "uid"], name: "index_users_on_provider_and_uid"

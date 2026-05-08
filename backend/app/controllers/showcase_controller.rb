@@ -1,15 +1,6 @@
 # frozen_string_literal: true
 
 class ShowcaseController < ApplicationController
-  # Temps ajouté au verrou par action de score — appliqué côté serveur dans #add_time.
-  QUIZ_SECONDS_PER_POINT = 1
-  SNAKE_SECONDS_PER_FRUIT = 300
-  DINO_SECONDS_PER_OBSTACLE = 300
-  TETRIS_SECONDS_PER_LINE = 60
-
-  # Backdoor: max duration per submission (aligné avec #add_time)
-  BACKDOOR_MAX_SECONDS = 86_400 * 365
-
   skip_before_action :verify_authenticity_token, only: [
     :add_time, :create_session, :update_session, :check_answer, :backdoor_add_time, :backdoor_chaster_lock
   ]
@@ -32,7 +23,7 @@ class ShowcaseController < ApplicationController
     return render "not_found", status: :not_found unless @beta.showcase_quiz_enabled
 
     @showcase_url = showcase_url(@beta.nickname)
-    @quiz_seconds_per_point = quiz_seconds_per_point_for(@beta)
+    @quiz_seconds_per_point = ShowcaseGameConfig.quiz_seconds_per_point_for(@beta)
   end
 
   def snake
@@ -41,7 +32,7 @@ class ShowcaseController < ApplicationController
     return render "not_found", status: :not_found unless @beta.showcase_snake_enabled
 
     @showcase_url = showcase_url(@beta.nickname)
-    @snake_seconds_per_fruit = snake_seconds_per_fruit_for(@beta)
+    @snake_seconds_per_fruit = ShowcaseGameConfig.snake_seconds_per_fruit_for(@beta)
   end
 
   def dino
@@ -50,7 +41,7 @@ class ShowcaseController < ApplicationController
     return render "not_found", status: :not_found unless @beta.showcase_dino_enabled
 
     @showcase_url = showcase_url(@beta.nickname)
-    @dino_seconds_per_obstacle = dino_seconds_per_obstacle_for(@beta)
+    @dino_seconds_per_obstacle = ShowcaseGameConfig.dino_seconds_per_obstacle_for(@beta)
   end
 
   def tetris
@@ -59,7 +50,7 @@ class ShowcaseController < ApplicationController
     return render "not_found", status: :not_found unless @beta.showcase_tetris_enabled
 
     @showcase_url = showcase_url(@beta.nickname)
-    @tetris_seconds_per_line = tetris_seconds_per_line_for(@beta)
+    @tetris_seconds_per_line = ShowcaseGameConfig.tetris_seconds_per_line_for(@beta)
   end
 
   def backdoor
@@ -85,79 +76,20 @@ class ShowcaseController < ApplicationController
   end
 
   def backdoor_add_time
-    addition = nil
     @beta = find_beta
     return render(json: { error: "Page introuvable." }, status: 404) unless @beta
-    return render json: { error: "Indisponible." }, status: 404 unless @beta.showcase_backdoor_enabled
 
     payload = backdoor_add_params
-    days = [payload[:days].to_i, 0].max
-    hours = [payload[:hours].to_i, 0].max
-    minutes = [payload[:minutes].to_i, 0].max
-    if hours > 23 || minutes > 59
-      return render json: { error: "Durée invalide." }, status: 422
-    end
-
-    seconds = days * 86_400 + hours * 3600 + minutes * 60
-    unless seconds.positive? && seconds <= BACKDOOR_MAX_SECONDS
-      return render json: { error: "Choisis une durée entre 1 minute et 1 an." }, status: 422
-    end
-
-    unless ShowcaseAddTimeLimiter.allow?(beta_id: @beta.id, seconds: seconds)
-      cap = ShowcaseAddTimeLimiter.remaining_capacity(@beta.id)
-      return render json: {
-        error: "Trop de temps ajouté récemment (max 2 jours / 5 min). Encore #{cap} s possibles.",
-        remaining_seconds: cap
-      }, status: :too_many_requests
-    end
-
-    name = payload[:player_name].to_s.strip
-    message = payload[:message].to_s.strip
-    if name.blank? || message.blank?
-      return render json: { error: "Le nom et le message sont obligatoires." }, status: 422
-    end
-
-    addition = @beta.showcase_time_additions.build(
-      seconds: seconds,
-      player_name: name,
-      message: message,
-      chaster_applied: false
+    result = BetaEvents::ShowcaseBackdoorAddTime.call(
+      beta: @beta,
+      days: payload[:days],
+      hours: payload[:hours],
+      minutes: payload[:minutes],
+      player_name: payload[:player_name],
+      message: payload[:message]
     )
-    unless addition.save
-      return render json: { error: addition.errors.full_messages.join(" ") }, status: 422
-    end
 
-    service = ChasterService.new(@beta)
-    lock = service.current_lock
-    unless lock
-      addition.update!(chaster_error: "Aucun cadenas Chaster actif.", chaster_applied: false)
-      return render json: { error: "Aucun cadenas Chaster actif pour le moment." }, status: 422
-    end
-
-    service.add_time_to_lock(
-      lock[:id],
-      seconds,
-      source: "showcase_backdoor",
-      summary: "Backdoor par #{name}",
-      metadata: { player_name: name, message: message }
-    )
-    ShowcaseAddTimeLimiter.record!(beta_id: @beta.id, seconds: seconds)
-    addition.update!(chaster_applied: true, chaster_error: nil)
-    ShowcaseBackdoorNotifyJob.perform_later(@beta.id, name, seconds, message)
-    render json: {
-      ok: true,
-      seconds: seconds,
-      lock: lock,
-      remaining_seconds: ShowcaseAddTimeLimiter.remaining_capacity(@beta.id)
-    }
-  rescue ChasterService::Unauthorized
-    addition&.update(chaster_error: "Chaster non connecté", chaster_applied: false) if addition&.persisted?
-    render json: { error: "Chaster non connecté côté vitrine." }, status: 401
-  rescue ChasterService::Error => e
-    if addition&.persisted?
-      addition.update(chaster_error: e.message.to_s.truncate(500), chaster_applied: false)
-    end
-    render json: { error: "Impossible d'ajouter le temps sur Chaster." }, status: 422
+    render json: result.json_body, status: result.http_status
   end
 
   def add_time
@@ -169,47 +101,36 @@ class ShowcaseController < ApplicationController
     when "snake", "dino", "tetris" then requested_game_type
     else "quiz"
     end
-    unless showcase_game_enabled_for?(@beta, game_kind)
-      return (request.format.json? ? (render(json: { error: "Jeu indisponible." }, status: 404)) : render("not_found", status: :not_found))
-    end
 
-    seconds = showcase_seconds_for(@beta, game_kind, params[:seconds])
-    unless seconds.present? && seconds.positive? && seconds <= 86_400 * 365 # max 1 an
-      return (request.format.json? ? (render(json: { error: "Score invalide." }, status: 422)) : redirect_to(showcase_path(@beta.nickname), alert: "Score invalide."))
-    end
-
-    unless ShowcaseAddTimeLimiter.allow?(beta_id: @beta.id, seconds: seconds)
-      cap = ShowcaseAddTimeLimiter.remaining_capacity(@beta.id)
-      msg = "Trop de temps ajouté récemment. Réessaie plus tard (max 2 jours / 5 min). Encore #{cap} s possibles."
-      return (request.format.json? ? (render(json: { error: msg }, status: 429)) : redirect_to(showcase_path(@beta.nickname), alert: msg))
-    end
-
-    if game_kind == "snake"
-      PishockShockJob.perform_later(@beta.id, pishock_intensity(1, @beta), 1)
-    elsif game_kind == "tetris"
-      lines = params[:lines].to_i.clamp(1, 8)
-      PishockShockJob.perform_later(@beta.id, pishock_intensity(lines, @beta), lines)
-    end
-
-    service = ChasterService.new(@beta)
-    lock = service.current_lock
-    unless lock
-      return (request.format.json? ? (render(json: { error: "Indisponible." }, status: 422)) : redirect_to(showcase_path(@beta.nickname), alert: "Indisponible pour le moment."))
-    end
-
-    service.add_time_to_lock(
-      lock[:id],
-      seconds,
-      source: "showcase_game",
-      summary: showcase_time_event_summary(game_kind),
-      metadata: showcase_time_event_metadata(game_kind)
+    seconds = ShowcaseGameConfig.seconds_for_game(
+      @beta,
+      game_kind,
+      requested_seconds: params[:seconds],
+      lines_param: params[:lines]
     )
-    ShowcaseAddTimeLimiter.record!(beta_id: @beta.id, seconds: seconds)
-    request.format.json? ? render(json: { ok: true }) : redirect_to(showcase_path(@beta.nickname), notice: "Merci !")
-  rescue ChasterService::Unauthorized
-    request.format.json? ? render(json: { error: "Indisponible." }, status: 401) : redirect_to(showcase_path(@beta.nickname), alert: "Indisponible pour le moment.")
-  rescue ChasterService::Error
-    request.format.json? ? render(json: { error: "Erreur." }, status: 500) : redirect_to(showcase_path(@beta.nickname), alert: "Une erreur s'est produite.")
+
+    result = BetaEvents::ShowcaseGameAddTime.call(
+      beta: @beta,
+      game_kind: game_kind,
+      seconds: seconds,
+      lines: params[:lines],
+      as_json: request.format.json?
+    )
+
+    if result.ok
+      return render(json: result.json_body, status: :ok) if result.format_json
+      return redirect_to(showcase_path(@beta.nickname), notice: "Merci !")
+    end
+
+    if result.render_not_found
+      return render("not_found", status: :not_found)
+    end
+
+    if result.format_json
+      render json: result.json_body, status: result.http_status
+    else
+      redirect_to result.redirect_path, result.flash_kind => result.flash_message
+    end
   end
 
   def create_session
@@ -218,7 +139,7 @@ class ShowcaseController < ApplicationController
 
     gt = (params[:game_type].presence || "quiz").to_s
     gt = "quiz" unless %w[quiz snake dino tetris].include?(gt)
-    unless showcase_game_enabled_for?(@beta, gt)
+    unless ShowcaseGameConfig.game_enabled?(@beta, gt)
       return render json: { error: "Jeu indisponible." }, status: 404
     end
 
@@ -227,7 +148,7 @@ class ShowcaseController < ApplicationController
       played_at: Time.current,
       score: 0
     )
-    notify_args = [@beta.id, session.id, gt]
+    notify_args = [ @beta.id, session.id, gt ]
     starter_name = showcase_player_name_from_cookie(@beta)
     notify_args << starter_name if starter_name.present?
     ShowcaseGameStartedNotifyJob.perform_later(*notify_args)
@@ -241,7 +162,7 @@ class ShowcaseController < ApplicationController
     return render(json: { error: "Page introuvable." }, status: 404) unless @beta
 
     game_session = @beta.game_sessions.find(params[:id])
-    unless showcase_game_enabled_for?(@beta, game_session.game_type)
+    unless ShowcaseGameConfig.game_enabled?(@beta, game_session.game_type)
       return render json: { error: "Jeu indisponible." }, status: 404
     end
     permitted = session_params
@@ -251,8 +172,8 @@ class ShowcaseController < ApplicationController
     game_session.update!(permitted)
 
     if first_name_submission && game_session.player_name.present?
-      intensity = pishock_intensity(game_session.score, @beta)
-      duration = game_session.game_type == "tetris" ? [game_session.score, 15].min.clamp(1, 15) : 1
+      intensity = ShowcaseGameConfig.pishock_intensity(game_session.score, @beta)
+      duration = game_session.game_type == "tetris" ? [ game_session.score, 15 ].min.clamp(1, 15) : 1
       PishockShockJob.perform_later(@beta.id, intensity, duration)
       ShowcaseBetaNotifyJob.perform_later(
         @beta.id,
@@ -301,7 +222,6 @@ class ShowcaseController < ApplicationController
     render json: { correct: correct }
   end
 
-  # Top N scores enregistrés (pseudo renseigné) pour la vitrine — paginé côté API.
   LEADERBOARD_MAX = 100
   LEADERBOARD_PER_PAGE_DEFAULT = 10
   LEADERBOARD_PER_PAGE_MAX = 20
@@ -311,16 +231,16 @@ class ShowcaseController < ApplicationController
     return render(json: { error: "Page introuvable." }, status: 404) unless @beta
 
     game_type = params[:game_type].presence || "quiz"
-    return render json: { error: "Jeu indisponible." }, status: 404 unless showcase_game_enabled_for?(@beta, game_type)
+    return render json: { error: "Jeu indisponible." }, status: 404 unless ShowcaseGameConfig.game_enabled?(@beta, game_type)
     sort = params[:sort].to_s == "recent" ? "recent" : "score"
-    page = [params[:page].to_i, 1].max
+    page = [ params[:page].to_i, 1 ].max
     per_page = params[:per_page].to_i
     per_page = LEADERBOARD_PER_PAGE_DEFAULT if per_page < 1
-    per_page = [per_page, LEADERBOARD_PER_PAGE_MAX].min
+    per_page = [ per_page, LEADERBOARD_PER_PAGE_MAX ].min
 
     base = @beta.game_sessions
       .where(game_type: game_type)
-      .where.not(player_name: [nil, ""])
+      .where.not(player_name: [ nil, "" ])
 
     ordered = if sort == "recent"
       base.order(played_at: :desc, id: :desc)
@@ -368,81 +288,6 @@ class ShowcaseController < ApplicationController
 
   def showcase_player_cookie_key(beta)
     "bgShowcasePlayer_#{beta.nickname.to_s.gsub(/[^a-zA-Z0-9]/, "_")}"
-  end
-
-  def snake_seconds_per_fruit_for(beta)
-    s = beta.showcase_snake_seconds_per_fruit
-    s = SNAKE_SECONDS_PER_FRUIT if s.blank? || s <= 0
-    [s, 86_400 * 365].min
-  end
-
-  def quiz_seconds_per_point_for(beta)
-    s = beta.showcase_quiz_seconds_per_point
-    s = QUIZ_SECONDS_PER_POINT if s.blank? || s <= 0
-    [s, 86_400 * 365].min
-  end
-
-  def dino_seconds_per_obstacle_for(beta)
-    s = beta.showcase_dino_seconds_per_obstacle
-    s = DINO_SECONDS_PER_OBSTACLE if s.blank? || s <= 0
-    [s, 86_400 * 365].min
-  end
-
-  def tetris_seconds_per_line_for(beta)
-    s = beta.showcase_tetris_seconds_per_line
-    s = TETRIS_SECONDS_PER_LINE if s.blank? || s <= 0
-    [s, 86_400 * 365].min
-  end
-
-  def showcase_seconds_for(beta, game_kind, requested_seconds)
-    case game_kind
-    when "snake" then snake_seconds_per_fruit_for(beta)
-    when "dino" then dino_seconds_per_obstacle_for(beta)
-    when "tetris"
-      per = tetris_seconds_per_line_for(beta)
-      lines = params[:lines].to_i
-      if lines.positive?
-        lines = [[lines, 1].max, 8].min
-        lines * per
-      else
-        per
-      end
-    else
-      points = requested_seconds&.to_i
-      return nil if points.blank?
-
-      points * quiz_seconds_per_point_for(beta)
-    end
-  end
-
-  def showcase_game_enabled_for?(beta, game_type)
-    case game_type.to_s
-    when "snake" then beta.showcase_snake_enabled
-    when "dino" then beta.showcase_dino_enabled
-    when "tetris" then beta.showcase_tetris_enabled
-    when "quiz" then beta.showcase_quiz_enabled
-    else false
-    end
-  end
-
-  def showcase_time_event_summary(game_kind)
-    {
-      "quiz" => "Quiz vitrine",
-      "snake" => "Snake vitrine",
-      "dino" => "Dino Run vitrine",
-      "tetris" => "Tétris vitrine"
-    }.fetch(game_kind, "Vitrine")
-  end
-
-  def showcase_time_event_metadata(game_kind)
-    data = { game_type: game_kind }
-    data[:lines] = params[:lines].to_i.clamp(1, 8) if game_kind == "tetris"
-    data
-  end
-
-  def pishock_intensity(base, user)
-    factor = [user.pishock_intensity_factor.to_f, 0.01].max
-    (base * factor).round.clamp(1, 100)
   end
 
   def session_params

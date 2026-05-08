@@ -1,0 +1,32 @@
+    <%# Devices — liste seule, pas de suppression %>
+    <section class="ds-beta-section">
+      <h2 class="ds-section-title">Devices</h2>
+      <% if @devices.any? %>
+        <ul class="ds-beta-device-list">
+          <% @devices.each do |device| %>
+            <li class="ds-beta-device-card">
+              <div class="ds-device-info">
+                <span class="ds-device-name"><%= device.display_name %></span>
+                <% if device.name.present? %>
+                  <span class="ds-sep">·</span>
+                  <span class="ds-device-id"><%= device.device_id %></span>
+                <% end %>
+                <% if device.screen_width.present? && device.screen_height.present? %>
+                  <span class="ds-sep">·</span>
+                  <span><%= device.screen_width %>×<%= device.screen_height %></span>
+                <% end %>
+                <% if device.fcm_token.present? %>
+                  <span class="ds-sep">·</span>
+                  <span class="ds-status ds-status--on">Push</span>
+                <% else %>
+                  <span class="ds-sep">·</span>
+                  <span class="ds-status ds-status--off">Push off</span>
+                <% end %>
+              </div>
+            </li>
+          <% end %>
+        </ul>
+      <% else %>
+        <p class="ds-text-muted">Aucun device. Ouvre l'app pour t'enregistrer.</p>
+      <% end %>
+    </section>

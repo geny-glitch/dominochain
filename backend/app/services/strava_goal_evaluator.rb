@@ -22,20 +22,27 @@ class StravaGoalEvaluator
     chaster_lock_id = nil
 
     if status == "failed"
-      lock = @chaster_service.current_lock
-      if lock&.dig(:id).present?
-        chaster_lock_id = lock[:id]
-        @chaster_service.add_time_to_lock(
-          lock[:id],
-          goal.chaster_penalty_seconds,
-          source: "strava_goal",
-          summary: "Objectif Strava manqué: #{goal.name}",
-          metadata: { goal_id: goal.id, due_at: due_at&.iso8601 }
-        )
+      event = BetaEvents::DomainEvent.new(
+        beta: @user,
+        source: :strava_goal,
+        kind: :failed_penalty,
+        payload: { seconds: goal.chaster_penalty_seconds }
+      )
+      begin
+        BetaEvents::ActionExecutor.new(beta: @user, event: event).call
         chaster_applied = true
-      else
+        lock = @chaster_service.current_lock
+        chaster_lock_id = lock&.dig(:id)
+      rescue BetaEvents::ActionExecutionStopped => e
         status = "chaster_error"
-        chaster_error = "Aucun cadenas Chaster actif."
+        chaster_applied = false
+        chaster_lock_id = nil
+        chaster_error = case e.reason
+        when :no_chaster_lock then "Aucun cadenas Chaster actif."
+        when :chaster_unauthorized then "Chaster non connecté"
+        when :chaster_error, :missing_seconds then (e.detail.presence || "Erreur Chaster")
+        else (e.detail.presence || "Erreur Chaster")
+        end
       end
     end
   rescue ChasterService::Unauthorized

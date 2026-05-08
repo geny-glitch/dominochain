@@ -78,45 +78,36 @@ module Api
 
     def add_time
       seconds = params[:seconds].to_i
-      service = ChasterService.new(current_user)
-      lock_info = service.current_lock
-      return render json: { error: "Aucun lock actif" }, status: :unprocessable_entity if lock_info.nil?
-
-      service.add_time_to_lock(
-        lock_info[:id],
-        seconds,
-        source: current_device.present? ? "api" : "puryfi",
-        summary: current_device.present? ? "Ajout depuis l'app" : "Ajout depuis PuryFi"
+      event = BetaEvents::DomainEvent.new(
+        beta: current_user,
+        source: :api_chaster,
+        kind: :add_time,
+        payload: { seconds: seconds }
       )
+      BetaEvents::ActionExecutor.new(beta: current_user, event: event).call
+      lock_info = ChasterService.new(current_user).current_lock
       render json: {
         ok: true,
         added_seconds: seconds,
-        lock_id: lock_info[:id]
+        lock_id: lock_info&.[](:id)
       }
-    rescue ChasterService::Unauthorized
-      render json: { error: "Chaster non connecté" }, status: :unauthorized
-    rescue ChasterService::Error => e
-      render json: { error: e.message }, status: :unprocessable_entity
+    rescue BetaEvents::ActionExecutionStopped => e
+      case e.reason
+      when :no_chaster_lock, :missing_seconds
+        render json: { error: "Aucun lock actif" }, status: :unprocessable_entity
+      when :chaster_unauthorized
+        render json: { error: "Chaster non connecté" }, status: :unauthorized
+      when :chaster_error
+        render json: { error: e.detail.presence || "Erreur Chaster" }, status: :unprocessable_entity
+      else
+        render json: { error: "Erreur Chaster" }, status: :unprocessable_entity
+      end
     end
 
     private
 
     def showcase_game_seconds
-      quiz_sec = current_user.showcase_quiz_seconds_per_point
-      quiz_sec = ShowcaseController::QUIZ_SECONDS_PER_POINT if quiz_sec.blank? || quiz_sec <= 0
-      snake_sec = current_user.showcase_snake_seconds_per_fruit
-      snake_sec = ShowcaseController::SNAKE_SECONDS_PER_FRUIT if snake_sec.blank? || snake_sec <= 0
-      dino_sec = current_user.showcase_dino_seconds_per_obstacle
-      dino_sec = ShowcaseController::DINO_SECONDS_PER_OBSTACLE if dino_sec.blank? || dino_sec <= 0
-      tetris_sec = current_user.showcase_tetris_seconds_per_line
-      tetris_sec = ShowcaseController::TETRIS_SECONDS_PER_LINE if tetris_sec.blank? || tetris_sec <= 0
-
-      {
-        showcase_quiz_seconds_per_point: quiz_sec,
-        showcase_snake_seconds_per_fruit: snake_sec,
-        showcase_dino_seconds_per_obstacle: dino_sec,
-        showcase_tetris_seconds_per_line: tetris_sec
-      }
+      ShowcaseGameConfig.game_seconds_payload_for_user(current_user)
     end
 
     def pagination_page

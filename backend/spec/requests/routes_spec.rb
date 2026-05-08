@@ -673,9 +673,9 @@ RSpec.describe "Routes", type: :request do
       it "allows decreasing snake seconds after 24 hours" do
         beta = create(
           :user, :beta,
-          showcase_snake_seconds_per_fruit: 600,
-          showcase_snake_seconds_per_fruit_at: 25.hours.ago
+          showcase_snake_seconds_per_fruit: 600
         )
+        beta.update_column(:showcase_snake_seconds_per_fruit_at, 25.hours.ago)
         device = create(:device, user: beta)
         patch "/api/showcase_settings",
           params: { showcase_snake_seconds_per_fruit: 300 },
@@ -715,9 +715,9 @@ RSpec.describe "Routes", type: :request do
       it "allows decreasing tetris seconds after 24 hours" do
         beta = create(
           :user, :beta,
-          showcase_tetris_seconds_per_line: 120,
-          showcase_tetris_seconds_per_line_at: 25.hours.ago
+          showcase_tetris_seconds_per_line: 120
         )
+        beta.update_column(:showcase_tetris_seconds_per_line_at, 25.hours.ago)
         device = create(:device, user: beta)
         patch "/api/showcase_settings",
           params: { showcase_tetris_seconds_per_line: 60 },

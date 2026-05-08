@@ -14,14 +14,14 @@ RSpec.describe "API cigarette entries", type: :request do
         create(:cigarette_entry, user: beta, smoked_on: Date.yesterday, smoked_at: 1.day.ago, count: 1, chaster_seconds: 120, chaster_applied: true)
 
         get api_cigarettes_path, headers: headers
-      end
 
-      expect(response).to have_http_status(:ok)
-      json = JSON.parse(response.body)
-      expect(json["today_count"]).to eq(2)
-      expect(json["seconds_per_cigarette"]).to eq(120)
-      expect(json["history"].first).to include("date" => "2026-04-30", "count" => 2, "chaster_seconds" => 240)
-      expect(json["history"].second).to include("date" => "2026-04-29", "count" => 1, "chaster_seconds" => 120)
+        expect(response).to have_http_status(:ok)
+        json = JSON.parse(response.body)
+        expect(json["today_count"]).to eq(2)
+        expect(json["seconds_per_cigarette"]).to eq(120)
+        expect(json["history"].first).to include("date" => "2026-04-30", "count" => 2, "chaster_seconds" => 240)
+        expect(json["history"].second).to include("date" => "2026-04-29", "count" => 1, "chaster_seconds" => 120)
+      end
     end
 
     it "returns 401 without auth" do
@@ -42,24 +42,18 @@ RSpec.describe "API cigarette entries", type: :request do
     it "stores the cigarette and adds configured seconds to Chaster" do
       travel_to Time.zone.parse("2026-04-30 09:30:00") do
         post api_cigarettes_path, params: {}, headers: headers, as: :json
+
+        expect(response).to have_http_status(:created)
+        expect(service).to have_received(:add_time_to_lock).with("lock-cig", 120)
+        entry = beta.cigarette_entries.last
+        expect(entry.smoked_on).to eq(Date.new(2026, 4, 30))
+        expect(entry.chaster_seconds).to eq(120)
+        expect(entry.chaster_applied).to be true
+
+        json = JSON.parse(response.body)
+        expect(json["today_count"]).to eq(1)
+        expect(json["entry"]).to include("count" => 1, "chaster_applied" => true)
       end
-
-      expect(response).to have_http_status(:created)
-      expect(service).to have_received(:add_time_to_lock).with(
-        "lock-cig",
-        120,
-        source: "cigarettes",
-        summary: "1 cigarette(s)",
-        metadata: hash_including(count: 1, smoked_at: a_string_starting_with("2026-04-30T09:30:00"))
-      )
-      entry = beta.cigarette_entries.last
-      expect(entry.smoked_on).to eq(Date.new(2026, 4, 30))
-      expect(entry.chaster_seconds).to eq(120)
-      expect(entry.chaster_applied).to be true
-
-      json = JSON.parse(response.body)
-      expect(json["today_count"]).to eq(1)
-      expect(json["entry"]).to include("count" => 1, "chaster_applied" => true)
     end
 
     it "keeps the entry with an error when Chaster has no active lock" do

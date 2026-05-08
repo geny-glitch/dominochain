@@ -50,6 +50,7 @@ RSpec.describe StravaGoalEvaluator do
       allow(strava_service).to receive(:activities_between).and_return([
         { id: 1, type: "Run", sport_type: "Run", duration_seconds: 20.minutes.to_i, calories: nil, device_name: "" }
       ])
+      allow(ChasterService).to receive(:new).with(user).and_return(chaster_service)
       allow(chaster_service).to receive(:current_lock).and_return({ id: "lock-strava" })
       allow(chaster_service).to receive(:add_time_to_lock)
 
@@ -73,6 +74,7 @@ RSpec.describe StravaGoalEvaluator do
     it "records a Chaster error when no active lock exists" do
       goal = create(:strava_goal, user: user, required_activity_count: 1, min_duration_seconds: 30.minutes.to_i)
       allow(strava_service).to receive(:activities_between).and_return([])
+      allow(ChasterService).to receive(:new).with(user).and_return(chaster_service)
       allow(chaster_service).to receive(:current_lock).and_return(nil)
 
       check = evaluator.evaluate_goal!(goal, due_at: due_at)
@@ -89,6 +91,7 @@ RSpec.describe StravaGoalEvaluator do
         allow(strava_service).to receive(:activities_between).and_return([
           { id: 1, type: "Run", sport_type: "Run", duration_seconds: 40.minutes.to_i, calories: nil, device_name: "" }
         ])
+        allow(ChasterService).to receive(:new).with(user).and_return(chaster_service)
         allow(chaster_service).to receive(:current_lock).and_return(nil)
 
         checks = evaluator.evaluate_due_goals!

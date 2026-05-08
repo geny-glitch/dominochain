@@ -1,0 +1,26 @@
+// Material Design 3 — semantic tokens (dark theme)
+// Maps the existing OTB palette to MD3 names for incremental adoption in ERB/CSS.
+@import "variables";
+
+:root {
+  --md-sys-color-primary: #{$ds-amber};
+  --md-sys-color-on-primary: #{$ds-bg};
+  --md-sys-color-primary-container: #{rgba($ds-amber, 0.22)};
+  --md-sys-color-on-primary-container: #{$ds-amber};
+
+  --md-sys-color-surface: #{$ds-bg};
+  --md-sys-color-on-surface: #{$ds-text};
+  --md-sys-color-surface-container: #{$ds-surface};
+  --md-sys-color-surface-container-high: #{$ds-surface-elevated};
+  --md-sys-color-on-surface-variant: #{$ds-text-muted};
+
+  --md-sys-color-outline: #{$ds-border};
+  --md-sys-color-error: #{$ds-error};
+
+  --md-sys-elevation-1: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --md-sys-elevation-2: 0 1px 4px rgba(0, 0, 0, 0.45);
+
+  --md-sys-shape-corner-extra-small: #{$ds-radius-sm};
+  --md-sys-shape-corner-medium: 12px;
+  --md-sys-shape-corner-large: 16px;
+}

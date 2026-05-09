@@ -107,7 +107,7 @@ RSpec.describe "Routes", type: :request do
       beta = create(:user, :beta)
       sign_in beta
       post beta_pishock_test_path
-      expect(response).to redirect_to(beta_settings_path)
+      expect(response).to redirect_to(beta_actions_pishock_path)
       expect(flash[:alert]).to include("Enregistre")
     end
 
@@ -116,7 +116,7 @@ RSpec.describe "Routes", type: :request do
       sign_in beta
       allow(PishockService).to receive(:test_connection!).and_return(:ok)
       post beta_pishock_test_path
-      expect(response).to redirect_to(beta_settings_path)
+      expect(response).to redirect_to(beta_actions_pishock_path)
       expect(flash[:notice]).to be_present
       expect(PishockService).to have_received(:test_connection!).with(user: satisfy { |u| u.id == beta.id })
     end
@@ -146,7 +146,7 @@ RSpec.describe "Routes", type: :request do
         chaster_penalty_minutes: "90"
       }
 
-      expect(response).to redirect_to(beta_settings_path)
+      expect(response).to redirect_to(beta_sources_strava_path)
       goal = beta.strava_goals.last
       expect(goal.name).to eq("Cardio")
       expect(goal.required_count).to eq(2)
@@ -176,7 +176,7 @@ RSpec.describe "Routes", type: :request do
         chaster_penalty_minutes: "30"
       }
 
-      expect(response).to redirect_to(beta_settings_path)
+      expect(response).to redirect_to(beta_sources_strava_path)
       goal = beta.strava_goals.last
       expect(goal.activity_types).to eq(%w[TrailRun Ride])
     end
@@ -188,7 +188,7 @@ RSpec.describe "Routes", type: :request do
 
       delete strava_disconnect_path
 
-      expect(response).to redirect_to(beta_settings_path)
+      expect(response).to redirect_to(beta_sources_strava_path)
       expect(beta.reload.strava_access_token).to be_nil
       expect(beta.strava_goals.first.enabled).to be false
     end

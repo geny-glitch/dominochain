@@ -20,13 +20,22 @@ class BetaDashboardController < ApplicationController
   def sources_cigarettes
   end
 
+  def sources_strava
+    @strava_goals = current_user.strava_goals.recent.includes(:strava_goal_checks)
+  end
+
+  def sources_showcase
+    @showcase_qr = generate_showcase_qr
+  end
+
   def actions_chaster
     @chaster_lock = fetch_chaster_lock
   end
 
+  def actions_pishock
+  end
+
   def settings
-    @strava_goals = current_user.strava_goals.recent.includes(:strava_goal_checks)
-    @showcase_qr = generate_showcase_qr
   end
 
   def account
@@ -43,10 +52,10 @@ class BetaDashboardController < ApplicationController
       showcase_dino_seconds_per_obstacle: params[:showcase_dino_seconds_per_obstacle].to_i,
       showcase_tetris_seconds_per_line: params[:showcase_tetris_seconds_per_line].to_i
     )
-    redirect_to beta_settings_path,
+    redirect_to beta_sources_showcase_path,
       notice: "Temps des jeux enregistré (Quiz #{current_user.showcase_quiz_seconds_per_point} s/pt, Snake #{current_user.showcase_snake_seconds_per_fruit} s, Dino #{current_user.showcase_dino_seconds_per_obstacle} s, Tétris #{current_user.showcase_tetris_seconds_per_line} s/ligne)."
   rescue ActiveRecord::RecordInvalid => e
-    redirect_to beta_settings_path, alert: e.record.errors.full_messages.join(", ")
+    redirect_to beta_sources_showcase_path, alert: e.record.errors.full_messages.join(", ")
   end
 
   def update_backdoor
@@ -54,13 +63,13 @@ class BetaDashboardController < ApplicationController
     enabled = p[:showcase_backdoor_enabled] == "1"
     current_user.update!(showcase_backdoor_enabled: enabled)
     if enabled
-      redirect_to beta_settings_path,
+      redirect_to beta_sources_showcase_path,
         notice: "Page backdoor activée. URL (non affichée sur la vitrine) : #{request.base_url}#{showcase_backdoor_path(current_user.nickname)}"
     else
-      redirect_to beta_settings_path, notice: "Page backdoor désactivée."
+      redirect_to beta_sources_showcase_path, notice: "Page backdoor désactivée."
     end
   rescue ActiveRecord::RecordInvalid => e
-    redirect_to beta_settings_path, alert: e.record.errors.full_messages.join(", ")
+    redirect_to beta_sources_showcase_path, alert: e.record.errors.full_messages.join(", ")
   end
 
   def update_pishock
@@ -75,29 +84,29 @@ class BetaDashboardController < ApplicationController
       attrs[:pishock_intensity_factor] = p[:pishock_intensity_factor].to_f.clamp(0.01, 100)
     end
     current_user.update!(attrs)
-    redirect_to beta_settings_path, notice: "PiShock enregistré."
+    redirect_to beta_actions_pishock_path, notice: "PiShock enregistré."
   rescue ActiveRecord::RecordInvalid => e
-    redirect_to beta_settings_path, alert: e.record.errors.full_messages.join(", ")
+    redirect_to beta_actions_pishock_path, alert: e.record.errors.full_messages.join(", ")
   end
 
   def test_pishock
     u = current_user.reload
     unless u.pishock_username.present? && u.pishock_share_code.present? && u.pishock_api_key.present?
-      redirect_to beta_settings_path, alert: "Enregistre d’abord ton username, share code et clé API PiShock."
+      redirect_to beta_actions_pishock_path, alert: "Enregistre d’abord ton username, share code et clé API PiShock."
       return
     end
 
     case PishockService.test_connection!(user: u)
     when :ok
-      redirect_to beta_settings_path, notice: "PiShock : compte validé (api.pishock.com) et bip de test OK — vérifie l’appareil ou les logs sur pishock.com."
+      redirect_to beta_actions_pishock_path, notice: "PiShock : compte validé (api.pishock.com) et bip de test OK — vérifie l’appareil ou les logs sur pishock.com."
     when :auth_error
-      redirect_to beta_settings_path, alert: "PiShock : nom d’utilisateur ou clé API refusés (API publique v1). Vérifie sur pishock.com → Account."
+      redirect_to beta_actions_pishock_path, alert: "PiShock : nom d’utilisateur ou clé API refusés (API publique v1). Vérifie sur pishock.com → Account."
     when :device_error
-      redirect_to beta_settings_path, alert: "PiShock : compte OK, mais le bip a échoué (share code, revendication PUT /Share, shocker hors ligne ou en pause, …). Voir les logs Rails."
+      redirect_to beta_actions_pishock_path, alert: "PiShock : compte OK, mais le bip a échoué (share code, revendication PUT /Share, shocker hors ligne ou en pause, …). Voir les logs Rails."
     when :skipped
-      redirect_to beta_settings_path, alert: "Configuration PiShock incomplète."
+      redirect_to beta_actions_pishock_path, alert: "Configuration PiShock incomplète."
     when :error
-      redirect_to beta_settings_path, alert: "PiShock : erreur réseau ou réponse inattendue. Voir les logs Rails."
+      redirect_to beta_actions_pishock_path, alert: "PiShock : erreur réseau ou réponse inattendue. Voir les logs Rails."
     end
   end
 

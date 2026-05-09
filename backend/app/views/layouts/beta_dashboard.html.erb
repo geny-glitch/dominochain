@@ -27,14 +27,16 @@
 
         <nav class="ds-beta-sidebar-nav">
           <p class="ds-beta-nav-heading">Sources</p>
-          <%= beta_subnav_link "Purify (PuryFi)", beta_sources_puryfi_path, active: controller.action_name == "sources_puryfi" %>
-          <%= beta_subnav_link "Cigarettes", beta_sources_cigarettes_path, active: controller.action_name == "sources_cigarettes" %>
+          <%= beta_nav_link "Purify (PuryFi)", beta_sources_puryfi_path, active: controller.action_name == "sources_puryfi" %>
+          <%= beta_nav_link "Cigarettes", beta_sources_cigarettes_path, active: controller.action_name == "sources_cigarettes" %>
+          <%= beta_nav_link "Strava", beta_sources_strava_path, active: controller.action_name == "sources_strava" %>
+          <%= beta_nav_link "Vitrine", beta_sources_showcase_path, active: controller.action_name == "sources_showcase" %>
 
           <p class="ds-beta-nav-heading">Actions</p>
           <%= beta_nav_link "Chaster", beta_actions_chaster_path, active: controller.action_name == "actions_chaster" %>
+          <%= beta_nav_link "PiShock", beta_actions_pishock_path, active: controller.action_name == "actions_pishock" %>
 
           <p class="ds-beta-nav-heading">Espace perso</p>
-          <%= beta_nav_link "Réglages", beta_settings_path, active: controller.action_name == "settings" %>
           <%= beta_nav_link "Compte", beta_account_path, active: %w[account task].include?(controller.action_name) %>
         </nav>
       </aside>

@@ -33,7 +33,7 @@ class User < ApplicationRecord
     :showcase_tetris_seconds_per_line,
     numericality: { only_integer: true, greater_than: 0, less_than_or_equal_to: 86_400 * 365 },
     if: :beta?
-  validate :at_least_one_showcase_game_enabled, if: :beta?
+  validate :at_least_one_showcase_game_enabled, if: :validate_showcase_game_guard?
   validate :showcase_quiz_seconds_decrease_cooldown, if: :beta?
   validate :showcase_snake_seconds_decrease_cooldown, if: :beta?
   validate :showcase_dino_seconds_decrease_cooldown, if: :beta?
@@ -46,6 +46,7 @@ class User < ApplicationRecord
   before_save :touch_showcase_snake_seconds_changed_at, if: :will_save_change_to_showcase_snake_seconds_per_fruit?
   before_save :touch_showcase_dino_seconds_changed_at, if: :will_save_change_to_showcase_dino_seconds_per_obstacle?
   before_save :touch_showcase_tetris_seconds_changed_at, if: :will_save_change_to_showcase_tetris_seconds_per_line?
+  before_validation :apply_beta_defaults, on: :create
 
   def email_required?
     false
@@ -77,6 +78,41 @@ class User < ApplicationRecord
   end
 
   private
+
+  def apply_beta_defaults
+    return unless beta?
+
+    self.showcase_quiz_enabled = false
+    self.showcase_snake_enabled = false
+    self.showcase_dino_enabled = false
+    self.showcase_tetris_enabled = false
+    self.showcase_backdoor_enabled = false
+
+    prefs = (beta_ui_prefs || {}).deep_dup
+    prefs["catalog_visibility"] ||= {}
+    prefs["catalog_visibility"]["sources"] = {
+      "puryfi" => false,
+      "cigarettes" => false,
+      "strava" => false,
+      "showcase" => false
+    }
+    prefs["catalog_visibility"]["actions"] = {
+      "chaster" => false,
+      "pishock" => false
+    }
+    self.beta_ui_prefs = prefs
+  end
+
+  def validate_showcase_game_guard?
+    return false unless beta?
+    return false if new_record?
+
+    will_save_change_to_showcase_quiz_enabled? ||
+      will_save_change_to_showcase_snake_enabled? ||
+      will_save_change_to_showcase_dino_enabled? ||
+      will_save_change_to_showcase_tetris_enabled? ||
+      will_save_change_to_showcase_backdoor_enabled?
+  end
 
   def at_least_one_showcase_game_enabled
     return if showcase_quiz_enabled || showcase_snake_enabled || showcase_dino_enabled || showcase_tetris_enabled || showcase_backdoor_enabled

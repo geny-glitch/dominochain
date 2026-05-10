@@ -434,6 +434,22 @@ RSpec.describe "Routes", type: :request do
           device_id: "device-123"
         }
         expect(response).to have_http_status(:created)
+        user = User.find_by!(nickname: "newapi")
+        expect(user.showcase_quiz_enabled).to be false
+        expect(user.showcase_snake_enabled).to be false
+        expect(user.showcase_dino_enabled).to be false
+        expect(user.showcase_tetris_enabled).to be false
+        expect(user.showcase_backdoor_enabled).to be false
+        expect(user.beta_ui_prefs.dig("catalog_visibility", "sources")).to eq({
+          "puryfi" => false,
+          "cigarettes" => false,
+          "strava" => false,
+          "showcase" => false
+        })
+        expect(user.beta_ui_prefs.dig("catalog_visibility", "actions")).to eq({
+          "chaster" => false,
+          "pishock" => false
+        })
       end
 
       it "POST /api/auth/logout returns 204" do

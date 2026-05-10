@@ -65,8 +65,11 @@
               <% end %>
             </div>
             <div class="ds-form-group ds-puryfi-label-form-group">
-              <%= label_tag "puryfi_seconds_#{id}", "#{id} — #{PuryfiLabel.name_for(id)}", class: "ds-form-label ds-puryfi-label-title" %>
-              <%= number_field_tag "puryfi_seconds_per_label[#{id}]", (current_user.puryfi_seconds_per_label[id.to_s] || 0), min: 0, max: 86_400, class: "ds-input" %>
+              <%= label_tag "puryfi_seconds_#{id}", PuryfiLabel.name_for(id), class: "ds-form-label ds-puryfi-label-title" %>
+              <div class="ds-puryfi-seconds-field">
+                <%= number_field_tag "puryfi_seconds_per_label[#{id}]", (current_user.puryfi_seconds_per_label[id.to_s] || 0), min: 0, max: 86_400, class: "ds-input ds-puryfi-seconds-input" %>
+                <span class="ds-puryfi-seconds-unit">sec</span>
+              </div>
             </div>
           </div>
         <% end %>

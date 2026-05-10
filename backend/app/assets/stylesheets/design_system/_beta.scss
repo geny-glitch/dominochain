@@ -763,6 +763,23 @@
   line-height: 1.3;
 }
 
+.ds-puryfi-seconds-field {
+  display: inline-flex;
+  align-items: center;
+  gap: $ds-space-xs;
+}
+
+.ds-puryfi-seconds-input {
+  width: 6.5rem;
+  min-width: 0;
+}
+
+.ds-puryfi-seconds-unit {
+  font-size: $ds-small-size;
+  color: $ds-text-muted;
+  white-space: nowrap;
+}
+
 .ds-puryfi-install-drawer {
   margin: 0;
   border: 1px solid rgba($ds-border, 0.85);

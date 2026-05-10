@@ -169,6 +169,10 @@
   color: $ds-text;
 }
 
+.ds-beta-nav-lock {
+  overflow: hidden;
+}
+
 .ds-beta-app {
   display: flex;
   align-items: stretch;
@@ -181,6 +185,69 @@
   padding: $ds-space-lg $ds-space-md;
   background: $ds-surface;
   border-right: 1px solid $ds-border;
+  position: relative;
+  z-index: 20;
+}
+
+.ds-beta-sidebar-close {
+  display: none;
+  cursor: pointer;
+}
+
+.ds-beta-sidebar-overlay {
+  display: none;
+}
+
+.ds-beta-mobile-topbar {
+  display: none;
+}
+
+.ds-beta-mobile-navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $ds-space-md;
+}
+
+.ds-beta-mobile-navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: $ds-space-sm;
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+}
+
+.ds-beta-mobile-navbar-title {
+  display: block;
+  font-size: $ds-tiny-size;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: $ds-text-muted;
+}
+
+.ds-beta-mobile-navbar-user {
+  display: block;
+  font-size: $ds-body-size;
+  font-weight: 600;
+  color: $ds-teal;
+  line-height: 1.2;
+}
+
+.ds-beta-mobile-nav-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border: 1px solid $ds-border;
+  border-radius: $ds-radius-md;
+  background: $ds-surface;
+  color: $ds-text;
+  font-size: 1.15rem;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 .ds-beta-sidebar-brand {
@@ -190,6 +257,8 @@
   margin-bottom: $ds-space-xl;
   padding-bottom: $ds-space-lg;
   border-bottom: 1px solid $ds-border;
+  text-decoration: none;
+  color: inherit;
 }
 
 .ds-beta-sidebar-title {
@@ -266,45 +335,104 @@
 
 @media (max-width: 52rem) {
   .ds-beta-app {
-    flex-direction: column;
+    display: block;
   }
 
   .ds-beta-sidebar {
-    width: auto;
-    border-right: none;
-    border-bottom: 1px solid $ds-border;
-    padding-bottom: $ds-space-md;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 86vw;
+    max-width: 18rem;
+    height: 100vh;
+    border-right: 1px solid $ds-border;
+    border-bottom: 0;
+    padding-bottom: $ds-space-lg;
+    box-shadow: 0 0.75rem 2rem rgba(0, 0, 0, 0.22);
+    transform: translateX(-105%);
+    transition: transform 0.2s ease;
+    overflow-y: auto;
+  }
+
+  .ds-beta-sidebar-close {
+    display: inline-flex;
+    position: absolute;
+    top: $ds-space-sm;
+    right: $ds-space-sm;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: $ds-text-muted;
+    font-size: 1rem;
+  }
+
+  .ds-beta-sidebar-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    border: 0;
+    margin: 0;
+    padding: 0;
+    background: rgba(0, 0, 0, 0.35);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    z-index: 15;
+  }
+
+  .ds-beta-app.ds-beta-nav-open {
+    .ds-beta-sidebar {
+      transform: translateX(0);
+    }
+
+    .ds-beta-sidebar-overlay {
+      opacity: 1;
+      pointer-events: auto;
+    }
   }
 
   .ds-beta-sidebar-brand {
     margin-bottom: $ds-space-md;
-    padding-bottom: $ds-space-md;
+    padding-bottom: $ds-space-md * 1.2;
   }
 
   .ds-beta-sidebar-nav {
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: $ds-space-sm $ds-space-md;
-    align-items: flex-start;
+    flex-direction: column;
+    gap: $ds-space-xs;
+  }
 
-    .ds-beta-nav-heading {
-      width: 100%;
-      margin-top: $ds-space-sm;
-      margin-bottom: 0;
+  .ds-beta-main {
+    padding-top: 0;
+  }
 
-      &:first-child {
-        margin-top: 0;
-      }
-    }
+  .ds-beta-mobile-topbar {
+    display: block;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    padding: env(safe-area-inset-top) $ds-space-lg 0;
+    min-height: calc(3.75rem + env(safe-area-inset-top));
+    margin-bottom: $ds-space-md;
+    background: rgba($ds-bg, 0.92);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba($ds-border, 0.7);
+  }
 
-    .ds-beta-nav-link {
-      flex: 0 0 auto;
-    }
+  .ds-beta-mobile-navbar {
+    width: 100%;
+    min-height: 3.75rem;
   }
 
   .ds-beta-main-inner {
     padding-left: $ds-space-lg;
     padding-right: $ds-space-lg;
+    padding-top: $ds-space-md;
   }
 }
 
@@ -326,6 +454,168 @@
   font-size: 1rem;
   line-height: 1.5;
   color: $ds-text-muted;
+}
+
+.ds-beta-catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: $ds-space-md;
+}
+
+.ds-beta-catalog-grid--actions {
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+}
+
+.ds-beta-catalog-card {
+  display: flex;
+  flex-direction: column;
+  gap: $ds-space-sm;
+  padding: $ds-space-lg;
+  background: var(--md-sys-color-surface-container, #{$ds-surface});
+  border: 1px solid var(--md-sys-color-outline, #{$ds-border});
+  border-radius: var(--md-sys-shape-corner-large, #{$ds-radius-lg});
+  box-shadow: var(--md-sys-elevation-1);
+}
+
+.ds-beta-catalog-card--muted {
+  border-style: dashed;
+  opacity: 0.85;
+}
+
+.ds-beta-catalog-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: $ds-text;
+}
+
+.ds-beta-catalog-sub {
+  margin: 0;
+  font-size: $ds-small-size;
+  color: $ds-text-muted;
+}
+
+.ds-beta-catalog-events {
+  margin: 0;
+  font-size: $ds-small-size;
+  color: $ds-text;
+  line-height: 1.45;
+}
+
+.ds-beta-home-hero {
+  padding: $ds-space-xl;
+  background: linear-gradient(135deg, rgba($ds-teal, 0.12), rgba($ds-teal, 0.03));
+  border: 1px solid rgba($ds-teal, 0.25);
+  border-radius: $ds-radius-lg;
+}
+
+.ds-beta-home-hero-head,
+.ds-beta-home-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $ds-space-sm;
+}
+
+.ds-beta-home-metric {
+  margin: $ds-space-sm 0 0;
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1.15;
+  color: $ds-text;
+}
+
+.ds-beta-home-muted {
+  margin: $ds-space-sm 0 0;
+  color: $ds-text-muted;
+  font-size: $ds-small-size;
+  line-height: 1.5;
+}
+
+.ds-beta-home-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $ds-space-sm;
+  margin-top: $ds-space-lg;
+}
+
+.ds-beta-home-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: $ds-space-md;
+}
+
+.ds-beta-home-card {
+  display: flex;
+  flex-direction: column;
+  gap: $ds-space-sm;
+  padding: $ds-space-lg;
+  background: var(--md-sys-color-surface-container, #{$ds-surface});
+  border: 1px solid var(--md-sys-color-outline, #{$ds-border});
+  border-radius: var(--md-sys-shape-corner-large, #{$ds-radius-lg});
+  box-shadow: var(--md-sys-elevation-1);
+}
+
+.ds-beta-home-card-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: $ds-text;
+}
+
+.ds-beta-home-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.12rem 0.6rem;
+  font-size: $ds-tiny-size;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: rgba($ds-border, 0.55);
+  color: $ds-text-muted;
+}
+
+.ds-beta-home-pill--on {
+  background: rgba($ds-teal, 0.18);
+  color: $ds-teal;
+}
+
+.ds-beta-home-events {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ds-beta-home-events-item {
+  display: grid;
+  grid-template-columns: minmax(8rem, 1fr) auto auto;
+  gap: $ds-space-md;
+  align-items: baseline;
+  padding: $ds-space-sm 0;
+  border-bottom: 1px solid rgba($ds-border, 0.65);
+}
+
+.ds-beta-home-events-item:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.ds-beta-home-events-source {
+  color: $ds-text;
+  font-weight: 600;
+}
+
+.ds-beta-home-events-value {
+  color: $ds-teal;
+  font-family: $ds-font-mono;
+  font-size: $ds-small-size;
+}
+
+.ds-beta-home-events-time {
+  color: $ds-text-muted;
+  font-size: $ds-tiny-size;
+  font-variant-numeric: tabular-nums;
 }
 
 .ds-beta-toolbar {

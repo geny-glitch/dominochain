@@ -8,7 +8,11 @@ class BetaDashboardController < ApplicationController
   before_action :set_task, only: [ :task, :submit_proof ]
 
   def home
-    redirect_to beta_sources_puryfi_path
+    @chaster_lock = fetch_chaster_lock
+    @strava_primary_goal = current_user.strava_goals.enabled.recent.first
+    @cigarettes_today = current_user.cigarette_entries.for_day(Date.current).sum(:count)
+    @cigarettes_avg_30d = average_cigarettes_last_30_days
+    @recent_time_events = current_user.chaster_time_events.recent.limit(6)
   end
 
   def sources_puryfi
@@ -46,12 +50,18 @@ class BetaDashboardController < ApplicationController
   end
 
   def update_snake_seconds
-    current_user.update!(
+    attrs = {
       showcase_quiz_seconds_per_point: params[:showcase_quiz_seconds_per_point].to_i,
       showcase_snake_seconds_per_fruit: params[:showcase_snake_seconds_per_fruit].to_i,
       showcase_dino_seconds_per_obstacle: params[:showcase_dino_seconds_per_obstacle].to_i,
       showcase_tetris_seconds_per_line: params[:showcase_tetris_seconds_per_line].to_i
-    )
+    }
+    attrs[:showcase_quiz_enabled] = params[:showcase_quiz_enabled] == "1" if params.key?(:showcase_quiz_enabled)
+    attrs[:showcase_snake_enabled] = params[:showcase_snake_enabled] == "1" if params.key?(:showcase_snake_enabled)
+    attrs[:showcase_dino_enabled] = params[:showcase_dino_enabled] == "1" if params.key?(:showcase_dino_enabled)
+    attrs[:showcase_tetris_enabled] = params[:showcase_tetris_enabled] == "1" if params.key?(:showcase_tetris_enabled)
+
+    current_user.update!(attrs)
     redirect_to beta_sources_showcase_path,
       notice: "Temps des jeux enregistré (Quiz #{current_user.showcase_quiz_seconds_per_point} s/pt, Snake #{current_user.showcase_snake_seconds_per_fruit} s, Dino #{current_user.showcase_dino_seconds_per_obstacle} s, Tétris #{current_user.showcase_tetris_seconds_per_line} s/ligne)."
   rescue ActiveRecord::RecordInvalid => e
@@ -191,5 +201,11 @@ class BetaDashboardController < ApplicationController
     url = showcase_url(current_user.nickname)
     qr = RQRCode::QRCode.new(url, size: 8, level: :m)
     qr.as_svg(module_size: 4, fill: "ffffff", color: "000000")
+  end
+
+  def average_cigarettes_last_30_days
+    start_date = 29.days.ago.to_date
+    total = current_user.cigarette_entries.where(smoked_on: start_date..Date.current).sum(:count)
+    (total / 30.0).round(1)
   end
 end

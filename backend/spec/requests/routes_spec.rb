@@ -82,11 +82,11 @@ RSpec.describe "Routes", type: :request do
       expect(response).to redirect_to(new_user_session_path)
     end
 
-    it "redirects authenticated beta to Sources PuryFi" do
+    it "returns 200 on /beta when beta is authenticated" do
       beta = create(:user, :beta)
       sign_in beta
       get beta_dashboard_path
-      expect(response).to redirect_to(beta_sources_puryfi_path)
+      expect(response).to have_http_status(:ok)
     end
 
     it "returns 200 on Sources PuryFi when beta is authenticated" do

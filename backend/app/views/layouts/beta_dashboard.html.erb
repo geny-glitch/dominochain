@@ -17,15 +17,22 @@
   <body class="ds-beta-app-shell">
     <div class="ds-beta-app">
       <aside class="ds-beta-sidebar" aria-label="Navigation beta">
-        <div class="ds-beta-sidebar-brand">
+        <button type="button" class="ds-beta-sidebar-close" data-beta-nav-close aria-label="Fermer le menu">
+          ✕
+        </button>
+        <%= link_to beta_dashboard_path, class: "ds-beta-sidebar-brand" do %>
           <%= image_tag "otb-logo.png", alt: "OTB", width: 40, height: 40 %>
           <div>
             <span class="ds-beta-sidebar-title">Beta</span>
             <span class="ds-beta-sidebar-user"><%= current_user.nickname %></span>
           </div>
-        </div>
+        <% end %>
 
         <nav class="ds-beta-sidebar-nav">
+          <p class="ds-beta-nav-heading">Vue</p>
+          <%= beta_nav_link "Home", beta_dashboard_path, active: controller.action_name == "home" %>
+          <%= beta_nav_link "Catalogue", beta_settings_path, active: controller.action_name == "settings" %>
+
           <p class="ds-beta-nav-heading">Sources</p>
           <%= beta_nav_link "Purify (PuryFi)", beta_sources_puryfi_path, active: controller.action_name == "sources_puryfi" %>
           <%= beta_nav_link "Cigarettes", beta_sources_cigarettes_path, active: controller.action_name == "sources_cigarettes" %>
@@ -40,8 +47,23 @@
           <%= beta_nav_link "Compte", beta_account_path, active: %w[account task].include?(controller.action_name) %>
         </nav>
       </aside>
+      <button type="button" class="ds-beta-sidebar-overlay" data-beta-nav-close aria-label="Fermer le menu"></button>
 
       <div class="ds-beta-main">
+        <div class="ds-beta-mobile-topbar">
+          <div class="ds-beta-mobile-navbar">
+            <%= link_to beta_dashboard_path, class: "ds-beta-mobile-navbar-brand" do %>
+              <%= image_tag "otb-logo.png", alt: "OTB", width: 28, height: 28 %>
+              <div>
+                <span class="ds-beta-mobile-navbar-title">BETA</span>
+                <span class="ds-beta-mobile-navbar-user"><%= current_user.nickname %></span>
+              </div>
+            <% end %>
+            <button type="button" class="ds-beta-mobile-nav-toggle" data-beta-nav-open aria-label="Ouvrir le menu">
+              ☰
+            </button>
+          </div>
+        </div>
         <div class="ds-beta-main-inner">
           <% if flash[:notice].present? %>
             <div class="ds-flash ds-flash--success"><%= flash[:notice] %></div>
@@ -97,6 +119,32 @@
           }
           tick();
         }
+      }
+
+      var app = document.querySelector('.ds-beta-app');
+      if (app) {
+        var mq = window.matchMedia('(max-width: 52rem)');
+        function setNavOpen(open) {
+          app.classList.toggle('ds-beta-nav-open', open);
+          document.body.classList.toggle('ds-beta-nav-lock', open);
+        }
+        document.querySelectorAll('[data-beta-nav-open]').forEach(function(btn) {
+          btn.addEventListener('click', function() { setNavOpen(true); });
+        });
+        document.querySelectorAll('[data-beta-nav-close]').forEach(function(btn) {
+          btn.addEventListener('click', function() { setNavOpen(false); });
+        });
+        app.querySelectorAll('.ds-beta-sidebar .ds-beta-nav-link').forEach(function(link) {
+          link.addEventListener('click', function() {
+            if (mq.matches) setNavOpen(false);
+          });
+        });
+        document.addEventListener('keydown', function(e) {
+          if (e.key === 'Escape') setNavOpen(false);
+        });
+        window.addEventListener('resize', function() {
+          if (!mq.matches) setNavOpen(false);
+        });
       }
     })();
     </script>

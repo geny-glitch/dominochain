@@ -95,7 +95,13 @@ module Api
         kind: :smoked_add_time,
         payload: { seconds: seconds }
       )
-      BetaEvents::ActionExecutor.new(beta: current_user, event: event).call
+      execution_status = BetaEvents::ActionExecutor.new(beta: current_user, event: event).call
+      if %i[source_disabled no_enabled_actions].include?(execution_status)
+        entry.chaster_applied = false
+        entry.chaster_lock_id = nil
+        entry.chaster_error = "Source ou action désactivée."
+        return
+      end
       lock = ChasterService.new(current_user).current_lock
       entry.chaster_lock_id = lock&.[](:id)
       entry.chaster_applied = true

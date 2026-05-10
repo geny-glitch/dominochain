@@ -42,6 +42,45 @@ class BetaDashboardController < ApplicationController
   def settings
   end
 
+  def update_catalog_visibility
+    catalog = BetaCatalog.new(current_user)
+    updated = catalog.update_item_visibility(
+      kind: params[:kind],
+      item_id: params[:item_id],
+      enabled: params[:enabled]
+    )
+
+    unless updated
+      respond_to do |format|
+        format.html { redirect_to beta_settings_path, alert: "Source/action inconnue." }
+        format.json { render json: { ok: false, error: "Source/action inconnue." }, status: :unprocessable_entity }
+      end
+      return
+    end
+
+    label = catalog.item_label(kind: params[:kind], item_id: params[:item_id]) || "Élément"
+    visibility_label = ActiveModel::Type::Boolean.new.cast(params[:enabled]) ? "affiché" : "masqué"
+    message = "#{label} est maintenant #{visibility_label} dans le catalogue."
+    respond_to do |format|
+      format.html { redirect_to beta_settings_path, notice: message }
+      format.json do
+        render json: {
+          ok: true,
+          message: message,
+          kind: params[:kind].to_s,
+          item_id: params[:item_id].to_s,
+          enabled: ActiveModel::Type::Boolean.new.cast(params[:enabled])
+        }
+      end
+    end
+  rescue ActiveRecord::RecordInvalid => e
+    error_message = e.record.errors.full_messages.join(", ")
+    respond_to do |format|
+      format.html { redirect_to beta_settings_path, alert: error_message }
+      format.json { render json: { ok: false, error: error_message }, status: :unprocessable_entity }
+    end
+  end
+
   def account
     @control = current_user.control
     @invite_url = control_accept_from_link_url(current_user.nickname)

@@ -67,5 +67,31 @@ RSpec.describe "API cigarette entries", type: :request do
       expect(json["entry"]["chaster_error"]).to eq("Aucun cadenas Chaster actif.")
       expect(beta.cigarette_entries.last.chaster_applied).to be false
     end
+
+    it "keeps the entry without applying time when cigarettes source is disabled in catalog" do
+      beta.update!(beta_ui_prefs: { "catalog_visibility" => { "sources" => { "cigarettes" => false } } })
+
+      post api_cigarettes_path, params: {}, headers: headers, as: :json
+
+      expect(response).to have_http_status(:created)
+      expect(service).not_to have_received(:add_time_to_lock)
+
+      json = JSON.parse(response.body)
+      expect(json["entry"]["chaster_applied"]).to be false
+      expect(json["entry"]["chaster_error"]).to eq("Source ou action désactivée.")
+    end
+
+    it "keeps the entry without applying time when chaster action is disabled in catalog" do
+      beta.update!(beta_ui_prefs: { "catalog_visibility" => { "actions" => { "chaster" => false } } })
+
+      post api_cigarettes_path, params: {}, headers: headers, as: :json
+
+      expect(response).to have_http_status(:created)
+      expect(service).not_to have_received(:add_time_to_lock)
+
+      json = JSON.parse(response.body)
+      expect(json["entry"]["chaster_applied"]).to be false
+      expect(json["entry"]["chaster_error"]).to eq("Source ou action désactivée.")
+    end
   end
 end

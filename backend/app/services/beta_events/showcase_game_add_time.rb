@@ -54,7 +54,10 @@ module BetaEvents
         }
       )
 
-      ActionExecutor.new(beta: @beta, event: event).call
+      execution_status = ActionExecutor.new(beta: @beta, event: event).call
+      if %i[source_disabled no_enabled_actions].include?(execution_status)
+        return failure(:unprocessable_entity, "Source ou action désactivée.")
+      end
 
       Result.new(
         ok: true,

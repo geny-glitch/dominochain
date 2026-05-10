@@ -1,6 +1,30 @@
 # frozen_string_literal: true
 
 module BetaDashboardHelper
+  def beta_source_catalog_items
+    beta_catalog.source_items
+  end
+
+  def beta_action_catalog_items
+    beta_catalog.action_items
+  end
+
+  def beta_visible_sidebar_source_items
+    beta_catalog.visible_source_items
+  end
+
+  def beta_visible_sidebar_action_items
+    beta_catalog.visible_action_items
+  end
+
+  def beta_catalog_source_enabled?(item_id)
+    beta_catalog.source_enabled?(item_id)
+  end
+
+  def beta_catalog_action_enabled?(item_id)
+    beta_catalog.action_enabled?(item_id)
+  end
+
   def beta_nav_link(text, path, active: false)
     classes = [ "ds-beta-nav-link" ]
     classes << "ds-beta-nav-link--active" if active
@@ -37,5 +61,11 @@ module BetaDashboardHelper
     else
       "#{sign}#{s}s"
     end
+  end
+
+  private
+
+  def beta_catalog
+    @beta_catalog ||= BetaCatalog.new(current_user)
   end
 end

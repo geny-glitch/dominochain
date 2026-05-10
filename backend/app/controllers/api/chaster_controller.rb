@@ -84,7 +84,10 @@ module Api
         kind: :add_time,
         payload: { seconds: seconds }
       )
-      BetaEvents::ActionExecutor.new(beta: current_user, event: event).call
+      execution_status = BetaEvents::ActionExecutor.new(beta: current_user, event: event).call
+      if %i[source_disabled no_enabled_actions].include?(execution_status)
+        return render json: { error: "Source ou action désactivée." }, status: :unprocessable_entity
+      end
       lock_info = ChasterService.new(current_user).current_lock
       render json: {
         ok: true,

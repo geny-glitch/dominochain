@@ -17,6 +17,7 @@ get "beta/sources/vitrine", to: "beta_dashboard#sources_showcase", as: :beta_sou
   get "beta/actions/chaster", to: "beta_dashboard#actions_chaster", as: :beta_actions_chaster
 get "beta/actions/pishock", to: "beta_dashboard#actions_pishock", as: :beta_actions_pishock
   get "beta/reglages", to: "beta_dashboard#settings", as: :beta_settings
+  patch "beta/catalogue/visibility", to: "beta_dashboard#update_catalog_visibility", as: :beta_catalog_visibility
   get "beta/compte", to: "beta_dashboard#account", as: :beta_account
   patch "beta/pishock", to: "beta_dashboard#update_pishock", as: :beta_pishock
   post "beta/pishock/test", to: "beta_dashboard#test_pishock", as: :beta_pishock_test

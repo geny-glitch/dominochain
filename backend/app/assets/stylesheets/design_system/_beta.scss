@@ -477,6 +477,18 @@
   box-shadow: var(--md-sys-elevation-1);
 }
 
+.ds-beta-catalog-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  border: 1px solid rgba($ds-border, 0.85);
+  color: $ds-teal;
+  background: rgba($ds-teal, 0.08);
+}
+
 .ds-beta-catalog-card--muted {
   border-style: dashed;
   opacity: 0.85;
@@ -500,6 +512,69 @@
   font-size: $ds-small-size;
   color: $ds-text;
   line-height: 1.45;
+}
+
+.ds-beta-catalog-footer {
+  margin-top: auto;
+  padding-top: $ds-space-sm;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: $ds-space-sm;
+}
+
+.ds-beta-catalog-toggle-form {
+  margin: 0;
+}
+
+.ds-beta-catalog-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: $ds-space-xs;
+  margin: 0;
+  cursor: pointer;
+}
+
+.ds-beta-catalog-toggle-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.ds-beta-catalog-toggle-switch {
+  position: relative;
+  width: 2.25rem;
+  height: 1.35rem;
+  border-radius: 999px;
+  background: rgba($ds-border, 0.95);
+  transition: background $ds-transition;
+
+  &::after {
+    content: "";
+    position: absolute;
+    top: 0.14rem;
+    left: 0.14rem;
+    width: 1.05rem;
+    height: 1.05rem;
+    border-radius: 999px;
+    background: $ds-surface;
+    box-shadow: 0 0 0 1px rgba($ds-border, 0.8);
+    transition: transform $ds-transition;
+  }
+}
+
+.ds-beta-catalog-toggle-input:checked + .ds-beta-catalog-toggle-switch {
+  background: rgba($ds-teal, 0.6);
+}
+
+.ds-beta-catalog-toggle-input:checked + .ds-beta-catalog-toggle-switch::after {
+  transform: translateX(0.9rem);
+}
+
+.ds-beta-catalog-toggle-input:focus-visible + .ds-beta-catalog-toggle-switch {
+  outline: 2px solid rgba($ds-teal, 0.6);
+  outline-offset: 2px;
 }
 
 .ds-beta-home-hero {

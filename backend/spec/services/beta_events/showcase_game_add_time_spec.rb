@@ -27,4 +27,27 @@ RSpec.describe BetaEvents::ShowcaseGameAddTime do
     expect(result.ok).to be false
     expect(result.http_status).to eq(:not_found)
   end
+
+  it "returns unprocessable when showcase source is disabled in catalog" do
+    beta.update!(beta_ui_prefs: { "catalog_visibility" => { "sources" => { "showcase" => false } } })
+
+    result = described_class.call(beta: beta, game_kind: "snake", seconds: 300, as_json: true)
+
+    expect(result.ok).to be false
+    expect(result.http_status).to eq(:unprocessable_entity)
+    expect(result.json_body).to include(error: "Source ou action désactivée.")
+    expect(chaster_double).not_to have_received(:add_time_to_lock)
+  end
+
+  it "returns unprocessable when all showcase actions are disabled in catalog" do
+    beta.update!(beta_ui_prefs: { "catalog_visibility" => { "actions" => { "chaster" => false } } })
+    beta.update!(beta_ui_prefs: beta.beta_ui_prefs.deep_merge("catalog_visibility" => { "actions" => { "pishock" => false } }))
+
+    result = described_class.call(beta: beta, game_kind: "snake", seconds: 300, as_json: true)
+
+    expect(result.ok).to be false
+    expect(result.http_status).to eq(:unprocessable_entity)
+    expect(result.json_body).to include(error: "Source ou action désactivée.")
+    expect(chaster_double).not_to have_received(:add_time_to_lock)
+  end
 end

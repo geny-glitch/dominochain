@@ -74,7 +74,11 @@ module BetaEvents
       ctx.addition = addition
 
       begin
-        ActionExecutor.new(beta: @beta, event: event, context: ctx).call
+        execution_status = ActionExecutor.new(beta: @beta, event: event, context: ctx).call
+        if %i[source_disabled no_enabled_actions].include?(execution_status)
+          addition.update!(chaster_applied: false, chaster_error: "Source ou action désactivée.")
+          return Result.new(ok: false, http_status: :unprocessable_entity, json_body: { error: "Source ou action désactivée." })
+        end
       rescue ActionExecutionStopped => e
         return backdoor_error_response(e.reason, addition, seconds)
       end

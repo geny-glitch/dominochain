@@ -172,9 +172,12 @@ class ShowcaseController < ApplicationController
     game_session.update!(permitted)
 
     if first_name_submission && game_session.player_name.present?
-      intensity = ShowcaseGameConfig.pishock_intensity(game_session.score, @beta)
-      duration = game_session.game_type == "tetris" ? [ game_session.score, 15 ].min.clamp(1, 15) : 1
-      PishockShockJob.perform_later(@beta.id, intensity, duration)
+      catalog = BetaCatalog.new(@beta)
+      if catalog.source_enabled_for_event_source?(:showcase_game) && catalog.action_enabled?("pishock")
+        intensity = ShowcaseGameConfig.pishock_intensity(game_session.score, @beta)
+        duration = game_session.game_type == "tetris" ? [ game_session.score, 15 ].min.clamp(1, 15) : 1
+        PishockShockJob.perform_later(@beta.id, intensity, duration)
+      end
       ShowcaseBetaNotifyJob.perform_later(
         @beta.id,
         game_session.player_name,

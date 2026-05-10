@@ -29,10 +29,16 @@ class StravaGoalEvaluator
         payload: { seconds: goal.chaster_penalty_seconds }
       )
       begin
-        BetaEvents::ActionExecutor.new(beta: @user, event: event).call
-        chaster_applied = true
-        lock = @chaster_service.current_lock
-        chaster_lock_id = lock&.dig(:id)
+        execution_status = BetaEvents::ActionExecutor.new(beta: @user, event: event).call
+        if execution_status == :ok
+          chaster_applied = true
+          lock = @chaster_service.current_lock
+          chaster_lock_id = lock&.dig(:id)
+        else
+          chaster_applied = false
+          chaster_lock_id = nil
+          chaster_error = "Source ou action désactivée."
+        end
       rescue BetaEvents::ActionExecutionStopped => e
         status = "chaster_error"
         chaster_applied = false

@@ -33,15 +33,19 @@
           <%= beta_nav_link "Home", beta_dashboard_path, active: controller.action_name == "home" %>
           <%= beta_nav_link "Catalogue", beta_settings_path, active: controller.action_name == "settings" %>
 
-          <p class="ds-beta-nav-heading">Sources</p>
-          <%= beta_nav_link "Purify (PuryFi)", beta_sources_puryfi_path, active: controller.action_name == "sources_puryfi" %>
-          <%= beta_nav_link "Cigarettes", beta_sources_cigarettes_path, active: controller.action_name == "sources_cigarettes" %>
-          <%= beta_nav_link "Strava", beta_sources_strava_path, active: controller.action_name == "sources_strava" %>
-          <%= beta_nav_link "Vitrine", beta_sources_showcase_path, active: controller.action_name == "sources_showcase" %>
+          <% if beta_visible_sidebar_source_items.any? %>
+            <p class="ds-beta-nav-heading">Sources</p>
+            <% beta_visible_sidebar_source_items.each do |item| %>
+              <%= beta_nav_link item[:label], public_send(item[:path_helper]), active: controller.action_name == item[:action_name] %>
+            <% end %>
+          <% end %>
 
-          <p class="ds-beta-nav-heading">Actions</p>
-          <%= beta_nav_link "Chaster", beta_actions_chaster_path, active: controller.action_name == "actions_chaster" %>
-          <%= beta_nav_link "PiShock", beta_actions_pishock_path, active: controller.action_name == "actions_pishock" %>
+          <% if beta_visible_sidebar_action_items.any? %>
+            <p class="ds-beta-nav-heading">Actions</p>
+            <% beta_visible_sidebar_action_items.each do |item| %>
+              <%= beta_nav_link item[:label], public_send(item[:path_helper]), active: controller.action_name == item[:action_name] %>
+            <% end %>
+          <% end %>
 
           <p class="ds-beta-nav-heading">Espace perso</p>
           <%= beta_nav_link "Compte", beta_account_path, active: %w[account task].include?(controller.action_name) %>

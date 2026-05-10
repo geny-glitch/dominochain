@@ -19,6 +19,9 @@ class BetaDashboardController < ApplicationController
     current_user.ensure_puryfi_plugin_token!
     @puryfi_ws_url = current_user.puryfi_ws_url
     @puryfi_label_ids = (0..25).to_a
+    @puryfi_events_count = current_user.chaster_time_events.where(source: "puryfi").count
+    @puryfi_last_event_at = current_user.chaster_time_events.where(source: "puryfi").maximum(:occurred_at)
+    @puryfi_installation_collapsed = @puryfi_events_count.positive?
   end
 
   def sources_cigarettes
@@ -165,7 +168,8 @@ class BetaDashboardController < ApplicationController
   end
 
   def update_puryfi
-    attrs = { puryfi_min_score: params[:puryfi_min_score].to_f }
+    min_score_percent = params[:puryfi_min_score].to_f.clamp(0.0, 100.0)
+    attrs = { puryfi_min_score: (min_score_percent / 100.0).round(4) }
     raw = params[:puryfi_seconds_per_label]
     if raw.is_a?(ActionController::Parameters) || raw.is_a?(Hash)
       h = raw.is_a?(ActionController::Parameters) ? raw.to_unsafe_h : raw

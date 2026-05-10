@@ -1,4 +1,4 @@
-# OTB — Own their backgrounds
+# Domino Chain — Own their backgrounds
 
 Android app + Rails backend. Register your device, upload an image via the web, and it becomes your wallpaper.
 

@@ -1,10 +1,10 @@
 ---
-description: Respecter le design system OTB pour l'app Android
+description: Respecter le design system Domino Chain pour l'app Android
 globs: android/**/*.{xml,kt}
 alwaysApply: false
 ---
 
-# Design System OTB — Android
+# Design System Domino Chain — Android
 
 Toujours utiliser les ressources du design system pour les layouts et vues Android. Ne pas écrire de couleurs, dimensions ou styles en dur.
 

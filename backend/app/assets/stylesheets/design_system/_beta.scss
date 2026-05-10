@@ -218,19 +218,10 @@
   color: inherit;
 }
 
-.ds-beta-mobile-navbar-title {
+.ds-beta-mobile-navbar-wordmark {
   display: block;
-  font-size: $ds-tiny-size;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: $ds-text-muted;
-}
-
-.ds-beta-mobile-navbar-user {
-  display: block;
-  font-size: $ds-body-size;
-  font-weight: 600;
-  color: $ds-teal;
+  font-size: 0.95rem;
+  color: $ds-text;
   line-height: 1.2;
 }
 
@@ -261,20 +252,11 @@
   color: inherit;
 }
 
-.ds-beta-sidebar-title {
+.ds-beta-sidebar-wordmark {
   display: block;
-  font-size: $ds-small-size;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: $ds-text-muted;
-}
-
-.ds-beta-sidebar-user {
-  display: block;
-  font-size: $ds-body-size;
-  color: $ds-teal;
-  font-weight: 600;
+  font-size: 1rem;
+  color: $ds-text;
+  line-height: 1.2;
 }
 
 .ds-beta-sidebar-nav {

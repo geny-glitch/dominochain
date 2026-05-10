@@ -113,21 +113,21 @@
 }
 
 .ds-home__title {
-  font-family: $ds-font-serif;
+  font-family: $ds-font-brand;
   font-size: clamp(3rem, 10vw, 5rem);
-  font-weight: 400;
+  font-weight: 600;
   color: $ds-text;
-  letter-spacing: 0.2em;
+  letter-spacing: -0.02em;
   margin: 0;
   text-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
 }
 
 .ds-home__tagline {
-  font-family: $ds-font-family;
+  font-family: $ds-font-mono;
   font-size: clamp(0.9rem, 2.5vw, 1.1rem);
-  font-weight: 300;
+  font-weight: 400;
   color: $ds-text-muted;
-  letter-spacing: 0.3em;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   margin: $ds-space-sm 0 0;
   text-shadow: 0 1px 10px rgba(0, 0, 0, 0.4);

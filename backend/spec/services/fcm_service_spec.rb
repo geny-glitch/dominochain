@@ -20,7 +20,7 @@ RSpec.describe FcmService do
       )
 
       expect(described_class).to have_received(:send_request) do |_sent_device, payload|
-        expect(payload.dig(:message, :data, :title)).to eq("OTB dev")
+        expect(payload.dig(:message, :data, :title)).to eq("Domino Chain dev")
       end
     ensure
       if previous_bg_env.nil?
@@ -50,7 +50,7 @@ RSpec.describe FcmService do
         message = payload.fetch(:message)
         expect(message[:token]).to eq("fcm-token")
         expect(message[:notification]).to eq(
-          title: "OTB",
+          title: "Domino Chain",
           body: "Alice commence une partie de Snake."
         )
         expect(message[:data]).to eq(
@@ -78,7 +78,7 @@ RSpec.describe FcmService do
       expect(described_class).to have_received(:send_request) do |_sent_device, payload|
         message = payload.fetch(:message)
         expect(message[:notification]).to eq(
-          title: "OTB",
+          title: "Domino Chain",
           body: "Quelqu'un commence une partie de Snake."
         )
         expect(message[:data]).to eq(

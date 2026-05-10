@@ -56,18 +56,18 @@ android {
         create("prod") {
             dimension = "environment"
             buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrlProd\"")
-            buildConfigField("String", "NOTIFICATION_TITLE", "\"OTB\"")
+            buildConfigField("String", "NOTIFICATION_TITLE", "\"Domino Chain\"")
             buildConfigField("String", "SENTRY_DSN", "\"$sentryDsnProd\"")
-            resValue("string", "app_name", "BG")
+            resValue("string", "app_name", "Domino Chain")
         }
         create("staging") {
             dimension = "environment"
             applicationIdSuffix = ".staging"
             versionNameSuffix = "-staging"
             buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrlStaging\"")
-            buildConfigField("String", "NOTIFICATION_TITLE", "\"OTB dev\"")
+            buildConfigField("String", "NOTIFICATION_TITLE", "\"Domino Chain dev\"")
             buildConfigField("String", "SENTRY_DSN", "\"$sentryDsnStaging\"")
-            resValue("string", "app_name", "BG Staging")
+            resValue("string", "app_name", "Domino Chain Staging")
         }
     }
 

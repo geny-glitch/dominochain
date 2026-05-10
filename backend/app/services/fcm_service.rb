@@ -3,8 +3,8 @@
 class FcmService
   FCM_SCOPE = "https://www.googleapis.com/auth/firebase.messaging"
   FCM_ENDPOINT = "https://fcm.googleapis.com/v1/projects/%<project_id>s/messages:send"
-  NOTIFICATION_TITLE_STAGING = "OTB dev"
-  NOTIFICATION_TITLE_DEFAULT = "OTB"
+  NOTIFICATION_TITLE_STAGING = "Domino Chain dev"
+  NOTIFICATION_TITLE_DEFAULT = "Domino Chain"
 
   TEASER_MESSAGES = [
     "Ton univers a changé 👀",

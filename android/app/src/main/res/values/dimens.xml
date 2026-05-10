@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- OTB Design System — spacing tokens -->
+<!-- Domino Chain Design System — spacing tokens -->
 <resources>
     <dimen name="ds_space_xs">4dp</dimen>
     <dimen name="ds_space_sm">8dp</dimen>

@@ -1,14 +1,20 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title><%= content_for(:title) || "Beta — OTB" %></title>
+    <title><%= content_for(:title) || "Beta — Domino Chain" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="theme-color" content="#0a0a0b">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/icon.png" sizes="512x512">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <%= yield :head %>
 
     <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
@@ -21,10 +27,9 @@
           ✕
         </button>
         <%= link_to beta_dashboard_path, class: "ds-beta-sidebar-brand" do %>
-          <%= image_tag "otb-logo.png", alt: "OTB", width: 40, height: 40 %>
+          <%= image_tag "domino-chain-logo.png", alt: "Domino Chain", width: 40, height: 40 %>
           <div>
-            <span class="ds-beta-sidebar-title">Beta</span>
-            <span class="ds-beta-sidebar-user"><%= current_user.nickname %></span>
+            <span class="ds-beta-sidebar-wordmark wordmark">DominoChain</span>
           </div>
         <% end %>
 
@@ -57,10 +62,9 @@
         <div class="ds-beta-mobile-topbar">
           <div class="ds-beta-mobile-navbar">
             <%= link_to beta_dashboard_path, class: "ds-beta-mobile-navbar-brand" do %>
-              <%= image_tag "otb-logo.png", alt: "OTB", width: 28, height: 28 %>
+              <%= image_tag "domino-chain-logo.png", alt: "Domino Chain", width: 28, height: 28 %>
               <div>
-                <span class="ds-beta-mobile-navbar-title">BETA</span>
-                <span class="ds-beta-mobile-navbar-user"><%= current_user.nickname %></span>
+                <span class="ds-beta-mobile-navbar-wordmark wordmark">DominoChain</span>
               </div>
             <% end %>
             <button type="button" class="ds-beta-mobile-nav-toggle" data-beta-nav-open aria-label="Ouvrir le menu">

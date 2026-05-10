@@ -15,11 +15,10 @@
     <% end %>
 
     <header class="ds-header">
-      <%= image_tag "otb-logo.png", alt: "OTB", class: "ds-header-logo", width: 48, height: 48 %>
+      <%= image_tag "domino-chain-logo.png", alt: "Domino Chain", class: "ds-header-logo", width: 48, height: 48 %>
       <div class="ds-header-text">
-        <h1 class="ds-title">OTB</h1>
+        <h1 class="ds-title wordmark">DominoChain</h1>
         <p class="ds-subtitle ds-subtitle--with-icon">
-          Own their backgrounds
           <% if @device %>
             <button type="button" class="ds-permissions-icon ds-permissions-icon--<%= permissions_all_ok ? 'ok' : 'warning' %>" id="permissions-icon-btn" title="<%= permissions_all_ok ? 'Autorisations OK' : 'Autorisations manquantes' %>" aria-label="<%= permissions_all_ok ? 'Autorisations OK' : 'Autorisations manquantes' %>">
               <% if permissions_all_ok %>

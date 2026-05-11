@@ -1,0 +1,28 @@
+description: Structure source/action pages into clear conceptual sections
+globs: backend/app/views/beta_dashboard/sources_*.html.erb,backend/app/views/beta_dashboard/actions_*.html.erb,backend/app/views/beta_dashboard/_sources_*.html.erb,backend/app/views/beta_dashboard/_actions_*.html.erb
+alwaysApply: true
+---
+
+# Source/Action Section Structure
+
+When rendering a source or an action page, separate concepts clearly into independent sections when applicable:
+
+- `Installation`: one-time setup steps to make the integration work.
+- `Configuration`: choices and parameters once installed.
+- `Logs / Tracking`: recent events, checks, execution status, and timestamps.
+- `Notifications`: whether notifications are available and where they appear.
+
+Only show sections that make sense for the current integration; do not force all four.
+
+## Card Separation Rule
+
+- One section must map to one distinct `ds-beta-control-card`.
+- Do not mix multiple section concepts in a single control card.
+- Keep section cards visually consistent across source/action pages.
+- Keep section titles outside cards (same visual pattern as PuryFi pages).
+- Preserve clear vertical rhythm between consecutive cards (visible spacing).
+
+## Installation Drawer Rule
+
+- When installation is completed and confirmed working, keep installation details collapsed by default in a drawer.
+- If installation is missing or failing, keep installation instructions visible.

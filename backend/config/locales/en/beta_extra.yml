@@ -1,5 +1,10 @@
 en:
   beta:
+    integration_sections:
+      installation: "Installation"
+      configuration: "Configuration"
+      logs_tracking: "Logs / Tracking"
+      notifications: "Notifications"
     showcase_source:
       page_title: "Sources · Showcase — %{nickname}"
       heading: "Showcase"
@@ -26,6 +31,8 @@ en:
     strava:
       section_title: "Strava + Chaster"
       refresh_title: "Refresh"
+      installation_connected_hint: "Strava is connected and ready. Installation details stay collapsed by default."
+      installation_disconnected_hint: "Connect your Strava account once to activate this source."
       connected_line: "Strava connected%{athlete}"
       athlete_suffix: " · athlete #%{id}"
       goals_hint: "Each goal counts activities on an explicit sliding window (daily, weekly, or X days). At the chosen time in the beta's time zone, if the required count is not reached, the configured time is added once to the active Chaster lock."
@@ -64,6 +71,7 @@ en:
       create_goal: "Create Strava goal"
       connect_pitch: "Connect your Strava account to create sliding X-day goals that add Chaster time on failure."
       connect_strava: "Connect Strava"
+      logs_tracking_hint: "Each goal shows its latest check result and next scheduled evaluation."
       not_configured: "Strava is not configured on this server."
       window_presets:
         daily: "Daily — 1-day sliding window"
@@ -103,6 +111,19 @@ en:
       showcase_link: "Showcase"
       seconds_hint_suffix: "(showcase/tracker economy)."
       current_seconds_html: "Currently: <strong>%{seconds} s</strong> per cigarette."
+    actions_chaster:
+      refresh_title: "Refresh"
+      installation_connected_hint: "Chaster is connected and active on this account."
+      installation_disconnected_hint: "Connect your Chaster account once to enable this action."
+      connect: "Connect Chaster"
+      disconnect: "Disconnect Chaster"
+      disconnect_confirm: "Disconnect your Chaster account? You will need to reconnect to load lock data again."
+      connected: "Chaster connected"
+      active_lock_fallback: "Active lock"
+      frozen: "Frozen"
+      logs_lock_hint: "Remaining lock time is also shown in the app and widget."
+      notifications_hint: "Chaster updates are delivered via the Chaster app and widgets when available."
+      not_configured: "Chaster is not configured on this server."
     pishock:
       page_title: "Actions · PiShock — %{nickname}"
       heading: "PiShock"

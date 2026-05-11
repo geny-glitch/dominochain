@@ -1,5 +1,10 @@
 fr:
   beta:
+    integration_sections:
+      installation: "Installation"
+      configuration: "Configuration"
+      logs_tracking: "Logs / Suivi"
+      notifications: "Notifications"
     showcase_source:
       page_title: "Sources · Vitrine — %{nickname}"
       heading: "Vitrine"
@@ -26,6 +31,8 @@ fr:
     strava:
       section_title: "Strava + Chaster"
       refresh_title: "Actualiser"
+      installation_connected_hint: "Strava est connecté et prêt. Les détails d'installation restent repliés par défaut."
+      installation_disconnected_hint: "Connecte ton compte Strava une seule fois pour activer cette source."
       connected_line: "Strava connecté%{athlete}"
       athlete_suffix: " · athlète n°%{id}"
       goals_hint: "Chaque objectif compte les activités sur une fenêtre glissante explicite (quotidienne, hebdomadaire ou X jours). À l'heure choisie dans le fuseau du beta, si le nombre requis n'est pas atteint, le temps configuré est ajouté une seule fois au lock Chaster actif."
@@ -64,6 +71,7 @@ fr:
       create_goal: "Créer l'objectif Strava"
       connect_pitch: "Connecte ton compte Strava pour créer des objectifs sur X jours glissants qui ajoutent du temps Chaster en cas d'échec."
       connect_strava: "Connecter Strava"
+      logs_tracking_hint: "Chaque objectif affiche son dernier résultat de check et sa prochaine évaluation planifiée."
       not_configured: "Strava n'est pas configuré sur ce serveur."
       window_presets:
         daily: "Quotidien — 1 jour glissant"
@@ -103,6 +111,19 @@ fr:
       showcase_link: "Vitrine"
       seconds_hint_suffix: "(économie vitrine / tracker)."
       current_seconds_html: "Actuellement : <strong>%{seconds} s</strong> par cigarette."
+    actions_chaster:
+      refresh_title: "Actualiser"
+      installation_connected_hint: "Chaster est connecté et actif sur ce compte."
+      installation_disconnected_hint: "Connecte ton compte Chaster une seule fois pour activer cette action."
+      connect: "Connecter Chaster"
+      disconnect: "Déconnecter Chaster"
+      disconnect_confirm: "Déconnecter ton compte Chaster ? Tu devras te reconnecter pour recharger les données du lock."
+      connected: "Chaster connecté"
+      active_lock_fallback: "Lock en cours"
+      frozen: "Gelé"
+      logs_lock_hint: "Le temps restant s'affiche aussi sur l'app et le widget."
+      notifications_hint: "Les mises à jour Chaster sont envoyées via l'app Chaster et les widgets quand disponibles."
+      not_configured: "Chaster n'est pas configuré sur ce serveur."
     pishock:
       page_title: "Actions · PiShock — %{nickname}"
       heading: "PiShock"

@@ -58,6 +58,10 @@
   box-shadow: var(--md-sys-elevation-1);
 }
 
+.ds-beta-control-card + .ds-beta-control-card {
+  margin-top: $ds-space-lg;
+}
+
 .ds-beta-control-card--invite {
   border-color: rgba($ds-teal, 0.3);
 }

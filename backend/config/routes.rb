@@ -1,4 +1,6 @@
 Rails.application.routes.draw do
+  patch "locale", to: "locales#update", as: :user_locale
+
   devise_for :users, path: "", path_names: {
     sign_in: "login", sign_out: "logout", sign_up: "signup"
   }, controllers: { registrations: "registrations" }

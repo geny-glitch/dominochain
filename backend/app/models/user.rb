@@ -24,7 +24,7 @@ class User < ApplicationRecord
   has_many :strava_goal_checks, dependent: :destroy
 
   validates :nickname, presence: true, uniqueness: true
-  validates :nickname, format: { with: /\A[a-zA-Z0-9_]+\z/, message: "ne peut contenir que lettres, chiffres et underscores" }
+  validates :nickname, format: { with: /\A[a-zA-Z0-9_]+\z/, message: :invalid_nickname_format }
   validates :pishock_intensity_factor,
     numericality: { greater_than: 0, less_than_or_equal_to: 100 }
   validates :showcase_quiz_seconds_per_point,
@@ -117,7 +117,7 @@ class User < ApplicationRecord
   def at_least_one_showcase_game_enabled
     return if showcase_quiz_enabled || showcase_snake_enabled || showcase_dino_enabled || showcase_tetris_enabled || showcase_backdoor_enabled
 
-    errors.add(:base, "Au moins un jeu ou la page Backdoor doit rester activé sur la vitrine.")
+    errors.add(:base, I18n.t("activerecord.errors.models.user.at_least_one_showcase_game"))
   end
 
   def showcase_quiz_seconds_decrease_cooldown
@@ -183,7 +183,10 @@ class User < ApplicationRecord
     unlock_at = last_changed_at + SHOWCASE_SECONDS_DECREASE_COOLDOWN
     errors.add(
       attribute,
-      "tu ne peux pas réduire ce délai avant 24 h après le dernier changement (réessaie après #{unlock_at.strftime('%d/%m %H:%M')})."
+      I18n.t(
+        "activerecord.errors.models.user.showcase_seconds_decrease_cooldown",
+        unlock_at: I18n.l(unlock_at, format: :unlock)
+      )
     )
   end
 end

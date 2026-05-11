@@ -1,4 +1,4 @@
-<% content_for :title, "Home — #{current_user.nickname}" %>
+<% content_for :title, t("beta.home.title", nickname: current_user.nickname) %>
 <% show_chaster = beta_catalog_action_enabled?("chaster") %>
 <% show_pishock = beta_catalog_action_enabled?("pishock") %>
 <% show_strava = beta_catalog_source_enabled?("strava") %>
@@ -7,9 +7,9 @@
 <% show_widgets = show_pishock || show_strava || show_cigarettes || show_showcase %>
 
 <header class="ds-beta-page-head">
-  <h1 class="ds-beta-page-title">Hello, <%= current_user.nickname %> 👋</h1>
+  <h1 class="ds-beta-page-title"><%= t("beta.home.greeting", nickname: current_user.nickname) %></h1>
   <p class="ds-beta-page-lead">
-    Tableau de bord: un coup d'oeil rapide sur les integrations qui tournent et les derniers evenements.
+    <%= t("beta.home.lead") %>
   </p>
 </header>
 
@@ -17,111 +17,114 @@
   <section class="ds-beta-section ds-beta-section--first">
     <div class="ds-beta-home-hero">
       <div class="ds-beta-home-hero-head">
-        <h2 class="ds-section-title">Chaster</h2>
+        <h2 class="ds-section-title"><%= t("beta.home.chaster_title") %></h2>
         <% if @chaster_lock.present? %>
-          <span class="ds-beta-home-pill ds-beta-home-pill--on">en cours</span>
+          <span class="ds-beta-home-pill ds-beta-home-pill--on"><%= t("beta.home.pill_in_progress") %></span>
         <% else %>
-          <span class="ds-beta-home-pill">aucun lock</span>
+          <span class="ds-beta-home-pill"><%= t("beta.home.pill_no_lock") %></span>
         <% end %>
       </div>
       <% if @chaster_lock.present? %>
         <p class="ds-beta-home-metric" id="chaster-countdown"
            data-end-date="<%= @chaster_lock[:end_date] %>"
            data-is-frozen="<%= @chaster_lock[:is_frozen] %>">
-          <%= @chaster_lock[:is_frozen] ? "Gele" : format_chaster_remaining(@chaster_lock[:remaining_seconds]) %>
+          <%= @chaster_lock[:is_frozen] ? t("beta.home.pill_frozen") : format_chaster_remaining(@chaster_lock[:remaining_seconds]) %>
         </p>
         <p class="ds-beta-home-muted">
-          Lock actif: <strong><%= @chaster_lock[:title].presence || "Chaster" %></strong>
+          <%= t("beta.home.lock_active_prefix") %> <strong><%= @chaster_lock[:title].presence || "Chaster" %></strong>
         </p>
       <% else %>
-        <p class="ds-beta-home-muted">Aucun lock en cours. Les sources restent pretes et ajouteront du temps au prochain lock actif.</p>
+        <p class="ds-beta-home-muted"><%= t("beta.home.no_lock_hint") %></p>
       <% end %>
       <div class="ds-beta-home-actions">
-        <%= link_to "Ouvrir Chaster", beta_actions_chaster_path, class: "ds-btn ds-btn--secondary ds-btn--sm" %>
-        <%= link_to "Catalogue", beta_settings_path, class: "ds-btn ds-btn--ghost ds-btn--sm" %>
+        <%= link_to t("beta.home.open_chaster"), beta_actions_chaster_path, class: "ds-btn ds-btn--secondary ds-btn--sm" %>
+        <%= link_to t("layouts.beta_dashboard.nav.catalog"), beta_settings_path, class: "ds-btn ds-btn--ghost ds-btn--sm" %>
       </div>
     </div>
   </section>
 <% end %>
 
 <section class="ds-beta-section <%= "ds-beta-section--first" unless show_chaster %>">
-  <h2 class="ds-section-title">Widgets actifs</h2>
+  <h2 class="ds-section-title"><%= t("beta.home.widgets_title") %></h2>
   <% if show_widgets %>
     <div class="ds-beta-home-grid">
       <% if show_pishock %>
         <article class="ds-beta-home-card">
           <div class="ds-beta-home-card-head">
-            <h3 class="ds-beta-home-card-title">PiShock</h3>
+            <h3 class="ds-beta-home-card-title"><%= t("beta.home.pishock_title") %></h3>
             <span class="ds-beta-home-pill <%= current_user.pishock_enabled? ? "ds-beta-home-pill--on" : "" %>">
-              <%= current_user.pishock_enabled? ? "active" : "off" %>
+              <%= current_user.pishock_enabled? ? t("beta.home.pill_on") : t("beta.home.pill_off") %>
             </span>
           </div>
           <p class="ds-beta-home-muted">
-            <%= current_user.pishock_enabled? ? "Collier configure, pret a recevoir des actions." : "PiShock desactive." %>
+            <%= current_user.pishock_enabled? ? t("beta.home.pishock_on") : t("beta.home.pishock_off") %>
           </p>
-          <%= link_to "Configurer PiShock", beta_actions_pishock_path, class: "ds-btn ds-btn--ghost ds-btn--sm" %>
+          <%= link_to t("beta.home.configure_pishock"), beta_actions_pishock_path, class: "ds-btn ds-btn--ghost ds-btn--sm" %>
         </article>
       <% end %>
 
       <% if show_strava %>
         <article class="ds-beta-home-card">
           <div class="ds-beta-home-card-head">
-            <h3 class="ds-beta-home-card-title">Strava</h3>
+            <h3 class="ds-beta-home-card-title"><%= t("beta.home.strava_title") %></h3>
             <span class="ds-beta-home-pill <%= @strava_primary_goal.present? ? "ds-beta-home-pill--on" : "" %>">
-              <%= @strava_primary_goal.present? ? "connectee" : "off" %>
+              <%= @strava_primary_goal.present? ? t("beta.home.strava_connected") : t("beta.home.pill_off") %>
             </span>
           </div>
           <% if @strava_primary_goal.present? %>
             <p class="ds-beta-home-muted">
-              Objectif <strong><%= @strava_primary_goal.name %></strong> · <%= @strava_primary_goal.window_label %> · penalite <%= @strava_primary_goal.chaster_penalty_seconds / 60 %> min
+              <%= t("beta.home.strava_goal_line", name: @strava_primary_goal.name, window: @strava_primary_goal.window_label, minutes: @strava_primary_goal.chaster_penalty_seconds / 60) %>
             </p>
           <% else %>
-            <p class="ds-beta-home-muted">Aucun objectif actif pour le moment.</p>
+            <p class="ds-beta-home-muted"><%= t("beta.home.strava_no_goal") %></p>
           <% end %>
-          <%= link_to "Configurer Strava", beta_sources_strava_path, class: "ds-btn ds-btn--ghost ds-btn--sm" %>
+          <%= link_to t("beta.home.configure_strava"), beta_sources_strava_path, class: "ds-btn ds-btn--ghost ds-btn--sm" %>
         </article>
       <% end %>
 
       <% if show_cigarettes %>
         <article class="ds-beta-home-card">
           <div class="ds-beta-home-card-head">
-            <h3 class="ds-beta-home-card-title">Cigarettes</h3>
-            <span class="ds-beta-home-pill ds-beta-home-pill--on">app reliee</span>
+            <h3 class="ds-beta-home-card-title"><%= t("beta.home.cigarettes_title") %></h3>
+            <span class="ds-beta-home-pill ds-beta-home-pill--on"><%= t("beta.home.cigarettes_app") %></span>
           </div>
           <p class="ds-beta-home-metric"><%= @cigarettes_today %></p>
-          <p class="ds-beta-home-muted">aujourd'hui · moyenne 30j: <%= @cigarettes_avg_30d %>/jour</p>
-          <%= link_to "Configurer Cigarettes", beta_sources_cigarettes_path, class: "ds-btn ds-btn--ghost ds-btn--sm" %>
+          <p class="ds-beta-home-muted"><%= t("beta.home.cigarettes_today", avg: @cigarettes_avg_30d) %></p>
+          <%= link_to t("beta.home.configure_cigarettes"), beta_sources_cigarettes_path, class: "ds-btn ds-btn--ghost ds-btn--sm" %>
         </article>
       <% end %>
 
       <% if show_showcase %>
         <article class="ds-beta-home-card">
           <div class="ds-beta-home-card-head">
-            <h3 class="ds-beta-home-card-title">Vitrine</h3>
-            <span class="ds-beta-home-pill ds-beta-home-pill--on">live</span>
+            <h3 class="ds-beta-home-card-title"><%= t("beta.home.showcase_title") %></h3>
+            <span class="ds-beta-home-pill ds-beta-home-pill--on"><%= t("beta.home.pill_live") %></span>
           </div>
           <p class="ds-beta-home-muted">
-            Quiz <strong><%= current_user.showcase_quiz_seconds_per_point %>s/pt</strong> ·
-            Snake <strong><%= current_user.showcase_snake_seconds_per_fruit %>s</strong> ·
-            Dino <strong><%= current_user.showcase_dino_seconds_per_obstacle %>s</strong> ·
-            Tetris <strong><%= current_user.showcase_tetris_seconds_per_line %>s/ligne</strong>
+            <%= t(
+              "beta.home.showcase_rates_html",
+              quiz: current_user.showcase_quiz_seconds_per_point,
+              snake: current_user.showcase_snake_seconds_per_fruit,
+              dino: current_user.showcase_dino_seconds_per_obstacle,
+              tetris: current_user.showcase_tetris_seconds_per_line
+            ) %>
           </p>
-          <%= link_to "Configurer Vitrine", beta_sources_showcase_path, class: "ds-btn ds-btn--ghost ds-btn--sm" %>
+          <%= link_to t("beta.home.configure_showcase"), beta_sources_showcase_path, class: "ds-btn ds-btn--ghost ds-btn--sm" %>
         </article>
       <% end %>
     </div>
   <% else %>
     <div class="ds-beta-control-card">
-      <p class="ds-beta-home-muted">Aucun widget actif dans le catalogue. Active des sources/actions dans les parametres.</p>
-      <%= link_to "Ouvrir le catalogue", beta_settings_path, class: "ds-btn ds-btn--ghost ds-btn--sm" %>
+      <p class="ds-beta-home-muted"><%= t("beta.home.widgets_empty") %></p>
+      <%= link_to t("beta.home.open_catalog"), beta_settings_path, class: "ds-btn ds-btn--ghost ds-btn--sm" %>
     </div>
   <% end %>
 </section>
 
 <section class="ds-beta-section">
   <div class="ds-section-header">
-    <h2 class="ds-section-title">Derniers evenements</h2>
-    <%= link_to "Voir tout dans Catalogue", beta_settings_path, class: "ds-btn ds-btn--ghost ds-btn--sm" %>
+    <h2 class="ds-section-title"><%= t("beta.home.events_title") %></h2>
+    <%= link_to t("beta.home.see_catalog"), beta_settings_path, class: "ds-btn ds-btn--ghost ds-btn--sm" %>
   </div>
   <div class="ds-beta-control-card">
     <% if @recent_time_events.any? %>
@@ -135,7 +138,7 @@
         <% end %>
       </ul>
     <% else %>
-      <p class="ds-beta-home-muted">Aucun evenement recent pour l'instant.</p>
+      <p class="ds-beta-home-muted"><%= t("beta.home.no_events") %></p>
     <% end %>
   </div>
 </section>

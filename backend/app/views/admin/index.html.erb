@@ -1,27 +1,27 @@
-<% content_for :title, "Admin — Domino Chain" %>
+<% content_for :title, t("admin.index_title") %>
 
 <div class="ds-page">
   <div class="ds-container ds-admin-container">
     <header class="ds-header">
-      <%= image_tag "domino-chain-logo.png", alt: "Domino Chain", class: "ds-header-logo", width: 48, height: 48 %>
+      <%= image_tag "domino-chain-logo.png", alt: t("layouts.application.logo_alt"), class: "ds-header-logo", width: 48, height: 48 %>
       <div>
-        <h1 class="ds-title">Admin</h1>
-        <p class="ds-subtitle">Utilisateurs</p>
+        <h1 class="ds-title"><%= t("admin.heading") %></h1>
+        <p class="ds-subtitle"><%= t("admin.users_subtitle") %></p>
       </div>
       <div class="ds-header-actions">
-        <%= link_to "Review", admin_review_path, class: "ds-btn ds-btn--ghost ds-btn--sm" %>
-        <%= link_to "Paramètres", admin_settings_path, class: "ds-btn ds-btn--ghost ds-btn--sm" %>
+        <%= link_to t("admin.review_link"), admin_review_path, class: "ds-btn ds-btn--ghost ds-btn--sm" %>
+        <%= link_to t("admin.settings_link"), admin_settings_path, class: "ds-btn ds-btn--ghost ds-btn--sm" %>
       </div>
     </header>
 
     <% if @controls&.any? %>
       <section class="ds-admin-list">
-        <h2>Controls actifs</h2>
+        <h2><%= t("admin.active_controls_title") %></h2>
         <ul class="ds-device-list">
           <% @controls.each do |control| %>
             <li class="ds-device-list-item">
               <span><%= control.boss.nickname %> → <%= control.beta.nickname %></span>
-              <%= button_to "Libérer", admin_release_control_path(control.id), method: :post, form: { data: { turbo_confirm: "Libérer ce beta ?" } }, class: "ds-btn ds-btn--ghost ds-btn--sm" %>
+              <%= button_to t("admin.release_short"), admin_release_control_path(control.id), method: :post, form: { data: { turbo_confirm: t("admin.release_control_confirm") } }, class: "ds-btn ds-btn--ghost ds-btn--sm" %>
             </li>
           <% end %>
         </ul>
@@ -29,7 +29,7 @@
     <% end %>
 
     <section class="ds-admin-list">
-      <h2>Utilisateurs</h2>
+      <h2><%= t("admin.users_heading") %></h2>
       <% if @users.any? %>
         <ul class="ds-device-list">
           <% @users.each do |user| %>
@@ -40,7 +40,7 @@
                 <span class="ds-device-id"><%= user.role %></span>
               </div>
               <% if user.beta? %>
-                <%= link_to "Voir la page", wallpaper_upload_path(user.nickname), class: "ds-btn ds-btn--primary ds-btn--sm" %>
+                <%= link_to t("admin.view_wallpaper_page"), wallpaper_upload_path(user.nickname), class: "ds-btn ds-btn--primary ds-btn--sm" %>
               <% elsif user.boss? %>
                 <% controlled = user.controls.accepted %>
                 <% if controlled.any? %>
@@ -48,7 +48,7 @@
                     <%= link_to c.beta.nickname, wallpaper_upload_path(c.beta.nickname), class: "ds-btn ds-btn--primary ds-btn--sm" %>
                   <% end %>
                 <% else %>
-                  <span class="ds-text-muted">Aucun beta</span>
+                  <span class="ds-text-muted"><%= t("admin.no_beta") %></span>
                 <% end %>
               <% else %>
                 <span class="ds-text-muted">—</span>
@@ -57,7 +57,7 @@
           <% end %>
         </ul>
       <% else %>
-        <p class="ds-admin-empty">Aucun utilisateur.</p>
+        <p class="ds-admin-empty"><%= t("admin.no_users") %></p>
       <% end %>
     </section>
   </div>

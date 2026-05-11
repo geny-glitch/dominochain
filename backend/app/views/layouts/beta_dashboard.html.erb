@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title><%= content_for(:title) || "Beta — Domino Chain" %></title>
+    <title><%= content_for(:title) || t("layouts.beta_dashboard.default_title") %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="theme-color" content="#0a0a0b">
     <%= csrf_meta_tags %>
@@ -22,8 +22,8 @@
 
   <body class="ds-beta-app-shell">
     <div class="ds-beta-app">
-      <aside class="ds-beta-sidebar" aria-label="Navigation beta">
-        <button type="button" class="ds-beta-sidebar-close" data-beta-nav-close aria-label="Fermer le menu">
+      <aside class="ds-beta-sidebar" aria-label="<%= t("layouts.beta_dashboard.nav_beta") %>">
+        <button type="button" class="ds-beta-sidebar-close" data-beta-nav-close aria-label="<%= t("js.close_menu") %>">
           ✕
         </button>
         <%= link_to beta_dashboard_path, class: "ds-beta-sidebar-brand" do %>
@@ -34,29 +34,29 @@
         <% end %>
 
         <nav class="ds-beta-sidebar-nav">
-          <p class="ds-beta-nav-heading">Vue</p>
-          <%= beta_nav_link "Home", beta_dashboard_path, active: controller.action_name == "home" %>
-          <%= beta_nav_link "Catalogue", beta_settings_path, active: controller.action_name == "settings" %>
+          <p class="ds-beta-nav-heading"><%= t("layouts.beta_dashboard.nav.view") %></p>
+          <%= beta_nav_link t("layouts.beta_dashboard.nav.home"), beta_dashboard_path, active: controller.action_name == "home" %>
+          <%= beta_nav_link t("layouts.beta_dashboard.nav.catalog"), beta_settings_path, active: controller.action_name == "settings" %>
 
           <% if beta_visible_sidebar_source_items.any? %>
-            <p class="ds-beta-nav-heading">Sources</p>
+            <p class="ds-beta-nav-heading"><%= t("layouts.beta_dashboard.nav.sources") %></p>
             <% beta_visible_sidebar_source_items.each do |item| %>
               <%= beta_nav_link item[:label], public_send(item[:path_helper]), active: controller.action_name == item[:action_name] %>
             <% end %>
           <% end %>
 
           <% if beta_visible_sidebar_action_items.any? %>
-            <p class="ds-beta-nav-heading">Actions</p>
+            <p class="ds-beta-nav-heading"><%= t("layouts.beta_dashboard.nav.actions") %></p>
             <% beta_visible_sidebar_action_items.each do |item| %>
               <%= beta_nav_link item[:label], public_send(item[:path_helper]), active: controller.action_name == item[:action_name] %>
             <% end %>
           <% end %>
 
-          <p class="ds-beta-nav-heading">Espace perso</p>
-          <%= beta_nav_link "Compte", beta_account_path, active: %w[account task].include?(controller.action_name) %>
+          <p class="ds-beta-nav-heading"><%= t("layouts.beta_dashboard.nav.personal") %></p>
+          <%= beta_nav_link t("layouts.beta_dashboard.nav.account"), beta_account_path, active: %w[account task].include?(controller.action_name) %>
         </nav>
       </aside>
-      <button type="button" class="ds-beta-sidebar-overlay" data-beta-nav-close aria-label="Fermer le menu"></button>
+      <button type="button" class="ds-beta-sidebar-overlay" data-beta-nav-close aria-label="<%= t("js.close_menu") %>"></button>
 
       <div class="ds-beta-main">
         <div class="ds-beta-mobile-topbar">
@@ -67,7 +67,7 @@
                 <span class="ds-beta-mobile-navbar-wordmark wordmark">DominoChain</span>
               </div>
             <% end %>
-            <button type="button" class="ds-beta-mobile-nav-toggle" data-beta-nav-open aria-label="Ouvrir le menu">
+            <button type="button" class="ds-beta-mobile-nav-toggle" data-beta-nav-open aria-label="<%= t("js.open_menu") %>">
               ☰
             </button>
           </div>
@@ -86,6 +86,10 @@
 
     <script>
     (function() {
+      var BGI18N = <%= raw({
+        copied: t("js.copied"), done: t("js.done"), finished: t("js.finished"),
+        cdDay: t("js.countdown_day"), cdHour: t("js.countdown_hour"), cdMin: t("js.countdown_min"), cdSec: t("js.countdown_sec")
+      }.to_json) %>;
       document.querySelectorAll('[data-copy-target]').forEach(function(btn) {
         btn.addEventListener('click', function() {
           var id = btn.dataset.copyTarget;
@@ -94,7 +98,7 @@
           var text = el.textContent || el.innerText;
           navigator.clipboard.writeText(text).then(function() {
             var orig = btn.textContent;
-            btn.textContent = 'Copié !';
+            btn.textContent = BGI18N.copied;
             setTimeout(function() { btn.textContent = orig; }, 1500);
           });
         });
@@ -106,20 +110,20 @@
         if (endDateStr) {
           var endTime = new Date(endDateStr).getTime();
           function formatRemaining(sec) {
-            if (sec <= 0) return 'Terminé';
+            if (sec <= 0) return BGI18N.finished;
             var d = Math.floor(sec / 86400);
             var h = Math.floor((sec % 86400) / 3600);
             var m = Math.floor((sec % 3600) / 60);
             var s = sec % 60;
-            if (d > 0) return d + 'j ' + h + 'h ' + m + 'min ' + s + 's';
-            if (h > 0) return h + 'h ' + m + 'min ' + s + 's';
-            if (m > 0) return m + 'min ' + s + 's';
-            return s + 's';
+            if (d > 0) return d + BGI18N.cdDay + h + BGI18N.cdHour + m + BGI18N.cdMin + s + BGI18N.cdSec;
+            if (h > 0) return h + BGI18N.cdHour + m + BGI18N.cdMin + s + BGI18N.cdSec;
+            if (m > 0) return m + BGI18N.cdMin + s + BGI18N.cdSec;
+            return s + BGI18N.cdSec;
           }
           function tick() {
             var remaining = Math.floor((endTime - Date.now()) / 1000);
             if (remaining <= 0) {
-              countdownEl.textContent = 'Terminé';
+              countdownEl.textContent = BGI18N.finished;
               return;
             }
             countdownEl.textContent = formatRemaining(remaining);

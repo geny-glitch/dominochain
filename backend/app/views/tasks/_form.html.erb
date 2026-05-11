@@ -1,47 +1,47 @@
 <%= form_with url: wallpaper_tasks_path(@nickname, device_id: @device_id), method: :post, local: true, class: "ds-form ds-task-form", id: "task-form" do |f| %>
   <div class="ds-form-group">
-    <label for="task_name" class="ds-form-label">Nom</label>
-    <input type="text" name="task[name]" id="task_name" class="ds-input" required placeholder='Ex: Ecrire 100 fois "je serai obéissant"'>
+    <label for="task_name" class="ds-form-label"><%= t("tasks_form.name") %></label>
+    <input type="text" name="task[name]" id="task_name" class="ds-input" required placeholder="<%= t("tasks_form.name_placeholder") %>">
   </div>
 
   <div class="ds-form-group">
-    <label for="task_description" class="ds-form-label">Description</label>
-    <textarea name="task[description]" id="task_description" class="ds-input ds-textarea" rows="3" placeholder="Détails de la tâche..."></textarea>
+    <label for="task_description" class="ds-form-label"><%= t("tasks_form.description") %></label>
+    <textarea name="task[description]" id="task_description" class="ds-input ds-textarea" rows="3" placeholder="<%= t("tasks_form.description_placeholder") %>"></textarea>
   </div>
 
   <div class="ds-form-group">
-    <label for="task_expected_proof" class="ds-form-label">Preuve attendue</label>
-    <textarea name="task[expected_proof]" id="task_expected_proof" class="ds-input ds-textarea" rows="2" placeholder="Ex: Photo des lignes ou lien vers writeforme"></textarea>
+    <label for="task_expected_proof" class="ds-form-label"><%= t("tasks_form.expected_proof") %></label>
+    <textarea name="task[expected_proof]" id="task_expected_proof" class="ds-input ds-textarea" rows="2" placeholder="<%= t("tasks_form.expected_proof_placeholder") %>"></textarea>
   </div>
 
   <div class="ds-form-group">
-    <span class="ds-form-label">Deadline</span>
+    <span class="ds-form-label"><%= t("tasks_form.deadline") %></span>
     <div class="ds-deadline-options">
       <label class="ds-radio-label">
         <input type="radio" name="deadline_mode" value="duration" checked>
-        <span>Dans</span>
+        <span><%= t("tasks_form.in_duration") %></span>
         <select name="deadline_duration" class="ds-select">
-          <option value="15">15 min</option>
-          <option value="30">30 min</option>
-          <option value="60">1 h</option>
-          <option value="120">2 h</option>
-          <option value="180">3 h</option>
-          <option value="360">6 h</option>
-          <option value="720">12 h</option>
-          <option value="1440">24 h</option>
+          <option value="15"><%= t("tasks_form.option_15m") %></option>
+          <option value="30"><%= t("tasks_form.option_30m") %></option>
+          <option value="60"><%= t("tasks_form.option_1h") %></option>
+          <option value="120"><%= t("tasks_form.option_2h") %></option>
+          <option value="180"><%= t("tasks_form.option_3h") %></option>
+          <option value="360"><%= t("tasks_form.option_6h") %></option>
+          <option value="720"><%= t("tasks_form.option_12h") %></option>
+          <option value="1440"><%= t("tasks_form.option_24h") %></option>
         </select>
       </label>
       <label class="ds-radio-label">
         <input type="radio" name="deadline_mode" value="tonight">
-        <span>Ce soir 18h</span>
+        <span><%= t("tasks_form.tonight") %></span>
       </label>
       <label class="ds-radio-label">
         <input type="radio" name="deadline_mode" value="tomorrow">
-        <span>Demain 9h</span>
+        <span><%= t("tasks_form.tomorrow") %></span>
       </label>
       <label class="ds-radio-label">
         <input type="radio" name="deadline_mode" value="datetime">
-        <span>Date/heure précise</span>
+        <span><%= t("tasks_form.datetime_exact") %></span>
       </label>
     </div>
     <div id="datetime-wrapper" class="ds-datetime-wrapper" style="display: none;">
@@ -53,18 +53,18 @@
   <div class="ds-form-group">
     <label class="ds-checkbox-label">
       <input type="checkbox" name="task[trigger_alarm]" value="1" id="task_trigger_alarm">
-      <span>Déclencher une alarme sur le téléphone</span>
+      <span><%= t("tasks_form.alarm") %></span>
     </label>
     <div id="alarm-sound-options" class="ds-alarm-sound-options" style="display: none;">
-      <span class="ds-form-label">Son d'alarme</span>
+      <span class="ds-form-label"><%= t("tasks_form.alarm_sound") %></span>
       <select name="task[alarm_sound]" class="ds-select">
-        <option value="urgent">Alerte forte (recommandé)</option>
-        <option value="default">Alarme réveil (système)</option>
+        <option value="urgent"><%= t("tasks_form.alarm_urgent") %></option>
+        <option value="default"><%= t("tasks_form.alarm_default") %></option>
       </select>
     </div>
   </div>
 
-  <button type="submit" class="ds-btn ds-btn--primary">Créer la tâche</button>
+  <button type="submit" class="ds-btn ds-btn--primary"><%= t("tasks_form.submit") %></button>
 <% end %>
 
 <script>

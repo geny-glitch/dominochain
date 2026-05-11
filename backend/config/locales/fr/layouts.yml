@@ -1,0 +1,16 @@
+fr:
+  layouts:
+    beta_dashboard:
+      default_title: "Beta — Domino Chain"
+      nav_beta: "Navigation beta"
+      nav:
+        view: "Vue"
+        home: "Home"
+        catalog: "Catalogue"
+        sources: "Sources"
+        actions: "Actions"
+        personal: "Espace perso"
+        account: "Compte"
+    application:
+      default_title: "Domino Chain"
+      logo_alt: "Domino Chain"

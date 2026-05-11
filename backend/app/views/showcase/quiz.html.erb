@@ -11,7 +11,7 @@
     </header>
 
     <div class="quiz-nav">
-      <%= link_to "← Retour", showcase_path(@beta.nickname), class: "ds-btn ds-btn--ghost ds-btn--sm" %>
+      <%= link_to t("showcase.common.back"), showcase_path(@beta.nickname), class: "ds-btn ds-btn--ghost ds-btn--sm" %>
     </div>
 
     <div id="quiz-intro" class="quiz-intro">
@@ -78,7 +78,7 @@
         </select>
       </div>
       <div id="quiz-leaderboard-list" class="quiz-leaderboard-list">
-        <p class="quiz-leaderboard-empty">Aucun score enregistré</p>
+        <p class="quiz-leaderboard-empty"><%= t("showcase.snake.empty") %></p>
       </div>
       <div id="quiz-leaderboard-pagination" class="quiz-leaderboard-pagination" hidden>
         <button type="button" class="ds-btn ds-btn--ghost ds-btn--sm" id="quiz-lb-prev" disabled>Précédent</button>
@@ -88,6 +88,8 @@
     </section>
   </div>
 </div>
+
+<div id="quiz-i18n-strings" data-lb-empty="<%= j t("showcase.snake.empty") %>" data-page-of="<%= j t("showcase.snake.page_of") %>" hidden></div>
 
 <% if flash[:notice] %>
   <div class="ds-flash ds-flash--success"><%= flash[:notice] %></div>
@@ -102,6 +104,10 @@
   const TIME_PER_QUESTION = 60; // comme le jeu radio : 60 s, erreur ne reset pas le timer
 
   const nickname = document.querySelector(".quiz-page").dataset.nickname;
+  const quizI18nEl = document.getElementById("quiz-i18n-strings");
+  const quizI18n = quizI18nEl ? quizI18nEl.dataset : {};
+  const LB_EMPTY_HTML = "<p class=\"quiz-leaderboard-empty\">" + (quizI18n.lbEmpty || "") + "</p>";
+  const PAGE_OF_TPL = quizI18n.pageOf || "";
   const LEADERBOARD_PER_PAGE = 10;
   const urls = {
     createSession: `/showcase/${nickname}/sessions`,
@@ -408,7 +414,8 @@
     lbPagEl.hidden = false;
     lbPrevBtn.disabled = page <= 1;
     lbNextBtn.disabled = page >= totalPages;
-    lbPageLabel.textContent = "Page " + page + " / " + totalPages;
+    const tpl = PAGE_OF_TPL || "Page %{page} / %{total}";
+    lbPageLabel.textContent = tpl.replace("%{page}", String(page)).replace("%{total}", String(totalPages));
   }
 
   async function loadLeaderboard() {
@@ -416,7 +423,7 @@
       const res = await fetchJson(buildLeaderboardUrl());
       const data = await res.json();
       if (data.error) {
-        leaderboardList.innerHTML = "<p class=\"quiz-leaderboard-empty\">Aucun score enregistré</p>";
+        leaderboardList.innerHTML = LB_EMPTY_HTML;
         lbPagEl.hidden = true;
         return;
       }
@@ -444,11 +451,11 @@
           "</tbody></table></div>";
         renderLeaderboardPagination(data);
       } else {
-        leaderboardList.innerHTML = "<p class=\"quiz-leaderboard-empty\">Aucun score enregistré</p>";
+        leaderboardList.innerHTML = LB_EMPTY_HTML;
         lbPagEl.hidden = true;
       }
     } catch {
-      leaderboardList.innerHTML = "<p class=\"quiz-leaderboard-empty\">Aucun score enregistré</p>";
+      leaderboardList.innerHTML = LB_EMPTY_HTML;
       lbPagEl.hidden = true;
     }
   }

@@ -1,16 +1,16 @@
 <section class="ds-beta-section ds-beta-section--first">
-  <h2 class="ds-section-title">Installation (WebSocket)</h2>
+  <h2 class="ds-section-title"><%= t("beta.puryfi.install_title") %></h2>
   <details class="ds-puryfi-install-drawer" <%= "open" unless @puryfi_installation_collapsed %>>
     <summary class="ds-puryfi-install-summary">
-      <span class="ds-puryfi-install-summary-title">URL du plugin PuryFi</span>
+      <span class="ds-puryfi-install-summary-title"><%= t("beta.puryfi.drawer_url_title") %></span>
       <span class="ds-puryfi-install-summary-status">
         <% if @puryfi_events_count.to_i.positive? %>
           <span class="ds-beta-home-pill ds-beta-home-pill--on">
             <span class="ds-puryfi-inline-icon" aria-hidden="true">✓</span>
-            Configuré · <%= @puryfi_events_count %> event<%= "s" if @puryfi_events_count > 1 %>
+            <%= t("beta.puryfi.status_ready", count: @puryfi_events_count) %>
           </span>
         <% else %>
-          <span class="ds-beta-home-pill">En attente du 1er event</span>
+          <span class="ds-beta-home-pill"><%= t("beta.puryfi.status_waiting") %></span>
         <% end %>
         <span class="ds-puryfi-toggle-icon" aria-hidden="true">▾</span>
       </span>
@@ -18,7 +18,7 @@
 
     <div class="ds-puryfi-install-body">
       <p class="ds-beta-control-text">
-        Colle cette URL dans ton plugin PuryFi (WebSocket). Elle identifie ton compte — pas besoin de token API BG sur le serveur Fly.
+        <%= t("beta.puryfi.ws_hint") %>
       </p>
 
       <% if @puryfi_ws_url.present? %>
@@ -27,31 +27,31 @@
         </p>
 
         <div class="ds-puryfi-install-actions">
-          <button type="button" class="ds-btn ds-btn--secondary ds-btn--sm" data-copy-target="puryfi-ws-url">Copier l’URL</button>
-          <%= button_to "Régénérer l’URL", beta_puryfi_regenerate_token_path, method: :post, form: { data: { turbo_confirm: "Les plugins qui utilisent l’ancienne URL cesseront de fonctionner. Continuer ?" } }, class: "ds-btn ds-btn--secondary ds-btn--sm" %>
+          <button type="button" class="ds-btn ds-btn--secondary ds-btn--sm" data-copy-target="puryfi-ws-url"><%= t("beta.puryfi.copy_url") %></button>
+          <%= button_to t("beta.puryfi.regenerate"), beta_puryfi_regenerate_token_path, method: :post, form: { data: { turbo_confirm: t("beta.puryfi.regenerate_confirm") } }, class: "ds-btn ds-btn--secondary ds-btn--sm" %>
         </div>
       <% end %>
 
       <% if @puryfi_last_event_at.present? %>
-        <p class="ds-beta-control-hint">Dernier event reçu : <%= l(@puryfi_last_event_at, format: :short) %>.</p>
+        <p class="ds-beta-control-hint"><%= t("beta.puryfi.last_event", time: l(@puryfi_last_event_at, format: :short)) %></p>
       <% end %>
     </div>
   </details>
 </section>
 
 <section class="ds-beta-section ds-beta-section--tight-top">
-  <h2 class="ds-section-title">Configuration</h2>
+  <h2 class="ds-section-title"><%= t("beta.puryfi.config_title") %></h2>
   <div class="ds-beta-control-card">
     <%= form_with url: beta_puryfi_path, method: :patch, local: true, class: "ds-form" do %>
       <div class="ds-form-group ds-puryfi-score-group">
-        <%= label_tag :puryfi_min_score, "Score minimum de détection (0–100 %)", class: "ds-form-label" %>
+        <%= label_tag :puryfi_min_score, t("beta.puryfi.min_score_label"), class: "ds-form-label" %>
         <%= number_field_tag :puryfi_min_score, (current_user.puryfi_min_score * 100).round, min: 0, max: 100, step: 1, class: "ds-input" %>
         <p class="ds-beta-control-hint ds-puryfi-score-hint">
-          PuryFi envoie un score en pourcentage. Exemple : 70 = moins strict, 90 = plus strict.
+          <%= t("beta.puryfi.min_score_hint") %>
         </p>
       </div>
 
-      <p class="ds-beta-control-hint ds-puryfi-config-hint">Secondes ajoutées au lock par étiquette détectée (0 = ignorée).</p>
+      <p class="ds-beta-control-hint ds-puryfi-config-hint"><%= t("beta.puryfi.seconds_hint") %></p>
 
       <div class="ds-puryfi-label-grid">
         <% @puryfi_label_ids.each do |id| %>
@@ -68,14 +68,14 @@
               <%= label_tag "puryfi_seconds_#{id}", PuryfiLabel.name_for(id), class: "ds-form-label ds-puryfi-label-title" %>
               <div class="ds-puryfi-seconds-field">
                 <%= number_field_tag "puryfi_seconds_per_label[#{id}]", (current_user.puryfi_seconds_per_label[id.to_s] || 0), min: 0, max: 86_400, class: "ds-input ds-puryfi-seconds-input" %>
-                <span class="ds-puryfi-seconds-unit">sec</span>
+                <span class="ds-puryfi-seconds-unit"><%= t("beta.puryfi.seconds_unit") %></span>
               </div>
             </div>
           </div>
         <% end %>
       </div>
 
-      <%= submit_tag "Enregistrer PuryFi", class: "ds-btn ds-btn--primary" %>
+      <%= submit_tag t("beta.puryfi.submit"), class: "ds-btn ds-btn--primary" %>
     <% end %>
   </div>
 </section>

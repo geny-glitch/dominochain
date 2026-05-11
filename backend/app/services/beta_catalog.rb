@@ -5,55 +5,37 @@ class BetaCatalog
   SOURCES_KEY = "sources"
   ACTIONS_KEY = "actions"
 
-  SOURCE_ITEMS = [
+  SOURCE_DEFS = [
     {
       id: "puryfi",
-      label: "Purify (PuryFi)",
-      subtitle: "Extension navigateur · détections par étiquette",
-      events: "Événement: detection.label",
       path_helper: :beta_sources_puryfi_path,
       action_name: "sources_puryfi"
     },
     {
       id: "cigarettes",
-      label: "Cigarettes",
-      subtitle: "App Android · déclarations manuelles",
-      events: "Événement: cigarette.created",
       path_helper: :beta_sources_cigarettes_path,
       action_name: "sources_cigarettes"
     },
     {
       id: "strava",
-      label: "Strava",
-      subtitle: "Objectifs glissants (1, 7 ou X jours)",
-      events: "Événement: goal.failed",
       path_helper: :beta_sources_strava_path,
       action_name: "sources_strava"
     },
     {
       id: "showcase",
-      label: "Vitrine",
-      subtitle: "Page publique, QR, jeux, backdoor",
-      events: "Événements: Snake, Quiz, Tétris, Dino, backdoor",
       path_helper: :beta_sources_showcase_path,
       action_name: "sources_showcase"
     }
   ].freeze
 
-  ACTION_ITEMS = [
+  ACTION_DEFS = [
     {
       id: "chaster",
-      label: "Chaster",
-      subtitle: "Lock principal · temps restant",
-      events: "Consomme le temps envoyé par les sources",
       path_helper: :beta_actions_chaster_path,
       action_name: "actions_chaster"
     },
     {
       id: "pishock",
-      label: "PiShock",
-      subtitle: "Collier / shocker · réactions physiques",
-      events: "Actions: zap, intensité multipliée par facteur Z",
       path_helper: :beta_actions_pishock_path,
       action_name: "actions_pishock"
     }
@@ -78,19 +60,19 @@ class BetaCatalog
   end
 
   def source_items
-    SOURCE_ITEMS
+    SOURCE_DEFS.map { |d| decorate_source(d) }
   end
 
   def action_items
-    ACTION_ITEMS
+    ACTION_DEFS.map { |d| decorate_action(d) }
   end
 
   def visible_source_items
-    SOURCE_ITEMS.select { |item| source_enabled?(item[:id]) }
+    source_items.select { |item| source_enabled?(item[:id]) }
   end
 
   def visible_action_items
-    ACTION_ITEMS.select { |item| action_enabled?(item[:id]) }
+    action_items.select { |item| action_enabled?(item[:id]) }
   end
 
   def source_enabled?(item_id)
@@ -131,11 +113,31 @@ class BetaCatalog
   def item_label(kind:, item_id:)
     key = kind_to_key(kind)
     return nil unless key
+    return nil unless allowed_item_ids_for(key).include?(item_id.to_s)
 
-    catalog_items_for(key).find { |item| item[:id] == item_id.to_s }&.fetch(:label, nil)
+    scope = key == SOURCES_KEY ? "sources" : "actions"
+    I18n.t("beta.catalog.#{scope}.#{item_id}.label")
   end
 
   private
+
+  def decorate_source(definition)
+    id = definition[:id]
+    definition.merge(
+      label: I18n.t("beta.catalog.sources.#{id}.label"),
+      subtitle: I18n.t("beta.catalog.sources.#{id}.subtitle"),
+      events: I18n.t("beta.catalog.sources.#{id}.events")
+    )
+  end
+
+  def decorate_action(definition)
+    id = definition[:id]
+    definition.merge(
+      label: I18n.t("beta.catalog.actions.#{id}.label"),
+      subtitle: I18n.t("beta.catalog.actions.#{id}.subtitle"),
+      events: I18n.t("beta.catalog.actions.#{id}.events")
+    )
+  end
 
   def kind_to_key(kind)
     case kind.to_s
@@ -146,11 +148,11 @@ class BetaCatalog
   end
 
   def allowed_item_ids_for(key)
-    catalog_items_for(key).map { |item| item[:id] }
+    catalog_defs_for(key).map { |item| item[:id] }
   end
 
-  def catalog_items_for(key)
-    key == SOURCES_KEY ? SOURCE_ITEMS : ACTION_ITEMS
+  def catalog_defs_for(key)
+    key == SOURCES_KEY ? SOURCE_DEFS : ACTION_DEFS
   end
 
   def item_enabled?(key, item_id)

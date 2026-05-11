@@ -12,11 +12,11 @@ module BetaAccessControl
   def require_beta_access!
     @nickname = params[:nickname]
     @beta = User.find_by(nickname: @nickname)
-    return redirect_to(root_path, alert: "Beta non trouvé.") unless @beta
+    return redirect_to(root_path, alert: I18n.t("flash.beta_access.beta_not_found")) unless @beta
 
     unless user_signed_in?
       store_location_for(:user, request.fullpath)
-      redirect_to new_user_session_path, alert: "Connectez-vous pour accéder."
+      redirect_to new_user_session_path, alert: I18n.t("flash.beta_access.sign_in_to_access")
       return
     end
 
@@ -35,7 +35,7 @@ module BetaAccessControl
     if @device.nil?
       # Boss/Admin a le contrôle mais le beta n'a pas de device : éviter la boucle avec control_accept_from_link
       redirect_target = current_user.admin? ? admin_path : dashboard_path
-      return redirect_to redirect_target, alert: "Aucun device enregistré. Le beta #{@beta.nickname} doit ouvrir l'app d'abord."
+      return redirect_to redirect_target, alert: I18n.t("flash.beta_access.no_device", nickname: @beta.nickname)
     end
   end
 end

@@ -15,12 +15,12 @@
     <% end %>
 
     <header class="ds-header">
-      <%= image_tag "domino-chain-logo.png", alt: "Domino Chain", class: "ds-header-logo", width: 48, height: 48 %>
+      <%= image_tag "domino-chain-logo.png", alt: t("wallpaper.logo_alt"), class: "ds-header-logo", width: 48, height: 48 %>
       <div class="ds-header-text">
         <h1 class="ds-title wordmark">DominoChain</h1>
         <p class="ds-subtitle ds-subtitle--with-icon">
           <% if @device %>
-            <button type="button" class="ds-permissions-icon ds-permissions-icon--<%= permissions_all_ok ? 'ok' : 'warning' %>" id="permissions-icon-btn" title="<%= permissions_all_ok ? 'Autorisations OK' : 'Autorisations manquantes' %>" aria-label="<%= permissions_all_ok ? 'Autorisations OK' : 'Autorisations manquantes' %>">
+            <button type="button" class="ds-permissions-icon ds-permissions-icon--<%= permissions_all_ok ? 'ok' : 'warning' %>" id="permissions-icon-btn" title="<%= permissions_all_ok ? t("wallpaper.permissions_ok_title") : t("wallpaper.permissions_missing_title") %>" aria-label="<%= permissions_all_ok ? t("wallpaper.permissions_ok_title") : t("wallpaper.permissions_missing_title") %>">
               <% if permissions_all_ok %>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
               <% else %>
@@ -34,19 +34,19 @@
 
     <% if @device %>
       <dialog id="permissions-dialog" class="ds-dialog">
-        <button type="button" class="ds-dialog-close-btn" id="permissions-dialog-close" title="Fermer" aria-label="Fermer">
+        <button type="button" class="ds-dialog-close-btn" id="permissions-dialog-close" title="<%= t("wallpaper.dialog_close") %>" aria-label="<%= t("wallpaper.dialog_close") %>">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
         <div class="ds-dialog-content">
           <% if permissions_all_ok %>
-            <p class="ds-dialog-text">Les autorisations sont correctement configurées. L'app fonctionnera correctement.</p>
+            <p class="ds-dialog-text"><%= t("wallpaper.permissions_ok_lead") %></p>
             <ul class="ds-permissions-checklist">
               <% Device::PERMISSION_LABELS.each_value do |label| %>
                 <li class="ds-permissions-checklist-item ds-permissions-checklist-item--ok"><span class="ds-permissions-check">✓</span> <%= label %></li>
               <% end %>
             </ul>
           <% else %>
-            <p class="ds-dialog-text">Il manque certaines autorisations sur le téléphone du beta. Sans elles, les captures d'écran et les notifications peuvent ne pas fonctionner.</p>
+            <p class="ds-dialog-text"><%= t("wallpaper.permissions_missing_lead") %></p>
             <ul class="ds-permissions-checklist">
               <% missing_list = @device.permissions_missing_list %>
               <% Device::PERMISSION_LABELS.each do |key, label| %>
@@ -57,7 +57,7 @@
               <% end %>
             </ul>
             <div class="ds-dialog-actions">
-              <%= button_to "Envoyer une notification au beta", wallpaper_grant_permissions_request_path(@nickname, device_id: @device_id), method: :post, class: "ds-btn ds-btn--primary ds-btn--sm" %>
+              <%= button_to t("wallpaper.grant_permissions_notify"), wallpaper_grant_permissions_request_path(@nickname, device_id: @device_id), method: :post, class: "ds-btn ds-btn--primary ds-btn--sm" %>
             </div>
           <% end %>
         </div>
@@ -69,15 +69,15 @@
       <div class="ds-boss-cta-grid">
         <%= button_to wallpaper_screenshot_request_path(@nickname, device_id: @device_id), method: :post, class: "ds-boss-cta-card", form: { class: "ds-boss-cta-form" } do %>
           <svg class="ds-boss-cta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="12" cy="12" r="4"/><path d="M16 8l4-4"/></svg>
-          <span class="ds-boss-cta-label">Screenshot</span>
+          <span class="ds-boss-cta-label"><%= t("wallpaper.cta_screenshot") %></span>
         <% end %>
         <%= link_to wallpaper_upload_new_path(@nickname, device_id: @device_id), class: "ds-boss-cta-card" do %>
           <svg class="ds-boss-cta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-          <span class="ds-boss-cta-label">Fond d'écran</span>
+          <span class="ds-boss-cta-label"><%= t("wallpaper.cta_wallpaper") %></span>
         <% end %>
         <button type="button" class="ds-boss-cta-card" id="task-cta-btn">
           <svg class="ds-boss-cta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 14h6"/><path d="M9 18h6"/></svg>
-          <span class="ds-boss-cta-label">Tâche</span>
+          <span class="ds-boss-cta-label"><%= t("wallpaper.cta_task") %></span>
         </button>
       </div>
 
@@ -90,39 +90,39 @@
           <% if current_wallpaper&.image&.attached? %>
             <% variant = @device.screen_width.present? && @device.screen_height.present? ? current_wallpaper.variant_for(@device) : current_wallpaper.image %>
             <div class="ds-boss-preview-thumb">
-              <%= image_tag variant, alt: "Fond d'écran actuel", class: "ds-wallpaper-img" %>
+              <%= image_tag variant, alt: t("wallpaper.alt_chosen_wallpaper"), class: "ds-wallpaper-img" %>
             </div>
             <div class="ds-wallpaper-meta">
-              <span>Fond d'écran choisi · <%= current_application.applied_at.strftime("%d/%m %H:%M") %></span>
+              <span><%= t("wallpaper.chosen_wallpaper_at", datetime: l(current_application.applied_at, format: :short)) %></span>
             </div>
           <% else %>
-            <p class="ds-boss-preview-placeholder">Aucun fond d'écran</p>
-            <%= link_to "Choisir un fond d'écran", wallpaper_upload_new_path(@nickname, device_id: @device_id), class: "ds-boss-preview-cta" %>
+            <p class="ds-boss-preview-placeholder"><%= t("wallpaper.no_wallpaper") %></p>
+            <%= link_to t("wallpaper.choose_wallpaper"), wallpaper_upload_new_path(@nickname, device_id: @device_id), class: "ds-boss-preview-cta" %>
           <% end %>
         </div>
         <div class="ds-boss-preview-card <%= 'ds-boss-preview-card--empty' unless latest_screenshot&.image&.attached? %>">
           <% if latest_screenshot&.image&.attached? %>
             <div class="ds-boss-preview-thumb">
-              <%= image_tag latest_screenshot.image, alt: "Dernière capture", class: "ds-wallpaper-img" %>
-              <a href="<%= url_for(latest_screenshot.image) %>" download="screenshot-<%= latest_screenshot.captured_at.strftime('%Y%m%d-%H%M') %>.jpg" class="ds-download-icon" title="Télécharger">
+              <%= image_tag latest_screenshot.image, alt: t("wallpaper.alt_latest_screenshot"), class: "ds-wallpaper-img" %>
+              <a href="<%= url_for(latest_screenshot.image) %>" download="screenshot-<%= latest_screenshot.captured_at.strftime('%Y%m%d-%H%M') %>.jpg" class="ds-download-icon" title="<%= t("wallpaper.download") %>">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               </a>
             </div>
             <div class="ds-wallpaper-meta">
-              <span>Dernière capture · <%= latest_screenshot.captured_at.strftime("%d/%m %H:%M") %></span>
+              <span><%= t("wallpaper.latest_screenshot_at", datetime: l(latest_screenshot.captured_at, format: :short)) %></span>
             </div>
           <% else %>
-            <p class="ds-boss-preview-placeholder">Aucune capture</p>
-            <%= button_to "Prendre un screenshot", wallpaper_screenshot_request_path(@nickname, device_id: @device_id), method: :post, class: "ds-boss-preview-cta ds-btn ds-btn--ghost ds-btn--sm" %>
+            <p class="ds-boss-preview-placeholder"><%= t("wallpaper.no_screenshot") %></p>
+            <%= button_to t("wallpaper.take_screenshot"), wallpaper_screenshot_request_path(@nickname, device_id: @device_id), method: :post, class: "ds-boss-preview-cta ds-btn ds-btn--ghost ds-btn--sm" %>
           <% end %>
         </div>
       </div>
 
       <%# Historique des tâches %>
       <section class="ds-task-section" id="task-form-section">
-        <h2 class="ds-section-title">Historique des tâches</h2>
+        <h2 class="ds-section-title"><%= t("wallpaper.task_history_title") %></h2>
         <details id="task-form-details" class="ds-task-form-details">
-          <summary class="ds-task-form-summary">Créer une tâche</summary>
+          <summary class="ds-task-form-summary"><%= t("wallpaper.create_task_summary") %></summary>
           <%= render "tasks/form" %>
         </details>
         <% if @tasks.any? %>
@@ -132,19 +132,19 @@
                 <div class="ds-task-card-info">
                   <span class="ds-task-card-name"><%= task.name %></span>
                   <div class="ds-task-card-meta">
-                    Deadline: <%= task.deadline_at.strftime("%d/%m %H:%M") %>
+                    <%= t("wallpaper.task_deadline", datetime: l(task.deadline_at, format: :short)) %>
                     · <span class="ds-task-status ds-task-status--<%= task.effective_status %>"><%= task.effective_status %></span>
                     <% if task.proof_pending? %>
-                      · <span class="ds-task-status ds-task-status--pending">Preuve en attente</span>
+                      · <span class="ds-task-status ds-task-status--pending"><%= t("wallpaper.proof_pending") %></span>
                     <% end %>
                   </div>
                 </div>
                 <div class="ds-task-card-actions">
-                  <%= link_to "Voir", wallpaper_task_path(@nickname, task, device_id: @device_id), class: "ds-btn ds-btn--secondary ds-btn--sm" %>
+                  <%= link_to t("wallpaper.view"), wallpaper_task_path(@nickname, task, device_id: @device_id), class: "ds-btn ds-btn--secondary ds-btn--sm" %>
                   <% if task.expired? %>
-                    <%= link_to "Punir", wallpaper_task_path(@nickname, task, device_id: @device_id), class: "ds-btn ds-btn--primary ds-btn--sm" %>
+                    <%= link_to t("wallpaper.punish"), wallpaper_task_path(@nickname, task, device_id: @device_id), class: "ds-btn ds-btn--primary ds-btn--sm" %>
                   <% end %>
-                  <%= button_to wallpaper_task_destroy_path(@nickname, task, device_id: @device_id), method: :delete, form: { data: { turbo_confirm: "Supprimer cette tâche ?" }, class: "ds-btn-icon-form" }, class: "ds-btn-icon ds-btn-icon--delete", title: "Supprimer" do %>
+                  <%= button_to wallpaper_task_destroy_path(@nickname, task, device_id: @device_id), method: :delete, form: { data: { turbo_confirm: t("wallpaper.destroy_task_confirm") }, class: "ds-btn-icon-form" }, class: "ds-btn-icon ds-btn-icon--delete", title: t("wallpaper.delete") do %>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
                   <% end %>
                 </div>
@@ -156,7 +156,7 @@
 
       <%# Historique des screenshots %>
       <section class="ds-history">
-        <h2 class="ds-section-title">Historique des screenshots</h2>
+        <h2 class="ds-section-title"><%= t("wallpaper.screenshot_history_title") %></h2>
         <% screenshots_with_images = @screenshots.select { |s| s.image.attached? } %>
         <% if screenshots_with_images.any? %>
           <div class="ds-history-expandable" data-initial="6" data-step="9" data-total="<%= screenshots_with_images.size %>">
@@ -165,12 +165,12 @@
                 <% screenshots_with_images.each do |screenshot| %>
                   <div class="ds-wallpaper-card ds-history-item">
                     <div class="ds-wallpaper-thumb" style="aspect-ratio: <%= device_ratio %>;">
-                      <%= image_tag screenshot.image, alt: "Screenshot", class: "ds-wallpaper-img" %>
-                      <a href="<%= url_for(screenshot.image) %>" download="screenshot-<%= screenshot.captured_at.strftime('%Y%m%d-%H%M') %>.jpg" class="ds-download-icon" title="Télécharger">
+                      <%= image_tag screenshot.image, alt: t("wallpaper.screenshot_alt"), class: "ds-wallpaper-img" %>
+                      <a href="<%= url_for(screenshot.image) %>" download="screenshot-<%= screenshot.captured_at.strftime('%Y%m%d-%H%M') %>.jpg" class="ds-download-icon" title="<%= t("wallpaper.download") %>">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                       </a>
                       <% if current_user.admin? %>
-                        <%= button_to wallpaper_destroy_screenshot_path(@nickname, screenshot.id, device_id: @device_id), method: :delete, form: { data: { turbo_confirm: "Supprimer ce screenshot ?" }, class: "ds-btn-icon-form ds-btn-icon-form--overlay" }, class: "ds-btn-icon ds-btn-icon--delete ds-btn-icon--overlay", title: "Supprimer" do %>
+                        <%= button_to wallpaper_destroy_screenshot_path(@nickname, screenshot.id, device_id: @device_id), method: :delete, form: { data: { turbo_confirm: t("wallpaper.destroy_screenshot_confirm") }, class: "ds-btn-icon-form ds-btn-icon-form--overlay" }, class: "ds-btn-icon ds-btn-icon--delete ds-btn-icon--overlay", title: t("wallpaper.delete") do %>
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
                         <% end %>
                       <% end %>
@@ -183,22 +183,22 @@
               </div>
               <div class="ds-history-fade"></div>
             </div>
-            <button type="button" class="ds-history-more" id="screenshots-more">Voir plus</button>
+            <button type="button" class="ds-history-more" id="screenshots-more"><%= t("wallpaper.see_more") %></button>
           </div>
         <% else %>
-          <p class="ds-text-muted" style="font-size: 0.8rem;">Aucun screenshot pour le moment.</p>
+          <p class="ds-text-muted" style="font-size: 0.8rem;"><%= t("wallpaper.no_screenshots_yet") %></p>
         <% end %>
       </section>
 
       <%# Historique des fonds d'écran choisis %>
       <section class="ds-history">
-        <h2 class="ds-section-title">Historique des fonds d'écran</h2>
+        <h2 class="ds-section-title"><%= t("wallpaper.wallpaper_history_title") %></h2>
         <% applications_with_images = @applications.select { |a| a.wallpaper.image.attached? } %>
         <% if applications_with_images.any? %>
           <div class="ds-history-header">
             <button type="button" id="download-all-btn" class="ds-btn ds-btn--ghost ds-btn--sm">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              Tout télécharger
+              <%= t("wallpaper.download_all") %>
             </button>
           </div>
           <div class="ds-history-expandable" data-initial="6" data-step="9" data-total="<%= applications_with_images.size %>">
@@ -212,10 +212,10 @@
                   <div class="ds-wallpaper-card wallpaper-card ds-history-item" data-download-url="<%= download_url %>" data-filename="wallpaper-<%= application.applied_at.strftime('%Y%m%d-%H%M') %>-<%= wallpaper.id %>.jpg">
                     <div class="ds-wallpaper-thumb" style="aspect-ratio: <%= device_ratio %>;">
                       <%= image_tag variant, alt: "", class: "ds-wallpaper-img" %>
-                      <a href="<%= download_url %>" download="wallpaper-<%= application.applied_at.strftime('%Y%m%d-%H%M') %>-<%= wallpaper.id %>.jpg" class="ds-download-icon" title="Télécharger">
+                      <a href="<%= download_url %>" download="wallpaper-<%= application.applied_at.strftime('%Y%m%d-%H%M') %>-<%= wallpaper.id %>.jpg" class="ds-download-icon" title="<%= t("wallpaper.download") %>">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                       </a>
-                      <%= button_to wallpaper_destroy_application_path(@nickname, application.id, device_id: @device_id), method: :delete, form: { data: { turbo_confirm: "Retirer cette entrée de l'historique ?" }, class: "ds-btn-icon-form ds-btn-icon-form--overlay" }, class: "ds-btn-icon ds-btn-icon--delete ds-btn-icon--overlay", title: "Supprimer" do %>
+                      <%= button_to wallpaper_destroy_application_path(@nickname, application.id, device_id: @device_id), method: :delete, form: { data: { turbo_confirm: t("wallpaper.remove_wallpaper_history_confirm") }, class: "ds-btn-icon-form ds-btn-icon-form--overlay" }, class: "ds-btn-icon ds-btn-icon--delete ds-btn-icon--overlay", title: t("wallpaper.delete") do %>
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
                       <% end %>
                     </div>
@@ -227,7 +227,7 @@
                     </div>
                     <% unless is_current %>
                       <div class="ds-wallpaper-actions">
-                        <%= button_to "Définir comme actuel", wallpaper_set_current_path(@nickname, wallpaper.id, device_id: @device_id), method: :post, class: "ds-btn ds-btn--secondary ds-btn--sm" %>
+                        <%= button_to t("wallpaper.set_as_current"), wallpaper_set_current_path(@nickname, wallpaper.id, device_id: @device_id), method: :post, class: "ds-btn ds-btn--secondary ds-btn--sm" %>
                       </div>
                     <% end %>
                   </div>
@@ -235,15 +235,15 @@
               </div>
               <div class="ds-history-fade"></div>
             </div>
-            <button type="button" class="ds-history-more" id="wallpapers-more">Voir plus</button>
+            <button type="button" class="ds-history-more" id="wallpapers-more"><%= t("wallpaper.see_more") %></button>
           </div>
         <% else %>
-          <p class="ds-text-muted" style="font-size: 0.8rem;">Aucun fond d'écran pour le moment.</p>
+          <p class="ds-text-muted" style="font-size: 0.8rem;"><%= t("wallpaper.no_wallpapers_yet") %></p>
         <% end %>
       </section>
 
       <details class="ds-debug-section">
-        <summary class="ds-debug-summary">Devices (debug)</summary>
+        <summary class="ds-debug-summary"><%= t("wallpaper.devices_debug") %></summary>
         <div class="ds-debug-content">
           <ul class="ds-debug-device-list">
             <% @devices.order(created_at: :desc).each do |d| %>
@@ -260,16 +260,16 @@
                   <% end %>
                   <% if d.fcm_token.present? %>
                     <span class="ds-sep">·</span>
-                    <span class="ds-status ds-status--on">Push</span>
+                    <span class="ds-status ds-status--on"><%= t("wallpaper.push_on") %></span>
                   <% else %>
                     <span class="ds-sep">·</span>
-                    <span class="ds-status ds-status--off">Push off</span>
+                    <span class="ds-status ds-status--off"><%= t("wallpaper.push_off") %></span>
                   <% end %>
                   <% if d.id == @device.id %>
-                    <span class="ds-debug-badge">actif</span>
+                    <span class="ds-debug-badge"><%= t("wallpaper.device_active") %></span>
                   <% end %>
                 </span>
-                <%= button_to wallpaper_destroy_device_path(@nickname, d.device_id), method: :delete, form: { data: { turbo_confirm: "Supprimer ce device ? Tous les wallpapers associés seront perdus." }, class: "ds-btn-icon-form" }, class: "ds-btn-icon ds-btn-icon--delete", title: "Supprimer" do %>
+                <%= button_to wallpaper_destroy_device_path(@nickname, d.device_id), method: :delete, form: { data: { turbo_confirm: t("wallpaper.destroy_device_confirm") }, class: "ds-btn-icon-form" }, class: "ds-btn-icon ds-btn-icon--delete", title: t("wallpaper.delete") do %>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
                 <% end %>
               </li>
@@ -278,7 +278,7 @@
         </div>
       </details>
     <% else %>
-      <p class="ds-error">Aucun device enregistré. Ouvre l'app pour t'enregistrer.</p>
+      <p class="ds-error"><%= t("wallpaper.no_device") %></p>
     <% end %>
   </div>
 </div>

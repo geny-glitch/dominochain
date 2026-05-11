@@ -7,7 +7,7 @@ class TasksController < ApplicationController
   def create
     deadline_at = compute_deadline
     @task = @beta.tasks.create!(task_params.merge(deadline_at: deadline_at))
-    redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), notice: "Tâche créée. Une notification a été envoyée."
+    redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), notice: t("flash.tasks.created")
   rescue ActiveRecord::RecordInvalid => e
     redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), alert: e.record.errors.full_messages.join(", ")
   rescue ArgumentError => e
@@ -20,25 +20,25 @@ class TasksController < ApplicationController
 
   def review_proof
     unless @task.proof_of_completion&.pending?
-      redirect_to wallpaper_task_path(@nickname, @task), alert: "Aucune preuve en attente."
+      redirect_to wallpaper_task_path(@nickname, @task), alert: t("flash.tasks.no_pending_proof")
       return
     end
 
-    accept = params[:accept] == "Accepter"
+    accept = params[:decision] == "accept"
     proof = @task.proof_of_completion
     proof.update!(status: accept ? "accepted" : "rejected", reviewed_at: Time.current, review_comment: params[:review_comment].presence)
     @task.update!(status: accept ? "completed" : "rejected")
 
     if accept
-      redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), notice: "Preuve acceptée. Le beta a été notifié."
+      redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), notice: t("flash.tasks.proof_accepted")
     else
-      redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), notice: "Preuve refusée. Le beta a été notifié."
+      redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), notice: t("flash.tasks.proof_rejected")
     end
   end
 
   def punish
     unless @task.expired?
-      redirect_to wallpaper_task_path(@nickname, @task, device_id: @device_id), alert: "Seules les tâches expirées peuvent être punies."
+      redirect_to wallpaper_task_path(@nickname, @task, device_id: @device_id), alert: t("flash.tasks.punish_only_expired")
       return
     end
 
@@ -51,12 +51,12 @@ class TasksController < ApplicationController
       FcmService.send_punishment_notification(device: device, task: @task, message: message)
     end
 
-    redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), notice: "Punition envoyée au beta."
+    redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), notice: t("flash.tasks.punish_sent")
   end
 
   def destroy
     @task.soft_destroy!
-    redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), notice: "Tâche supprimée."
+    redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), notice: t("flash.tasks.deleted")
   end
 
   private
@@ -64,7 +64,7 @@ class TasksController < ApplicationController
   def set_task
     @task = @beta.tasks.find(params[:id])
   rescue ActiveRecord::RecordNotFound
-    redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), alert: "Tâche non trouvée."
+    redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), alert: t("flash.tasks.not_found")
   end
 
   def task_params
@@ -77,7 +77,7 @@ class TasksController < ApplicationController
       Time.current + duration_minutes.minutes
     else
       raw = params.dig(:task, :deadline_at)
-      raw.present? ? Time.zone.parse(raw) : raise(ArgumentError, "Deadline requise")
+      raw.present? ? Time.zone.parse(raw) : raise(ArgumentError, I18n.t("flash.tasks.deadline_required"))
     end
   end
 end

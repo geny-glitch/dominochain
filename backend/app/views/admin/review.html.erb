@@ -1,24 +1,28 @@
-<% content_for :title, "Review — Admin Domino Chain" %>
+<% content_for :title, t("admin_review.page_title") %>
 
 <div class="ds-review">
   <div class="ds-review__bg" aria-hidden="true"></div>
 
   <div class="ds-review__content">
     <header class="ds-review__header">
-      <%= link_to "← Admin", admin_path, class: "ds-btn ds-btn--ghost ds-btn--sm" %>
-      <h1 class="ds-review__title">Review</h1>
+      <%= link_to t("admin_review.back_admin"), admin_path, class: "ds-btn ds-btn--ghost ds-btn--sm" %>
+      <h1 class="ds-review__title"><%= t("admin_review.title") %></h1>
     </header>
 
     <div id="review-grid" class="ds-review__grid">
       <% if @images&.any? %>
         <%= render partial: "admin/review_image", collection: @images || [], as: :image %>
       <% else %>
-        <p class="ds-review__empty">Aucune image. Lance <code>rails wikimedia:fetch_images</code> ou enregistre la liste dans Paramètres.</p>
+        <p class="ds-review__empty">
+          <%= t("admin_review.empty_prefix") %>
+          <code><%= t("admin_review.empty_code") %></code>
+          <%= t("admin_review.empty_suffix") %>
+        </p>
       <% end %>
     </div>
 
     <div id="review-sentinel" class="ds-review__sentinel"></div>
-    <div id="review-loading" class="ds-review__loading" style="display: none;">Chargement...</div>
+    <div id="review-loading" class="ds-review__loading" style="display: none;"><%= t("admin_review.loading") %></div>
   </div>
 </div>
 

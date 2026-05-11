@@ -55,15 +55,15 @@ class BetaDashboardController < ApplicationController
 
     unless updated
       respond_to do |format|
-        format.html { redirect_to beta_settings_path, alert: "Source/action inconnue." }
-        format.json { render json: { ok: false, error: "Source/action inconnue." }, status: :unprocessable_entity }
+        format.html { redirect_to beta_settings_path, alert: t("flash.beta.catalog_unknown") }
+        format.json { render json: { ok: false, error: t("flash.beta.catalog_unknown") }, status: :unprocessable_entity }
       end
       return
     end
 
-    label = catalog.item_label(kind: params[:kind], item_id: params[:item_id]) || "Élément"
-    visibility_label = ActiveModel::Type::Boolean.new.cast(params[:enabled]) ? "affiché" : "masqué"
-    message = "#{label} est maintenant #{visibility_label} dans le catalogue."
+    label = catalog.item_label(kind: params[:kind], item_id: params[:item_id]) || t("flash.beta.catalog_element")
+    visibility_label = ActiveModel::Type::Boolean.new.cast(params[:enabled]) ? t("flash.beta.catalog_visibility.shown") : t("flash.beta.catalog_visibility.hidden")
+    message = t("flash.beta.catalog_updated", label:, visibility: visibility_label)
     respond_to do |format|
       format.html { redirect_to beta_settings_path, notice: message }
       format.json do
@@ -105,7 +105,13 @@ class BetaDashboardController < ApplicationController
 
     current_user.update!(attrs)
     redirect_to beta_sources_showcase_path,
-      notice: "Temps des jeux enregistré (Quiz #{current_user.showcase_quiz_seconds_per_point} s/pt, Snake #{current_user.showcase_snake_seconds_per_fruit} s, Dino #{current_user.showcase_dino_seconds_per_obstacle} s, Tétris #{current_user.showcase_tetris_seconds_per_line} s/ligne)."
+      notice: t(
+        "flash.beta.game_times_saved",
+        quiz: current_user.showcase_quiz_seconds_per_point,
+        snake: current_user.showcase_snake_seconds_per_fruit,
+        dino: current_user.showcase_dino_seconds_per_obstacle,
+        tetris: current_user.showcase_tetris_seconds_per_line
+      )
   rescue ActiveRecord::RecordInvalid => e
     redirect_to beta_sources_showcase_path, alert: e.record.errors.full_messages.join(", ")
   end
@@ -116,9 +122,9 @@ class BetaDashboardController < ApplicationController
     current_user.update!(showcase_backdoor_enabled: enabled)
     if enabled
       redirect_to beta_sources_showcase_path,
-        notice: "Page backdoor activée. URL (non affichée sur la vitrine) : #{request.base_url}#{showcase_backdoor_path(current_user.nickname)}"
+        notice: t("flash.beta.backdoor_enabled", url: "#{request.base_url}#{showcase_backdoor_path(current_user.nickname)}")
     else
-      redirect_to beta_sources_showcase_path, notice: "Page backdoor désactivée."
+      redirect_to beta_sources_showcase_path, notice: t("flash.beta.backdoor_disabled")
     end
   rescue ActiveRecord::RecordInvalid => e
     redirect_to beta_sources_showcase_path, alert: e.record.errors.full_messages.join(", ")
@@ -136,7 +142,7 @@ class BetaDashboardController < ApplicationController
       attrs[:pishock_intensity_factor] = p[:pishock_intensity_factor].to_f.clamp(0.01, 100)
     end
     current_user.update!(attrs)
-    redirect_to beta_actions_pishock_path, notice: "PiShock enregistré."
+    redirect_to beta_actions_pishock_path, notice: t("flash.beta.pishock_saved")
   rescue ActiveRecord::RecordInvalid => e
     redirect_to beta_actions_pishock_path, alert: e.record.errors.full_messages.join(", ")
   end
@@ -144,27 +150,27 @@ class BetaDashboardController < ApplicationController
   def test_pishock
     u = current_user.reload
     unless u.pishock_username.present? && u.pishock_share_code.present? && u.pishock_api_key.present?
-      redirect_to beta_actions_pishock_path, alert: "Enregistre d’abord ton username, share code et clé API PiShock."
+      redirect_to beta_actions_pishock_path, alert: t("flash.beta.pishock_save_first")
       return
     end
 
     case PishockService.test_connection!(user: u)
     when :ok
-      redirect_to beta_actions_pishock_path, notice: "PiShock : compte validé (api.pishock.com) et bip de test OK — vérifie l’appareil ou les logs sur pishock.com."
+      redirect_to beta_actions_pishock_path, notice: t("flash.beta.pishock_test_ok")
     when :auth_error
-      redirect_to beta_actions_pishock_path, alert: "PiShock : nom d’utilisateur ou clé API refusés (API publique v1). Vérifie sur pishock.com → Account."
+      redirect_to beta_actions_pishock_path, alert: t("flash.beta.pishock_test_auth")
     when :device_error
-      redirect_to beta_actions_pishock_path, alert: "PiShock : compte OK, mais le bip a échoué (share code, revendication PUT /Share, shocker hors ligne ou en pause, …). Voir les logs Rails."
+      redirect_to beta_actions_pishock_path, alert: t("flash.beta.pishock_test_device")
     when :skipped
-      redirect_to beta_actions_pishock_path, alert: "Configuration PiShock incomplète."
+      redirect_to beta_actions_pishock_path, alert: t("flash.beta.pishock_test_skipped")
     when :error
-      redirect_to beta_actions_pishock_path, alert: "PiShock : erreur réseau ou réponse inattendue. Voir les logs Rails."
+      redirect_to beta_actions_pishock_path, alert: t("flash.beta.pishock_test_error")
     end
   end
 
   def regenerate_puryfi_token
     current_user.regenerate_puryfi_plugin_token!
-    redirect_to beta_sources_puryfi_path, notice: "Nouvelle URL WebSocket PuryFi générée. Mets à jour le plugin avec la nouvelle adresse."
+    redirect_to beta_sources_puryfi_path, notice: t("flash.beta.puryfi_regenerated")
   end
 
   def update_puryfi
@@ -183,7 +189,7 @@ class BetaDashboardController < ApplicationController
       attrs[:puryfi_seconds_per_label] = merged
     end
     current_user.update!(attrs)
-    redirect_to beta_sources_puryfi_path, notice: "Réglages PuryFi enregistrés."
+    redirect_to beta_sources_puryfi_path, notice: t("flash.beta.puryfi_saved")
   rescue ActiveRecord::RecordInvalid => e
     redirect_to beta_sources_puryfi_path, alert: e.record.errors.full_messages.join(", ")
   end
@@ -194,12 +200,12 @@ class BetaDashboardController < ApplicationController
 
   def submit_proof
     unless @task.can_submit_proof?
-      redirect_to beta_account_path, alert: "Impossible de soumettre une preuve (deadline dépassée ou déjà acceptée)."
+      redirect_to beta_account_path, alert: t("flash.beta.proof_deadline")
       return
     end
 
     unless params[:text].present? || params[:media].present?
-      redirect_to beta_task_path(@task), alert: "La preuve doit contenir du texte ou une image/vidéo."
+      redirect_to beta_task_path(@task), alert: t("flash.beta.proof_required")
       return
     end
 
@@ -213,7 +219,7 @@ class BetaDashboardController < ApplicationController
     proof.reviewed_at = nil
     proof.save!
 
-    redirect_to beta_account_path, notice: "Preuve soumise. En attente de validation."
+    redirect_to beta_account_path, notice: t("flash.beta.proof_submitted")
   rescue ActiveRecord::RecordInvalid => e
     redirect_to beta_task_path(@task), alert: e.record.errors.full_messages.join(", ")
   end
@@ -223,13 +229,13 @@ class BetaDashboardController < ApplicationController
   def require_beta_role!
     return if current_user.beta?
 
-    redirect_to dashboard_path, alert: "Accès réservé aux betas."
+    redirect_to dashboard_path, alert: t("flash.beta.beta_only")
   end
 
   def set_task
     @task = current_user.tasks.find(params[:id])
   rescue ActiveRecord::RecordNotFound
-    redirect_to beta_account_path, alert: "Tâche non trouvée."
+    redirect_to beta_account_path, alert: t("flash.beta.task_not_found")
   end
 
   def fetch_chaster_lock

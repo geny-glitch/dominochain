@@ -38,14 +38,8 @@ module BetaDashboardHelper
   end
 
   def beta_event_source_label(source)
-    {
-      "puryfi" => "Purify",
-      "cigarettes" => "Cigarettes",
-      "showcase_game" => "Vitrine",
-      "showcase_backdoor" => "Backdoor",
-      "strava_goal" => "Strava",
-      "api" => "API"
-    }[source.to_s] || source.to_s.humanize
+    key = "beta.events.sources.#{source}"
+    I18n.exists?(key) ? t(key) : source.to_s.humanize
   end
 
   def beta_signed_duration(seconds)
@@ -55,11 +49,17 @@ module BetaDashboardHelper
     m = (total % 3600) / 60
     s = total % 60
     if h.positive?
-      "#{sign}#{h}h #{m}min"
+      t("beta.signed_duration.hours_mins", sign:, h:, m:)
     elsif m.positive?
-      "#{sign}#{m}min #{s}s"
+      t("beta.signed_duration.mins_secs", sign:, m:, s:)
     else
-      "#{sign}#{s}s"
+      t("beta.signed_duration.secs", sign:, s:)
+    end
+  end
+
+  def strava_sliding_window_options
+    %w[daily weekly custom].map do |k|
+      [ t("beta.strava.window_presets.#{k}"), k ]
     end
   end
 

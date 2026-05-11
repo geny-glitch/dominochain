@@ -19,7 +19,7 @@
         <p class="ds-beta-control-hint">Le temps restant s'affiche aussi sur l'app et le widget.</p>
       <% else %>
         <p class="ds-beta-control-text">Chaster connecté</p>
-        <p class="ds-beta-control-hint">Aucun lock en cours. Le temps restant s'affiche sur l'app et le widget.</p>
+        <p class="ds-beta-control-hint"><%= t("beta.hints.chaster_no_lock") %></p>
       <% end %>
       <%= button_to "Déconnecter Chaster", chaster_disconnect_path, method: :delete, form: { data: { turbo_confirm: "Déconnecter ton compte Chaster ? Tu devras te reconnecter pour voir le lock." } }, class: "ds-btn ds-btn--secondary ds-btn--sm", style: "margin-top: 0.5rem;" %>
     </div>

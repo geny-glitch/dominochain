@@ -1,0 +1,20 @@
+es:
+  time:
+    formats:
+      short: "%d/%m/%Y %H:%M"
+      unlock: "%d/%m %H:%M"
+    finished: "Terminado"
+    remaining_days_hours_mins_secs: "%{days}d %{hours}h %{mins}min %{secs}s"
+    remaining_hours_mins_secs: "%{hours}h %{mins}min %{secs}s"
+    remaining_mins_secs: "%{mins}min %{secs}s"
+    remaining_secs: "%{secs}s"
+  js:
+    copied: "¡Copiado!"
+    done: "Listo"
+    finished: "Terminado"
+    close_menu: "Cerrar menú"
+    open_menu: "Abrir menú"
+    countdown_day: "d "
+    countdown_hour: "h "
+    countdown_min: "min "
+    countdown_sec: "s"

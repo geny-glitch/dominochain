@@ -1,9 +1,9 @@
-<% content_for :title, "Sources · Vitrine — #{current_user.nickname}" %>
+<% content_for :title, t("beta.showcase_source.page_title", nickname: current_user.nickname) %>
 
 <header class="ds-beta-page-head">
-  <h1 class="ds-beta-page-title">Vitrine</h1>
+  <h1 class="ds-beta-page-title"><%= t("beta.showcase_source.heading") %></h1>
   <p class="ds-beta-page-lead">
-    Source publique : URL partagée, QR code, jeux vitrine et page backdoor.
+    <%= t("beta.showcase_source.lead") %>
   </p>
 </header>
 

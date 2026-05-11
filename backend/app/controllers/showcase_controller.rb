@@ -63,8 +63,8 @@ class ShowcaseController < ApplicationController
 
   def backdoor_chaster_lock
     @beta = find_beta
-    return render(json: { error: "Page introuvable." }, status: 404) unless @beta
-    return render json: { error: "Indisponible." }, status: 404 unless @beta.showcase_backdoor_enabled
+    return render(json: { error: t("showcase.api.not_found") }, status: 404) unless @beta
+    return render json: { error: t("showcase.api.unavailable") }, status: 404 unless @beta.showcase_backdoor_enabled
 
     service = ChasterService.new(@beta)
     lock = service.current_lock
@@ -77,7 +77,7 @@ class ShowcaseController < ApplicationController
 
   def backdoor_add_time
     @beta = find_beta
-    return render(json: { error: "Page introuvable." }, status: 404) unless @beta
+    return render(json: { error: t("showcase.api.not_found") }, status: 404) unless @beta
 
     payload = backdoor_add_params
     result = BetaEvents::ShowcaseBackdoorAddTime.call(
@@ -94,7 +94,7 @@ class ShowcaseController < ApplicationController
 
   def add_time
     @beta = find_beta
-    return render(json: { error: "Page introuvable." }, status: 404) unless @beta
+    return render(json: { error: t("showcase.api.not_found") }, status: 404) unless @beta
 
     requested_game_type = params[:game_type].to_s
     game_kind = case requested_game_type
@@ -119,7 +119,7 @@ class ShowcaseController < ApplicationController
 
     if result.ok
       return render(json: result.json_body, status: :ok) if result.format_json
-      return redirect_to(showcase_path(@beta.nickname), notice: "Merci !")
+      return redirect_to(showcase_path(@beta.nickname), notice: t("flash.showcase.thanks"))
     end
 
     if result.render_not_found
@@ -135,7 +135,7 @@ class ShowcaseController < ApplicationController
 
   def create_session
     @beta = find_beta
-    return render(json: { error: "Page introuvable." }, status: 404) unless @beta
+    return render(json: { error: t("showcase.api.not_found") }, status: 404) unless @beta
 
     gt = (params[:game_type].presence || "quiz").to_s
     gt = "quiz" unless %w[quiz snake dino tetris].include?(gt)
@@ -159,7 +159,7 @@ class ShowcaseController < ApplicationController
 
   def update_session
     @beta = find_beta
-    return render(json: { error: "Page introuvable." }, status: 404) unless @beta
+    return render(json: { error: t("showcase.api.not_found") }, status: 404) unless @beta
 
     game_session = @beta.game_sessions.find(params[:id])
     unless ShowcaseGameConfig.game_enabled?(@beta, game_session.game_type)
@@ -195,7 +195,7 @@ class ShowcaseController < ApplicationController
 
   def questions
     @beta = find_beta
-    return render(json: { error: "Page introuvable." }, status: 404) unless @beta
+    return render(json: { error: t("showcase.api.not_found") }, status: 404) unless @beta
     return render json: { error: "Jeu indisponible." }, status: 404 unless @beta.showcase_quiz_enabled
 
     type = params[:type] || "normal"
@@ -214,7 +214,7 @@ class ShowcaseController < ApplicationController
 
   def check_answer
     @beta = find_beta
-    return render(json: { error: "Page introuvable." }, status: 404) unless @beta
+    return render(json: { error: t("showcase.api.not_found") }, status: 404) unless @beta
     return render json: { error: "Jeu indisponible." }, status: 404 unless @beta.showcase_quiz_enabled
 
     payload = request.content_type&.include?("json") ? JSON.parse(request.raw_post) : params
@@ -231,7 +231,7 @@ class ShowcaseController < ApplicationController
 
   def leaderboard
     @beta = find_beta
-    return render(json: { error: "Page introuvable." }, status: 404) unless @beta
+    return render(json: { error: t("showcase.api.not_found") }, status: 404) unless @beta
 
     game_type = params[:game_type].presence || "quiz"
     return render json: { error: "Jeu indisponible." }, status: 404 unless ShowcaseGameConfig.game_enabled?(@beta, game_type)

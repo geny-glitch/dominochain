@@ -14,6 +14,6 @@ class DashboardController < ApplicationController
   def require_boss_role!
     return if current_user.boss?
 
-    redirect_to beta_dashboard_path, alert: "Accès réservé aux boss."
+    redirect_to beta_dashboard_path, alert: t("flash.dashboard.boss_only")
   end
 end

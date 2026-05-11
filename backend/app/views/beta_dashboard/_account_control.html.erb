@@ -1,22 +1,22 @@
     <%# Contrôle — qui contrôle ou lien d'invitation %>
     <section class="ds-beta-section">
-      <h2 class="ds-section-title">Contrôle</h2>
+      <h2 class="ds-section-title"><%= t("beta.control.title") %></h2>
       <% if @control&.accepted? %>
         <div class="ds-beta-control-card">
-          <p class="ds-beta-control-text">Contrôlé par <strong><%= @control.boss.nickname %></strong></p>
-          <p class="ds-beta-control-hint">Le boss peut gérer tes wallpapers et tâches via le lien partagé.</p>
+          <p class="ds-beta-control-text"><%= t("beta.control.controlled_prefix") %> <strong><%= @control.boss.nickname %></strong></p>
+          <p class="ds-beta-control-hint"><%= t("beta.control.hint_boss") %></p>
         </div>
       <% else %>
         <div class="ds-beta-control-card ds-beta-control-card--invite">
-          <p class="ds-beta-control-text">Personne ne te contrôle pour le moment.</p>
-          <p class="ds-beta-control-hint">Partage ce lien pour inviter quelqu'un à te contrôler :</p>
+          <p class="ds-beta-control-text"><%= t("beta.control.nobody") %></p>
+          <p class="ds-beta-control-hint"><%= t("beta.control.invite_lead") %></p>
           <div class="ds-beta-invite-link">
             <code id="invite-url"><%= @invite_url %></code>
-            <button type="button" class="ds-btn ds-btn--secondary ds-btn--sm" data-copy-target="invite-url" title="Copier">
-              Copier
+            <button type="button" class="ds-btn ds-btn--secondary ds-btn--sm" data-copy-target="invite-url" title="<%= t("beta.control.copy") %>">
+              <%= t("beta.control.copy") %>
             </button>
           </div>
-          <p class="ds-beta-control-hint ds-beta-control-hint--small">Tu peux aussi envoyer une demande depuis l'app en entrant le pseudo du boss.</p>
+          <p class="ds-beta-control-hint ds-beta-control-hint--small"><%= t("beta.control.invite_footer") %></p>
         </div>
       <% end %>
     </section>

@@ -111,7 +111,9 @@ es:
     passwords:
       new_title: "¿Olvidaste la contraseña?"
       email: "Correo"
-      send_instructions: "Enviarme instrucciones de restablecimiento"
+      send_instructions_button: "Enviarme instrucciones de restablecimiento"
+      send_instructions: "Instrucciones enviadas. Revisa tu bandeja de entrada y no olvides mirar en correo no deseado."
+      send_paranoid_instructions: "Instrucciones enviadas. Revisa tu bandeja de entrada y no olvides mirar en correo no deseado."
       edit_title: "Cambiar contraseña"
       new_password: "Nueva contraseña"
       confirm_password: "Confirmar nueva contraseña"

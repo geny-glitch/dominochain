@@ -75,7 +75,9 @@ en:
     passwords:
       new_title: "Forgot your password?"
       email: "Email"
-      send_instructions: "Send me reset password instructions"
+      send_instructions_button: "Send me reset password instructions"
+      send_instructions: "Instructions sent. Check your inbox, and remember to look in your spam folder."
+      send_paranoid_instructions: "Instructions sent. Check your inbox, and remember to look in your spam folder."
       edit_title: "Change your password"
       new_password: "New password"
       confirm_password: "Confirm new password"

@@ -17,7 +17,7 @@ npm install
 npm run setup
 ```
 
-`setup` n’écrit que `BG_BACKEND_URL` dans `.env`. Sur le **dashboard beta**, copie l’URL WebSocket affichée (ex. `wss://bg-puryfi-ws.fly.dev/ws/…`) et colle-la dans PuryFi → Plugins → WebSocket. Les secondes par label et le score minimum se règlent sur le dashboard (enregistrés côté backend).
+`setup` n’écrit que `BG_BACKEND_URL` dans `.env`. Sur le **dashboard beta**, copie l’URL WebSocket affichée (ex. `wss://puryfi.dominochain.app/ws/…`) et colle-la dans PuryFi → Plugins → WebSocket. Les secondes par label et le score minimum se règlent sur le dashboard (enregistrés côté backend).
 
 ## Local
 
@@ -29,12 +29,12 @@ Dans PuryFi, utilise l’URL du dashboard (même forme, en `ws://` si besoin) : 
 
 ## Fly.io
 
-App : **`bg-puryfi-ws`** — origin HTTP : **https://bg-puryfi-ws.fly.dev** ; WebSocket sur **`/ws/:token`**.
+App : **`bg-puryfi-ws`** — origin HTTP : **https://puryfi.dominochain.app** ; WebSocket sur **`/ws/:token`**.
 
 Secret obligatoire (sans slash final) :
 
 ```bash
-fly secrets set BG_BACKEND_URL="https://bg-backend.fly.dev" -a bg-puryfi-ws
+fly secrets set BG_BACKEND_URL="https://dominochain.app" -a bg-puryfi-ws
 ```
 
 Déploiement depuis la racine du dépôt :

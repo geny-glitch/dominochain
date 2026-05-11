@@ -2,7 +2,7 @@
 
 Android app + Rails backend. Register your device, upload an image via the web, and it becomes your wallpaper.
 
-**Backend:** https://bg-backend.fly.dev
+**Backend:** https://dominochain.app
 
 ## Structure
 
@@ -37,8 +37,8 @@ bg/
 
 ```properties
 sdk.dir=/Users/TON_USERNAME/Library/Android/sdk
-API_BASE_URL_PROD=https://bg-backend.fly.dev
-API_BASE_URL_STAGING=https://bg-backend-staging.fly.dev
+API_BASE_URL_PROD=https://dominochain.app
+API_BASE_URL_STAGING=https://beta.dominochain.app
 ```
 
 Pour trouver `sdk.dir` : **Android Studio → Settings → Appearance & Behavior → System Settings → Android SDK** → le chemin est affiché en haut.
@@ -72,7 +72,7 @@ Pour trouver `sdk.dir` : **Android Studio → Settings → Appearance & Behavior
 
 ### 7. Tester le flux
 
-1. L’app affiche un lien (ex. `https://bg-backend.fly.dev/w/xxx`)
+1. L’app affiche un lien (ex. `https://dominochain.app/w/xxx`)
 2. Clique dessus ou copie-le dans un navigateur
 3. Ouvre la page sur ton téléphone ou ton Mac
 4. Envoie une image
@@ -113,7 +113,7 @@ Puis dans `local.properties` :
 - Pipeline Android staging : push sur branche `staging` (workflow `android-ota-release.yml`)
 - Secret GitHub requis pour notifier le backend staging : `DEPLOY_SECRET_STAGING`
 - Ajouter une app Firebase Android `com.bg.staging` et placer son `google-services.json` (ou config flavor équivalente)
-- Le site expose un lien de téléchargement APK : `/android/app.apk` (donc `https://bg-backend-staging.fly.dev/android/app.apk` en staging)
+- Le site expose un lien de téléchargement APK : `/android/app.apk` (donc `https://beta.dominochain.app/android/app.apk` en staging)
 
 ### Home page (collage influenceurs)
 

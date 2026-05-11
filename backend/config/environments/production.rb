@@ -93,7 +93,14 @@ Rails.application.configure do
   # Do not dump schema after migrations.
   config.active_record.dump_schema_after_migration = false
 
-  # Enable DNS rebinding protection - allow Fly.io app domain and internal proxy IPs
+  # Enable DNS rebinding protection - allow Fly.io app domain, configured custom
+  # domains, and internal proxy IPs.
   config.hosts << /.*\.fly\.dev/
   config.hosts << /^172\.\d+\.\d+\.\d+(:\d+)?$/  # Fly.io internal proxy for health checks
+
+  allowed_hosts = ENV.fetch("BG_ALLOWED_HOSTS", "")
+    .split(",")
+    .map(&:strip)
+    .reject(&:blank?)
+  allowed_hosts.each { |host| config.hosts << host }
 end

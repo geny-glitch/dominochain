@@ -63,7 +63,7 @@ class User < ApplicationRecord
   def puryfi_ws_url
     return nil if puryfi_plugin_token.blank?
 
-    base = ENV.fetch("PURYFI_WS_PUBLIC_BASE", "wss://bg-puryfi-ws.fly.dev").to_s.sub(%r{/+\z}, "")
+    base = ENV.fetch("PURYFI_WS_PUBLIC_BASE", "wss://puryfi.dominochain.app").to_s.sub(%r{/+\z}, "")
     "#{base}/ws/#{puryfi_plugin_token}"
   end
 

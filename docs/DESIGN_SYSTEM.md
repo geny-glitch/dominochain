@@ -30,8 +30,8 @@ Unified design system for web (Rails) and Android app. Inspired by Blade Runner 
 
 ## Typography
 
-- **Font** : Inter (web), Roboto (Android)
-- **Title** : 1.75rem / 28sp, weight 300, letter-spacing 0.08em
+- **Font** : Space Grotesk (web), Roboto (Android)
+- **Title** : 1.75rem / 28sp, web weight 500 (`-0.015em`), Android weight 300 (`0.08em`)
 - **Subtitle** : 0.8rem / 13sp
 - **Body** : 0.875rem / 14sp
 - **Small** : 0.75rem / 12sp

@@ -113,7 +113,12 @@ es:
         one: "Configurado · %{count} evento"
         other: "Configurado · %{count} eventos"
       status_waiting: "Esperando el 1er evento"
-      ws_hint: "Pega esta URL en tu plugin PuryFi (WebSocket). Identifica tu cuenta — no hace falta token API BG en el servidor Fly."
+      ws_hint: |-
+        En Plugin settings:
+        En "Register new plugin", elige "Websocket".
+        Pega esta URL y luego pulsa "+".
+        Debería aparecer una nueva fila con estado "Open".
+        El estado puede tardar unos segundos en actualizarse.
       copy_url: "Copiar URL"
       regenerate: "Regenerar URL"
       regenerate_confirm: "Los plugins que usen la URL antigua dejarán de funcionar. ¿Continuar?"

@@ -14,6 +14,8 @@ class BossRegistrationsController < Devise::RegistrationsController
     resource.save
     yield resource if block_given?
     if resource.persisted?
+      PostHog.identify(distinct_id: resource.posthog_distinct_id, properties: resource.posthog_properties)
+      PostHog.capture(distinct_id: resource.posthog_distinct_id, event: 'boss_registered', properties: { signup_method: 'web' })
       if resource.active_for_authentication?
         set_flash_message! :notice, :signed_up
         sign_up(resource_name, resource)

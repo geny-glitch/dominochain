@@ -89,6 +89,11 @@ module Api
         return render json: { error: "Source ou action désactivée." }, status: :unprocessable_entity
       end
       lock_info = ChasterService.new(current_user).current_lock
+      PostHog.capture(
+        distinct_id: current_user.posthog_distinct_id,
+        event: 'chaster_time_added',
+        properties: { seconds: seconds, lock_id: lock_info&.[](:id) }
+      )
       render json: {
         ok: true,
         added_seconds: seconds,

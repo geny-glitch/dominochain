@@ -7,6 +7,11 @@ class TasksController < ApplicationController
   def create
     deadline_at = compute_deadline
     @task = @beta.tasks.create!(task_params.merge(deadline_at: deadline_at))
+    PostHog.capture(
+      distinct_id: current_user.posthog_distinct_id,
+      event: 'task_created',
+      properties: { task_id: @task.id, task_name: @task.name, beta_nickname: @beta.nickname }
+    )
     redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), notice: t("flash.tasks.created")
   rescue ActiveRecord::RecordInvalid => e
     redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), alert: e.record.errors.full_messages.join(", ")
@@ -28,6 +33,11 @@ class TasksController < ApplicationController
     proof = @task.proof_of_completion
     proof.update!(status: accept ? "accepted" : "rejected", reviewed_at: Time.current, review_comment: params[:review_comment].presence)
     @task.update!(status: accept ? "completed" : "rejected")
+    PostHog.capture(
+      distinct_id: current_user.posthog_distinct_id,
+      event: 'task_proof_reviewed',
+      properties: { task_id: @task.id, decision: accept ? 'accepted' : 'rejected', beta_nickname: @beta.nickname }
+    )
 
     if accept
       redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), notice: t("flash.tasks.proof_accepted")
@@ -50,6 +60,11 @@ class TasksController < ApplicationController
     @task.user.devices.find_each do |device|
       FcmService.send_punishment_notification(device: device, task: @task, message: message)
     end
+    PostHog.capture(
+      distinct_id: current_user.posthog_distinct_id,
+      event: 'task_punishment_sent',
+      properties: { task_id: @task.id, has_message: message.present?, beta_nickname: @beta.nickname }
+    )
 
     redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), notice: t("flash.tasks.punish_sent")
   end

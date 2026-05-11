@@ -45,6 +45,7 @@ class User < ApplicationRecord
 
   before_validation :normalize_email
   before_validation :assign_nickname_from_email, on: :create
+  before_validation :ensure_uuid, on: :create
   before_save :touch_showcase_quiz_seconds_changed_at, if: :will_save_change_to_showcase_quiz_seconds_per_point?
   before_save :touch_showcase_snake_seconds_changed_at, if: :will_save_change_to_showcase_snake_seconds_per_fruit?
   before_save :touch_showcase_dino_seconds_changed_at, if: :will_save_change_to_showcase_dino_seconds_per_obstacle?
@@ -70,6 +71,15 @@ class User < ApplicationRecord
     end
 
     candidate
+  end
+
+  # Called by posthog-rails for automatic user association in error reports.
+  def posthog_distinct_id
+    self[:uuid]
+  end
+
+  def posthog_properties
+    { email: email, role: role, nickname: nickname, date_joined: created_at&.iso8601 }
   end
 
   def puryfi_ws_url
@@ -99,6 +109,10 @@ class User < ApplicationRecord
     return if nickname.present? || email.blank?
 
     self.nickname = self.class.generate_unique_nickname_from_email(email)
+  end
+
+  def ensure_uuid
+    self[:uuid] ||= SecureRandom.uuid
   end
 
   def apply_beta_defaults

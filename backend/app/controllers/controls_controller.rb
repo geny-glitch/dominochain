@@ -29,6 +29,11 @@ class ControlsController < ApplicationController
     end
 
     Control.create!(boss: current_user, beta: @beta, status: :accepted)
+    PostHog.capture(
+      distinct_id: current_user.posthog_distinct_id,
+      event: 'control_accepted',
+      properties: { beta_nickname: @beta.nickname, source: 'link' }
+    )
     redirect_to wallpaper_upload_path(@nickname), notice: t("flash.controls.now_controlling", nickname: @beta.nickname)
   rescue ActiveRecord::RecordInvalid => e
     redirect_to control_accept_from_link_path(@nickname), alert: e.record.errors.full_messages.join(", ")
@@ -36,7 +41,13 @@ class ControlsController < ApplicationController
 
   def release
     control = current_user.controls.accepted.find(params[:control_id])
+    beta_nickname = control.beta.nickname
     control.destroy!
+    PostHog.capture(
+      distinct_id: current_user.posthog_distinct_id,
+      event: 'control_released',
+      properties: { beta_nickname: beta_nickname }
+    )
     redirect_to dashboard_path, notice: t("flash.controls.release_ok")
   rescue ActiveRecord::RecordNotFound
     redirect_to dashboard_path, alert: t("flash.controls.control_not_found")
@@ -51,6 +62,11 @@ class ControlsController < ApplicationController
     end
     Control.create!(boss: current_user, beta: request.beta, status: :accepted)
     request.update!(status: :accepted)
+    PostHog.capture(
+      distinct_id: current_user.posthog_distinct_id,
+      event: 'control_accepted',
+      properties: { beta_nickname: request.beta.nickname, source: 'request' }
+    )
     redirect_to dashboard_path, notice: t("flash.controls.request_accepted", nickname: request.beta.nickname)
   rescue ActiveRecord::RecordNotFound
     redirect_to dashboard_path, alert: t("flash.controls.request_not_found")
@@ -61,6 +77,11 @@ class ControlsController < ApplicationController
   def reject_request
     request = current_user.control_requests_received.pending.find(params[:request_id])
     request.update!(status: :rejected)
+    PostHog.capture(
+      distinct_id: current_user.posthog_distinct_id,
+      event: 'control_request_rejected',
+      properties: { beta_nickname: request.beta.nickname }
+    )
     redirect_to dashboard_path, notice: t("flash.controls.request_rejected")
   rescue ActiveRecord::RecordNotFound
     redirect_to dashboard_path, alert: t("flash.controls.request_not_found")

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_05_11_123000) do
+ActiveRecord::Schema[7.2].define(version: 2026_05_11_222500) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -463,11 +463,13 @@ ActiveRecord::Schema[7.2].define(version: 2026_05_11_123000) do
     t.datetime "strava_token_expires_at"
     t.string "strava_athlete_id"
     t.jsonb "beta_ui_prefs", default: {}, null: false
+    t.string "uuid", null: false
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["nickname"], name: "index_users_on_nickname", unique: true
     t.index ["provider", "uid"], name: "index_users_on_provider_and_uid"
     t.index ["puryfi_plugin_token"], name: "index_users_on_puryfi_plugin_token", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
+    t.index ["uuid"], name: "index_users_on_uuid", unique: true
   end
 
   create_table "wallpaper_applications", force: :cascade do |t|

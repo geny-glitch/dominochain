@@ -1,5 +1,5 @@
     <%# PiShock %>
-    <section class="ds-beta-section">
+    <section class="ds-beta-section ds-beta-section--first">
       <h2 class="ds-section-title"><%= t("beta.integration_sections.installation") %></h2>
       <div class="ds-beta-control-card">
         <p class="ds-beta-control-hint">
@@ -39,6 +39,13 @@
       <div class="ds-beta-control-card">
         <p class="ds-beta-control-text"><%= t("beta.pishock.description") %></p>
         <%= form_with url: beta_pishock_path, method: :patch, local: true, class: "ds-form ds-pishock-form" do %>
+          <%= hidden_field_tag :pishock_enabled, "0" %>
+          <div class="ds-form-group">
+            <label class="ds-form-label">
+              <%= check_box_tag :pishock_enabled, "1", current_user.pishock_enabled, id: "pishock_enabled" %>
+              <%= t("beta.pishock.enable_checkbox") %>
+            </label>
+          </div>
           <div class="ds-form-group">
             <%= label_tag :pishock_intensity_factor, t("beta.pishock.intensity_factor_label"), class: "ds-form-label" %>
             <% pif = current_user.pishock_intensity_factor.to_f; pif_display = pif % 1 == 0 ? pif.to_i : pif %>

@@ -29,6 +29,9 @@ fr:
       save_backdoor: "Enregistrer la page backdoor"
       backdoor_hint: "La Backdoor permet d'ajouter du temps au lock Chaster (1 s à 24 h par clic). Même limite que la vitrine : au plus 2 jours ajoutés sur une fenêtre glissante de 5 minutes."
     strava:
+      page_title: "Sources · Strava — %{nickname}"
+      heading: "Strava"
+      lead: "Objectifs glissants reliés à Strava : en cas d'échec, du temps est ajouté sur Chaster."
       section_title: "Strava + Chaster"
       refresh_title: "Actualiser"
       installation_connected_hint: "Strava est connecté et prêt. Les détails d'installation restent repliés par défaut."

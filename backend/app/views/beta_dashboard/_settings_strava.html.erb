@@ -1,13 +1,18 @@
 <% if current_user.strava_access_token.present? %>
   <% athlete = current_user.strava_athlete_id.present? ? t("beta.strava.athlete_suffix", id: current_user.strava_athlete_id) : "" %>
 
-  <section class="ds-beta-section ds-beta-section--tight-top">
+  <section class="ds-beta-section ds-beta-section--first">
     <h2 class="ds-section-title"><%= t("beta.integration_sections.installation") %></h2>
     <div class="ds-beta-control-card">
-      <details>
-        <summary class="ds-beta-control-text"><%= t("beta.strava.connected_line", athlete: athlete) %></summary>
-        <p class="ds-beta-control-hint"><%= t("beta.strava.installation_connected_hint") %></p>
-        <%= button_to t("beta.strava.disconnect"), strava_disconnect_path, method: :delete, form: { data: { turbo_confirm: t("beta.strava.disconnect_confirm") } }, class: "ds-btn ds-btn--secondary ds-btn--sm", style: "margin-top: 0.5rem;" %>
+      <details class="ds-strava-install-drawer">
+        <summary class="ds-strava-install-summary">
+          <span class="ds-beta-control-text"><%= t("beta.strava.connected_line", athlete: athlete) %></span>
+          <span class="ds-strava-toggle-icon" aria-hidden="true">▾</span>
+        </summary>
+        <div class="ds-strava-install-body">
+          <p class="ds-beta-control-hint"><%= t("beta.strava.installation_connected_hint") %></p>
+          <%= button_to t("beta.strava.disconnect"), strava_disconnect_path, method: :delete, form: { data: { turbo_confirm: t("beta.strava.disconnect_confirm") } }, class: "ds-btn ds-btn--secondary ds-btn--sm ds-strava-inline-action" %>
+        </div>
       </details>
     </div>
   </section>
@@ -80,9 +85,9 @@
               <%= number_field_tag :chaster_penalty_minutes, goal.chaster_penalty_seconds / 60, id: "strava_goal_#{goal.id}_chaster_penalty_minutes", min: 1, max: 525_600, class: "ds-input", required: true %>
             </div>
             <p class="ds-beta-control-hint"><%= t("beta.strava.criteria_prefix") %> <%= goal.criteria_summary.presence || t("beta.strava.criteria_none") %></p>
-            <%= submit_tag t("beta.strava.save_goal"), class: "ds-btn ds-btn--primary ds-btn--sm", style: "margin-top: 0.75rem;" %>
+            <%= submit_tag t("beta.strava.save_goal"), class: "ds-btn ds-btn--primary ds-btn--sm ds-strava-inline-action-lg" %>
           <% end %>
-          <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem;">
+          <div class="ds-strava-goal-actions">
             <%= button_to t("beta.strava.delete_goal"), beta_strava_goal_destroy_path(goal), method: :delete, form: { data: { turbo_confirm: t("beta.strava.delete_confirm") } }, class: "ds-btn ds-btn--ghost ds-btn--sm" %>
           </div>
         </div>
@@ -152,7 +157,7 @@
           <%= number_field_tag :chaster_penalty_minutes, 60, min: 1, max: 525_600, class: "ds-input", required: true %>
         </div>
         <p class="ds-beta-control-hint"><%= t("beta.strava.new_goal_criteria_hint") %></p>
-        <%= submit_tag t("beta.strava.create_goal"), class: "ds-btn ds-btn--primary ds-btn--sm", style: "margin-top: 0.75rem;" %>
+        <%= submit_tag t("beta.strava.create_goal"), class: "ds-btn ds-btn--primary ds-btn--sm ds-strava-inline-action-lg" %>
       <% end %>
     </div>
   </section>
@@ -186,16 +191,19 @@
     <% end %>
   </section>
 <% elsif StravaService.configured? %>
-  <section class="ds-beta-section ds-beta-section--tight-top">
+  <section class="ds-beta-section ds-beta-section--first">
     <h2 class="ds-section-title"><%= t("beta.integration_sections.installation") %></h2>
     <div class="ds-beta-control-card">
       <p class="ds-beta-control-hint"><%= t("beta.strava.installation_disconnected_hint") %></p>
       <p class="ds-beta-control-text"><%= t("beta.strava.connect_pitch") %></p>
-      <%= link_to t("beta.strava.connect_strava"), strava_connect_path, class: "ds-btn ds-btn--primary ds-btn--sm", style: "margin-top: 0.5rem;" %>
+      <%= link_to t("beta.strava.connect_strava"), strava_connect_path, class: "ds-btn ds-btn--primary ds-btn--sm ds-strava-inline-action" %>
     </div>
   </section>
 <% else %>
-  <section class="ds-beta-section ds-beta-section--tight-top">
-    <p class="ds-text-muted"><%= t("beta.strava.not_configured") %></p>
+  <section class="ds-beta-section ds-beta-section--first">
+    <h2 class="ds-section-title"><%= t("beta.integration_sections.installation") %></h2>
+    <div class="ds-beta-control-card">
+      <p class="ds-text-muted"><%= t("beta.strava.not_configured") %></p>
+    </div>
   </section>
 <% end %>

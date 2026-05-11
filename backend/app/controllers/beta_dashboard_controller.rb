@@ -46,6 +46,7 @@ class BetaDashboardController < ApplicationController
   end
 
   def update_catalog_visibility
+    redirect_target = catalog_visibility_redirect_target
     catalog = BetaCatalog.new(current_user)
     updated = catalog.update_item_visibility(
       kind: params[:kind],
@@ -55,31 +56,35 @@ class BetaDashboardController < ApplicationController
 
     unless updated
       respond_to do |format|
-        format.html { redirect_to beta_settings_path, alert: t("flash.beta.catalog_unknown") }
+        format.html { redirect_to redirect_target, alert: t("flash.beta.catalog_unknown") }
         format.json { render json: { ok: false, error: t("flash.beta.catalog_unknown") }, status: :unprocessable_entity }
       end
       return
     end
 
     label = catalog.item_label(kind: params[:kind], item_id: params[:item_id]) || t("flash.beta.catalog_element")
-    visibility_label = ActiveModel::Type::Boolean.new.cast(params[:enabled]) ? t("flash.beta.catalog_visibility.shown") : t("flash.beta.catalog_visibility.hidden")
-    message = t("flash.beta.catalog_updated", label:, visibility: visibility_label)
+    enabled = ActiveModel::Type::Boolean.new.cast(params[:enabled])
+    message = if enabled
+      t("flash.beta.catalog_activated", label:)
+    else
+      t("flash.beta.catalog_deactivated", label:)
+    end
     respond_to do |format|
-      format.html { redirect_to beta_settings_path, notice: message }
+      format.html { redirect_to redirect_target, notice: message }
       format.json do
         render json: {
           ok: true,
           message: message,
           kind: params[:kind].to_s,
           item_id: params[:item_id].to_s,
-          enabled: ActiveModel::Type::Boolean.new.cast(params[:enabled])
+          enabled: enabled
         }
       end
     end
   rescue ActiveRecord::RecordInvalid => e
     error_message = e.record.errors.full_messages.join(", ")
     respond_to do |format|
-      format.html { redirect_to beta_settings_path, alert: error_message }
+      format.html { redirect_to redirect_target, alert: error_message }
       format.json { render json: { ok: false, error: error_message }, status: :unprocessable_entity }
     end
   end
@@ -255,5 +260,18 @@ class BetaDashboardController < ApplicationController
     start_date = 29.days.ago.to_date
     total = current_user.cigarette_entries.where(smoked_on: start_date..Date.current).sum(:count)
     (total / 30.0).round(1)
+  end
+
+  def catalog_visibility_redirect_target
+    candidate = params[:return_to].presence || request.referer
+    return beta_settings_path if candidate.blank?
+
+    uri = URI.parse(candidate)
+    path = uri.path.presence || candidate
+    return beta_settings_path unless path.start_with?("/beta/") && !path.start_with?("//")
+
+    uri.query.present? ? "#{path}?#{uri.query}" : path
+  rescue URI::InvalidURIError
+    beta_settings_path
   end
 end

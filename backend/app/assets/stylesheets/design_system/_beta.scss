@@ -27,6 +27,26 @@
   .ds-section-title {
     margin: 0;
   }
+
+  .ds-beta-control-hint {
+    margin: 0;
+  }
+}
+
+.ds-section-header--split {
+  justify-content: space-between;
+}
+
+.ds-section-header--with-action {
+  position: relative;
+  padding-right: calc(2.25rem + #{$ds-space-sm});
+}
+
+.ds-section-header-action {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
 }
 
 .ds-btn--icon {
@@ -733,6 +753,42 @@
   margin-bottom: $ds-space-md;
 }
 
+.ds-chaster-install-drawer {
+  margin: 0;
+}
+
+.ds-chaster-install-summary {
+  list-style: none;
+  cursor: pointer;
+  padding: $ds-space-sm 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $ds-space-sm;
+}
+
+.ds-chaster-install-summary::-webkit-details-marker {
+  display: none;
+}
+
+.ds-chaster-toggle-icon {
+  display: inline-flex;
+  color: $ds-text-muted;
+  transition: transform $ds-transition;
+}
+
+.ds-chaster-install-drawer[open] .ds-chaster-toggle-icon {
+  transform: rotate(180deg);
+}
+
+.ds-chaster-install-body {
+  padding-top: $ds-space-xs;
+}
+
+.ds-chaster-card-action {
+  margin-top: $ds-space-sm;
+}
+
 .ds-puryfi-label-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
@@ -930,6 +986,76 @@
 
 .ds-pishock-intensity-hint {
   margin-top: $ds-space-xs;
+}
+
+.ds-showcase-form {
+  margin-top: $ds-space-md;
+}
+
+.ds-showcase-games-hint {
+  margin-bottom: $ds-space-md;
+}
+
+.ds-showcase-backdoor-hint {
+  margin-top: $ds-space-md;
+}
+
+.ds-showcase-availability-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: $ds-space-sm;
+  margin-top: $ds-space-xs;
+}
+
+.ds-showcase-availability-option {
+  margin: 0;
+}
+
+.ds-strava-inline-action {
+  margin-top: $ds-space-sm;
+}
+
+.ds-strava-inline-action-lg {
+  margin-top: $ds-space-md;
+}
+
+.ds-strava-goal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $ds-space-xs;
+  margin-top: $ds-space-md;
+}
+
+.ds-strava-install-drawer {
+  margin: 0;
+}
+
+.ds-strava-install-summary {
+  list-style: none;
+  cursor: pointer;
+  padding: $ds-space-sm 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $ds-space-sm;
+}
+
+.ds-strava-install-summary::-webkit-details-marker {
+  display: none;
+}
+
+.ds-strava-toggle-icon {
+  display: inline-flex;
+  color: $ds-text-muted;
+  transition: transform $ds-transition;
+}
+
+.ds-strava-install-drawer[open] .ds-strava-toggle-icon {
+  transform: rotate(180deg);
+}
+
+.ds-strava-install-body {
+  padding-top: $ds-space-xs;
 }
 
 .ds-beta-task-back {

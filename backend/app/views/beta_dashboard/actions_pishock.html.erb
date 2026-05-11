@@ -3,10 +3,13 @@
 <header class="ds-beta-page-head">
   <div class="ds-beta-page-head-row">
     <h1 class="ds-beta-page-title"><%= t("beta.pishock.heading") %></h1>
-    <%= form_with url: beta_pishock_path, method: :patch, local: true, class: "ds-beta-catalog-toggle-form" do %>
-      <%= hidden_field_tag :pishock_enabled, "0" %>
-      <label class="ds-form-label ds-beta-catalog-toggle" title="<%= t("beta.pishock.enable_checkbox") %>">
-        <%= check_box_tag :pishock_enabled, "1", current_user.pishock_enabled, id: "pishock_enabled_header", class: "ds-beta-catalog-toggle-input", onchange: "this.form.requestSubmit();", "aria-label": t("beta.pishock.enable_checkbox") %>
+    <%= form_with url: beta_catalog_visibility_path, method: :patch, local: true, class: "ds-beta-catalog-toggle-form" do %>
+      <%= hidden_field_tag :kind, "action" %>
+      <%= hidden_field_tag :item_id, "pishock" %>
+      <%= hidden_field_tag :enabled, "0" %>
+      <%= hidden_field_tag :return_to, request.fullpath %>
+      <label class="ds-form-label ds-beta-catalog-toggle" title="<%= t("beta.settings.toggle_aria", label: t("beta.catalog.actions.pishock.label")) %>">
+        <%= check_box_tag :enabled, "1", beta_catalog_action_enabled?("pishock"), id: "catalog_action_pishock_page", class: "ds-beta-catalog-toggle-input", onchange: "this.form.requestSubmit();", "aria-label": t("beta.settings.toggle_aria", label: t("beta.catalog.actions.pishock.label")) %>
         <span class="ds-beta-catalog-toggle-switch" aria-hidden="true"></span>
       </label>
     <% end %>

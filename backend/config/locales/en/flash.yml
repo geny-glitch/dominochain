@@ -39,10 +39,8 @@ en:
       goal_not_found: "Strava goal not found."
     beta:
       catalog_unknown: "Unknown source/action."
-      catalog_updated: "%{label} is now %{visibility} in the catalog."
-      catalog_visibility:
-        shown: "shown"
-        hidden: "hidden"
+      catalog_activated: "%{label} has been activated."
+      catalog_deactivated: "%{label} has been deactivated."
       catalog_element: "Item"
       game_times_saved: "Game timers saved (Quiz %{quiz}s/pt, Snake %{snake}s, Dino %{dino}s, Tetris %{tetris}s/line)."
       backdoor_enabled: "Backdoor page enabled. URL (not shown on showcase): %{url}"

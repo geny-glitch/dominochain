@@ -3,7 +3,7 @@ en:
     catalog:
       sources:
         puryfi:
-          label: "Purify (PuryFi)"
+          label: "PuryFi"
           subtitle: "Browser extension · label-based detections"
           events: "Event: detection.label"
         cigarettes:
@@ -105,7 +105,7 @@ en:
       invite_footer: "You can also send a request from the app by entering the boss nickname."
     puryfi:
       page_title: "Sources · Purify — %{nickname}"
-      heading: "Purify (PuryFi)"
+      heading: "PuryFi"
       lead: "Browser extension — event source (detections) that add Chaster time based on your seconds per label."
       install_title: "Installation (WebSocket)"
       drawer_url_title: "PuryFi plugin URL"
@@ -124,6 +124,33 @@ en:
       seconds_hint: "Seconds added to the lock per detected label (0 = ignored)."
       submit: "Save PuryFi"
       seconds_unit: "s"
+      labels:
+        bellye: "Belly"
+        bellyc: "Belly (covered)"
+        butte: "Buttocks"
+        buttc: "Buttocks (covered)"
+        ftite: "Female chest"
+        ftitc: "Female chest (covered)"
+        fgene: "Female genitals"
+        fgenc: "Female genitals (covered)"
+        mgenc: "Male genitals (covered)"
+        mgene: "Male genitals"
+        mtite: "Male chest"
+        mtitc: "Male chest (covered)"
+        fface: "Female face"
+        mface: "Male face"
+        feetc: "Foot (covered)"
+        feete: "Foot"
+        apitc: "Armpit (covered)"
+        apite: "Armpit"
+        anusc: "Anus (covered)"
+        anuse: "Anus"
+        eye: "Eye"
+        mouth: "Mouth"
+        nipplec: "Nipple (covered)"
+        nipple: "Nipple"
+        handc: "Hand (covered)"
+        hand: "Hand"
     signed_duration:
       hours_mins: "%{sign}%{h}h %{m}min"
       mins_secs: "%{sign}%{m}min %{s}s"

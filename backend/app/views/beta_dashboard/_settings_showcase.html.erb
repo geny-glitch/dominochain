@@ -1,44 +1,44 @@
     <%# Vitrine %>
     <section class="ds-beta-section">
-      <h2 class="ds-section-title">Ma vitrine</h2>
+      <h2 class="ds-section-title"><%= t("beta.showcase.section_title") %></h2>
       <div class="ds-beta-control-card">
-        <p class="ds-beta-control-text">Ta page publique. Partage ce lien ou scanne le QR code pour que les visiteurs puissent ajouter du temps à ton lock.</p>
+        <p class="ds-beta-control-text"><%= t("beta.showcase.public_hint") %></p>
         <div class="ds-showcase-preview">
           <div class="ds-showcase-qr">
             <%= raw @showcase_qr %>
           </div>
           <div class="ds-showcase-link">
             <%= link_to showcase_url(current_user.nickname), showcase_path(current_user.nickname), id: "showcase-url", target: "_blank", rel: "noopener", class: "ds-showcase-link-url" %>
-            <button type="button" class="ds-btn ds-btn--secondary ds-btn--sm" data-copy-target="showcase-url" title="Copier">
-              Copier
+            <button type="button" class="ds-btn ds-btn--secondary ds-btn--sm" data-copy-target="showcase-url" title="<%= t("beta.showcase.copy") %>">
+              <%= t("beta.showcase.copy") %>
             </button>
           </div>
         </div>
       </div>
       <%= form_with url: beta_snake_seconds_path, method: :patch, local: true, class: "ds-form", style: "margin-top: 1rem;" do %>
-        <h3 class="ds-section-title" style="margin-bottom: 0.5rem; font-size: 1rem;">Jeux vitrine</h3>
-        <p class="ds-beta-control-hint" style="margin-bottom: 0.75rem;">Nombre de secondes ajoutées au lock Chaster pour chaque action de score. Chaque jeu a son propre réglage; une réduction n'est possible que 24 h après le dernier changement de ce jeu.</p>
+        <h3 class="ds-section-title" style="margin-bottom: 0.5rem; font-size: 1rem;"><%= t("beta.showcase.games_title") %></h3>
+        <p class="ds-beta-control-hint" style="margin-bottom: 0.75rem;"><%= t("beta.showcase.games_hint") %></p>
         <div class="ds-form-group">
-          <span class="ds-form-label">Disponibilité des jeux</span>
+          <span class="ds-form-label"><%= t("beta.showcase.games_availability") %></span>
           <%= hidden_field_tag :showcase_quiz_enabled, "0" %>
           <label class="ds-form-label">
             <%= check_box_tag :showcase_quiz_enabled, "1", current_user.showcase_quiz_enabled?, id: "showcase_quiz_enabled" %>
-            Quiz actif sur la vitrine
+            <%= t("beta.showcase.toggle_quiz") %>
           </label>
           <%= hidden_field_tag :showcase_snake_enabled, "0" %>
           <label class="ds-form-label">
             <%= check_box_tag :showcase_snake_enabled, "1", current_user.showcase_snake_enabled?, id: "showcase_snake_enabled" %>
-            Snake actif sur la vitrine
+            <%= t("beta.showcase.toggle_snake") %>
           </label>
           <%= hidden_field_tag :showcase_dino_enabled, "0" %>
           <label class="ds-form-label">
             <%= check_box_tag :showcase_dino_enabled, "1", current_user.showcase_dino_enabled?, id: "showcase_dino_enabled" %>
-            Dino Run actif sur la vitrine
+            <%= t("beta.showcase.toggle_dino") %>
           </label>
           <%= hidden_field_tag :showcase_tetris_enabled, "0" %>
           <label class="ds-form-label">
             <%= check_box_tag :showcase_tetris_enabled, "1", current_user.showcase_tetris_enabled?, id: "showcase_tetris_enabled" %>
-            Tétris actif sur la vitrine
+            <%= t("beta.showcase.toggle_tetris") %>
           </label>
         </div>
         <div class="ds-form-group">
@@ -57,17 +57,17 @@
           <%= label_tag :showcase_tetris_seconds_per_line, "Tétris - secondes par ligne complète", class: "ds-form-label" %>
           <%= number_field_tag :showcase_tetris_seconds_per_line, current_user.showcase_tetris_seconds_per_line, min: 1, max: 86_400 * 365, class: "ds-input", required: true %>
         </div>
-        <%= submit_tag "Enregistrer le temps des jeux", class: "ds-btn ds-btn--secondary ds-btn--sm" %>
+        <%= submit_tag t("beta.showcase.save_game_times"), class: "ds-btn ds-btn--secondary ds-btn--sm" %>
       <% end %>
       <%= form_with url: beta_backdoor_path, method: :patch, local: true, class: "ds-form", style: "margin-top: 1rem;" do %>
         <%= hidden_field_tag :showcase_backdoor_enabled, "0" %>
         <div class="ds-form-group">
           <label class="ds-form-label">
             <%= check_box_tag :showcase_backdoor_enabled, "1", current_user.showcase_backdoor_enabled?, id: "showcase_backdoor_enabled" %>
-            Activer la page backdoor (URL fixe, non affichée sur la vitrine : <%= showcase_backdoor_path(current_user.nickname) %>)
+            <%= t("beta.showcase.backdoor_checkbox", path: showcase_backdoor_path(current_user.nickname)) %>
           </label>
         </div>
-        <%= submit_tag "Enregistrer la page backdoor", class: "ds-btn ds-btn--secondary ds-btn--sm" %>
+        <%= submit_tag t("beta.showcase.save_backdoor"), class: "ds-btn ds-btn--secondary ds-btn--sm" %>
       <% end %>
-      <p class="ds-beta-control-hint" style="margin-top: 0.75rem;">La backdoor permet d’ajouter du temps au lock Chaster (1 s à 24 h par clic). Même limite que la vitrine : au plus 2 jours ajoutés sur une fenêtre glissante de 5 minutes.</p>
+      <p class="ds-beta-control-hint" style="margin-top: 0.75rem;"><%= t("beta.showcase.backdoor_hint") %></p>
     </section>

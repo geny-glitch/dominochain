@@ -1,26 +1,27 @@
 <section class="ds-beta-section ds-beta-section--first">
   <header class="ds-beta-page-head">
-    <h1 class="ds-beta-page-title">Cigarettes</h1>
+    <h1 class="ds-beta-page-title"><%= t("beta.cigarettes_source.heading") %></h1>
     <p class="ds-beta-page-lead">
-      Source d'événements depuis l’app Android : chaque déclaration ajoute du temps sur ton lock Chaster actif (même mécanisme que les autres sources).
+      <%= t("beta.cigarettes_source.lead") %>
     </p>
   </header>
 
   <div class="ds-beta-control-card">
-    <p class="ds-beta-control-text">Utilisation</p>
+    <p class="ds-beta-control-text"><%= t("beta.cigarettes_source.usage_title") %></p>
     <ul class="ds-beta-bullet-list">
-      <li>Ouvre l’app connectée avec ton compte beta.</li>
-      <li>Enregistre une cigarette depuis l’écran prévu ; l’app appelle <code class="ds-code-inline">POST <%= api_cigarettes_path %></code>.</li>
-      <li>Si aucun lock Chaster n’est actif, la ligne est quand même enregistrée mais le temps n’est pas appliqué (voir le détail dans l’app).</li>
+      <li><%= t("beta.cigarettes_source.usage_steps.open_app") %></li>
+      <li><%= t("beta.cigarettes_source.usage_steps.submit_entry_html", endpoint: api_cigarettes_path) %></li>
+      <li><%= t("beta.cigarettes_source.usage_steps.no_lock") %></li>
     </ul>
   </div>
 
   <div class="ds-beta-control-card ds-beta-section-spaced">
-    <p class="ds-beta-control-text">Secondes ajoutées par cigarette</p>
+    <p class="ds-beta-control-text"><%= t("beta.cigarettes_source.seconds_title") %></p>
     <p class="ds-beta-control-hint">
-      La valeur utilisée est la même que <strong>Snake — secondes par pomme</strong> dans
-      <%= link_to "Vitrine", beta_sources_showcase_path, class: "ds-inline-link" %> (économie vitrine / tracker).
-      Actuellement : <strong><%= current_user.showcase_snake_seconds_per_fruit %> s</strong> par cigarette.
+      <%= t("beta.cigarettes_source.seconds_hint_prefix_html") %>
+      <%= link_to t("beta.cigarettes_source.showcase_link"), beta_sources_showcase_path, class: "ds-inline-link" %>
+      <%= t("beta.cigarettes_source.seconds_hint_suffix") %>
+      <%= t("beta.cigarettes_source.current_seconds_html", seconds: current_user.showcase_snake_seconds_per_fruit) %>
     </p>
   </div>
 </section>

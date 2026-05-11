@@ -1,4 +1,4 @@
-<% content_for :title, "Tétris" %>
+<% content_for :title, t("showcase.tetris.title") %>
 <% content_for :body_class, "tetris-page-active" %>
 <% content_for :head do %>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
@@ -7,18 +7,18 @@
 <div class="tetris-page" data-nickname="<%= @beta.nickname %>" data-tetris-seconds-per-line="<%= @tetris_seconds_per_line %>">
   <div class="tetris-container">
     <div id="tetris-intro" class="tetris-intro">
-      <h1 class="tetris-title">Tétris</h1>
-      <p class="tetris-hint">Clavier : flèches pour déplacer et tourner, bas pour descendre, espace pour poser. Tactile : deux zones gauche/droite, puis tourner et poser.</p>
+      <h1 class="tetris-title"><%= t("showcase.tetris.title") %></h1>
+      <p class="tetris-hint"><%= t("showcase.tetris.intro_hint") %></p>
       <div class="tetris-start-speed">
-        <label class="tetris-start-speed-label" for="tetris-start-speed">Vitesse de départ</label>
-        <select id="tetris-start-speed" class="tetris-input tetris-start-speed-select" aria-label="Vitesse de départ">
-          <option value="1">Normale</option>
-          <option value="1.4">Rapide</option>
-          <option value="1.9">Très rapide</option>
-          <option value="2.5">Extrême</option>
+        <label class="tetris-start-speed-label" for="tetris-start-speed"><%= t("showcase.tetris.start_speed") %></label>
+        <select id="tetris-start-speed" class="tetris-input tetris-start-speed-select" aria-label="<%= t("showcase.tetris.start_speed") %>">
+          <option value="1"><%= t("showcase.tetris.speed_normal") %></option>
+          <option value="1.4"><%= t("showcase.tetris.speed_fast") %></option>
+          <option value="1.9"><%= t("showcase.tetris.speed_very_fast") %></option>
+          <option value="2.5"><%= t("showcase.tetris.speed_extreme") %></option>
         </select>
       </div>
-      <button type="button" class="tetris-btn tetris-btn--start" id="tetris-start">Jouer</button>
+      <button type="button" class="tetris-btn tetris-btn--start" id="tetris-start"><%= t("showcase.tetris.play") %></button>
     </div>
 
     <div id="tetris-game" class="tetris-game" hidden>
@@ -29,64 +29,80 @@
             <div id="tetris-fx-tetris" class="tetris-fx-tetris" hidden>TETRIS!</div>
           </div>
         </div>
-        <aside class="tetris-preview-aside" aria-label="Prochaine pièce et score">
-          <p class="tetris-preview-title">Suivante</p>
+        <aside class="tetris-preview-aside" aria-label="<%= t("showcase.tetris.next_piece_and_score") %>">
+          <p class="tetris-preview-title"><%= t("showcase.tetris.next_piece") %></p>
           <canvas id="tetris-next-canvas" class="tetris-next-canvas" width="80" height="80"></canvas>
           <div class="tetris-score-row" aria-live="polite">
-            <span class="tetris-score">Lignes : <span id="tetris-lines">0</span></span>
-            <span class="tetris-score tetris-score--speed">Vitesse : <span id="tetris-speed-label">—</span></span>
-            <span class="tetris-score tetris-score--time">Temps ajouté : <span id="tetris-time-added">0 seconde</span></span>
+            <span class="tetris-score"><%= t("showcase.tetris.lines") %>: <span id="tetris-lines">0</span></span>
+            <span class="tetris-score tetris-score--speed"><%= t("showcase.tetris.speed") %>: <span id="tetris-speed-label">—</span></span>
+            <span class="tetris-score tetris-score--time"><%= t("showcase.tetris.time_added") %>: <span id="tetris-time-added">0 <%= t("showcase.tetris.second_singular") %></span></span>
           </div>
         </aside>
       </div>
-      <div class="tetris-touch-controls" aria-label="Contrôles tactiles">
+      <div class="tetris-touch-controls" aria-label="<%= t("showcase.tetris.touch_controls") %>">
         <div class="tetris-touch-row tetris-touch-row--lr">
-          <button type="button" class="tetris-btn tetris-btn--zone" id="tetris-btn-left" aria-label="Gauche">←</button>
-          <button type="button" class="tetris-btn tetris-btn--zone" id="tetris-btn-right" aria-label="Droite">→</button>
+          <button type="button" class="tetris-btn tetris-btn--zone" id="tetris-btn-left" aria-label="<%= t("showcase.snake.aria_left") %>">←</button>
+          <button type="button" class="tetris-btn tetris-btn--zone" id="tetris-btn-right" aria-label="<%= t("showcase.snake.aria_right") %>">→</button>
         </div>
         <div class="tetris-touch-row tetris-touch-row--actions">
-          <button type="button" class="tetris-btn tetris-btn--action tetris-btn--rotate" id="tetris-btn-rotate" aria-label="Tourner">Tourner</button>
-          <button type="button" class="tetris-btn tetris-btn--action tetris-btn--harddrop" id="tetris-btn-harddrop" aria-label="Poser tout de suite">Poser</button>
+          <button type="button" class="tetris-btn tetris-btn--action tetris-btn--rotate" id="tetris-btn-rotate" aria-label="<%= t("showcase.tetris.rotate") %>"><%= t("showcase.tetris.rotate") %></button>
+          <button type="button" class="tetris-btn tetris-btn--action tetris-btn--harddrop" id="tetris-btn-harddrop" aria-label="<%= t("showcase.tetris.drop_now") %>"><%= t("showcase.tetris.drop") %></button>
         </div>
       </div>
     </div>
 
     <div id="tetris-gameover" class="tetris-gameover" hidden>
-      <h2 class="tetris-gameover-title">Game Over</h2>
-      <p class="tetris-gameover-score">Lignes : <span id="tetris-final-lines">0</span></p>
-      <p class="tetris-gameover-score">Temps ajouté : <span id="tetris-final-time">0 seconde</span></p>
+      <h2 class="tetris-gameover-title"><%= t("showcase.tetris.game_over") %></h2>
+      <p class="tetris-gameover-score"><%= t("showcase.tetris.lines") %>: <span id="tetris-final-lines">0</span></p>
+      <p class="tetris-gameover-score"><%= t("showcase.tetris.time_added") %>: <span id="tetris-final-time">0 <%= t("showcase.tetris.second_singular") %></span></p>
       <div class="tetris-leaderboard-form" id="tetris-lb-name-block">
-        <p id="tetris-lb-auto-registered" class="tetris-lb-registered" hidden>Score enregistré pour <strong id="tetris-lb-registered-name"></strong></p>
+        <p id="tetris-lb-auto-registered" class="tetris-lb-registered" hidden><%= t("showcase.tetris.score_saved_prefix") %> <strong id="tetris-lb-registered-name"></strong></p>
         <div id="tetris-lb-name-fields" class="tetris-lb-name-fields">
-          <input type="text" id="tetris-player-name" class="tetris-input" placeholder="Ton pseudo pour le leaderboard" maxlength="30" />
-          <button type="button" class="tetris-btn tetris-btn--submit" id="tetris-save-name">Enregistrer au leaderboard</button>
+          <input type="text" id="tetris-player-name" class="tetris-input" placeholder="<%= t("showcase.tetris.name_placeholder") %>" maxlength="30" />
+          <button type="button" class="tetris-btn tetris-btn--submit" id="tetris-save-name"><%= t("showcase.tetris.save_leaderboard") %></button>
         </div>
       </div>
-      <button type="button" class="tetris-btn tetris-btn--ghost" id="tetris-replay">Rejouer</button>
+      <button type="button" class="tetris-btn tetris-btn--ghost" id="tetris-replay"><%= t("showcase.tetris.replay") %></button>
     </div>
   </div>
 
   <section class="tetris-leaderboard" id="tetris-leaderboard">
-    <h3 class="tetris-leaderboard-title">Leaderboard</h3>
+    <h3 class="tetris-leaderboard-title"><%= t("showcase.tetris.leaderboard") %></h3>
     <div class="tetris-leaderboard-toolbar">
-      <label class="tetris-leaderboard-toolbar-label" for="tetris-lb-sort">Trier</label>
-      <select id="tetris-lb-sort" class="tetris-input tetris-leaderboard-sort" aria-label="Trier le classement">
-        <option value="score">Plus de lignes</option>
-        <option value="recent">Plus récent</option>
+      <label class="tetris-leaderboard-toolbar-label" for="tetris-lb-sort"><%= t("showcase.tetris.sort_label") %></label>
+      <select id="tetris-lb-sort" class="tetris-input tetris-leaderboard-sort" aria-label="<%= t("showcase.tetris.sort_aria") %>">
+        <option value="score"><%= t("showcase.tetris.sort_score") %></option>
+        <option value="recent"><%= t("showcase.tetris.sort_recent") %></option>
       </select>
     </div>
     <div id="tetris-leaderboard-list" class="tetris-leaderboard-list">
       <p class="tetris-leaderboard-empty"><%= t("showcase.snake.empty") %></p>
     </div>
     <div id="tetris-leaderboard-pagination" class="tetris-leaderboard-pagination" hidden>
-      <button type="button" class="tetris-btn tetris-btn--ghost tetris-btn--sm" id="tetris-lb-prev" disabled>Précédent</button>
+      <button type="button" class="tetris-btn tetris-btn--ghost tetris-btn--sm" id="tetris-lb-prev" disabled><%= t("showcase.snake.prev") %></button>
       <span class="tetris-leaderboard-page-label" id="tetris-lb-page-label"></span>
-      <button type="button" class="tetris-btn tetris-btn--ghost tetris-btn--sm" id="tetris-lb-next">Suivant</button>
+      <button type="button" class="tetris-btn tetris-btn--ghost tetris-btn--sm" id="tetris-lb-next"><%= t("showcase.snake.next") %></button>
     </div>
   </section>
 </div>
 
-<div id="tetris-i18n-strings" data-lb-empty="<%= j t("showcase.snake.empty") %>" data-page-of="<%= j t("showcase.snake.page_of") %>" hidden></div>
+<script type="application/json" id="tetris-i18n-json"><%= raw json_escape({
+  lb_empty: t("showcase.snake.empty"),
+  page_of: t("showcase.snake.page_of"),
+  table_aria: t("showcase.tetris.table_aria"),
+  col_player: t("showcase.snake.col_player"),
+  col_lines: t("showcase.tetris.col_lines"),
+  col_time_added: t("showcase.tetris.col_time_added"),
+  col_date: t("showcase.snake.col_date"),
+  col_time: t("showcase.snake.col_time"),
+  second_singular: t("showcase.tetris.second_singular"),
+  second_plural: t("showcase.tetris.second_plural"),
+  minute_singular: t("showcase.tetris.minute_singular"),
+  minute_plural: t("showcase.tetris.minute_plural"),
+  minute_short: t("showcase.tetris.minute_short"),
+  second_short: t("showcase.tetris.second_short"),
+  speed_step: t("showcase.tetris.speed_step")
+}.to_json) %></script>
 
 <% if flash[:notice] %>
   <div class="tetris-flash tetris-flash--success"><%= flash[:notice] %></div>
@@ -172,10 +188,10 @@
 
   const pageEl = document.querySelector(".tetris-page");
   const nickname = pageEl.dataset.nickname;
-  const tetrisI18nEl = document.getElementById("tetris-i18n-strings");
-  const tetrisI18n = tetrisI18nEl ? tetrisI18nEl.dataset : {};
-  const LB_EMPTY_HTML = "<p class=\"tetris-leaderboard-empty\">" + (tetrisI18n.lbEmpty || "") + "</p>";
-  const PAGE_OF_TPL = tetrisI18n.pageOf || "";
+  const tetrisI18nEl = document.getElementById("tetris-i18n-json");
+  const tetrisI18n = tetrisI18nEl ? JSON.parse(tetrisI18nEl.textContent) : {};
+  const LB_EMPTY_HTML = "<p class=\"tetris-leaderboard-empty\">" + (tetrisI18n.lb_empty || "") + "</p>";
+  const PAGE_OF_TPL = tetrisI18n.page_of || "";
   const secondsPerLine = Math.max(1, parseInt(pageEl.dataset.tetrisSecondsPerLine || "60", 10) || 60);
   const LEADERBOARD_PER_PAGE = 10;
   const urls = {
@@ -311,15 +327,16 @@
   function formatPlayedTime(iso) {
     const d = parsePlayedAt(iso);
     if (!d) return "—";
-    return d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+    const locale = document.documentElement.lang || navigator.language || "en";
+    return d.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
   }
   function formatAddedTime(lineCount) {
     const totalSeconds = Math.max(0, (parseInt(lineCount || 0, 10) || 0) * secondsPerLine);
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
-    if (minutes > 0 && seconds > 0) return minutes + " min " + seconds + " s";
-    if (minutes > 0) return minutes + " minute" + (minutes > 1 ? "s" : "");
-    return seconds + " seconde" + (seconds > 1 ? "s" : "");
+    if (minutes > 0 && seconds > 0) return minutes + " " + (tetrisI18n.minute_short || "min") + " " + seconds + " " + (tetrisI18n.second_short || "s");
+    if (minutes > 0) return minutes + " " + (minutes > 1 ? (tetrisI18n.minute_plural || "minutes") : (tetrisI18n.minute_singular || "minute"));
+    return seconds + " " + (seconds > 1 ? (tetrisI18n.second_plural || "seconds") : (tetrisI18n.second_singular || "second"));
   }
   function buildLeaderboardUrl() {
     const p = new URLSearchParams({
@@ -441,8 +458,9 @@
   function updateSpeedLabel() {
     if (!speedLabelEl) return;
     const sec = dropMs / 1000;
-    const secStr = sec.toLocaleString("fr-FR", { maximumFractionDigits: sec >= 1 ? 1 : 2, minimumFractionDigits: 0 });
-    speedLabelEl.textContent = secStr + " s / pas";
+    const locale = document.documentElement.lang || navigator.language || "en";
+    const secStr = sec.toLocaleString(locale, { maximumFractionDigits: sec >= 1 ? 1 : 2, minimumFractionDigits: 0 });
+    speedLabelEl.textContent = secStr + " " + (tetrisI18n.speed_step || "s / step");
   }
 
   function drawNextBlock(offsetX, offsetY, gridR, gridC, color) {
@@ -831,14 +849,14 @@
       if (Array.isArray(entries) && entries.length > 0) {
         leaderboardList.innerHTML =
           '<div class="tetris-leaderboard-table-wrap">' +
-          '<table class="tetris-leaderboard-table" aria-label="Classement Tétris">' +
+          `<table class="tetris-leaderboard-table" aria-label="${escapeHtml(tetrisI18n.table_aria || "Leaderboard")}">` +
           "<thead><tr>" +
           '<th scope="col" class="tetris-leaderboard-th tetris-leaderboard-th--num">#</th>' +
-          '<th scope="col" class="tetris-leaderboard-th">Joueur</th>' +
-          '<th scope="col" class="tetris-leaderboard-th tetris-leaderboard-th--score">Lignes</th>' +
-          '<th scope="col" class="tetris-leaderboard-th tetris-leaderboard-th--meta">Temps</th>' +
-          '<th scope="col" class="tetris-leaderboard-th tetris-leaderboard-th--meta">Date</th>' +
-          '<th scope="col" class="tetris-leaderboard-th tetris-leaderboard-th--meta">Heure</th>' +
+          `<th scope="col" class="tetris-leaderboard-th">${escapeHtml(tetrisI18n.col_player || "Player")}</th>` +
+          `<th scope="col" class="tetris-leaderboard-th tetris-leaderboard-th--score">${escapeHtml(tetrisI18n.col_lines || "Lines")}</th>` +
+          `<th scope="col" class="tetris-leaderboard-th tetris-leaderboard-th--meta">${escapeHtml(tetrisI18n.col_time_added || "Time added")}</th>` +
+          `<th scope="col" class="tetris-leaderboard-th tetris-leaderboard-th--meta">${escapeHtml(tetrisI18n.col_date || "Date")}</th>` +
+          `<th scope="col" class="tetris-leaderboard-th tetris-leaderboard-th--meta">${escapeHtml(tetrisI18n.col_time || "Time")}</th>` +
           "</tr></thead><tbody>" +
           entries.map(s =>
             "<tr>" +

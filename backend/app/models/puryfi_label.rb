@@ -2,35 +2,6 @@
 
 # Human-readable names for PuryFi static label ids (0–25), aligned with puryfi-ws/shared/labels.ts
 class PuryfiLabel
-  NAMES = [
-    "Ventre",
-    "Ventre (couvert)",
-    "Fesses",
-    "Fesses (couvertes)",
-    "Poitrine féminine",
-    "Poitrine féminine (couverte)",
-    "Génitaux féminins",
-    "Génitaux féminins (couverts)",
-    "Génitaux masculins (couverts)",
-    "Génitaux masculins",
-    "Poitrine masculine",
-    "Poitrine masculine (couverte)",
-    "Visage féminin",
-    "Visage masculin",
-    "Pied (couvert)",
-    "Pied",
-    "Aisselle (couverte)",
-    "Aisselle",
-    "Anus (couvert)",
-    "Anus",
-    "Œil",
-    "Bouche",
-    "Mamelon (couvert)",
-    "Mamelon",
-    "Main (couverte)",
-    "Main"
-  ].freeze
-
   CODES = %w[
     bellye bellyc butte buttc ftite ftitc fgene fgenc mgenc mgene mtite mtitc
     fface mface feetc feete apitc apite anusc anuse eye mouth nipplec nipple handc hand
@@ -60,7 +31,10 @@ class PuryfiLabel
   }.freeze
 
   def self.name_for(id)
-    NAMES[id] || "Label #{id}"
+    code = code_for(id)
+    return "Label #{id}" if code.blank?
+
+    I18n.t("beta.puryfi.labels.#{code}", default: "Label #{id}")
   end
 
   def self.code_for(id)

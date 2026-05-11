@@ -57,10 +57,12 @@ class StravaGoal < ApplicationRecord
 
   def criteria_summary
     parts = []
-    parts << "durée >= #{min_duration_seconds / 60} min" if min_duration_seconds.present?
-    parts << "calories >= #{min_calories}" if min_calories.present?
-    parts << "types: #{activity_types.join(', ')}" if activity_types.present?
-    parts << "appareils: #{device_names.join(', ')}" if device_names.present?
+    if min_duration_seconds.present?
+      parts << I18n.t("beta.strava.criteria.min_duration", minutes: min_duration_seconds / 60)
+    end
+    parts << I18n.t("beta.strava.criteria.min_calories", calories: min_calories) if min_calories.present?
+    parts << I18n.t("beta.strava.criteria.activity_types", types: activity_types.join(", ")) if activity_types.present?
+    parts << I18n.t("beta.strava.criteria.device_names", devices: device_names.join(", ")) if device_names.present?
     parts.join(" · ")
   end
 
@@ -92,9 +94,12 @@ class StravaGoal < ApplicationRecord
 
   def window_label
     case window_days
-    when 1 then "quotidien"
-    when 7 then "hebdomadaire"
-    else "#{window_days} jours glissants"
+    when 1
+      I18n.t("beta.strava.window_short.daily")
+    when 7
+      I18n.t("beta.strava.window_short.weekly")
+    else
+      I18n.t("beta.strava.window_short.custom", days: window_days)
     end
   end
 
@@ -165,20 +170,24 @@ class StravaGoal < ApplicationRecord
   def criteria_present
     return if min_duration_seconds.present? || min_calories.present? || activity_types.present? || device_names.present?
 
-    errors.add(:base, "Ajoute au moins un critère Strava.")
+    errors.add(:base, I18n.t("beta.strava.errors.criteria_required"))
   end
 
   def activity_types_are_strings
-    errors.add(:activity_types, "doit être une liste") unless activity_types.is_a?(Array)
+    return if activity_types.is_a?(Array)
+
+    errors.add(:activity_types, I18n.t("beta.strava.errors.must_be_list"))
   end
 
   def device_names_are_strings
-    errors.add(:device_names, "doit être une liste") unless device_names.is_a?(Array)
+    return if device_names.is_a?(Array)
+
+    errors.add(:device_names, I18n.t("beta.strava.errors.must_be_list"))
   end
 
   def time_zone_known
     return if time_zone.blank? || ActiveSupport::TimeZone[time_zone].present?
 
-    errors.add(:time_zone, "est invalide")
+    errors.add(:time_zone, I18n.t("beta.strava.errors.invalid_time_zone"))
   end
 end

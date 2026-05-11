@@ -143,7 +143,7 @@ fr:
       api_key_placeholder: "•••••••• (laisser vide pour ne pas changer)"
       intensity_factor_label: "Facteur d'intensité Z"
       intensity_hint: "Multiplie l'intensité de tous les chocs. Z=1 = normal · Z=10 -> 1 ligne Tétris = intensité 10 · Z=0.5 -> moitié moins fort. Max 100."
-      save: "Enregistrer PiShock"
+      save: "Enregistrer"
       test_hint_html: "Teste avec les identifiants <strong>déjà enregistrés</strong> (enregistre le formulaire si tu viens de les modifier)."
       test_button: "Tester la connexion (API publique + bip 1 s)"
       test_confirm: "Valider le compte sur api.pishock.com, rattacher le share code si besoin, puis bip de test ?"

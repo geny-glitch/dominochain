@@ -22,6 +22,13 @@ Only show sections that make sense for the current integration; do not force all
 - Keep section titles outside cards (same visual pattern as PuryFi pages).
 - Preserve clear vertical rhythm between consecutive cards (visible spacing).
 
+## Section Container and Activation Toggle Rule
+
+- Wrap each logical section in `<section class="ds-beta-section">`.
+- Every source/action page must expose an enable/disable toggle.
+- Place the toggle on the same horizontal row as the page title.
+- Align the toggle at the far right end of that title row (top-right of the page content area).
+
 ## Installation Drawer Rule
 
 - When installation is completed and confirmed working, keep installation details collapsed by default in a drawer.

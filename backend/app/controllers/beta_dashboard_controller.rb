@@ -132,16 +132,15 @@ class BetaDashboardController < ApplicationController
 
   def update_pishock
     p = params.permit(:pishock_enabled, :pishock_username, :pishock_share_code, :pishock_api_key, :pishock_intensity_factor)
-    attrs = {
-      pishock_enabled: p[:pishock_enabled] == "1",
-      pishock_username: p[:pishock_username].to_s.strip.presence,
-      pishock_share_code: p[:pishock_share_code].to_s.strip.presence
-    }
+    attrs = {}
+    attrs[:pishock_enabled] = p[:pishock_enabled] == "1" if p.key?(:pishock_enabled)
+    attrs[:pishock_username] = p[:pishock_username].to_s.strip.presence if p.key?(:pishock_username)
+    attrs[:pishock_share_code] = p[:pishock_share_code].to_s.strip.presence if p.key?(:pishock_share_code)
     attrs[:pishock_api_key] = p[:pishock_api_key] if p[:pishock_api_key].present?
-    if p[:pishock_intensity_factor].present?
+    if p.key?(:pishock_intensity_factor) && p[:pishock_intensity_factor].present?
       attrs[:pishock_intensity_factor] = p[:pishock_intensity_factor].to_f.clamp(0.01, 100)
     end
-    current_user.update!(attrs)
+    current_user.update!(attrs) if attrs.any?
     redirect_to beta_actions_pishock_path, notice: t("flash.beta.pishock_saved")
   rescue ActiveRecord::RecordInvalid => e
     redirect_to beta_actions_pishock_path, alert: e.record.errors.full_messages.join(", ")

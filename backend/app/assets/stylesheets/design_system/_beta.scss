@@ -460,6 +460,17 @@
   margin-bottom: $ds-space-lg;
 }
 
+.ds-beta-page-head-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $ds-space-sm;
+}
+
+.ds-beta-page-head-row .ds-beta-page-title {
+  margin-bottom: 0;
+}
+
 .ds-beta-page-title {
   margin: 0 0 $ds-space-xs;
   font-family: $ds-font-brand;
@@ -907,6 +918,18 @@
   &:hover {
     color: $ds-teal-dim;
   }
+}
+
+.ds-pishock-form {
+  margin-top: $ds-space-md;
+}
+
+.ds-pishock-install-test {
+  margin-top: $ds-space-md;
+}
+
+.ds-pishock-intensity-hint {
+  margin-top: $ds-space-xs;
 }
 
 .ds-beta-task-back {

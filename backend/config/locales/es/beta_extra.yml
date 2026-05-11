@@ -143,7 +143,7 @@ es:
       api_key_placeholder: "•••••••• (deja vacío para no cambiarlo)"
       intensity_factor_label: "Factor de intensidad Z"
       intensity_hint: "Multiplica la intensidad de todas las descargas. Z=1 = normal · Z=10 -> 1 línea de Tetris = intensidad 10 · Z=0.5 -> mitad de intensidad. Máx 100."
-      save: "Guardar PiShock"
+      save: "Guardar"
       test_hint_html: "Prueba con las credenciales <strong>ya guardadas</strong> (guarda el formulario si acabas de cambiarlas)."
       test_button: "Probar conexión (API pública + pitido de 1 s)"
       test_confirm: "¿Validar cuenta en api.pishock.com, asociar share code si hace falta y luego emitir pitido de prueba?"

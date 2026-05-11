@@ -28,6 +28,7 @@
   border: none;
   border-radius: var(--md-sys-shape-corner-medium, #{$ds-radius-sm});
   font-size: $ds-body-size;
+  font-weight: $ds-cta-weight;
   cursor: pointer;
   font-family: inherit;
   transition: background $ds-transition, color $ds-transition, box-shadow $ds-transition;

@@ -143,7 +143,7 @@ en:
       api_key_placeholder: "•••••••• (leave blank to keep current value)"
       intensity_factor_label: "Intensity factor Z"
       intensity_hint: "Multiplies shock intensity globally. Z=1 = normal · Z=10 -> 1 Tetris line = intensity 10 · Z=0.5 -> half intensity. Max 100."
-      save: "Save PiShock"
+      save: "Save settings"
       test_hint_html: "Test with the <strong>already saved</strong> credentials (save the form first if you just changed them)."
       test_button: "Test connection (public API + 1 s beep)"
       test_confirm: "Validate account on api.pishock.com, bind share code if needed, then run test beep?"

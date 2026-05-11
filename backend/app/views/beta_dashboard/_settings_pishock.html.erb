@@ -1,25 +1,17 @@
     <%# PiShock %>
     <section class="ds-beta-section">
-      <h2 class="ds-section-title"><%= t("beta.pishock.section_title") %></h2>
+      <h2 class="ds-section-title"><%= t("beta.integration_sections.installation") %></h2>
       <div class="ds-beta-control-card">
-        <p class="ds-beta-control-text"><%= t("beta.pishock.description") %></p>
         <p class="ds-beta-control-hint">
           <%= t("beta.pishock.setup_hint_prefix_html") %>
-          <a href="https://pishock.com" target="_blank" rel="noopener noreferrer">pishock.com</a>
+          <a href="https://pishock.com" target="_blank" rel="noopener noreferrer" class="ds-inline-link">pishock.com</a>
           <%= t("beta.pishock.setup_hint_middle_html") %>
-          <a href="https://apidocs.pishock.com/" target="_blank" rel="noopener noreferrer"><%= t("beta.pishock.api_docs_label") %></a>
+          <a href="https://apidocs.pishock.com/" target="_blank" rel="noopener noreferrer" class="ds-inline-link"><%= t("beta.pishock.api_docs_label") %></a>
           <%= t("beta.pishock.setup_hint_and") %>
-          <a href="https://docs.pishock.com/pishock/api-documentation/pishock-api-documentation.html" target="_blank" rel="noopener noreferrer"><%= t("beta.pishock.auth_docs_label") %></a>.
-          <%= link_to t("beta.pishock.debug_page"), beta_pishock_debug_path %>
+          <a href="https://docs.pishock.com/pishock/api-documentation/pishock-api-documentation.html" target="_blank" rel="noopener noreferrer" class="ds-inline-link"><%= t("beta.pishock.auth_docs_label") %></a>.
         </p>
-        <%= form_with url: beta_pishock_path, method: :patch, local: true, class: "ds-form", style: "margin-top: 0.75rem;" do %>
-          <%= hidden_field_tag :pishock_enabled, "0" %>
-          <div class="ds-form-group">
-            <label class="ds-form-label">
-              <%= check_box_tag :pishock_enabled, "1", current_user.pishock_enabled, id: "pishock_enabled" %>
-              <%= t("beta.pishock.enable_checkbox") %>
-            </label>
-          </div>
+
+        <%= form_with url: beta_pishock_path, method: :patch, local: true, class: "ds-form ds-pishock-form" do %>
           <div class="ds-form-group">
             <%= label_tag :pishock_username, t("beta.pishock.username_label"), class: "ds-form-label" %>
             <%= text_field_tag :pishock_username, current_user.pishock_username, class: "ds-input", autocomplete: "username" %>
@@ -32,15 +24,28 @@
             <%= label_tag :pishock_api_key, t("beta.pishock.api_key_label"), class: "ds-form-label" %>
             <%= password_field_tag :pishock_api_key, nil, class: "ds-input", autocomplete: "new-password", placeholder: current_user.pishock_api_key.present? ? t("beta.pishock.api_key_placeholder") : "" %>
           </div>
+          <%= submit_tag t("beta.pishock.save"), class: "ds-btn ds-btn--primary ds-btn--sm" %>
+        <% end %>
+
+        <div class="ds-pishock-install-test">
+          <p class="ds-beta-control-hint"><%= t("beta.pishock.test_hint_html") %></p>
+          <%= button_to t("beta.pishock.test_button"), beta_pishock_test_path, method: :post, form: { data: { turbo_confirm: t("beta.pishock.test_confirm") } }, class: "ds-btn ds-btn--secondary ds-btn--sm" %>
+        </div>
+      </div>
+    </section>
+
+    <section class="ds-beta-section">
+      <h2 class="ds-section-title"><%= t("beta.integration_sections.configuration") %></h2>
+      <div class="ds-beta-control-card">
+        <p class="ds-beta-control-text"><%= t("beta.pishock.description") %></p>
+        <%= form_with url: beta_pishock_path, method: :patch, local: true, class: "ds-form ds-pishock-form" do %>
           <div class="ds-form-group">
             <%= label_tag :pishock_intensity_factor, t("beta.pishock.intensity_factor_label"), class: "ds-form-label" %>
             <% pif = current_user.pishock_intensity_factor.to_f; pif_display = pif % 1 == 0 ? pif.to_i : pif %>
             <%= number_field_tag :pishock_intensity_factor, pif_display, min: 0.01, max: 100, step: "any", class: "ds-input" %>
-            <p class="ds-beta-control-hint" style="margin-top: 0.25rem;"><%= t("beta.pishock.intensity_hint") %></p>
+            <p class="ds-beta-control-hint ds-pishock-intensity-hint"><%= t("beta.pishock.intensity_hint") %></p>
           </div>
           <%= submit_tag t("beta.pishock.save"), class: "ds-btn ds-btn--primary ds-btn--sm" %>
         <% end %>
-        <p class="ds-beta-control-hint" style="margin-top: 0.75rem;"><%= t("beta.pishock.test_hint_html") %></p>
-        <%= button_to t("beta.pishock.test_button"), beta_pishock_test_path, method: :post, form: { data: { turbo_confirm: t("beta.pishock.test_confirm") } }, class: "ds-btn ds-btn--secondary ds-btn--sm", style: "margin-top: 0.5rem;" %>
       </div>
     </section>

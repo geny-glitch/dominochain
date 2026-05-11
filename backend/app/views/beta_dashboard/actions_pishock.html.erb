@@ -1,7 +1,16 @@
 <% content_for :title, t("beta.pishock.page_title", nickname: current_user.nickname) %>
 
 <header class="ds-beta-page-head">
-  <h1 class="ds-beta-page-title"><%= t("beta.pishock.heading") %></h1>
+  <div class="ds-beta-page-head-row">
+    <h1 class="ds-beta-page-title"><%= t("beta.pishock.heading") %></h1>
+    <%= form_with url: beta_pishock_path, method: :patch, local: true, class: "ds-beta-catalog-toggle-form" do %>
+      <%= hidden_field_tag :pishock_enabled, "0" %>
+      <label class="ds-form-label ds-beta-catalog-toggle" title="<%= t("beta.pishock.enable_checkbox") %>">
+        <%= check_box_tag :pishock_enabled, "1", current_user.pishock_enabled, id: "pishock_enabled_header", class: "ds-beta-catalog-toggle-input", onchange: "this.form.requestSubmit();", "aria-label": t("beta.pishock.enable_checkbox") %>
+        <span class="ds-beta-catalog-toggle-switch" aria-hidden="true"></span>
+      </label>
+    <% end %>
+  </div>
   <p class="ds-beta-page-lead">
     <%= t("beta.pishock.lead") %>
   </p>

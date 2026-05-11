@@ -35,7 +35,7 @@ en:
       sign_in_with: "Sign in with %{provider}"
     sessions:
       title: "Log in"
-      nickname: "Nickname"
+      email: "Email"
       password: "Password"
       remember_me: "Remember me"
       submit: "Log in"

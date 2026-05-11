@@ -25,6 +25,42 @@ es:
     empty: "Ningún beta controlado. Pide a un beta que comparta su enlace o envíe una solicitud."
     sign_out: "Cerrar sesión"
   devise:
+    mailer:
+      confirmation_instructions:
+        subject: "Confirma tu correo de DominoChain"
+        preview: "Confirma tu correo de DominoChain."
+        eyebrow: "Confirmación de correo"
+        heading: "Confirma tu correo"
+        body: "Confirma %{email} para terminar de proteger tu cuenta DominoChain."
+        cta: "Confirmar mi correo"
+      reset_password_instructions:
+        subject: "Restablece tu contraseña DominoChain"
+        preview: "Usa este enlace seguro para restablecer tu contraseña DominoChain."
+        eyebrow: "Recuperación de contraseña"
+        heading: "Restablece tu contraseña"
+        body: "Recibimos una solicitud de recuperación para %{email}. Usa el botón de abajo para elegir una nueva contraseña."
+        cta: "Restablecer mi contraseña"
+        ignore: "Si no solicitaste esto, puedes ignorar este correo. Tu contraseña no cambiará hasta que abras el enlace y guardes una nueva."
+      unlock_instructions:
+        subject: "Desbloquea tu cuenta DominoChain"
+        preview: "Desbloquea tu cuenta DominoChain."
+        eyebrow: "Desbloqueo de cuenta"
+        heading: "Desbloquea tu cuenta"
+        body: "Tu cuenta %{email} está bloqueada. Usa el botón de abajo para desbloquearla."
+        cta: "Desbloquear mi cuenta"
+      email_changed:
+        subject: "Tu correo DominoChain cambió"
+        preview: "El correo de tu cuenta DominoChain fue actualizado."
+        eyebrow: "Actualización de cuenta"
+        heading: "Correo actualizado"
+        body: "El correo de tu cuenta DominoChain ahora es %{email}."
+        pending_body: "El correo de tu cuenta DominoChain se está cambiando a %{email}."
+      password_change:
+        subject: "Tu contraseña DominoChain cambió"
+        preview: "La contraseña de tu cuenta DominoChain fue actualizada."
+        eyebrow: "Aviso de seguridad"
+        heading: "Contraseña cambiada"
+        body: "La contraseña de %{email} fue cambiada. Si no fuiste tú, inicia un restablecimiento inmediatamente."
     links:
       log_in: "Iniciar sesión"
       sign_up_beta: "Alta beta"
@@ -35,7 +71,7 @@ es:
       sign_in_with: "Entrar con %{provider}"
     sessions:
       title: "Iniciar sesión"
-      nickname: "Apodo"
+      email: "Correo"
       password: "Contraseña"
       remember_me: "Recordarme"
       submit: "Entrar"

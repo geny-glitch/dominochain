@@ -33,25 +33,38 @@ RSpec.describe "Routes", type: :request do
   end
 
   describe "Devise POST routes" do
-    let(:user) { create(:user, :beta, nickname: "testbeta", password: "password123") }
+    let(:user) { create(:user, :beta, nickname: "testbeta", email: "testbeta@dominochain.app", password: "password123") }
 
     it "POST /login signs in and redirects" do
-      post user_session_path, params: { user: { nickname: user.nickname, password: "password123" } }
+      post user_session_path, params: { user: { email: user.email, password: "password123" } }
       expect(response).to have_http_status(:redirect)
     end
 
     it "POST /signup creates user and redirects" do
       post user_registration_path, params: {
-        user: { nickname: "newuser", password: "password123", password_confirmation: "password123" }
+        user: { email: "newuser@dominochain.app", password: "password123", password_confirmation: "password123" }
       }
       expect(response).to have_http_status(:redirect)
+      expect(User.find_by!(email: "newuser@dominochain.app").nickname).to eq("newuser")
     end
 
     it "POST /signup/boss creates boss and redirects" do
       post boss_registration_path, params: {
-        user: { nickname: "newboss", password: "password123", password_confirmation: "password123" }
+        user: { email: "newboss@dominochain.app", password: "password123", password_confirmation: "password123" }
       }
       expect(response).to have_http_status(:redirect)
+      expect(User.find_by!(email: "newboss@dominochain.app").nickname).to eq("newboss")
+    end
+
+    it "POST /password sends reset instructions" do
+      user = create(:user, email: "recover@dominochain.app")
+
+      expect {
+        post user_password_path, params: { user: { email: user.email } }
+      }.to change { ActionMailer::Base.deliveries.count }.by(1)
+
+      expect(user.reload.reset_password_token).to be_present
+      expect(ActionMailer::Base.deliveries.last.subject).to eq("Reset your DominoChain password")
     end
   end
 
@@ -416,25 +429,26 @@ RSpec.describe "Routes", type: :request do
   describe "API routes" do
     describe "Auth (no device token required)" do
       it "POST /api/auth/login returns 401 with invalid credentials" do
-        post api_auth_login_path, params: { nickname: "unknown", password: "wrong" }
+        post api_auth_login_path, params: { email: "unknown@dominochain.app", password: "wrong" }
         expect(response).to have_http_status(:unauthorized)
       end
 
       it "POST /api/auth/login returns 200 with valid credentials" do
-        user = create(:user, :beta, nickname: "apiuser", password: "password123")
+        user = create(:user, :beta, nickname: "apiuser", email: "apiuser@dominochain.app", password: "password123")
         post api_auth_login_path, params: {
-          nickname: user.nickname, password: "password123", device_id: "test-device"
+          email: user.email, password: "password123", device_id: "test-device"
         }
         expect(response).to have_http_status(:ok)
       end
 
       it "POST /api/auth/register returns 201" do
         post api_auth_register_path, params: {
-          nickname: "newapi", password: "password123", password_confirmation: "password123",
+          email: "newapi@dominochain.app", password: "password123", password_confirmation: "password123",
           device_id: "device-123"
         }
         expect(response).to have_http_status(:created)
-        user = User.find_by!(nickname: "newapi")
+        user = User.find_by!(email: "newapi@dominochain.app")
+        expect(user.nickname).to eq("newapi")
         expect(user.showcase_quiz_enabled).to be false
         expect(user.showcase_snake_enabled).to be false
         expect(user.showcase_dino_enabled).to be false
@@ -804,7 +818,7 @@ RSpec.describe "Routes", type: :request do
 
       it "POST /api/devices creates device when user has auth (via login)" do
         post api_auth_login_path, params: {
-          nickname: beta.nickname, password: "password123", device_id: "fresh-device"
+          email: beta.email, password: "password123", device_id: "fresh-device"
         }
         expect(response).to have_http_status(:ok)
         token = JSON.parse(response.body)["token"]

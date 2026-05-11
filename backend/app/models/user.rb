@@ -3,9 +3,9 @@ class User < ApplicationRecord
 
   # Include default devise modules. Others available are:
   # :confirmable, :lockable, :timeoutable, :trackable and :omniauthable
-  devise :database_authenticatable, :registerable,
+  devise :database_authenticatable, :registerable, :recoverable,
          :rememberable, :validatable,
-         authentication_keys: [:nickname]
+         authentication_keys: [:email]
 
   enum role: { beta: 0, boss: 1, admin: 2 }
 
@@ -42,22 +42,33 @@ class User < ApplicationRecord
     numericality: { greater_than_or_equal_to: 0.0, less_than_or_equal_to: 1.0 },
     if: :beta?
 
+  before_validation :normalize_email
+  before_validation :assign_nickname_from_email, on: :create
   before_save :touch_showcase_quiz_seconds_changed_at, if: :will_save_change_to_showcase_quiz_seconds_per_point?
   before_save :touch_showcase_snake_seconds_changed_at, if: :will_save_change_to_showcase_snake_seconds_per_fruit?
   before_save :touch_showcase_dino_seconds_changed_at, if: :will_save_change_to_showcase_dino_seconds_per_obstacle?
   before_save :touch_showcase_tetris_seconds_changed_at, if: :will_save_change_to_showcase_tetris_seconds_per_line?
   before_validation :apply_beta_defaults, on: :create
 
-  def email_required?
-    false
-  end
+  def self.generate_unique_nickname_from_email(email, excluding_id: nil)
+    base = email.to_s.split("@", 2).first.to_s.downcase.gsub(/[^a-z0-9_]/, "_")
+    base = "user" if base.blank?
+    base = base[0, 24].sub(/_+\z/, "")
+    base = "user" if base.blank?
 
-  def email_changed?
-    false
-  end
+    candidate = base
+    suffix = 2
+    scope = where(nickname: candidate)
+    scope = scope.where.not(id: excluding_id) if excluding_id.present?
 
-  def will_save_change_to_email?
-    false
+    while scope.exists?
+      candidate = "#{base}_#{suffix}"
+      suffix += 1
+      scope = where(nickname: candidate)
+      scope = scope.where.not(id: excluding_id) if excluding_id.present?
+    end
+
+    candidate
   end
 
   def puryfi_ws_url
@@ -78,6 +89,16 @@ class User < ApplicationRecord
   end
 
   private
+
+  def normalize_email
+    self.email = email.to_s.strip.downcase if email.present?
+  end
+
+  def assign_nickname_from_email
+    return if nickname.present? || email.blank?
+
+    self.nickname = self.class.generate_unique_nickname_from_email(email)
+  end
 
   def apply_beta_defaults
     return unless beta?

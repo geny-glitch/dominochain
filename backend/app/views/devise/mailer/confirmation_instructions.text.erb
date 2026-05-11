@@ -1,0 +1,7 @@
+DominoChain
+
+<%= t("devise.mailer.confirmation_instructions.heading") %>
+
+<%= t("devise.mailer.confirmation_instructions.body", email: @resource.email) %>
+
+<%= user_confirmation_url(confirmation_token: @token) %>

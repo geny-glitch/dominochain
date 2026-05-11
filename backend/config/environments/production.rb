@@ -79,9 +79,17 @@ Rails.application.configure do
   # caching is enabled.
   config.action_mailer.perform_caching = false
 
-  # Ignore bad email addresses and do not raise email delivery errors.
-  # Set this to true and configure the email server for immediate delivery to raise delivery errors.
-  # config.action_mailer.raise_delivery_errors = false
+  app_public_base_url = ENV.fetch("APP_PUBLIC_BASE_URL", "https://dominochain.app")
+  app_public_uri = URI.parse(app_public_base_url)
+  config.action_mailer.delivery_method = :resend
+  config.action_mailer.raise_delivery_errors = true
+  config.action_mailer.default_url_options = {
+    host: app_public_uri.host,
+    protocol: app_public_uri.scheme
+  }.tap do |options|
+    options[:port] = app_public_uri.port unless [80, 443].include?(app_public_uri.port)
+  end
+  config.action_mailer.asset_host = app_public_base_url
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
   # the I18n.default_locale when a translation cannot be found).

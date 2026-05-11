@@ -5,17 +5,23 @@ module Api
     skip_before_action :verify_authenticity_token
 
     def login
-      user = User.find_for_database_authentication(nickname: params[:nickname])
+      user = User.find_for_database_authentication(email: params[:email].to_s.strip.downcase)
       if user&.valid_password?(params[:password])
         device = link_device_to_user(user)
         render json: auth_response(user, device)
       else
-        render json: { error: "Pseudo ou mot de passe incorrect" }, status: :unauthorized
+        render json: { error: "E-mail ou mot de passe incorrect" }, status: :unauthorized
       end
     end
 
     def register
-      user = User.new(nickname: params[:nickname], password: params[:password], password_confirmation: params[:password_confirmation], role: :beta)
+      user = User.new(
+        email: params[:email],
+        nickname: params[:nickname].presence,
+        password: params[:password],
+        password_confirmation: params[:password_confirmation],
+        role: :beta
+      )
       if user.save
         device = link_device_to_user(user)
         render json: auth_response(user, device), status: :created
@@ -54,7 +60,7 @@ module Api
       web_url = device ? "#{request.base_url}/w/#{user.nickname}" : nil
       {
         token: device&.auth_token,
-        user: { nickname: user.nickname },
+        user: { nickname: user.nickname, email: user.email },
         device_id: device&.device_id,
         web_url: web_url
       }

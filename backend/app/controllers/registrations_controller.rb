@@ -7,7 +7,7 @@ class RegistrationsController < Devise::RegistrationsController
   protected
 
   def configure_sign_up_params
-    devise_parameter_sanitizer.permit(:sign_up, keys: [:nickname, :role])
+    devise_parameter_sanitizer.permit(:sign_up, keys: [:email, :role])
   end
 
   def build_resource(hash = {})

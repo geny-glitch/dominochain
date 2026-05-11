@@ -1,0 +1,9 @@
+DominoChain
+
+<%= t("devise.mailer.email_changed.heading") %>
+
+<% if @resource.try(:unconfirmed_email?) %>
+<%= t("devise.mailer.email_changed.pending_body", email: @resource.unconfirmed_email) %>
+<% else %>
+<%= t("devise.mailer.email_changed.body", email: @resource.email) %>
+<% end %>

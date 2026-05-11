@@ -25,6 +25,42 @@ fr:
     empty: "Aucun beta contrôlé. Demandez à un beta de partager son lien ou d'envoyer une demande."
     sign_out: "Déconnexion"
   devise:
+    mailer:
+      confirmation_instructions:
+        subject: "Confirme ton e-mail DominoChain"
+        preview: "Confirme ton adresse e-mail DominoChain."
+        eyebrow: "Confirmation e-mail"
+        heading: "Confirme ton e-mail"
+        body: "Confirme %{email} pour sécuriser ton compte DominoChain."
+        cta: "Confirmer mon e-mail"
+      reset_password_instructions:
+        subject: "Réinitialise ton mot de passe DominoChain"
+        preview: "Utilise ce lien sécurisé pour réinitialiser ton mot de passe DominoChain."
+        eyebrow: "Récupération du mot de passe"
+        heading: "Réinitialise ton mot de passe"
+        body: "Nous avons reçu une demande de récupération pour %{email}. Utilise le bouton ci-dessous pour choisir un nouveau mot de passe."
+        cta: "Réinitialiser mon mot de passe"
+        ignore: "Si tu n'as pas demandé cela, ignore cet e-mail. Ton mot de passe ne changera pas tant que tu n'auras pas ouvert le lien et enregistré un nouveau mot de passe."
+      unlock_instructions:
+        subject: "Déverrouille ton compte DominoChain"
+        preview: "Déverrouille ton compte DominoChain."
+        eyebrow: "Déverrouillage"
+        heading: "Déverrouille ton compte"
+        body: "Ton compte %{email} a été verrouillé. Utilise le bouton ci-dessous pour le déverrouiller."
+        cta: "Déverrouiller mon compte"
+      email_changed:
+        subject: "Ton e-mail DominoChain a changé"
+        preview: "L'e-mail de ton compte DominoChain a été mis à jour."
+        eyebrow: "Mise à jour du compte"
+        heading: "E-mail modifié"
+        body: "L'e-mail de ton compte DominoChain est maintenant %{email}."
+        pending_body: "L'e-mail de ton compte DominoChain est en cours de modification vers %{email}."
+      password_change:
+        subject: "Ton mot de passe DominoChain a changé"
+        preview: "Le mot de passe de ton compte DominoChain a été mis à jour."
+        eyebrow: "Avis de sécurité"
+        heading: "Mot de passe modifié"
+        body: "Le mot de passe de %{email} a été modifié. Si ce n'était pas toi, lance immédiatement une réinitialisation."
     links:
       log_in: "Connexion"
       sign_up_beta: "Inscription Beta"
@@ -35,7 +71,7 @@ fr:
       sign_in_with: "Se connecter avec %{provider}"
     sessions:
       title: "Connexion"
-      nickname: "Pseudo"
+      email: "E-mail"
       password: "Mot de passe"
       remember_me: "Se souvenir de moi"
       submit: "Se connecter"

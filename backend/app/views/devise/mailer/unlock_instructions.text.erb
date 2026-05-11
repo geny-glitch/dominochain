@@ -1,0 +1,7 @@
+DominoChain
+
+<%= t("devise.mailer.unlock_instructions.heading") %>
+
+<%= t("devise.mailer.unlock_instructions.body", email: @resource.email) %>
+
+<%= user_unlock_url(unlock_token: @token) %>

@@ -26,7 +26,7 @@
 .ds-btn {
   padding: $ds-space-sm $ds-space-lg;
   border: none;
-  border-radius: var(--md-sys-shape-corner-medium, #{$ds-radius-md});
+  border-radius: var(--md-sys-shape-corner-medium, #{$ds-radius-sm});
   font-size: $ds-body-size;
   cursor: pointer;
   font-family: inherit;
@@ -47,11 +47,13 @@
     background: transparent;
     color: var(--md-sys-color-primary, #{$ds-magenta});
     border: 1px solid var(--md-sys-color-primary, #{$ds-magenta});
+    text-decoration: none;
 
     &:hover {
       background: rgba($ds-magenta, 0.1);
       border-color: var(--md-sys-color-primary, #{$ds-magenta});
       color: var(--md-sys-color-primary, #{$ds-magenta});
+      text-decoration: none;
     }
   }
 
@@ -75,7 +77,7 @@
 
 // Section title
 .ds-section-title {
-  font-size: 0.7rem;
+  font-size: $ds-small-size;
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;

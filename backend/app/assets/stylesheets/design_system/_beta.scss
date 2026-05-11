@@ -188,12 +188,19 @@
 }
 
 .ds-beta-sidebar {
+  display: flex;
+  flex-direction: column;
+  align-self: flex-start;
   width: 16rem;
   flex-shrink: 0;
+  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
   padding: $ds-space-lg $ds-space-md;
   background: $ds-surface;
   border-right: 1px solid $ds-border;
-  position: relative;
+  position: sticky;
+  top: 0;
   z-index: 20;
 }
 
@@ -270,7 +277,27 @@
 .ds-beta-sidebar-nav {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
   gap: $ds-space-xs;
+}
+
+.ds-beta-sidebar-footer {
+  margin-top: $ds-space-md;
+  padding-top: $ds-space-lg;
+}
+
+.ds-beta-sidebar-footer form {
+  margin: 0;
+}
+
+.ds-beta-sidebar-signout {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
 }
 
 .ds-beta-nav-heading {
@@ -341,7 +368,6 @@
     box-shadow: 0 0.75rem 2rem rgba(0, 0, 0, 0.22);
     transform: translateX(-105%);
     transition: transform 0.2s ease;
-    overflow-y: auto;
   }
 
   .ds-beta-sidebar-close {

@@ -13,15 +13,15 @@
     </style>
     <style name="DsSubtitle" parent="TextAppearance.MaterialComponents.Body1">
         <item name="android:textColor">@color/ds_text_muted</item>
-        <item name="android:textSize">13sp</item>
+        <item name="android:textSize">14sp</item>
     </style>
     <style name="DsBody" parent="TextAppearance.MaterialComponents.Body1">
         <item name="android:textColor">@color/ds_text</item>
-        <item name="android:textSize">14sp</item>
+        <item name="android:textSize">15sp</item>
     </style>
     <style name="DsSmall" parent="TextAppearance.MaterialComponents.Caption">
         <item name="android:textColor">@color/ds_text_muted</item>
-        <item name="android:textSize">12sp</item>
+        <item name="android:textSize">13sp</item>
     </style>
     <style name="DsSectionTitle" parent="DsSmall">
         <item name="android:textAllCaps">true</item>
@@ -34,7 +34,7 @@
         <item name="android:textColor">@color/white</item>
         <item name="backgroundTint">@color/ds_amber</item>
         <item name="cornerRadius">@dimen/ds_radius_sm</item>
-        <item name="android:textSize">14sp</item>
+        <item name="android:textSize">15sp</item>
         <item name="android:paddingStart">@dimen/ds_space_lg</item>
         <item name="android:paddingEnd">@dimen/ds_space_lg</item>
         <item name="android:paddingTop">@dimen/ds_space_sm</item>
@@ -46,19 +46,19 @@
         <item name="strokeWidth">1dp</item>
         <item name="backgroundTint">@android:color/transparent</item>
         <item name="cornerRadius">@dimen/ds_radius_sm</item>
-        <item name="android:textSize">14sp</item>
+        <item name="android:textSize">15sp</item>
     </style>
     <style name="DsButtonGhost" parent="Widget.MaterialComponents.Button.TextButton">
         <item name="android:textColor">@color/ds_blue</item>
         <item name="android:background">@android:color/transparent</item>
-        <item name="android:textSize">14sp</item>
+        <item name="android:textSize">15sp</item>
     </style>
 
     <!-- Inputs -->
     <style name="DsEditText" parent="Widget.AppCompat.EditText">
         <item name="android:textColor">@color/ds_text</item>
         <item name="android:textColorHint">@color/ds_text_muted</item>
-        <item name="android:textSize">14sp</item>
+        <item name="android:textSize">15sp</item>
         <item name="android:background">@drawable/ds_input_background</item>
         <item name="android:padding">@dimen/ds_space_md</item>
     </style>

@@ -32,10 +32,10 @@ Unified design system for web (Rails) and Android app. Inspired by Blade Runner 
 
 - **Font** : Space Grotesk (web), Roboto (Android)
 - **Title** : 1.75rem / 28sp, web weight 500 (`-0.015em`), Android weight 300 (`0.08em`)
-- **Subtitle** : 0.8rem / 13sp
-- **Body** : 0.875rem / 14sp
-- **Small** : 0.75rem / 12sp
-- **Tiny** : 0.65rem / 11sp
+- **Subtitle** : 0.875rem / 14sp
+- **Body** : 0.95rem / 15sp
+- **Small** : 0.825rem / 13sp
+- **Tiny** : 0.72rem / 11sp
 
 ---
 

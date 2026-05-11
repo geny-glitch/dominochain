@@ -2,13 +2,13 @@
 <!-- Domino Chain Design System — Blade Runner 2049 inspired -->
 <resources>
     <!-- Base -->
-    <color name="ds_bg">#0a0a0b</color>
-    <color name="ds_surface">#121214</color>
-    <color name="ds_surface_elevated">#1a1a1d</color>
-    <color name="ds_border">#2f2f34</color>
-    <color name="ds_text">#f0eeea</color>
-    <color name="ds_text_muted">#b8b5b1</color>
-    <color name="ds_text_dim">#8a8784</color>
+    <color name="ds_bg">#0e0e12</color>
+    <color name="ds_surface">#16161b</color>
+    <color name="ds_surface_elevated">#1e1e24</color>
+    <color name="ds_border">#34343b</color>
+    <color name="ds_text">#fbfaf7</color>
+    <color name="ds_text_muted">#c4c1bc</color>
+    <color name="ds_text_dim">#8e8b87</color>
 
     <!-- Accents -->
     <color name="ds_magenta">#ec4899</color>

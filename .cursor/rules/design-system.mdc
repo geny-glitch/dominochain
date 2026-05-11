@@ -43,7 +43,7 @@ Toujours utiliser les classes du design system pour les pages web. Ne pas écrir
 
 ## Couleurs / tokens
 
-- Palette courante : `magenta` (CTA primary), `blue` (accent, liens, focus), `violet` (secondary), `error`.
+- Palette courante : `magenta` (CTA primary + secondary outline + toggles/check/radio), `blue` (accent, liens, focus), `violet` (états spéciaux), `error`.
 - Les alias legacy `amber`/`teal` restent autorisés pour compatibilité, mais ne pas introduire de nouveaux noms hors tokens DS.
 - Toujours consommer les variables/tokens DS, jamais de hex en dur dans les vues/SCSS de feature.
 

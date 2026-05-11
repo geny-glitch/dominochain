@@ -33,13 +33,21 @@
   padding: $ds-space-sm;
   line-height: 1;
 
+  &.ds-btn--ghost {
+    color: $ds-magenta;
+
+    &:hover {
+      color: $ds-magenta-dim;
+    }
+  }
+
   svg {
     display: block;
   }
 }
 
 .ds-icon-refresh {
-  color: $ds-teal;
+  color: $ds-magenta;
 }
 
 .ds-beta-control-card {
@@ -547,7 +555,8 @@
 }
 
 .ds-beta-catalog-toggle-input:checked + .ds-beta-catalog-toggle-switch {
-  background: rgba($ds-teal, 0.6);
+  background: $ds-magenta;
+  box-shadow: 0 0 12px rgba($ds-magenta, 0.45);
 }
 
 .ds-beta-catalog-toggle-input:checked + .ds-beta-catalog-toggle-switch::after {
@@ -555,7 +564,7 @@
 }
 
 .ds-beta-catalog-toggle-input:focus-visible + .ds-beta-catalog-toggle-switch {
-  outline: 2px solid rgba($ds-teal, 0.6);
+  outline: 2px solid rgba($ds-magenta, 0.6);
   outline-offset: 2px;
 }
 

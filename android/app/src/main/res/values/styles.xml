@@ -41,10 +41,10 @@
         <item name="android:paddingBottom">@dimen/ds_space_sm</item>
     </style>
     <style name="DsButtonSecondary" parent="Widget.MaterialComponents.Button.OutlinedButton">
-        <item name="android:textColor">@color/ds_text_muted</item>
-        <item name="strokeColor">@color/ds_border</item>
+        <item name="android:textColor">@color/ds_magenta</item>
+        <item name="strokeColor">@color/ds_magenta</item>
         <item name="strokeWidth">1dp</item>
-        <item name="backgroundTint">@color/ds_surface_elevated</item>
+        <item name="backgroundTint">@android:color/transparent</item>
         <item name="cornerRadius">@dimen/ds_radius_sm</item>
         <item name="android:textSize">14sp</item>
     </style>

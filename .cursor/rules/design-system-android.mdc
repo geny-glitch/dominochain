@@ -34,6 +34,7 @@ Utiliser `@dimen/ds_space_xs` à `@dimen/ds_space_3xl`, `@dimen/ds_page_padding`
 - **Bouton ghost** : `@style/DsButtonGhost`
 - **Input** : `@style/DsEditText`
 - **Carte** : `@drawable/ds_card_background`
+- **Contrôles d’activation** (Switch/Checkbox/Radio) : suivre le thème Material avec `colorSecondary` DS (magenta).
 
 ## Branding Android (launcher + notification)
 

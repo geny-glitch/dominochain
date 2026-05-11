@@ -44,13 +44,14 @@
   }
 
   &--secondary {
-    background: var(--md-sys-color-surface-container-high, #{$ds-surface-elevated});
-    color: $ds-violet;
-    border: 1px solid rgba($ds-violet, 0.45);
+    background: transparent;
+    color: var(--md-sys-color-primary, #{$ds-magenta});
+    border: 1px solid var(--md-sys-color-primary, #{$ds-magenta});
 
     &:hover {
-      background: rgba($ds-violet, 0.1);
-      border-color: $ds-violet;
+      background: rgba($ds-magenta, 0.1);
+      border-color: var(--md-sys-color-primary, #{$ds-magenta});
+      color: var(--md-sys-color-primary, #{$ds-magenta});
     }
   }
 
@@ -198,8 +199,8 @@
   }
 
   &--on {
-    background: $ds-blue;
-    box-shadow: 0 0 12px rgba($ds-blue, 0.3);
+    background: $ds-magenta;
+    box-shadow: 0 0 12px rgba($ds-magenta, 0.45);
   }
 
   &--on::after {

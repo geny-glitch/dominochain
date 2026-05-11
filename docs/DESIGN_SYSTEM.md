@@ -8,13 +8,13 @@ Design system unifié pour le web (Rails) et l'app Android. Inspiré de Blade Ru
 
 | Token | Hex | Usage |
 |-------|-----|-------|
-| `bg` | `#0a0a0b` | Fond principal |
-| `surface` | `#121214` | Cartes, blocs |
-| `surface-elevated` | `#1a1a1d` | Surfaces surélevées |
-| `border` | `#2f2f34` | Bordures |
-| `text` | `#f0eeea` | Texte principal |
-| `text-muted` | `#b8b5b1` | Labels, texte secondaire |
-| `text-dim` | `#8a8784` | Texte tertiaire |
+| `bg` | `#0e0e12` | Fond principal |
+| `surface` | `#16161b` | Cartes, blocs |
+| `surface-elevated` | `#1e1e24` | Surfaces surélevées |
+| `border` | `#34343b` | Bordures |
+| `text` | `#fbfaf7` | Texte principal |
+| `text-muted` | `#c4c1bc` | Labels, texte secondaire |
+| `text-dim` | `#8e8b87` | Texte tertiaire |
 | `magenta` | `#ec4899` | Primary / CTA |
 | `magenta-dim` | `#db2777` | Hover primary |
 | `blue` | `#22d3ee` | Liens, accents, focus |
@@ -68,7 +68,7 @@ Design system unifié pour le web (Rails) et l'app Android. Inspiré de Blade Ru
 | Variant | Usage |
 |---------|-------|
 | `primary` | Action principale (magenta) |
-| `secondary` | Action secondaire (violet outline) |
+| `secondary` | Action secondaire (magenta outline) |
 | `ghost` | Liens, actions tertiaires (blue) |
 | `sm` | Petit format |
 
@@ -76,7 +76,7 @@ Design system unifié pour le web (Rails) et l'app Android. Inspiré de Blade Ru
 
 - **Form group** : `ds-form-group` — espacement entre champs
 - **Label** : `ds-form-label` — small, text-muted
-- **Input** : `ds-input` — fond bg, bordure border, focus teal
+- **Input** : `ds-input` — fond bg, bordure border, focus blue
 - **Textarea** : `ds-input ds-textarea`
 - **Hint** : `ds-form-hint` — texte d'aide
 
@@ -93,6 +93,8 @@ Design system unifié pour le web (Rails) et l'app Android. Inspiré de Blade Ru
 
 - **Badge / status** : `ds-badge`, `ds-status` + variantes (`--on`, `--off`, `--pending`, `--error`, `--locked`, `--live`)
 - **Toggle** : `ds-toggle` et variantes (`ds-toggle--on`) ou composants DS qui l’embarquent (`ds-beta-catalog-toggle-*`)
+- **Couleur d’activation** : toggles, checkboxes, radios et contrôles équivalents utilisent `magenta`.
+- **Icônes cliquables** : actions icon-only (ex. réglages, refresh, open/share/copy) utilisent la couleur primary `magenta`.
 - **Règle** : conserver les variantes DS; ne pas restyler localement par page.
 
 ---

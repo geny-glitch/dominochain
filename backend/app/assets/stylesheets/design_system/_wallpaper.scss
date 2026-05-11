@@ -216,7 +216,7 @@
 .ds-boss-cta-icon {
   width: 28px;
   height: 28px;
-  color: $ds-teal;
+  color: $ds-magenta;
   flex-shrink: 0;
 }
 
@@ -662,13 +662,13 @@
   width: 26px;
   height: 26px;
   background: rgba(10, 10, 11, 0.75);
-  color: $ds-teal;
+  color: $ds-magenta;
   border-radius: $ds-radius-sm;
   text-decoration: none;
   transition: background $ds-transition, color $ds-transition;
 
   &:hover {
-    background: $ds-teal;
+    background: $ds-magenta;
     color: $ds-bg;
   }
 }
@@ -812,6 +812,10 @@
     font-size: $ds-body-size;
     color: $ds-text-muted;
     cursor: pointer;
+
+    input[type="radio"] {
+      accent-color: $ds-magenta;
+    }
   }
 }
 
@@ -826,6 +830,10 @@
   font-size: $ds-body-size;
   color: $ds-text-muted;
   cursor: pointer;
+
+  input[type="checkbox"] {
+    accent-color: $ds-magenta;
+  }
 }
 
 .ds-alarm-sound-options {
@@ -1238,7 +1246,7 @@
 
 .ds-editor-range {
   width: 80px;
-  accent-color: $ds-teal;
+  accent-color: $ds-magenta;
 }
 
 .ds-editor-value {

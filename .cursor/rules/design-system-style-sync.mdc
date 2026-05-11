@@ -1,18 +1,17 @@
----
-description: Synchroniser tous les fichiers design system lors d'une demande de changement de style
+description: Sync all design system layers for style change requests
 alwaysApply: true
 ---
 
-# Style change => DS sync obligatoire
+# Style Change => Mandatory DS Sync
 
-Quand l'utilisateur demande un changement de style (couleurs, CTA, toggles, typographie, rayons, icônes, favicons), appliquer la modification dans **toutes** les couches DS concernées, pas seulement le fichier courant.
+When the user asks for a style change (colors, CTAs, toggles, typography, radii, icons, favicons), apply the change to **all** affected DS layers, not just the current file.
 
-Checklist minimale :
+Minimum checklist:
 
-- Web tokens/styles : `backend/app/assets/stylesheets/design_system/` (`_variables.scss`, `_base.scss`, `_material_tokens.scss`, `_components.scss` + fichiers feature DS impactés).
-- Android tokens/styles : `android/app/src/main/res/values/` (`colors.xml`, `styles.xml`, `themes.xml`, `ic_launcher_background.xml` si concerné).
-- Assets de marque/UI : `backend/public/favicons/`, `backend/public/icon.svg`, assets Android launcher/notification si concernés.
-- Documentation : aligner `docs/DESIGN_SYSTEM.md` (et `docs/BRAND_DOMINO_CHAIN.md` si branding impacté).
-- Règles Cursor DS : mettre à jour `.cursor/rules/design-system*.mdc` si les consignes changent.
+- Web tokens/styles: `backend/app/assets/stylesheets/design_system/` (`_variables.scss`, `_base.scss`, `_material_tokens.scss`, `_components.scss` + impacted DS feature files).
+- Android tokens/styles: `android/app/src/main/res/values/` (`colors.xml`, `styles.xml`, `themes.xml`, `ic_launcher_background.xml` when relevant).
+- Brand/UI assets: `backend/public/favicons/`, `backend/public/icon.svg`, Android launcher/notification assets when relevant.
+- Documentation: keep `docs/DESIGN_SYSTEM.md` aligned (and `docs/BRAND_DOMINO_CHAIN.md` if branding is impacted).
+- Cursor DS rules: update `.cursor/rules/design-system*.mdc` if guidance changes.
 
-Ne pas laisser d'incohérence entre web, Android et docs : si un token change, vérifier ses alias legacy (`amber`/`teal`) et ses usages secondaires (hover/focus/toggle/checkbox/radio).
+Do not leave inconsistencies between web, Android, and docs: if a token changes, verify legacy aliases (`amber`/`teal`) and secondary usages (hover/focus/toggle/checkbox/radio).

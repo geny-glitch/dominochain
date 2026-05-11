@@ -1,62 +1,61 @@
----
-description: Respecter le design system Domino Chain pour l'app Android
+description: Follow the Domino Chain design system for the Android app
 globs: android/**/*.{xml,kt}
 alwaysApply: false
 ---
 
 # Design System Domino Chain — Android
 
-Toujours utiliser les ressources du design system pour les layouts et vues Android. Ne pas écrire de couleurs, dimensions ou styles en dur.
+Always use design system resources for Android layouts and views. Do not hardcode colors, dimensions, or styles.
 
-## Référence
+## Reference
 
-Voir `docs/DESIGN_SYSTEM.md` pour la spec complète.
+See `docs/DESIGN_SYSTEM.md` for the full spec.
 
-## Couleurs
+## Colors
 
-Utiliser les couleurs nommées : `@color/ds_bg`, `@color/ds_text`, `@color/ds_text_muted`, `@color/ds_magenta`, `@color/ds_blue`, `@color/ds_violet`, etc. Jamais de hex en dur dans les layouts.
+Use named colors: `@color/ds_bg`, `@color/ds_text`, `@color/ds_text_muted`, `@color/ds_magenta`, `@color/ds_blue`, `@color/ds_violet`, etc. Never hardcode hex values in layouts.
 
-Notes :
-- Les alias legacy `@color/ds_amber` et `@color/ds_teal` existent encore pour compatibilité.
-- Pour le nouveau code, privilégier les tokens explicites (`ds_magenta`, `ds_blue`, `ds_violet`).
+Notes:
+- Legacy aliases `@color/ds_amber` and `@color/ds_teal` still exist for compatibility.
+- For new code, prefer explicit tokens (`ds_magenta`, `ds_blue`, `ds_violet`).
 
-## Espacement
+## Spacing
 
-Utiliser `@dimen/ds_space_xs` à `@dimen/ds_space_3xl`, `@dimen/ds_page_padding`. Jamais de valeurs en dp en dur.
+Use `@dimen/ds_space_xs` through `@dimen/ds_space_3xl`, and `@dimen/ds_page_padding`. Never hardcode `dp` values.
 
 ## Styles
 
-- **Titre** : `@style/DsTitle` ou `DsTitleSmall`
-- **Sous-titre / labels** : `@style/DsSmall` ou `DsSectionTitle`
-- **Corps** : `@style/DsBody`
-- **Bouton principal** : `@style/DsButton`
-- **Bouton secondaire** : `@style/DsButtonSecondary`
-- **Bouton ghost** : `@style/DsButtonGhost`
-- **Input** : `@style/DsEditText`
-- **Carte** : `@drawable/ds_card_background`
-- **Contrôles d’activation** (Switch/Checkbox/Radio) : suivre le thème Material avec `colorSecondary` DS (magenta).
+- **Title**: `@style/DsTitle` or `DsTitleSmall`
+- **Subtitle / labels**: `@style/DsSmall` or `DsSectionTitle`
+- **Body**: `@style/DsBody`
+- **Primary button**: `@style/DsButton`
+- **Secondary button**: `@style/DsButtonSecondary`
+- **Ghost button**: `@style/DsButtonGhost`
+- **Input**: `@style/DsEditText`
+- **Card**: `@drawable/ds_card_background`
+- **Activation controls** (Switch/Checkbox/Radio): follow Material theme with DS `colorSecondary` (magenta).
 
-## Branding Android (launcher + notification)
+## Android Branding (launcher + notification)
 
-- Utiliser les ressources officielles du DS pour l’icône app/notification :
+- Use official DS resources for app/notification icons:
   - `@mipmap/ic_launcher`, `@mipmap/ic_launcher_round`
   - `@drawable/ic_notification`
   - `@color/ic_launcher_background`
-- Ne pas réintroduire d’assets launcher/notification custom hors des dossiers `mipmap-*` / `drawable-*` alignés avec le DS.
+- Do not reintroduce custom launcher/notification assets outside DS-aligned `mipmap-*` / `drawable-*` folders.
 
-## Structure de layout
+## Layout Structure
 
 ```xml
-<!-- Page avec padding -->
+<!-- Page with padding -->
 android:padding="@dimen/ds_page_padding"
 android:background="@color/ds_bg"
 
-<!-- Carte / bloc -->
+<!-- Card / block -->
 android:background="@drawable/ds_card_background"
 android:padding="@dimen/ds_space_lg"
 ```
 
-## Fichiers de référence
+## Reference Files
 
 - `android/app/src/main/res/values/colors.xml`
 - `android/app/src/main/res/values/dimens.xml`

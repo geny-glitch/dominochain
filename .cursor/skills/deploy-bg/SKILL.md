@@ -14,23 +14,23 @@ cd backend && fly deploy
 - App: `bg-backend` (fly.toml)
 - URL: https://bg-backend.fly.dev
 
-## Android (téléphone)
+## Android (phone)
 
 ```bash
 cd android && ./gradlew installDebug
 ```
 
-**Prérequis :**
-- Téléphone connecté en USB avec débogage USB activé
-- Ou débogage sans fil configuré (Android 11+)
+**Prerequisites:**
+- Phone connected over USB with USB debugging enabled
+- Or wireless debugging configured (Android 11+)
 
-**Alternative** : build l’APK sans installer :
+**Alternative**: build the APK without installing:
 ```bash
 cd android && ./gradlew assembleDebug
-# APK généré dans android/app/build/outputs/apk/debug/app-debug.apk
+# APK generated at android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
-## Déploiement complet
+## Full Deployment
 
 ```bash
 cd backend && fly deploy && cd ../android && ./gradlew installDebug

@@ -1,19 +1,18 @@
----
-description: Exiger des specs pour toute nouvelle feature
+description: Require specs for every new feature
 alwaysApply: true
 ---
 
-# Specs obligatoires pour chaque nouvelle feature
+# Mandatory Specs for New Features
 
-Quand tu ajoutes une nouvelle feature (nouveau comportement, nouveau flow, nouveau endpoint, nouvelle UI avec logique), ajoute aussi des specs dans la meme PR.
+When you add a new feature (new behavior, flow, endpoint, or UI with logic), add specs in the same PR.
 
-Regles :
+Rules:
 
-- Ne pas livrer une nouvelle feature sans spec associee.
-- Preferer le niveau de test qui valide le comportement utilisateur (request/system), puis completer avec model/service si besoin.
-- Si la feature modifie une vue critique ou un flow d'auth, verifier le rendu avec `render_views` quand c'est pertinent.
-- Couvrir au minimum : cas nominal + un cas d'echec/edge case.
+- Do not ship a new feature without an associated spec.
+- Prefer tests that validate user behavior first (request/system), then add model/service tests if needed.
+- If the feature changes a critical view or an auth flow, verify rendering with `render_views` when relevant.
+- Cover at least: one happy path and one failure/edge case.
 
-Exception :
+Exception:
 
-- Si techniquement impossible dans l'instant, expliquer clairement pourquoi et proposer la spec a ajouter juste apres.
+- If technically impossible right now, clearly explain why and propose the spec to add immediately after.

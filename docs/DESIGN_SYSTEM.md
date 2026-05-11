@@ -1,34 +1,34 @@
 # Domino Chain Design System
 
-Design system unifié pour le web (Rails) et l'app Android. Inspiré de Blade Runner 2049 — sombre, atmosphérique, accent primary magenta + accents blue/violet.
+Unified design system for web (Rails) and Android app. Inspired by Blade Runner 2049 — dark, atmospheric, with a primary magenta accent and blue/violet secondary accents.
 
 ---
 
-## Couleurs
+## Colors
 
 | Token | Hex | Usage |
 |-------|-----|-------|
-| `bg` | `#0e0e12` | Fond principal |
-| `surface` | `#16161b` | Cartes, blocs |
-| `surface-elevated` | `#1e1e24` | Surfaces surélevées |
-| `border` | `#34343b` | Bordures |
-| `text` | `#fbfaf7` | Texte principal |
-| `text-muted` | `#c4c1bc` | Labels, texte secondaire |
-| `text-dim` | `#8e8b87` | Texte tertiaire |
+| `bg` | `#0e0e12` | Main background |
+| `surface` | `#16161b` | Cards, blocks |
+| `surface-elevated` | `#1e1e24` | Elevated surfaces |
+| `border` | `#34343b` | Borders |
+| `text` | `#fbfaf7` | Primary text |
+| `text-muted` | `#c4c1bc` | Labels, secondary text |
+| `text-dim` | `#8e8b87` | Tertiary text |
 | `magenta` | `#ec4899` | Primary / CTA |
-| `magenta-dim` | `#db2777` | Hover primary |
-| `blue` | `#22d3ee` | Liens, accents, focus |
-| `blue-dim` | `#06b6d4` | Hover blue |
+| `magenta-dim` | `#db2777` | Primary hover |
+| `blue` | `#22d3ee` | Links, accents, focus |
+| `blue-dim` | `#06b6d4` | Blue hover |
 | `violet` | `#a855f7` | Secondary / premium |
-| `violet-dim` | `#9333ea` | Hover secondary |
-| `error` | `#ef6b6b` | Erreurs |
-| `success` | `#22d3ee` | Succès (aligné accent blue) |
+| `violet-dim` | `#9333ea` | Secondary hover |
+| `error` | `#ef6b6b` | Errors |
+| `success` | `#22d3ee` | Success (aligned with blue accent) |
 
-> Compatibilité : `amber` et `teal` restent disponibles comme alias legacy vers `magenta` et `blue`.
+> Compatibility: `amber` and `teal` remain available as legacy aliases to `magenta` and `blue`.
 
 ---
 
-## Typographie
+## Typography
 
 - **Font** : Inter (web), Roboto (Android)
 - **Title** : 1.75rem / 28sp, weight 300, letter-spacing 0.08em
@@ -39,7 +39,7 @@ Design system unifié pour le web (Rails) et l'app Android. Inspiré de Blade Ru
 
 ---
 
-## Espacement (dp / rem)
+## Spacing (dp / rem)
 
 | Token | Web | Android |
 |-------|-----|---------|
@@ -53,7 +53,7 @@ Design system unifié pour le web (Rails) et l'app Android. Inspiré de Blade Ru
 
 ---
 
-## Rayons
+## Radius
 
 - **sm** : 4dp
 - **md** : 6dp
@@ -61,60 +61,60 @@ Design system unifié pour le web (Rails) et l'app Android. Inspiré de Blade Ru
 
 ---
 
-## Composants
+## Components
 
-### Boutons / CTA
+### Buttons / CTA
 
 | Variant | Usage |
 |---------|-------|
-| `primary` | Action principale (magenta) |
-| `secondary` | Action secondaire (magenta outline) |
-| `ghost` | Liens, actions tertiaires (blue) |
-| `sm` | Petit format |
+| `primary` | Primary action (magenta) |
+| `secondary` | Secondary action (magenta outline) |
+| `ghost` | Links, tertiary actions (blue) |
+| `sm` | Small format |
 
-### Formulaires
+### Forms
 
-- **Form group** : `ds-form-group` — espacement entre champs
-- **Label** : `ds-form-label` — small, text-muted
-- **Input** : `ds-input` — fond bg, bordure border, focus blue
-- **Textarea** : `ds-input ds-textarea`
-- **Hint** : `ds-form-hint` — texte d'aide
+- **Form group**: `ds-form-group` — spacing between fields
+- **Label**: `ds-form-label` — small, text-muted
+- **Input**: `ds-input` — `bg` background, `border` border, blue focus
+- **Textarea**: `ds-input ds-textarea`
+- **Hint**: `ds-form-hint` — helper text
 
 ### Sections
 
-- **Section title** : `ds-section-title` — uppercase, letter-spacing, text-muted
+- **Section title**: `ds-section-title` — uppercase, letter-spacing, text-muted
 
 ### Flash / Feedback
 
-- **Success** : fond accent translucide, bordure success
-- **Error** : fond rouge translucide, bordure error
+- **Success**: translucent accent background, success border
+- **Error**: translucent red background, error border
 
 ### Badges / Status / Toggles
 
-- **Badge / status** : `ds-badge`, `ds-status` + variantes (`--on`, `--off`, `--pending`, `--error`, `--locked`, `--live`)
-- **Toggle** : `ds-toggle` et variantes (`ds-toggle--on`) ou composants DS qui l’embarquent (`ds-beta-catalog-toggle-*`)
-- **Couleur d’activation** : toggles, checkboxes, radios et contrôles équivalents utilisent `magenta`.
-- **Icônes cliquables** : actions icon-only (ex. réglages, refresh, open/share/copy) utilisent la couleur primary `magenta`.
-- **Règle** : conserver les variantes DS; ne pas restyler localement par page.
+- **Badge / status**: `ds-badge`, `ds-status` + variants (`--on`, `--off`, `--pending`, `--error`, `--locked`, `--live`)
+- **Toggle**: `ds-toggle` and variants (`ds-toggle--on`) or DS components embedding it (`ds-beta-catalog-toggle-*`)
+- **Activation color**: toggles, checkboxes, radios, and equivalent controls use `magenta`.
+- **Clickable icons**: icon-only actions (for example settings, refresh, open/share/copy) use primary `magenta`.
+- **Rule**: keep DS variants; do not restyle locally per page.
 
 ---
 
-## Structure de page (web)
+## Page Structure (Web)
 
 ```erb
 <div class="ds-page">
   <div class="ds-container">
     <header class="ds-header">...</header>
-    <!-- contenu -->
+    <!-- content -->
   </div>
 </div>
 ```
 
-## Structure d'écran (Android)
+## Screen Structure (Android)
 
-- `ds_page` : layout racine avec padding
-- `ds_section` : bloc avec espacement
-- `ds_card` : carte avec surface, bordure, radius
+- `ds_page`: root layout with padding
+- `ds_section`: block with spacing
+- `ds_card`: card with surface, border, radius
 
 ## Logos / Favicons / App icons
 
@@ -126,7 +126,7 @@ Design system unifié pour le web (Rails) et l'app Android. Inspiré de Blade Ru
 
 ---
 
-## Références
+## References
 
 - **Web** : `backend/app/assets/stylesheets/design_system/`
 - **Android** : `android/app/src/main/res/values/` (colors, themes, styles, dimens)

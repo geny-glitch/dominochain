@@ -1,3 +1,3 @@
-# Dossier `docs/` (GitHub Pages)
+# `docs/` Folder (GitHub Pages)
 
-Contenu servi en statique si tu actives **GitHub Pages** sur la branche `main` avec ce dossier comme source (`/docs`).
+Content served as static files if you enable **GitHub Pages** on the `main` branch with this folder as source (`/docs`).

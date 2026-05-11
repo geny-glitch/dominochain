@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - staging
     paths:
       - "android/**"
       - ".github/workflows/android-ota-release.yml"
@@ -12,7 +13,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: android-ota-release
+  group: android-ota-release-${{ github.ref_name }}
   cancel-in-progress: true
 
 jobs:
@@ -35,6 +36,20 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Select release target
+        run: |
+          if [ "${GITHUB_REF_NAME}" = "staging" ]; then
+            echo "APK_FLAVOR=staging" >> "${GITHUB_ENV}"
+            echo "BACKEND_NOTIFY_URL=https://bg-backend-staging.fly.dev/android/version" >> "${GITHUB_ENV}"
+            echo "LATEST_TAG=latest-staging" >> "${GITHUB_ENV}"
+            echo "BUILD_TAG_PREFIX=build-staging" >> "${GITHUB_ENV}"
+          else
+            echo "APK_FLAVOR=prod" >> "${GITHUB_ENV}"
+            echo "BACKEND_NOTIFY_URL=https://bg-backend.fly.dev/android/version" >> "${GITHUB_ENV}"
+            echo "LATEST_TAG=latest" >> "${GITHUB_ENV}"
+            echo "BUILD_TAG_PREFIX=build" >> "${GITHUB_ENV}"
+          fi
+
       - name: Decode release keystore
         run: |
           echo "${KEYSTORE_FILE}" | base64 --decode > android/app/release.keystore
@@ -44,23 +59,23 @@ jobs:
       - name: Compute next OTA version code
         id: ota_version
         run: |
-          NEXT_VERSION_CODE="$(python3 - <<'PY'
-          import json
-          import os
-
-          with open("version.json", encoding="utf-8") as f:
-              current_version_code = int(json.load(f)["versionCode"])
-          run_number = int(os.environ["GITHUB_RUN_NUMBER"])
-          print(max(current_version_code + 1, run_number))
-          PY
-          )"
+          if [ "${GITHUB_REF_NAME}" = "staging" ]; then
+            NEXT_VERSION_CODE="${GITHUB_RUN_NUMBER}"
+          else
+            NEXT_VERSION_CODE="$(python3 -c 'import json, os; current_version_code = int(json.load(open("version.json", encoding="utf-8"))["versionCode"]); run_number = int(os.environ["GITHUB_RUN_NUMBER"]); print(max(current_version_code + 1, run_number))')"
+          fi
           echo "code=${NEXT_VERSION_CODE}" >> "${GITHUB_OUTPUT}"
 
       - name: Build signed release APK
         working-directory: android
         run: |
+          if [ "${APK_FLAVOR}" = "staging" ]; then
+            GRADLE_TASK="assembleStagingRelease"
+          else
+            GRADLE_TASK="assembleProdRelease"
+          fi
           for attempt in 1 2 3; do
-            if ./gradlew --no-daemon assembleRelease; then
+            if ./gradlew --no-daemon "${GRADLE_TASK}"; then
               exit 0
             fi
             if [ "${attempt}" -eq 3 ]; then
@@ -93,6 +108,7 @@ jobs:
           OTA_VERSION_CODE: ${{ steps.ota_version.outputs.code }}
 
       - name: Update version.json
+        if: github.ref_name == 'main'
         run: |
           python3 - <<'PY'
           import json
@@ -112,6 +128,7 @@ jobs:
           VERSION_CODE: ${{ steps.version.outputs.code }}
 
       - name: Commit version metadata
+        if: github.ref_name == 'main'
         run: |
           if git diff --quiet -- version.json; then
             echo "version.json is already up to date"
@@ -124,31 +141,42 @@ jobs:
           fi
 
       - name: Prepare APK asset
-        run: cp android/app/build/outputs/apk/release/app-release.apk app.apk
+        run: cp "android/app/build/outputs/apk/${APK_FLAVOR}/release/app-${APK_FLAVOR}-release.apk" app.apk
 
-      - name: Notify backend of new version
+      - name: Notify backend of new version (prod)
+        if: github.ref_name == 'main'
         run: |
-          curl --fail -s -X POST https://bg-backend.fly.dev/android/version \
+          curl --fail -s -X POST "${BACKEND_NOTIFY_URL}" \
             -H "Authorization: Bearer ${DEPLOY_SECRET}" \
             -F "versionCode=${{ steps.version.outputs.code }}" \
             -F "apk=@app.apk;type=application/vnd.android.package-archive"
         env:
           DEPLOY_SECRET: ${{ secrets.DEPLOY_SECRET }}
 
+      - name: Notify backend of new version (staging)
+        if: github.ref_name == 'staging'
+        run: |
+          curl --fail -s -X POST "${BACKEND_NOTIFY_URL}" \
+            -H "Authorization: Bearer ${DEPLOY_SECRET}" \
+            -F "versionCode=${{ steps.version.outputs.code }}" \
+            -F "apk=@app.apk;type=application/vnd.android.package-archive"
+        env:
+          DEPLOY_SECRET: ${{ secrets.DEPLOY_SECRET_STAGING }}
+
       - name: Publish versioned GitHub release
         run: |
-          gh release create "build-${{ steps.version.outputs.code }}" app.apk \
-            --title "Build ${{ steps.version.outputs.code }}" \
-            --notes "Android build ${{ steps.version.outputs.code }} — commit ${{ github.sha }}"
+          gh release create "${BUILD_TAG_PREFIX}-${{ steps.version.outputs.code }}" app.apk \
+            --title "Build ${APK_FLAVOR} ${{ steps.version.outputs.code }}" \
+            --notes "Android ${APK_FLAVOR} build ${{ steps.version.outputs.code }} — commit ${{ github.sha }}"
         env:
           GH_TOKEN: ${{ github.token }}
 
       - name: Update latest GitHub release
         run: |
-          if gh release view latest >/dev/null 2>&1; then
-            gh release upload latest app.apk --clobber
+          if gh release view "${LATEST_TAG}" >/dev/null 2>&1; then
+            gh release upload "${LATEST_TAG}" app.apk --clobber
           else
-            gh release create latest app.apk --title "Latest Android APK" --notes "Automated latest Android release."
+            gh release create "${LATEST_TAG}" app.apk --title "Latest Android APK (${APK_FLAVOR})" --notes "Automated latest Android ${APK_FLAVOR} release."
           fi
         env:
           GH_TOKEN: ${{ github.token }}

@@ -1,0 +1,34 @@
+<section class="ds-beta-section">
+  <div class="ds-section-header">
+    <h2 class="ds-section-title">Chaster</h2>
+    <% if current_user.chaster_access_token.present? %>
+      <%= link_to beta_dashboard_path, class: "ds-btn ds-btn--icon ds-btn--ghost", title: "Actualiser" do %>
+        <svg class="ds-icon-refresh" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+      <% end %>
+    <% end %>
+  </div>
+  <% if current_user.chaster_access_token.present? %>
+    <div class="ds-beta-control-card">
+      <% if @chaster_lock %>
+        <p class="ds-beta-control-text"><%= @chaster_lock[:title].presence || "Lock en cours" %></p>
+        <p class="ds-chaster-countdown" id="chaster-countdown"
+           data-end-date="<%= @chaster_lock[:end_date] %>"
+           data-is-frozen="<%= @chaster_lock[:is_frozen] %>">
+          <%= @chaster_lock[:is_frozen] ? "Gelé" : format_chaster_remaining(@chaster_lock[:remaining_seconds]) %>
+        </p>
+        <p class="ds-beta-control-hint">Le temps restant s'affiche aussi sur l'app et le widget.</p>
+      <% else %>
+        <p class="ds-beta-control-text">Chaster connecté</p>
+        <p class="ds-beta-control-hint"><%= t("beta.hints.chaster_no_lock") %></p>
+      <% end %>
+      <%= button_to "Déconnecter Chaster", chaster_disconnect_path, method: :delete, form: { data: { turbo_confirm: "Déconnecter ton compte Chaster ? Tu devras te reconnecter pour voir le lock." } }, class: "ds-btn ds-btn--secondary ds-btn--sm", style: "margin-top: 0.5rem;" %>
+    </div>
+  <% elsif ChasterService.configured? %>
+    <div class="ds-beta-control-card ds-beta-control-card--invite">
+      <p class="ds-beta-control-text">Connecte ton compte Chaster pour commencer.</p>
+      <%= link_to "Connecter Chaster", chaster_connect_path, class: "ds-btn ds-btn--primary ds-btn--sm", style: "margin-top: 0.5rem;" %>
+    </div>
+  <% else %>
+    <p class="ds-text-muted">Chaster n'est pas configuré sur ce serveur.</p>
+  <% end %>
+</section>

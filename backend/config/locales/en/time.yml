@@ -1,0 +1,20 @@
+en:
+  time:
+    formats:
+      short: "%Y-%m-%d %H:%M"
+      unlock: "%m/%d %H:%M"
+    finished: "Finished"
+    remaining_days_hours_mins_secs: "%{days}d %{hours}h %{mins}min %{secs}s"
+    remaining_hours_mins_secs: "%{hours}h %{mins}min %{secs}s"
+    remaining_mins_secs: "%{mins}min %{secs}s"
+    remaining_secs: "%{secs}s"
+  js:
+    copied: "Copied!"
+    done: "Done"
+    finished: "Finished"
+    close_menu: "Close menu"
+    open_menu: "Open menu"
+    countdown_day: "d "
+    countdown_hour: "h "
+    countdown_min: "min "
+    countdown_sec: "s"

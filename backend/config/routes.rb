@@ -1,7 +1,15 @@
 Rails.application.routes.draw do
+  patch "locale", to: "locales#update", as: :user_locale
+
   devise_for :users, path: "", path_names: {
     sign_in: "login", sign_out: "logout", sign_up: "signup"
-  }, controllers: { registrations: "registrations" }
+  }, controllers: {
+    registrations: "registrations",
+    sessions: "sessions",
+    passwords: "passwords",
+    confirmations: "confirmations",
+    unlocks: "unlocks"
+  }
 
   devise_scope :user do
     get "signup/boss", to: "boss_registrations#new", as: :new_boss_registration
@@ -9,7 +17,16 @@ Rails.application.routes.draw do
   end
 
   get "dashboard", to: "dashboard#show", as: :dashboard
-  get "beta", to: "beta_dashboard#show", as: :beta_dashboard
+  get "beta", to: "beta_dashboard#home", as: :beta_dashboard
+  get "beta/sources/puryfi", to: "beta_dashboard#sources_puryfi", as: :beta_sources_puryfi
+  get "beta/sources/cigarettes", to: "beta_dashboard#sources_cigarettes", as: :beta_sources_cigarettes
+get "beta/sources/strava", to: "beta_dashboard#sources_strava", as: :beta_sources_strava
+get "beta/sources/vitrine", to: "beta_dashboard#sources_showcase", as: :beta_sources_showcase
+  get "beta/actions/chaster", to: "beta_dashboard#actions_chaster", as: :beta_actions_chaster
+get "beta/actions/pishock", to: "beta_dashboard#actions_pishock", as: :beta_actions_pishock
+  get "beta/reglages", to: "beta_dashboard#settings", as: :beta_settings
+  patch "beta/catalogue/visibility", to: "beta_dashboard#update_catalog_visibility", as: :beta_catalog_visibility
+  get "beta/compte", to: "beta_dashboard#account", as: :beta_account
   patch "beta/pishock", to: "beta_dashboard#update_pishock", as: :beta_pishock
   post "beta/pishock/test", to: "beta_dashboard#test_pishock", as: :beta_pishock_test
   get "beta/pishock/debug", to: "pishock_debug#show", as: :beta_pishock_debug
@@ -108,6 +125,7 @@ Rails.application.routes.draw do
 
     get "chaster/lock", to: "chaster#lock", as: :chaster_lock
     get "chaster/locks", to: "chaster#locks", as: :chaster_locks
+    get "chaster/time_events", to: "chaster#time_events", as: :chaster_time_events
     post "chaster/add_time", to: "chaster#add_time", as: :chaster_add_time
 
     get "cigarettes", to: "cigarette_entries#index"

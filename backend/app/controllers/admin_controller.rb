@@ -12,15 +12,15 @@ class AdminController < ApplicationController
   def release_control
     control = Control.find(params[:control_id])
     control.destroy!
-    redirect_to admin_path, notice: "Beta #{control.beta.nickname} libéré."
+    redirect_to admin_path, notice: t("flash.admin.beta_released", nickname: control.beta.nickname)
   rescue ActiveRecord::RecordNotFound
-    redirect_to admin_path, alert: "Control non trouvé."
+    redirect_to admin_path, alert: t("flash.admin.control_not_found")
   end
 
   private
 
   def require_admin!
-    redirect_to root_path, alert: "Accès refusé." unless current_user.admin?
+    redirect_to root_path, alert: t("flash.admin.access_denied") unless current_user.admin?
   end
 
   def settings
@@ -33,7 +33,7 @@ class AdminController < ApplicationController
     @app_setting ||= AppSetting.create!(influencer_names: "")
     if @app_setting.update(influencer_names: params[:influencer_names])
       WikimediaCommonsService.fetch_and_store_all
-      redirect_to admin_settings_path, notice: "Liste enregistrée. Images récupérées."
+      redirect_to admin_settings_path, notice: t("flash.admin.settings_saved")
     else
       render :settings, status: :unprocessable_entity
     end

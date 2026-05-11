@@ -3,6 +3,8 @@
 class FcmService
   FCM_SCOPE = "https://www.googleapis.com/auth/firebase.messaging"
   FCM_ENDPOINT = "https://fcm.googleapis.com/v1/projects/%<project_id>s/messages:send"
+  NOTIFICATION_TITLE_STAGING = "Domino Chain dev"
+  NOTIFICATION_TITLE_DEFAULT = "Domino Chain"
 
   TEASER_MESSAGES = [
     "Ton univers a changé 👀",
@@ -58,7 +60,7 @@ class FcmService
         message: {
           token: device.fcm_token,
           notification: {
-            title: "OTB",
+            title: notification_title,
             body: body
           },
           data: { type: "teaser" },
@@ -90,7 +92,7 @@ class FcmService
         return
       end
 
-      title = "OTB"
+      title = notification_title
       body = "Nouvelle tâche : #{task.name}"
 
       # Data-only pour que onMessageReceived soit toujours appelé (même en background)
@@ -132,7 +134,7 @@ class FcmService
       # et qu'on puisse afficher la notif teaser + déclencher la capture
       data = {
         type: "take_screenshot",
-        title: "OTB",
+        title: notification_title,
         body: body
       }
 
@@ -161,7 +163,7 @@ class FcmService
 
       data = {
         type: "grant_permissions",
-        title: "OTB",
+        title: notification_title,
         body: "Accorde les autorisations nécessaires pour que l'app fonctionne correctement"
       }
 
@@ -188,7 +190,7 @@ class FcmService
         return
       end
 
-      title = "OTB"
+      title = notification_title
       body = proof.accepted? ? "Preuve acceptée ✓" : "Preuve refusée"
       body += ": #{proof.review_comment}" if proof.review_comment.present?
 
@@ -220,7 +222,7 @@ class FcmService
       end
 
       label = showcase_game_label(game_type)
-      title = "OTB"
+      title = notification_title
       body = "#{player_name} a terminé une partie de #{label} : #{score} point#{'s' if score != 1}"
 
       payload = {
@@ -251,7 +253,7 @@ class FcmService
       end
 
       label = showcase_game_label(game_type)
-      title = "OTB"
+      title = notification_title
       starter_name = player_name.to_s.squish
       body = if starter_name.present?
         "#{starter_name} commence une partie de #{label}."
@@ -294,7 +296,7 @@ class FcmService
       payload = {
         message: {
           token: device.fcm_token,
-          notification: { title: "OTB", body: body },
+          notification: { title: notification_title, body: body },
           data: {
             type: "showcase_backdoor",
             player_name: player_name.to_s,
@@ -318,7 +320,7 @@ class FcmService
         return
       end
 
-      title = "OTB"
+      title = notification_title
       body = message.presence || "Tâche non terminée à temps..."
 
       data = {
@@ -346,6 +348,10 @@ class FcmService
     end
 
     private
+
+    def notification_title
+      ENV["BG_ENV"] == "staging" ? NOTIFICATION_TITLE_STAGING : NOTIFICATION_TITLE_DEFAULT
+    end
 
     def format_duration_for_notification(total_seconds)
       s = total_seconds.to_i

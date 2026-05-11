@@ -42,7 +42,7 @@
       </select>
     </div>
     <div id="dino-leaderboard-list" class="dino-leaderboard-list">
-      <p class="dino-leaderboard-empty">Aucun score enregistré</p>
+      <p class="dino-leaderboard-empty"><%= t("showcase.snake.empty") %></p>
     </div>
     <div id="dino-leaderboard-pagination" class="dino-leaderboard-pagination" hidden>
       <button type="button" class="dino-btn dino-btn--ghost dino-btn--sm" id="dino-lb-prev" disabled>Précédent</button>
@@ -51,6 +51,8 @@
     </div>
   </section>
 </div>
+
+<div id="dino-i18n-strings" data-lb-empty="<%= j t("showcase.snake.empty") %>" data-page-of="<%= j t("showcase.snake.page_of") %>" hidden></div>
 
 <% if flash[:notice] %>
   <div class="dino-flash dino-flash--success"><%= flash[:notice] %></div>
@@ -63,6 +65,10 @@
 (function() {
   const pageEl = document.querySelector(".dino-page");
   const nickname = pageEl.dataset.nickname;
+  const dinoI18nEl = document.getElementById("dino-i18n-strings");
+  const dinoI18n = dinoI18nEl ? dinoI18nEl.dataset : {};
+  const LB_EMPTY_HTML = "<p class=\"dino-leaderboard-empty\">" + (dinoI18n.lbEmpty || "") + "</p>";
+  const PAGE_OF_TPL = dinoI18n.pageOf || "";
   const secondsPerObstacle = Math.max(1, parseInt(pageEl.dataset.dinoSecondsPerObstacle || "300", 10) || 300);
   const LEADERBOARD_PER_PAGE = 10;
   const urls = {
@@ -212,7 +218,8 @@
     lbPagEl.hidden = false;
     lbPrevBtn.disabled = page <= 1;
     lbNextBtn.disabled = page >= totalPages;
-    lbPageLabel.textContent = "Page " + page + " / " + totalPages;
+    const tpl = PAGE_OF_TPL || "Page %{page} / %{total}";
+    lbPageLabel.textContent = tpl.replace("%{page}", String(page)).replace("%{total}", String(totalPages));
   }
 
   async function loadLeaderboard() {
@@ -220,7 +227,7 @@
       const res = await fetchJson(buildLeaderboardUrl());
       const data = await res.json();
       if (data.error) {
-        leaderboardList.innerHTML = "<p class=\"dino-leaderboard-empty\">Aucun score enregistré</p>";
+        leaderboardList.innerHTML = LB_EMPTY_HTML;
         lbPagEl.hidden = true;
         return;
       }
@@ -250,11 +257,11 @@
           "</tbody></table></div>";
         renderLeaderboardPagination(data);
       } else {
-        leaderboardList.innerHTML = "<p class=\"dino-leaderboard-empty\">Aucun score enregistré</p>";
+        leaderboardList.innerHTML = LB_EMPTY_HTML;
         lbPagEl.hidden = true;
       }
     } catch {
-      leaderboardList.innerHTML = "<p class=\"dino-leaderboard-empty\">Aucun score enregistré</p>";
+      leaderboardList.innerHTML = LB_EMPTY_HTML;
       lbPagEl.hidden = true;
     }
   }

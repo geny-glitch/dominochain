@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= content_for(:title) || t("layouts.beta_dashboard.default_title") %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="theme-color" content="#0a0a0b">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/icon.png" sizes="512x512">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <%= yield :head %>
+
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+  </head>
+
+  <body class="ds-beta-app-shell">
+    <div class="ds-beta-app">
+      <aside class="ds-beta-sidebar" aria-label="<%= t("layouts.beta_dashboard.nav_beta") %>">
+        <button type="button" class="ds-beta-sidebar-close" data-beta-nav-close aria-label="<%= t("js.close_menu") %>">
+          ✕
+        </button>
+        <%= link_to beta_dashboard_path, class: "ds-beta-sidebar-brand" do %>
+          <%= image_tag "domino-chain-logo.png", alt: "Domino Chain", width: 40, height: 40 %>
+          <div>
+            <span class="ds-beta-sidebar-wordmark wordmark">DominoChain</span>
+          </div>
+        <% end %>
+
+        <nav class="ds-beta-sidebar-nav">
+          <p class="ds-beta-nav-heading"><%= t("layouts.beta_dashboard.nav.view") %></p>
+          <%= beta_nav_link t("layouts.beta_dashboard.nav.home"), beta_dashboard_path, active: controller.action_name == "home" %>
+          <%= beta_nav_link t("layouts.beta_dashboard.nav.catalog"), beta_settings_path, active: controller.action_name == "settings" %>
+
+          <% if beta_visible_sidebar_source_items.any? %>
+            <p class="ds-beta-nav-heading"><%= t("layouts.beta_dashboard.nav.sources") %></p>
+            <% beta_visible_sidebar_source_items.each do |item| %>
+              <%= beta_nav_link item[:label], public_send(item[:path_helper]), active: controller.action_name == item[:action_name] %>
+            <% end %>
+          <% end %>
+
+          <% if beta_visible_sidebar_action_items.any? %>
+            <p class="ds-beta-nav-heading"><%= t("layouts.beta_dashboard.nav.actions") %></p>
+            <% beta_visible_sidebar_action_items.each do |item| %>
+              <%= beta_nav_link item[:label], public_send(item[:path_helper]), active: controller.action_name == item[:action_name] %>
+            <% end %>
+          <% end %>
+
+          <p class="ds-beta-nav-heading"><%= t("layouts.beta_dashboard.nav.personal") %></p>
+          <%= beta_nav_link t("layouts.beta_dashboard.nav.account"), beta_account_path, active: %w[account task].include?(controller.action_name) %>
+        </nav>
+      </aside>
+      <button type="button" class="ds-beta-sidebar-overlay" data-beta-nav-close aria-label="<%= t("js.close_menu") %>"></button>
+
+      <div class="ds-beta-main">
+        <div class="ds-beta-mobile-topbar">
+          <div class="ds-beta-mobile-navbar">
+            <%= link_to beta_dashboard_path, class: "ds-beta-mobile-navbar-brand" do %>
+              <%= image_tag "domino-chain-logo.png", alt: "Domino Chain", width: 28, height: 28 %>
+              <div>
+                <span class="ds-beta-mobile-navbar-wordmark wordmark">DominoChain</span>
+              </div>
+            <% end %>
+            <button type="button" class="ds-beta-mobile-nav-toggle" data-beta-nav-open aria-label="<%= t("js.open_menu") %>">
+              ☰
+            </button>
+          </div>
+        </div>
+        <div class="ds-beta-main-inner">
+          <% if flash[:notice].present? %>
+            <div class="ds-flash ds-flash--success"><%= flash[:notice] %></div>
+          <% end %>
+          <% if flash[:alert].present? %>
+            <div class="ds-flash ds-flash--error"><%= flash[:alert] %></div>
+          <% end %>
+          <%= yield %>
+        </div>
+      </div>
+    </div>
+
+    <script>
+    (function() {
+      var BGI18N = <%= raw({
+        copied: t("js.copied"), done: t("js.done"), finished: t("js.finished"),
+        cdDay: t("js.countdown_day"), cdHour: t("js.countdown_hour"), cdMin: t("js.countdown_min"), cdSec: t("js.countdown_sec")
+      }.to_json) %>;
+      document.querySelectorAll('[data-copy-target]').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var id = btn.dataset.copyTarget;
+          var el = document.getElementById(id);
+          if (!el) return;
+          var text = el.textContent || el.innerText;
+          navigator.clipboard.writeText(text).then(function() {
+            var orig = btn.textContent;
+            btn.textContent = BGI18N.copied;
+            setTimeout(function() { btn.textContent = orig; }, 1500);
+          });
+        });
+      });
+
+      var countdownEl = document.getElementById('chaster-countdown');
+      if (countdownEl && countdownEl.dataset.isFrozen !== 'true') {
+        var endDateStr = countdownEl.dataset.endDate;
+        if (endDateStr) {
+          var endTime = new Date(endDateStr).getTime();
+          function formatRemaining(sec) {
+            if (sec <= 0) return BGI18N.finished;
+            var d = Math.floor(sec / 86400);
+            var h = Math.floor((sec % 86400) / 3600);
+            var m = Math.floor((sec % 3600) / 60);
+            var s = sec % 60;
+            if (d > 0) return d + BGI18N.cdDay + h + BGI18N.cdHour + m + BGI18N.cdMin + s + BGI18N.cdSec;
+            if (h > 0) return h + BGI18N.cdHour + m + BGI18N.cdMin + s + BGI18N.cdSec;
+            if (m > 0) return m + BGI18N.cdMin + s + BGI18N.cdSec;
+            return s + BGI18N.cdSec;
+          }
+          function tick() {
+            var remaining = Math.floor((endTime - Date.now()) / 1000);
+            if (remaining <= 0) {
+              countdownEl.textContent = BGI18N.finished;
+              return;
+            }
+            countdownEl.textContent = formatRemaining(remaining);
+            setTimeout(tick, 1000);
+          }
+          tick();
+        }
+      }
+
+      var app = document.querySelector('.ds-beta-app');
+      if (app) {
+        var mq = window.matchMedia('(max-width: 52rem)');
+        function setNavOpen(open) {
+          app.classList.toggle('ds-beta-nav-open', open);
+          document.body.classList.toggle('ds-beta-nav-lock', open);
+        }
+        document.querySelectorAll('[data-beta-nav-open]').forEach(function(btn) {
+          btn.addEventListener('click', function() { setNavOpen(true); });
+        });
+        document.querySelectorAll('[data-beta-nav-close]').forEach(function(btn) {
+          btn.addEventListener('click', function() { setNavOpen(false); });
+        });
+        app.querySelectorAll('.ds-beta-sidebar .ds-beta-nav-link').forEach(function(link) {
+          link.addEventListener('click', function() {
+            if (mq.matches) setNavOpen(false);
+          });
+        });
+        document.addEventListener('keydown', function(e) {
+          if (e.key === 'Escape') setNavOpen(false);
+        });
+        window.addEventListener('resize', function() {
+          if (!mq.matches) setNavOpen(false);
+        });
+      }
+    })();
+    </script>
+  </body>
+</html>

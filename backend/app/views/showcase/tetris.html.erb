@@ -76,7 +76,7 @@
       </select>
     </div>
     <div id="tetris-leaderboard-list" class="tetris-leaderboard-list">
-      <p class="tetris-leaderboard-empty">Aucun score enregistré</p>
+      <p class="tetris-leaderboard-empty"><%= t("showcase.snake.empty") %></p>
     </div>
     <div id="tetris-leaderboard-pagination" class="tetris-leaderboard-pagination" hidden>
       <button type="button" class="tetris-btn tetris-btn--ghost tetris-btn--sm" id="tetris-lb-prev" disabled>Précédent</button>
@@ -85,6 +85,8 @@
     </div>
   </section>
 </div>
+
+<div id="tetris-i18n-strings" data-lb-empty="<%= j t("showcase.snake.empty") %>" data-page-of="<%= j t("showcase.snake.page_of") %>" hidden></div>
 
 <% if flash[:notice] %>
   <div class="tetris-flash tetris-flash--success"><%= flash[:notice] %></div>
@@ -170,6 +172,10 @@
 
   const pageEl = document.querySelector(".tetris-page");
   const nickname = pageEl.dataset.nickname;
+  const tetrisI18nEl = document.getElementById("tetris-i18n-strings");
+  const tetrisI18n = tetrisI18nEl ? tetrisI18nEl.dataset : {};
+  const LB_EMPTY_HTML = "<p class=\"tetris-leaderboard-empty\">" + (tetrisI18n.lbEmpty || "") + "</p>";
+  const PAGE_OF_TPL = tetrisI18n.pageOf || "";
   const secondsPerLine = Math.max(1, parseInt(pageEl.dataset.tetrisSecondsPerLine || "60", 10) || 60);
   const LEADERBOARD_PER_PAGE = 10;
   const urls = {
@@ -808,7 +814,8 @@
     lbPagEl.hidden = false;
     lbPrevBtn.disabled = page <= 1;
     lbNextBtn.disabled = page >= totalPages;
-    lbPageLabel.textContent = "Page " + page + " / " + totalPages;
+    const tpl = PAGE_OF_TPL || "Page %{page} / %{total}";
+    lbPageLabel.textContent = tpl.replace("%{page}", String(page)).replace("%{total}", String(totalPages));
   }
 
   async function loadLeaderboard() {
@@ -816,7 +823,7 @@
       const res = await fetchJson(buildLeaderboardUrl());
       const data = await res.json();
       if (data.error) {
-        leaderboardList.innerHTML = "<p class=\"tetris-leaderboard-empty\">Aucun score enregistré</p>";
+        leaderboardList.innerHTML = LB_EMPTY_HTML;
         lbPagEl.hidden = true;
         return;
       }
@@ -848,11 +855,11 @@
           "</tbody></table></div>";
         renderLeaderboardPagination(data);
       } else {
-        leaderboardList.innerHTML = "<p class=\"tetris-leaderboard-empty\">Aucun score enregistré</p>";
+        leaderboardList.innerHTML = LB_EMPTY_HTML;
         lbPagEl.hidden = true;
       }
     } catch {
-      leaderboardList.innerHTML = "<p class=\"tetris-leaderboard-empty\">Aucun score enregistré</p>";
+      leaderboardList.innerHTML = LB_EMPTY_HTML;
       lbPagEl.hidden = true;
     }
   }

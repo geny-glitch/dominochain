@@ -1,0 +1,123 @@
+<% content_for :title, t("beta.settings.title", nickname: current_user.nickname) %>
+
+<header class="ds-beta-page-head">
+  <h1 class="ds-beta-page-title"><%= t("beta.settings.page_title") %></h1>
+  <p class="ds-beta-page-lead">
+    <%= t("beta.settings.lead") %>
+  </p>
+</header>
+
+<section class="ds-beta-section ds-beta-section--first">
+  <div class="ds-section-header">
+    <h2 class="ds-section-title"><%= t("beta.settings.sources_installed") %></h2>
+    <span class="ds-beta-control-hint"><%= beta_source_catalog_items.count %></span>
+  </div>
+  <div class="ds-beta-catalog-grid">
+    <% beta_source_catalog_items.each do |item| %>
+      <% enabled = beta_catalog_source_enabled?(item[:id]) %>
+      <article class="ds-beta-catalog-card <%= "ds-beta-catalog-card--muted" unless enabled %>">
+        <span class="ds-beta-catalog-icon" aria-hidden="true">
+          <%= render "catalog_icon", item_id: item[:id] %>
+        </span>
+        <h3 class="ds-beta-catalog-title"><%= item[:label] %></h3>
+        <p class="ds-beta-catalog-sub"><%= item[:subtitle] %></p>
+        <p class="ds-beta-catalog-events"><%= item[:events] %></p>
+        <div class="ds-beta-catalog-footer">
+          <%= form_with url: beta_catalog_visibility_path, method: :patch, local: true, class: "ds-beta-catalog-toggle-form" do %>
+            <%= hidden_field_tag :kind, "source" %>
+            <%= hidden_field_tag :item_id, item[:id] %>
+            <%= hidden_field_tag :enabled, "0" %>
+            <label class="ds-form-label ds-beta-catalog-toggle">
+              <%= check_box_tag :enabled, "1", enabled, id: "catalog_source_#{item[:id]}", class: "ds-beta-catalog-toggle-input", onchange: "this.form.requestSubmit();", "aria-label": t("beta.settings.toggle_aria", label: item[:label]) %>
+              <span class="ds-beta-catalog-toggle-switch" aria-hidden="true"></span>
+            </label>
+          <% end %>
+          <%= link_to public_send(item[:path_helper]), class: "ds-btn ds-btn--icon ds-btn--ghost ds-btn--sm", title: t("beta.settings.configure_title", label: item[:label]), "aria-label": t("beta.settings.configure_aria", label: item[:label]) do %>
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/><path d="M19.4 15a1.6 1.6 0 0 0 .32 1.76l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06A1.6 1.6 0 0 0 15 19.4a1.6 1.6 0 0 0-1 1.47V21a2 2 0 0 1-4 0v-.09a1.6 1.6 0 0 0-1-1.47 1.6 1.6 0 0 0-1.76.32l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.6 1.6 0 0 0 4.6 15a1.6 1.6 0 0 0-1.47-1H3a2 2 0 0 1 0-4h.09a1.6 1.6 0 0 0 1.47-1 1.6 1.6 0 0 0-.32-1.76l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.6 1.6 0 0 0 9 4.6a1.6 1.6 0 0 0 1-1.47V3a2 2 0 0 1 4 0v.09a1.6 1.6 0 0 0 1 1.47 1.6 1.6 0 0 0 1.76-.32l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.6 1.6 0 0 0 19.4 9c.44.16.92.25 1.41.25H21a2 2 0 0 1 0 4h-.09c-.49 0-.97.09-1.41.25z"/></svg>
+          <% end %>
+        </div>
+      </article>
+    <% end %>
+  </div>
+</section>
+
+<section class="ds-beta-section">
+  <div class="ds-section-header">
+    <h2 class="ds-section-title"><%= t("beta.settings.actions_installed") %></h2>
+    <span class="ds-beta-control-hint"><%= beta_action_catalog_items.count %></span>
+  </div>
+  <div class="ds-beta-catalog-grid ds-beta-catalog-grid--actions">
+    <% beta_action_catalog_items.each do |item| %>
+      <% enabled = beta_catalog_action_enabled?(item[:id]) %>
+      <article class="ds-beta-catalog-card <%= "ds-beta-catalog-card--muted" unless enabled %>">
+        <span class="ds-beta-catalog-icon" aria-hidden="true">
+          <%= render "catalog_icon", item_id: item[:id] %>
+        </span>
+        <h3 class="ds-beta-catalog-title"><%= item[:label] %></h3>
+        <p class="ds-beta-catalog-sub"><%= item[:subtitle] %></p>
+        <p class="ds-beta-catalog-events"><%= item[:events] %></p>
+        <div class="ds-beta-catalog-footer">
+          <%= form_with url: beta_catalog_visibility_path, method: :patch, local: true, class: "ds-beta-catalog-toggle-form" do %>
+            <%= hidden_field_tag :kind, "action" %>
+            <%= hidden_field_tag :item_id, item[:id] %>
+            <%= hidden_field_tag :enabled, "0" %>
+            <label class="ds-form-label ds-beta-catalog-toggle">
+              <%= check_box_tag :enabled, "1", enabled, id: "catalog_action_#{item[:id]}", class: "ds-beta-catalog-toggle-input", onchange: "this.form.requestSubmit();", "aria-label": t("beta.settings.toggle_aria", label: item[:label]) %>
+              <span class="ds-beta-catalog-toggle-switch" aria-hidden="true"></span>
+            </label>
+          <% end %>
+          <%= link_to public_send(item[:path_helper]), class: "ds-btn ds-btn--icon ds-btn--ghost ds-btn--sm", title: t("beta.settings.configure_title", label: item[:label]), "aria-label": t("beta.settings.configure_aria", label: item[:label]) do %>
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/><path d="M19.4 15a1.6 1.6 0 0 0 .32 1.76l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06A1.6 1.6 0 0 0 15 19.4a1.6 1.6 0 0 0-1 1.47V21a2 2 0 0 1-4 0v-.09a1.6 1.6 0 0 0-1-1.47 1.6 1.6 0 0 0-1.76.32l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.6 1.6 0 0 0 4.6 15a1.6 1.6 0 0 0-1.47-1H3a2 2 0 0 1 0-4h.09a1.6 1.6 0 0 0 1.47-1 1.6 1.6 0 0 0-.32-1.76l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.6 1.6 0 0 0 9 4.6a1.6 1.6 0 0 0 1-1.47V3a2 2 0 0 1 4 0v.09a1.6 1.6 0 0 0 1 1.47 1.6 1.6 0 0 0 1.76-.32l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.6 1.6 0 0 0 19.4 9c.44.16.92.25 1.41.25H21a2 2 0 0 1 0 4h-.09c-.49 0-.97.09-1.41.25z"/></svg>
+          <% end %>
+        </div>
+      </article>
+    <% end %>
+  </div>
+</section>
+
+<script>
+  (function() {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || "";
+    const forms = document.querySelectorAll(".ds-beta-catalog-toggle-form");
+    forms.forEach((form) => {
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const checkbox = form.querySelector(".ds-beta-catalog-toggle-input");
+        if (!checkbox) return;
+
+        const previousValue = !checkbox.checked;
+        checkbox.disabled = true;
+        const card = form.closest(".ds-beta-catalog-card");
+
+        try {
+          const params = new URLSearchParams();
+          params.set("kind", form.querySelector('input[name="kind"]')?.value || "");
+          params.set("item_id", form.querySelector('input[name="item_id"]')?.value || "");
+          params.set("enabled", checkbox.checked ? "1" : "0");
+
+          const response = await fetch(form.action, {
+            method: "PATCH",
+            headers: {
+              "X-CSRF-Token": csrfToken,
+              "X-Requested-With": "XMLHttpRequest",
+              "Accept": "application/json",
+              "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+            },
+            body: params.toString()
+          });
+
+          if (!response.ok) throw new Error("request_failed");
+          const payload = await response.json().catch(() => ({}));
+          const enabled = payload.enabled === true;
+          checkbox.checked = enabled;
+          if (card) card.classList.toggle("ds-beta-catalog-card--muted", !enabled);
+        } catch (_) {
+          checkbox.checked = previousValue;
+          if (card) card.classList.toggle("ds-beta-catalog-card--muted", !previousValue);
+        } finally {
+          checkbox.disabled = false;
+        }
+      });
+    });
+  })();
+</script>

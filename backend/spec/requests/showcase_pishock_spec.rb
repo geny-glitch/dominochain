@@ -123,7 +123,7 @@ RSpec.describe "Showcase PiShock hooks", type: :request do
     end
 
     it "passes the showcase player cookie to the game-start notification" do
-      beta.update!(nickname: "pi-beta")
+      beta.update!(nickname: "pi_beta")
       cookies["bgShowcasePlayer_pi_beta"] = "  Alice  "
 
       expect do
@@ -185,6 +185,28 @@ RSpec.describe "Showcase PiShock hooks", type: :request do
           headers: { "Content-Type" => "application/json" },
           as: :json
       end.to have_enqueued_job(ShowcaseBetaNotifyJob).with(beta.id, "Alice", 42, "snake")
+    end
+
+    it "does not enqueue PiShock when pishock action is disabled in catalog" do
+      beta.update!(beta_ui_prefs: { "catalog_visibility" => { "actions" => { "pishock" => false } } })
+
+      expect do
+        patch showcase_update_session_path(beta.nickname, game_session.id),
+          params: { player_name: "Alice" },
+          headers: { "Content-Type" => "application/json" },
+          as: :json
+      end.not_to have_enqueued_job(PishockShockJob)
+    end
+
+    it "does not enqueue PiShock when showcase source is disabled in catalog" do
+      beta.update!(beta_ui_prefs: { "catalog_visibility" => { "sources" => { "showcase" => false } } })
+
+      expect do
+        patch showcase_update_session_path(beta.nickname, game_session.id),
+          params: { player_name: "Alice" },
+          headers: { "Content-Type" => "application/json" },
+          as: :json
+      end.not_to have_enqueued_job(PishockShockJob)
     end
 
     it "does not enqueue showcase notify when only score is patched" do

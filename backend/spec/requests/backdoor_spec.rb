@@ -26,7 +26,13 @@ RSpec.describe "Showcase backdoor (legacy spec path)", type: :request do
     before do
       allow(ChasterService).to receive(:new).with(beta).and_return(service)
       allow(service).to receive(:current_lock).and_return({ id: "lock123" })
-      allow(service).to receive(:add_time_to_lock).with("lock123", 3_660)
+      allow(service).to receive(:add_time_to_lock).with(
+        "lock123",
+        3_660,
+        source: "showcase_backdoor",
+        summary: "Backdoor par Visitor",
+        metadata: { player_name: "Visitor", message: "Hello beta" }
+      )
     end
 
     it "stores addition, calls Chaster and enqueues FCM job" do
@@ -66,14 +72,14 @@ RSpec.describe "Showcase backdoor (legacy spec path)", type: :request do
       ShowcaseAddTimeLimiter.reset_window!(beta.id)
       travel_to Time.zone.parse("2026-04-25 12:00:00") do
         ShowcaseAddTimeEvent.create!(user: beta, seconds: ShowcaseAddTimeLimiter::MAX_SECONDS_PER_WINDOW)
+
+        post showcase_backdoor_add_time_path(beta.nickname),
+          params: { days: 0, hours: 0, minutes: 1, player_name: "A", message: "B" },
+          as: :json
+
+        expect(response).to have_http_status(:too_many_requests)
+        expect(service).not_to have_received(:add_time_to_lock)
       end
-
-      post showcase_backdoor_add_time_path(beta.nickname),
-        params: { days: 0, hours: 0, minutes: 1, player_name: "A", message: "B" },
-        as: :json
-
-      expect(response).to have_http_status(:too_many_requests)
-      expect(service).not_to have_received(:add_time_to_lock)
     end
   end
 end

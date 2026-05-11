@@ -10,6 +10,7 @@ import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.Part
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 data class RegisterRequest(
     val device_id: String,
@@ -165,6 +166,12 @@ interface ApiService {
     @GET("api/chaster/lock")
     suspend fun getChasterLock(): Response<ChasterLockResponse>
 
+    @GET("api/chaster/time_events")
+    suspend fun getChasterTimeEvents(
+        @Query("page") page: Int,
+        @Query("per_page") perPage: Int
+    ): Response<ChasterTimeEventsResponse>
+
     @GET("api/cigarettes")
     suspend fun getCigarettes(): Response<CigaretteTrackerResponse>
 
@@ -247,6 +254,29 @@ data class ChasterLock(
     val is_frozen: Boolean,
     val remaining_seconds: Int?,
     val display_remaining_time: Boolean = true
+)
+
+data class ChasterTimeEventsResponse(
+    val events: List<ChasterTimeEvent> = emptyList(),
+    val meta: PaginationMeta? = null
+)
+
+data class ChasterTimeEvent(
+    val id: Long,
+    val lock_id: String?,
+    val seconds: Int,
+    val source: String?,
+    val source_label: String?,
+    val summary: String?,
+    val occurred_at: String?
+)
+
+data class PaginationMeta(
+    val page: Int,
+    val per_page: Int,
+    val total_count: Int,
+    val total_pages: Int,
+    val next_page: Int?
 )
 
 data class CigaretteTrackerResponse(

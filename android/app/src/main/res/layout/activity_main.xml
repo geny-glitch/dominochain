@@ -217,6 +217,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="@dimen/ds_space_xl"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
                 android:visibility="gone"
                 app:cardBackgroundColor="@color/ds_surface"
                 app:cardCornerRadius="12dp"
@@ -278,6 +281,14 @@
                         android:textSize="10sp"
                         android:textColor="@color/ds_text_muted"
                         android:visibility="gone" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/ds_space_sm"
+                        android:text="@string/chaster_open_history"
+                        android:textColor="@color/ds_teal"
+                        style="@style/DsSmall" />
 
                     <TextView
                         android:id="@+id/chaster_hint"

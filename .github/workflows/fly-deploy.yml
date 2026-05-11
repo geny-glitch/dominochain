@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - staging
     paths:
       - "backend/**"
       - ".github/workflows/fly-deploy.yml"
@@ -14,23 +15,34 @@ jobs:
     name: Deploy app
     runs-on: ubuntu-latest
     concurrency:
-      group: fly-deploy-main
+      group: fly-deploy-${{ github.ref_name }}
       cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
 
       - uses: superfly/flyctl-actions/setup-flyctl@master
 
+      - name: Select Fly app and config
+        working-directory: backend
+        run: |
+          if [ "${GITHUB_REF_NAME}" = "staging" ]; then
+            echo "FLY_CONFIG=fly.staging.toml" >> "${GITHUB_ENV}"
+            echo "FLY_APP=bg-backend-staging" >> "${GITHUB_ENV}"
+          else
+            echo "FLY_CONFIG=fly.toml" >> "${GITHUB_ENV}"
+            echo "FLY_APP=bg-backend" >> "${GITHUB_ENV}"
+          fi
+
       - name: Deploy to Fly.io
         working-directory: backend
-        run: flyctl deploy --remote-only
+        run: flyctl deploy --remote-only --config "${FLY_CONFIG}"
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 
       # Fly can keep multiple machines per process group; one worker is enough for Solid Queue.
       - name: Scale worker group to one machine
         working-directory: backend
-        run: flyctl scale count worker=1 -y
+        run: flyctl scale count worker=1 -y --app "${FLY_APP}"
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 

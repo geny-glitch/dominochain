@@ -1,20 +1,22 @@
 ---
-description: Toujours utiliser le design system OTB pour les pages et vues
+description: Toujours utiliser le design system Domino Chain pour les pages et vues
 globs: backend/app/views/**/*.erb
 alwaysApply: false
 ---
 
-# Design System OTB
+# Design System Domino Chain
 
 Toujours utiliser les classes du design system pour les pages web. Ne pas écrire de HTML/CSS custom sans passer par le design system.
 
 ## Structure de page
 
+### Pages classiques (hors espace beta)
+
 ```erb
 <div class="ds-page">
   <div class="ds-container">
     <header class="ds-header">
-      <%= image_tag "otb-logo.png", alt: "OTB", class: "ds-header-logo", width: 48, height: 48 %>
+      <%= image_tag "domino-chain-logo.png", alt: "Domino Chain", class: "ds-header-logo", width: 48, height: 48 %>
       <h1 class="ds-title">Titre</h1>
       <p class="ds-subtitle">Sous-titre</p>
     </header>
@@ -22,6 +24,12 @@ Toujours utiliser les classes du design system pour les pages web. Ne pas écrir
   </div>
 </div>
 ```
+
+### Espace beta (layout `beta_dashboard`)
+
+- Le layout fournit la **sidebar** (`ds-beta-sidebar`, `ds-beta-nav-link`, etc.) et la zone principale (`ds-beta-main-inner`).
+- Chaque vue beta : `content_for :title`, un **en-tête de page** optionnel (`ds-beta-page-head`, `ds-beta-page-title`, `ds-beta-page-lead`), puis du contenu avec les composants ci-dessous (`ds-beta-section`, `ds-beta-control-card`, formulaires DS).
+- Ne pas envelopper tout le `yield` dans `ds-page` / `ds-container` : ces classes sont pour les pages hors layout beta.
 
 ## Composants
 

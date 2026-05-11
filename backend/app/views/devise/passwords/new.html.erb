@@ -1,16 +1,24 @@
-<h2>Forgot your password?</h2>
+<div class="ds-page">
+  <div class="ds-container">
+    <header class="ds-header">
+      <h1 class="ds-title"><%= t("devise.passwords.new_title") %></h1>
+    </header>
 
-<%= form_for(resource, as: resource_name, url: password_path(resource_name), html: { method: :post }) do |f| %>
-  <%= render "devise/shared/error_messages", resource: resource %>
+    <%= form_for(resource, as: resource_name, url: password_path(resource_name), html: { method: :post, class: "ds-form ds-auth-form" }) do |f| %>
+      <%= render "devise/shared/error_messages", resource: resource %>
 
-  <div class="field">
-    <p><%= f.label :email %></p>
-    <p><%= f.email_field :email, autofocus: true, autocomplete: "email" %></p>
+      <div class="ds-form-group">
+        <%= f.label :email, t("devise.passwords.email"), class: "ds-form-label" %>
+        <%= f.email_field :email, autofocus: true, autocomplete: "email", class: "ds-input" %>
+      </div>
+
+      <div class="ds-form-actions">
+        <%= f.submit t("devise.passwords.send_instructions"), class: "ds-btn ds-btn--primary" %>
+      </div>
+    <% end %>
+
+    <nav class="ds-auth-links">
+      <%= render "devise/shared/links" %>
+    </nav>
   </div>
-
-  <div class="actions">
-    <%= f.submit "Send me password reset instructions" %>
-  </div>
-<% end %>
-
-<%= render "devise/shared/links" %>
+</div>

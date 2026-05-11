@@ -82,10 +82,17 @@ RSpec.describe "Routes", type: :request do
       expect(response).to redirect_to(new_user_session_path)
     end
 
-    it "returns 200 when beta is authenticated" do
+    it "returns 200 on /beta when beta is authenticated" do
       beta = create(:user, :beta)
       sign_in beta
       get beta_dashboard_path
+      expect(response).to have_http_status(:ok)
+    end
+
+    it "returns 200 on Sources PuryFi when beta is authenticated" do
+      beta = create(:user, :beta)
+      sign_in beta
+      get beta_sources_puryfi_path
       expect(response).to have_http_status(:ok)
     end
   end
@@ -100,7 +107,7 @@ RSpec.describe "Routes", type: :request do
       beta = create(:user, :beta)
       sign_in beta
       post beta_pishock_test_path
-      expect(response).to redirect_to(beta_dashboard_path)
+      expect(response).to redirect_to(beta_actions_pishock_path)
       expect(flash[:alert]).to include("Enregistre")
     end
 
@@ -109,7 +116,7 @@ RSpec.describe "Routes", type: :request do
       sign_in beta
       allow(PishockService).to receive(:test_connection!).and_return(:ok)
       post beta_pishock_test_path
-      expect(response).to redirect_to(beta_dashboard_path)
+      expect(response).to redirect_to(beta_actions_pishock_path)
       expect(flash[:notice]).to be_present
       expect(PishockService).to have_received(:test_connection!).with(user: satisfy { |u| u.id == beta.id })
     end
@@ -139,7 +146,7 @@ RSpec.describe "Routes", type: :request do
         chaster_penalty_minutes: "90"
       }
 
-      expect(response).to redirect_to(beta_dashboard_path)
+      expect(response).to redirect_to(beta_sources_strava_path)
       goal = beta.strava_goals.last
       expect(goal.name).to eq("Cardio")
       expect(goal.required_count).to eq(2)
@@ -169,7 +176,7 @@ RSpec.describe "Routes", type: :request do
         chaster_penalty_minutes: "30"
       }
 
-      expect(response).to redirect_to(beta_dashboard_path)
+      expect(response).to redirect_to(beta_sources_strava_path)
       goal = beta.strava_goals.last
       expect(goal.activity_types).to eq(%w[TrailRun Ride])
     end
@@ -181,7 +188,7 @@ RSpec.describe "Routes", type: :request do
 
       delete strava_disconnect_path
 
-      expect(response).to redirect_to(beta_dashboard_path)
+      expect(response).to redirect_to(beta_sources_strava_path)
       expect(beta.reload.strava_access_token).to be_nil
       expect(beta.strava_goals.first.enabled).to be false
     end
@@ -427,6 +434,22 @@ RSpec.describe "Routes", type: :request do
           device_id: "device-123"
         }
         expect(response).to have_http_status(:created)
+        user = User.find_by!(nickname: "newapi")
+        expect(user.showcase_quiz_enabled).to be false
+        expect(user.showcase_snake_enabled).to be false
+        expect(user.showcase_dino_enabled).to be false
+        expect(user.showcase_tetris_enabled).to be false
+        expect(user.showcase_backdoor_enabled).to be false
+        expect(user.beta_ui_prefs.dig("catalog_visibility", "sources")).to eq({
+          "puryfi" => false,
+          "cigarettes" => false,
+          "strava" => false,
+          "showcase" => false
+        })
+        expect(user.beta_ui_prefs.dig("catalog_visibility", "actions")).to eq({
+          "chaster" => false,
+          "pishock" => false
+        })
       end
 
       it "POST /api/auth/logout returns 204" do
@@ -450,7 +473,7 @@ RSpec.describe "Routes", type: :request do
 
         delete chaster_disconnect_path
 
-        expect(response).to redirect_to(beta_dashboard_path)
+        expect(response).to redirect_to(beta_actions_chaster_path)
         expect(flash[:alert]).to eq("Impossible de déconnecter Chaster tant qu'un lock est actif.")
         expect(beta.reload.chaster_access_token).to eq("access")
         expect(beta.chaster_refresh_token).to eq("refresh")
@@ -470,7 +493,7 @@ RSpec.describe "Routes", type: :request do
 
         delete chaster_disconnect_path
 
-        expect(response).to redirect_to(beta_dashboard_path)
+        expect(response).to redirect_to(beta_actions_chaster_path)
         expect(flash[:notice]).to eq("Chaster déconnecté.")
         expect(beta.reload.chaster_access_token).to be_nil
         expect(beta.chaster_refresh_token).to be_nil
@@ -673,9 +696,9 @@ RSpec.describe "Routes", type: :request do
       it "allows decreasing snake seconds after 24 hours" do
         beta = create(
           :user, :beta,
-          showcase_snake_seconds_per_fruit: 600,
-          showcase_snake_seconds_per_fruit_at: 25.hours.ago
+          showcase_snake_seconds_per_fruit: 600
         )
+        beta.update_column(:showcase_snake_seconds_per_fruit_at, 25.hours.ago)
         device = create(:device, user: beta)
         patch "/api/showcase_settings",
           params: { showcase_snake_seconds_per_fruit: 300 },
@@ -715,9 +738,9 @@ RSpec.describe "Routes", type: :request do
       it "allows decreasing tetris seconds after 24 hours" do
         beta = create(
           :user, :beta,
-          showcase_tetris_seconds_per_line: 120,
-          showcase_tetris_seconds_per_line_at: 25.hours.ago
+          showcase_tetris_seconds_per_line: 120
         )
+        beta.update_column(:showcase_tetris_seconds_per_line_at, 25.hours.ago)
         device = create(:device, user: beta)
         patch "/api/showcase_settings",
           params: { showcase_tetris_seconds_per_line: 60 },

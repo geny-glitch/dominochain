@@ -1,6 +1,7 @@
 package com.bg
 
 import com.bg.api.ChasterLockResponse
+import com.bg.api.ChasterTimeEventsResponse
 import com.bg.api.FcmTokenRequest
 import com.bg.api.NameRequest
 import com.bg.api.PermissionsRequest
@@ -97,6 +98,19 @@ class DeviceRepository {
                 Result.success(response.body())
             } else if (response.code() == 401) {
                 Result.success(ChasterLockResponse(lock = null, error = "Chaster non connecté"))
+            } else {
+                Result.failure(Exception("Failed: ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getChasterTimeEvents(page: Int, perPage: Int): Result<ChasterTimeEventsResponse> {
+        return try {
+            val response = api.getChasterTimeEvents(page, perPage)
+            if (response.isSuccessful) {
+                Result.success(response.body() ?: ChasterTimeEventsResponse())
             } else {
                 Result.failure(Exception("Failed: ${response.code()}"))
             }

@@ -7,6 +7,7 @@ module Api
     def show
       return head :forbidden unless current_user.beta?
 
+      caps = BetaCapabilities.for(current_user)
       render json: {
         showcase_quiz_enabled: current_user.showcase_quiz_enabled,
         showcase_snake_enabled: current_user.showcase_snake_enabled,
@@ -18,7 +19,8 @@ module Api
         showcase_dino_seconds_per_obstacle: current_user.showcase_dino_seconds_per_obstacle,
         showcase_tetris_seconds_per_line: current_user.showcase_tetris_seconds_per_line,
         puryfi_min_score: current_user.puryfi_min_score,
-        puryfi_seconds_per_label: current_user.puryfi_seconds_per_label
+        puryfi_seconds_per_label: current_user.puryfi_seconds_per_label,
+        capabilities: caps.as_json
       }
     end
 
@@ -56,6 +58,7 @@ module Api
         attrs[:puryfi_seconds_per_label] = sanitize_puryfi_seconds_per_label(params[:puryfi_seconds_per_label])
       end
       current_user.update!(attrs)
+      caps = BetaCapabilities.for(current_user)
       render json: {
         showcase_quiz_enabled: current_user.showcase_quiz_enabled,
         showcase_snake_enabled: current_user.showcase_snake_enabled,
@@ -67,7 +70,8 @@ module Api
         showcase_dino_seconds_per_obstacle: current_user.showcase_dino_seconds_per_obstacle,
         showcase_tetris_seconds_per_line: current_user.showcase_tetris_seconds_per_line,
         puryfi_min_score: current_user.puryfi_min_score,
-        puryfi_seconds_per_label: current_user.puryfi_seconds_per_label
+        puryfi_seconds_per_label: current_user.puryfi_seconds_per_label,
+        capabilities: caps.as_json
       }
     rescue ActiveRecord::RecordInvalid => e
       render json: { error: e.record.errors.full_messages.join(" ") }, status: :unprocessable_entity

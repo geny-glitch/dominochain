@@ -50,6 +50,7 @@ RSpec.describe StravaGoalEvaluator do
       allow(strava_service).to receive(:activities_between).and_return([
         { id: 1, type: "Run", sport_type: "Run", duration_seconds: 20.minutes.to_i, calories: nil, device_name: "" }
       ])
+      allow(ChasterService).to receive(:new).with(user).and_return(chaster_service)
       allow(chaster_service).to receive(:current_lock).and_return({ id: "lock-strava" })
       allow(chaster_service).to receive(:add_time_to_lock)
 
@@ -59,7 +60,13 @@ RSpec.describe StravaGoalEvaluator do
       expect(first.status).to eq("failed")
       expect(first.chaster_applied).to be true
       expect(first.chaster_lock_id).to eq("lock-strava")
-      expect(chaster_service).to have_received(:add_time_to_lock).once.with("lock-strava", 90.minutes.to_i)
+      expect(chaster_service).to have_received(:add_time_to_lock).once.with(
+        "lock-strava",
+        90.minutes.to_i,
+        source: "strava_goal",
+        summary: "Objectif Strava manqué: Cardio rolling",
+        metadata: { goal_id: goal.id, due_at: a_string_starting_with(due_at.iso8601.first(19)) }
+      )
       expect(second.id).to eq(first.id)
       expect(goal.strava_goal_checks.count).to eq(1)
     end
@@ -67,6 +74,7 @@ RSpec.describe StravaGoalEvaluator do
     it "records a Chaster error when no active lock exists" do
       goal = create(:strava_goal, user: user, required_activity_count: 1, min_duration_seconds: 30.minutes.to_i)
       allow(strava_service).to receive(:activities_between).and_return([])
+      allow(ChasterService).to receive(:new).with(user).and_return(chaster_service)
       allow(chaster_service).to receive(:current_lock).and_return(nil)
 
       check = evaluator.evaluate_goal!(goal, due_at: due_at)
@@ -83,6 +91,7 @@ RSpec.describe StravaGoalEvaluator do
         allow(strava_service).to receive(:activities_between).and_return([
           { id: 1, type: "Run", sport_type: "Run", duration_seconds: 40.minutes.to_i, calories: nil, device_name: "" }
         ])
+        allow(ChasterService).to receive(:new).with(user).and_return(chaster_service)
         allow(chaster_service).to receive(:current_lock).and_return(nil)
 
         checks = evaluator.evaluate_due_goals!

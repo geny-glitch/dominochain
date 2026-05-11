@@ -16,15 +16,15 @@ RSpec.describe "Showcase add_time rate limit", type: :request do
   it "returns 429 when showcase would exceed 2 days in 5 minutes" do
     travel_to Time.zone.parse("2026-04-25 12:00:00") do
       ShowcaseAddTimeEvent.create!(user: beta, seconds: ShowcaseAddTimeLimiter::MAX_SECONDS_PER_WINDOW)
+
+      post showcase_add_time_path(beta.nickname),
+        params: { game_type: "snake" },
+        headers: { "CONTENT_TYPE" => "application/json" },
+        as: :json
+
+      expect(response).to have_http_status(:too_many_requests)
+      expect(service_double).not_to have_received(:add_time_to_lock)
     end
-
-    post showcase_add_time_path(beta.nickname),
-      params: { game_type: "snake" },
-      headers: { "CONTENT_TYPE" => "application/json" },
-      as: :json
-
-    expect(response).to have_http_status(:too_many_requests)
-    expect(service_double).not_to have_received(:add_time_to_lock)
   end
 
   it "records usage after successful snake add_time" do
@@ -34,7 +34,7 @@ RSpec.describe "Showcase add_time rate limit", type: :request do
       as: :json
 
     expect(response).to have_http_status(:ok)
-    expect(ShowcaseAddTimeEvent.where(user_id: beta.id).sum(:seconds)).to eq(ShowcaseController::SNAKE_SECONDS_PER_FRUIT)
+    expect(ShowcaseAddTimeEvent.where(user_id: beta.id).sum(:seconds)).to eq(ShowcaseGameConfig::SNAKE_SECONDS_PER_FRUIT)
   end
 
   it "uses beta-configured seconds per fruit for snake" do

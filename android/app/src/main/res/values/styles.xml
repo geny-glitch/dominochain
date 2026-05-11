@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- OTB Design System — component styles -->
+<!-- Domino Chain Design System — component styles -->
 <resources>
     <!-- Typography -->
     <style name="DsTitle" parent="TextAppearance.MaterialComponents.Headline5">

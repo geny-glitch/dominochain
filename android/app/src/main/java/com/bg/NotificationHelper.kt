@@ -15,7 +15,6 @@ import androidx.core.app.NotificationCompat
 object NotificationHelper {
     const val CHANNEL_ID_DEFAULT = "otb_default"
     private const val CHANNEL_ID = "otb_teaser"
-    private const val CHANNEL_NAME = "OTB"
     private const val CHANNEL_TASKS = "otb_tasks"
     private const val CHANNEL_TASKS_URGENT = "otb_tasks_urgent"
     private const val TEASER_NOTIFICATION_ID = 2001
@@ -30,7 +29,7 @@ object NotificationHelper {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT)
+            val channel = NotificationChannel(CHANNEL_ID, BuildConfig.NOTIFICATION_TITLE, NotificationManager.IMPORTANCE_DEFAULT)
             notificationManager.createNotificationChannel(channel)
         }
 
@@ -49,7 +48,7 @@ object NotificationHelper {
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle("OTB")
+            .setContentTitle(BuildConfig.NOTIFICATION_TITLE)
             .setContentText(contentText)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setContentIntent(pendingIntent)
@@ -66,7 +65,7 @@ object NotificationHelper {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_HIGH)
+            val channel = NotificationChannel(CHANNEL_ID, BuildConfig.NOTIFICATION_TITLE, NotificationManager.IMPORTANCE_HIGH)
             notificationManager.createNotificationChannel(channel)
         }
 
@@ -103,7 +102,7 @@ object NotificationHelper {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT)
+            val channel = NotificationChannel(CHANNEL_ID, BuildConfig.NOTIFICATION_TITLE, NotificationManager.IMPORTANCE_DEFAULT)
             notificationManager.createNotificationChannel(channel)
         }
 
@@ -141,7 +140,8 @@ object NotificationHelper {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val importance = NotificationManager.IMPORTANCE_HIGH
-            val channel = NotificationChannel(channelId, if (triggerAlarm) "OTB Tâches urgentes" else "OTB Tâches", importance).apply {
+            val channelName = if (triggerAlarm) "${BuildConfig.NOTIFICATION_TITLE} Tâches urgentes" else "${BuildConfig.NOTIFICATION_TITLE} Tâches"
+            val channel = NotificationChannel(channelId, channelName, importance).apply {
                 enableVibration(true)
                 if (triggerAlarm && soundUri != null) {
                     setSound(
@@ -188,7 +188,7 @@ object NotificationHelper {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(CHANNEL_TASKS, "OTB Tâches", NotificationManager.IMPORTANCE_DEFAULT)
+            val channel = NotificationChannel(CHANNEL_TASKS, "${BuildConfig.NOTIFICATION_TITLE} Tâches", NotificationManager.IMPORTANCE_DEFAULT)
             notificationManager.createNotificationChannel(channel)
         }
 
@@ -220,7 +220,7 @@ object NotificationHelper {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(CHANNEL_TASKS, "OTB Tâches", NotificationManager.IMPORTANCE_HIGH)
+            val channel = NotificationChannel(CHANNEL_TASKS, "${BuildConfig.NOTIFICATION_TITLE} Tâches", NotificationManager.IMPORTANCE_HIGH)
             notificationManager.createNotificationChannel(channel)
         }
 

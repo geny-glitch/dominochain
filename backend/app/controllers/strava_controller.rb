@@ -16,19 +16,19 @@ class StravaController < ApplicationController
 
   def callback
     if params[:state] != session[:strava_oauth_state]
-      redirect_to beta_dashboard_path, alert: "Connexion Strava annulée (état invalide)."
+      redirect_to beta_sources_strava_path, alert: t("flash.strava.oauth_invalid_state")
       return
     end
     session.delete(:strava_oauth_state)
 
     if params[:error].present?
-      redirect_to beta_dashboard_path, alert: "Strava: #{params[:error]}"
+      redirect_to beta_sources_strava_path, alert: t("flash.strava.oauth_error", message: params[:error].to_s)
       return
     end
 
     code = params[:code].to_s
     if code.blank?
-      redirect_to beta_dashboard_path, alert: "Code d'autorisation Strava manquant."
+      redirect_to beta_sources_strava_path, alert: t("flash.strava.oauth_missing_code")
       return
     end
 
@@ -40,43 +40,43 @@ class StravaController < ApplicationController
       strava_athlete_id: tokens[:athlete_id]
     )
 
-    redirect_to beta_dashboard_path, notice: "Strava connecté avec succès."
+    redirect_to beta_sources_strava_path, notice: t("flash.strava.connected")
   rescue StravaService::Error => e
-    redirect_to beta_dashboard_path, alert: "Erreur Strava: #{e.message}"
+    redirect_to beta_sources_strava_path, alert: t("flash.strava.error", message: e.message)
   end
 
   def disconnect
     StravaService.new(current_user).disconnect!
-    redirect_to beta_dashboard_path, notice: "Strava déconnecté. Les objectifs Strava ont été désactivés."
+    redirect_to beta_sources_strava_path, notice: t("flash.strava.disconnected")
   end
 
   def create_goal
     goal = current_user.strava_goals.create!(goal_params)
-    redirect_to beta_dashboard_path, notice: "Objectif Strava « #{goal.name} » créé."
+    redirect_to beta_sources_strava_path, notice: t("flash.strava.goal_created", name: goal.name)
   rescue ActiveRecord::RecordInvalid => e
-    redirect_to beta_dashboard_path, alert: e.record.errors.full_messages.join(", ")
+    redirect_to beta_sources_strava_path, alert: e.record.errors.full_messages.join(", ")
   end
 
   def update_goal
     @goal.update!(goal_params)
-    redirect_to beta_dashboard_path, notice: "Objectif Strava « #{@goal.name} » enregistré."
+    redirect_to beta_sources_strava_path, notice: t("flash.strava.goal_updated", name: @goal.name)
   rescue ActiveRecord::RecordInvalid => e
-    redirect_to beta_dashboard_path, alert: e.record.errors.full_messages.join(", ")
+    redirect_to beta_sources_strava_path, alert: e.record.errors.full_messages.join(", ")
   end
 
   def destroy_goal
     name = @goal.name
     @goal.destroy!
-    redirect_to beta_dashboard_path, notice: "Objectif Strava « #{name} » supprimé."
+    redirect_to beta_sources_strava_path, notice: t("flash.strava.goal_destroyed", name:)
   end
 
   def check_goal
     check = StravaGoalEvaluator.new(current_user).evaluate_goal!(@goal, due_at: check_due_at)
-    redirect_to beta_dashboard_path, notice: strava_check_notice(check)
+    redirect_to beta_sources_strava_path, notice: strava_check_notice(check)
   rescue StravaService::Unauthorized
-    redirect_to beta_dashboard_path, alert: "Strava non connecté."
+    redirect_to beta_sources_strava_path, alert: t("flash.strava.not_connected")
   rescue StravaService::Error, ChasterService::Error => e
-    redirect_to beta_dashboard_path, alert: "Vérification Strava impossible: #{e.message}"
+    redirect_to beta_sources_strava_path, alert: t("flash.strava.check_impossible", message: e.message)
   end
 
   private
@@ -84,25 +84,25 @@ class StravaController < ApplicationController
   def require_beta_role!
     return if current_user.beta?
 
-    redirect_to dashboard_path, alert: "Accès réservé aux betas."
+    redirect_to dashboard_path, alert: t("flash.strava.beta_only")
   end
 
   def require_strava_configured!
     return if StravaService.configured?
 
-    redirect_to beta_dashboard_path, alert: "Strava n'est pas configuré. Contacte l'administrateur."
+    redirect_to beta_sources_strava_path, alert: t("flash.strava.not_configured")
   end
 
   def require_strava_connected!
     return if current_user.strava_access_token.present?
 
-    redirect_to beta_dashboard_path, alert: "Connecte Strava avant de gérer des objectifs."
+    redirect_to beta_sources_strava_path, alert: t("flash.strava.connect_first")
   end
 
   def set_goal
     @goal = current_user.strava_goals.find(params[:id])
   rescue ActiveRecord::RecordNotFound
-    redirect_to beta_dashboard_path, alert: "Objectif Strava introuvable."
+    redirect_to beta_sources_strava_path, alert: t("flash.strava.goal_not_found")
   end
 
   def goal_params
@@ -177,11 +177,28 @@ class StravaController < ApplicationController
   def strava_check_notice(check)
     case check.status
     when "passed"
-      "Objectif Strava validé: #{check.valid_count}/#{check.required_count} activités sur #{check.window_days} jours."
+      t(
+        "flash.strava.check_passed",
+        valid: check.valid_count,
+        required: check.required_count,
+        days: check.window_days
+      )
     when "failed"
-      "Objectif Strava non validé: #{check.valid_count}/#{check.required_count} sur #{check.window_days} jours. #{check.chaster_penalty_seconds / 60} min ajoutées à Chaster."
+      t(
+        "flash.strava.check_failed",
+        valid: check.valid_count,
+        required: check.required_count,
+        days: check.window_days,
+        penalty_minutes: check.chaster_penalty_seconds / 60
+      )
     else
-      "Objectif Strava non validé: #{check.valid_count}/#{check.required_count} sur #{check.window_days} jours. Chaster n'a pas pu être pénalisé: #{check.chaster_error}"
+      t(
+        "flash.strava.check_chaster_failed",
+        valid: check.valid_count,
+        required: check.required_count,
+        days: check.window_days,
+        chaster_error: check.chaster_error.to_s
+      )
     end
   end
 end

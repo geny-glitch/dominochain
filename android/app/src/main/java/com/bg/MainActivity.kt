@@ -101,6 +101,12 @@ class MainActivity : AppCompatActivity() {
             loadChasterLock()
             ChasterWidgetWorker.updateNow(this)
         }
+        binding.chasterCard.setOnClickListener {
+            startActivity(Intent(this, ChasterHistoryActivity::class.java))
+        }
+        binding.chasterRemaining.setOnClickListener {
+            startActivity(Intent(this, ChasterHistoryActivity::class.java))
+        }
         binding.cigarettesIncrement.setOnClickListener {
             incrementCigarettesTracker()
         }

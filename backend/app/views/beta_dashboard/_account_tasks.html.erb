@@ -1,0 +1,37 @@
+    <%# Tâches en cours %>
+    <section class="ds-beta-section">
+      <h2 class="ds-section-title">Tâches en cours</h2>
+      <% if @tasks.any? %>
+        <ul class="ds-task-list">
+          <% @tasks.each do |task| %>
+            <li class="ds-task-card">
+              <div class="ds-task-card-info">
+                <span class="ds-task-card-name"><%= task.name %></span>
+                <div class="ds-task-card-meta">
+                  Deadline: <%= task.deadline_at.strftime("%d/%m %H:%M") %>
+                  · <span class="ds-task-status ds-task-status--<%= task.effective_status %>"><%= task.effective_status %></span>
+                  <% if task.proof_pending? %>
+                    · <span class="ds-task-status ds-task-status--pending">Preuve en attente</span>
+                  <% elsif task.proof_accepted? %>
+                    · <span class="ds-task-status ds-task-status--completed">Preuve acceptée</span>
+                  <% end %>
+                </div>
+              </div>
+              <div class="ds-task-card-actions">
+                <% if task.can_submit_proof? %>
+                  <%= link_to "Soumettre preuve", beta_task_path(task), class: "ds-btn ds-btn--primary ds-btn--sm" %>
+                <% elsif task.proof_pending? %>
+                  <span class="ds-btn ds-btn--ghost ds-btn--sm" disabled>En attente de validation</span>
+                <% elsif task.proof_accepted? %>
+                  <span class="ds-btn ds-btn--ghost ds-btn--sm" disabled>✓ Validé</span>
+                <% else %>
+                  <span class="ds-btn ds-btn--ghost ds-btn--sm" disabled><%= task.effective_status %></span>
+                <% end %>
+              </div>
+            </li>
+          <% end %>
+        </ul>
+      <% else %>
+        <p class="ds-text-muted"><%= t("beta.empty.no_tasks") %></p>
+      <% end %>
+    </section>

@@ -1,0 +1,176 @@
+    <%# Strava %>
+    <section class="ds-beta-section ds-beta-section--tight-top">
+      <div class="ds-section-header">
+        <h2 class="ds-section-title"><%= t("beta.strava.section_title") %></h2>
+        <% if current_user.strava_access_token.present? %>
+          <%= link_to beta_sources_strava_path, class: "ds-btn ds-btn--icon ds-btn--ghost", title: t("beta.strava.refresh_title") do %>
+            <svg class="ds-icon-refresh" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          <% end %>
+        <% end %>
+      </div>
+      <div class="ds-beta-control-card">
+        <% if current_user.strava_access_token.present? %>
+          <% athlete = current_user.strava_athlete_id.present? ? t("beta.strava.athlete_suffix", id: current_user.strava_athlete_id) : "" %>
+          <p class="ds-beta-control-text"><%= t("beta.strava.connected_line", athlete: athlete) %></p>
+          <p class="ds-beta-control-hint"><%= t("beta.strava.goals_hint") %></p>
+          <%= button_to t("beta.strava.disconnect"), strava_disconnect_path, method: :delete, form: { data: { turbo_confirm: t("beta.strava.disconnect_confirm") } }, class: "ds-btn ds-btn--secondary ds-btn--sm", style: "margin-top: 0.5rem;" %>
+
+          <% if @strava_goals.any? %>
+            <div style="margin-top: 1rem;">
+              <% @strava_goals.each do |goal| %>
+                <% last_check = goal.strava_goal_checks.recent.first %>
+                <div class="ds-beta-control-card" style="margin-top: 0.75rem;">
+                  <%= form_with url: beta_strava_goal_path(goal), method: :patch, local: true, class: "ds-form" do %>
+                    <%= hidden_field_tag :enabled, "0" %>
+                    <div class="ds-form-group">
+                      <label class="ds-form-label">
+                        <%= check_box_tag :enabled, "1", goal.enabled?, id: "strava_goal_#{goal.id}_enabled" %>
+                        <%= t("beta.strava.goal_active") %>
+                      </label>
+                    </div>
+                    <div class="ds-form-group">
+                      <%= label_tag "strava_goal_#{goal.id}_name", t("beta.strava.name"), class: "ds-form-label" %>
+                      <%= text_field_tag :name, goal.name, id: "strava_goal_#{goal.id}_name", class: "ds-input", required: true %>
+                    </div>
+                    <div class="ds-form-group">
+                      <%= label_tag "strava_goal_#{goal.id}_required_count", t("beta.strava.required_valid_activities"), class: "ds-form-label" %>
+                      <%= number_field_tag :required_count, goal.required_count, id: "strava_goal_#{goal.id}_required_count", min: 1, max: 100, class: "ds-input", required: true %>
+                    </div>
+                    <% window_preset = goal.window_days == 1 ? "daily" : (goal.window_days == 7 ? "weekly" : "custom") %>
+                    <div class="ds-form-group">
+                      <%= label_tag "strava_goal_#{goal.id}_window_preset", t("beta.strava.sliding_window"), class: "ds-form-label" %>
+                      <%= select_tag :window_preset, options_for_select(strava_sliding_window_options, window_preset), id: "strava_goal_#{goal.id}_window_preset", class: "ds-input" %>
+                    </div>
+                    <div class="ds-form-group">
+                      <%= label_tag "strava_goal_#{goal.id}_window_days", t("beta.strava.window_days_custom"), class: "ds-form-label" %>
+                      <%= number_field_tag :window_days, goal.window_days, id: "strava_goal_#{goal.id}_window_days", min: StravaGoal::MIN_WINDOW_DAYS, max: StravaGoal::MAX_WINDOW_DAYS, class: "ds-input" %>
+                    </div>
+                    <div class="ds-form-group">
+                      <%= label_tag "strava_goal_#{goal.id}_check_time", t("beta.strava.check_time"), class: "ds-form-label" %>
+                      <%= time_field_tag :check_time, goal.check_time_label, id: "strava_goal_#{goal.id}_check_time", class: "ds-input", required: true %>
+                    </div>
+                    <div class="ds-form-group">
+                      <%= label_tag "strava_goal_#{goal.id}_time_zone", t("beta.strava.time_zone"), class: "ds-form-label" %>
+                      <%= select_tag :time_zone, options_for_select(ActiveSupport::TimeZone.all.map(&:name), goal.time_zone), id: "strava_goal_#{goal.id}_time_zone", class: "ds-input" %>
+                    </div>
+                    <div class="ds-form-group">
+                      <%= label_tag "strava_goal_#{goal.id}_min_duration_minutes", t("beta.strava.min_duration"), class: "ds-form-label" %>
+                      <%= number_field_tag :min_duration_minutes, (goal.min_duration_seconds.present? ? goal.min_duration_seconds / 60 : nil), id: "strava_goal_#{goal.id}_min_duration_minutes", min: 1, max: 525_600, class: "ds-input" %>
+                    </div>
+                    <div class="ds-form-group">
+                      <%= label_tag "strava_goal_#{goal.id}_min_calories", t("beta.strava.min_calories"), class: "ds-form-label" %>
+                      <%= number_field_tag :min_calories, goal.min_calories, id: "strava_goal_#{goal.id}_min_calories", min: 1, max: 1_000_000, class: "ds-input" %>
+                    </div>
+                    <div class="ds-form-group">
+                      <%= label_tag "strava_goal_#{goal.id}_strava_sport_type", t("beta.strava.strava_sport_type"), class: "ds-form-label" %>
+                      <%= select_tag :strava_sport_type, options_for_select([[t("beta.strava.strava_sport_blank_goal"), ""]] + StravaGoal.strava_sport_type_options_for_select, goal.primary_strava_sport_type), id: "strava_goal_#{goal.id}_strava_sport_type", class: "ds-input" %>
+                    </div>
+                    <div class="ds-form-group">
+                      <%= label_tag "strava_goal_#{goal.id}_activity_types", t("beta.strava.activity_types_extra"), class: "ds-form-label" %>
+                      <%= text_field_tag :activity_types, goal.supplemental_activity_types_for_form.join(", "), id: "strava_goal_#{goal.id}_activity_types", class: "ds-input", placeholder: t("beta.strava.placeholders.activity_types") %>
+                    </div>
+                    <div class="ds-form-group">
+                      <%= label_tag "strava_goal_#{goal.id}_device_names", t("beta.strava.device_names"), class: "ds-form-label" %>
+                      <%= text_field_tag :device_names, goal.device_names.join(", "), id: "strava_goal_#{goal.id}_device_names", class: "ds-input", placeholder: t("beta.strava.placeholders.device_names") %>
+                    </div>
+                    <div class="ds-form-group">
+                      <%= label_tag "strava_goal_#{goal.id}_chaster_penalty_minutes", t("beta.strava.chaster_penalty_minutes"), class: "ds-form-label" %>
+                      <%= number_field_tag :chaster_penalty_minutes, goal.chaster_penalty_seconds / 60, id: "strava_goal_#{goal.id}_chaster_penalty_minutes", min: 1, max: 525_600, class: "ds-input", required: true %>
+                    </div>
+                    <p class="ds-beta-control-hint"><%= t("beta.strava.criteria_prefix") %> <%= goal.criteria_summary.presence || t("beta.strava.criteria_none") %></p>
+                    <% if last_check %>
+                      <p class="ds-beta-control-hint">
+                        <%= t("beta.strava.last_check_prefix") %> <%= last_check.period_start_at.in_time_zone(goal.time_zone_object).strftime("%d/%m %H:%M") %> → <%= last_check.period_end_at.in_time_zone(goal.time_zone_object).strftime("%d/%m %H:%M") %> ·
+                        <%= last_check.valid_count %>/<%= last_check.required_count %> <%= t("beta.strava.activities_separator") %>
+                        <%= t("beta.strava.status_label") %> <strong><%= last_check.status %></strong>
+                        <% if last_check.chaster_applied? %>
+                          <%= t("beta.strava.chaster_min_added", minutes: last_check.chaster_penalty_seconds / 60) %>
+                        <% elsif last_check.chaster_error.present? %>
+                          <%= t("beta.strava.chaster_error_prefix") %> <%= last_check.chaster_error %>
+                        <% end %>
+                      </p>
+                    <% end %>
+                    <p class="ds-beta-control-hint">
+                      <%= t("beta.strava.next_evaluation", datetime: goal.next_due_at.in_time_zone(goal.time_zone_object).strftime("%d/%m/%Y %H:%M"), tz: goal.time_zone) %>
+                    </p>
+                    <%= submit_tag t("beta.strava.save_goal"), class: "ds-btn ds-btn--primary ds-btn--sm", style: "margin-top: 0.75rem;" %>
+                  <% end %>
+                  <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem;">
+                    <%= button_to t("beta.strava.check_last_window"), beta_strava_goal_check_path(goal), method: :post, class: "ds-btn ds-btn--secondary ds-btn--sm" %>
+                    <%= button_to t("beta.strava.delete_goal"), beta_strava_goal_destroy_path(goal), method: :delete, form: { data: { turbo_confirm: t("beta.strava.delete_confirm") } }, class: "ds-btn ds-btn--ghost ds-btn--sm" %>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          <% else %>
+            <p class="ds-beta-control-hint"><%= t("beta.strava.no_goals") %></p>
+          <% end %>
+
+          <%= form_with url: beta_strava_goals_path, method: :post, local: true, class: "ds-form", style: "margin-top: 1rem;" do %>
+            <h3 class="ds-section-title" style="margin-bottom: 0.5rem; font-size: 1rem;"><%= t("beta.strava.new_goal_title") %></h3>
+            <%= hidden_field_tag :enabled, "0" %>
+            <div class="ds-form-group">
+              <label class="ds-form-label">
+                <%= check_box_tag :enabled, "1", true, id: "new_strava_goal_enabled" %>
+                <%= t("beta.strava.goal_active") %>
+              </label>
+            </div>
+            <div class="ds-form-group">
+              <%= label_tag :name, t("beta.strava.name"), class: "ds-form-label" %>
+              <%= text_field_tag :name, nil, class: "ds-input", placeholder: t("beta.strava.placeholders.name_example"), required: true %>
+            </div>
+            <div class="ds-form-group">
+              <%= label_tag :required_count, t("beta.strava.required_valid_activities"), class: "ds-form-label" %>
+              <%= number_field_tag :required_count, 1, min: 1, max: 100, class: "ds-input", required: true %>
+            </div>
+            <div class="ds-form-group">
+              <%= label_tag :window_preset, t("beta.strava.sliding_window"), class: "ds-form-label" %>
+              <%= select_tag :window_preset, options_for_select(strava_sliding_window_options, "weekly"), class: "ds-input" %>
+            </div>
+            <div class="ds-form-group">
+              <%= label_tag :window_days, t("beta.strava.window_days_custom"), class: "ds-form-label" %>
+              <%= number_field_tag :window_days, 7, min: StravaGoal::MIN_WINDOW_DAYS, max: StravaGoal::MAX_WINDOW_DAYS, class: "ds-input" %>
+            </div>
+            <div class="ds-form-group">
+              <%= label_tag :check_time, t("beta.strava.check_time"), class: "ds-form-label" %>
+              <%= time_field_tag :check_time, "00:00", class: "ds-input", required: true %>
+            </div>
+            <div class="ds-form-group">
+              <%= label_tag :time_zone, t("beta.strava.time_zone"), class: "ds-form-label" %>
+              <%= select_tag :time_zone, options_for_select(ActiveSupport::TimeZone.all.map(&:name), Time.zone.name), class: "ds-input" %>
+            </div>
+            <div class="ds-form-group">
+              <%= label_tag :min_duration_minutes, t("beta.strava.min_duration"), class: "ds-form-label" %>
+              <%= number_field_tag :min_duration_minutes, nil, min: 1, max: 525_600, class: "ds-input", placeholder: t("beta.strava.placeholders.min_duration") %>
+            </div>
+            <div class="ds-form-group">
+              <%= label_tag :min_calories, t("beta.strava.min_calories"), class: "ds-form-label" %>
+              <%= number_field_tag :min_calories, nil, min: 1, max: 1_000_000, class: "ds-input", placeholder: t("beta.strava.placeholders.min_calories") %>
+            </div>
+            <div class="ds-form-group">
+              <%= label_tag :strava_sport_type, t("beta.strava.strava_sport_type"), class: "ds-form-label" %>
+              <%= select_tag :strava_sport_type, options_for_select([[t("beta.strava.strava_sport_blank_new"), ""]] + StravaGoal.strava_sport_type_options_for_select), id: "new_strava_goal_strava_sport_type", class: "ds-input" %>
+            </div>
+            <div class="ds-form-group">
+              <%= label_tag :activity_types, t("beta.strava.activity_types_extra"), class: "ds-form-label" %>
+              <%= text_field_tag :activity_types, nil, class: "ds-input", placeholder: t("beta.strava.placeholders.activity_types_new") %>
+            </div>
+            <div class="ds-form-group">
+              <%= label_tag :device_names, t("beta.strava.device_names"), class: "ds-form-label" %>
+              <%= text_field_tag :device_names, nil, class: "ds-input", placeholder: t("beta.strava.placeholders.device_names") %>
+            </div>
+            <div class="ds-form-group">
+              <%= label_tag :chaster_penalty_minutes, t("beta.strava.chaster_penalty_minutes"), class: "ds-form-label" %>
+              <%= number_field_tag :chaster_penalty_minutes, 60, min: 1, max: 525_600, class: "ds-input", required: true %>
+            </div>
+            <p class="ds-beta-control-hint"><%= t("beta.strava.new_goal_criteria_hint") %></p>
+            <%= submit_tag t("beta.strava.create_goal"), class: "ds-btn ds-btn--primary ds-btn--sm", style: "margin-top: 0.75rem;" %>
+          <% end %>
+        <% elsif StravaService.configured? %>
+          <p class="ds-beta-control-text"><%= t("beta.strava.connect_pitch") %></p>
+          <%= link_to t("beta.strava.connect_strava"), strava_connect_path, class: "ds-btn ds-btn--primary ds-btn--sm", style: "margin-top: 0.5rem;" %>
+        <% else %>
+          <p class="ds-text-muted"><%= t("beta.strava.not_configured") %></p>
+        <% end %>
+      </div>
+    </section>

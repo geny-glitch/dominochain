@@ -1,0 +1,10 @@
+en:
+  activerecord:
+    errors:
+      models:
+        user:
+          attributes:
+            nickname:
+              invalid_nickname_format: "may only contain letters, numbers, and underscores"
+          at_least_one_showcase_game: "At least one game or the Backdoor page must stay enabled on the showcase."
+          showcase_seconds_decrease_cooldown: "you cannot reduce this delay until 24 h after the last change (try again after %{unlock_at})."

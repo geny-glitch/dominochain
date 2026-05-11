@@ -1,0 +1,10 @@
+fr:
+  activerecord:
+    errors:
+      models:
+        user:
+          attributes:
+            nickname:
+              invalid_nickname_format: "ne peut contenir que lettres, chiffres et underscores"
+          at_least_one_showcase_game: "Au moins un jeu ou la page Backdoor doit rester activé sur la vitrine."
+          showcase_seconds_decrease_cooldown: "tu ne peux pas réduire ce délai avant 24 h après le dernier changement (réessaie après %{unlock_at})."

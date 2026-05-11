@@ -1,19 +1,19 @@
 <div class="ds-page">
   <div class="ds-container">
     <header class="ds-header">
-      <%= image_tag "otb-logo.png", alt: "OTB", class: "ds-header-logo", width: 48, height: 48 %>
-      <h1 class="ds-title">OTB</h1>
-      <p class="ds-subtitle">Connexion</p>
+      <%= image_tag "domino-chain-logo.png", alt: t("layouts.application.logo_alt"), class: "ds-header-logo", width: 48, height: 48 %>
+      <h1 class="ds-title wordmark">DominoChain</h1>
+      <p class="ds-subtitle eyebrow"><%= t("devise.sessions.title") %></p>
     </header>
 
     <%= form_for(resource, as: resource_name, url: session_path(resource_name), html: { class: "ds-form ds-auth-form" }) do |f| %>
       <div class="ds-form-group">
-        <%= f.label :nickname, "Pseudo", class: "ds-form-label" %>
+        <%= f.label :nickname, t("devise.sessions.nickname"), class: "ds-form-label" %>
         <%= f.text_field :nickname, autofocus: true, autocomplete: "nickname", class: "ds-input" %>
       </div>
 
       <div class="ds-form-group">
-        <%= f.label :password, "Mot de passe", class: "ds-form-label" %>
+        <%= f.label :password, t("devise.sessions.password"), class: "ds-form-label" %>
         <%= f.password_field :password, autocomplete: "current-password", class: "ds-input" %>
       </div>
 
@@ -21,13 +21,13 @@
         <div class="ds-form-group">
           <label class="ds-checkbox-label">
             <%= f.check_box :remember_me %>
-            <span>Se souvenir de moi</span>
+            <span><%= t("devise.sessions.remember_me") %></span>
           </label>
         </div>
       <% end %>
 
       <div class="ds-form-actions">
-        <%= f.submit "Se connecter", class: "ds-btn ds-btn--primary" %>
+        <%= f.submit t("devise.sessions.submit"), class: "ds-btn ds-btn--primary" %>
       </div>
     <% end %>
 

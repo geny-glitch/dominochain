@@ -1,4 +1,4 @@
-# OTB Design System
+# Domino Chain Design System
 
 Design system unifié pour le web (Rails) et l'app Android. Inspiré de Blade Runner 2049 — sombre, atmosphérique, accents ambre et teal.
 

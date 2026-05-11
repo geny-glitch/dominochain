@@ -1,4 +1,4 @@
-# OTB — Own their backgrounds
+# Domino Chain — Own their backgrounds
 
 Android app + Rails backend. Register your device, upload an image via the web, and it becomes your wallpaper.
 
@@ -37,7 +37,8 @@ bg/
 
 ```properties
 sdk.dir=/Users/TON_USERNAME/Library/Android/sdk
-API_BASE_URL=https://bg-backend.fly.dev
+API_BASE_URL_PROD=https://bg-backend.fly.dev
+API_BASE_URL_STAGING=https://bg-backend-staging.fly.dev
 ```
 
 Pour trouver `sdk.dir` : **Android Studio → Settings → Appearance & Behavior → System Settings → Android SDK** → le chemin est affiché en haut.
@@ -91,8 +92,9 @@ bin/rails server
 ```
 
 Puis dans `local.properties` :
-- Émulateur : `API_BASE_URL=http://10.0.2.2:3000`
-- Appareil physique : `API_BASE_URL=http://TON_IP_MAC:3000` (trouve ton IP avec `ifconfig | grep "inet "`)
+- Émulateur : `API_BASE_URL_PROD=http://10.0.2.2:3000`
+- Appareil physique : `API_BASE_URL_PROD=http://TON_IP_MAC:3000` (trouve ton IP avec `ifconfig | grep "inet "`)
+- Pour le flavor staging Android : `API_BASE_URL_STAGING=http://10.0.2.2:3000` (ou ton backend staging Fly)
 
 ## Deploy (Fly.io)
 
@@ -102,6 +104,16 @@ Puis dans `local.properties` :
 4. Set DATABASE_URL from Postgres connection string
 5. Pour les push FCM : `fly secrets set FIREBASE_PROJECT_ID=ton-project-id FIREBASE_CREDENTIALS_JSON="$(cat path/to/service-account.json)"`
 6. Deploy: `cd backend && fly deploy`
+
+## Staging (Fly + Android)
+
+- Fichier Fly staging backend : `backend/fly.staging.toml` (app `bg-backend-staging`)
+- Pipeline backend staging : push sur branche `staging` (workflow `fly-deploy.yml`)
+- APK Android staging : flavor `staging`, package `com.bg.staging`, installable à côté de prod
+- Pipeline Android staging : push sur branche `staging` (workflow `android-ota-release.yml`)
+- Secret GitHub requis pour notifier le backend staging : `DEPLOY_SECRET_STAGING`
+- Ajouter une app Firebase Android `com.bg.staging` et placer son `google-services.json` (ou config flavor équivalente)
+- Le site expose un lien de téléchargement APK : `/android/app.apk` (donc `https://bg-backend-staging.fly.dev/android/app.apk` en staging)
 
 ### Home page (collage influenceurs)
 

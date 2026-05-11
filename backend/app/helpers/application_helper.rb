@@ -1,6 +1,6 @@
 module ApplicationHelper
   def format_chaster_remaining(seconds)
-    return "Terminé" if seconds.nil? || seconds <= 0
+    return t("time.finished") if seconds.nil? || seconds <= 0
 
     days = seconds / 86_400
     hours = (seconds % 86_400) / 3600
@@ -8,13 +8,13 @@ module ApplicationHelper
     secs = seconds % 60
 
     if days.positive?
-      "#{days}j #{hours}h #{mins}min #{secs}s"
+      t("time.remaining_days_hours_mins_secs", days:, hours:, mins:, secs:)
     elsif hours.positive?
-      "#{hours}h #{mins}min #{secs}s"
+      t("time.remaining_hours_mins_secs", hours:, mins:, secs:)
     elsif mins.positive?
-      "#{mins}min #{secs}s"
+      t("time.remaining_mins_secs", mins:, secs:)
     else
-      "#{secs}s"
+      t("time.remaining_secs", secs:)
     end
   end
 end

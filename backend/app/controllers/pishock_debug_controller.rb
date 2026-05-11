@@ -30,7 +30,7 @@ class PishockDebugController < ApplicationController
     username = debug_params[:username].to_s.strip
     apikey = debug_params[:apikey].to_s.strip
     if username.blank? || apikey.blank?
-      redirect_to beta_pishock_debug_path, alert: "Renseigne le nom d’utilisateur et la clé API."
+      redirect_to beta_pishock_debug_path, alert: t("flash.pishock_debug.fill_username_api")
       return
     end
 
@@ -48,12 +48,12 @@ class PishockDebugController < ApplicationController
       **res
     )
 
-    redirect_to beta_pishock_debug_path, notice: "Étape 1 exécutée."
+    redirect_to beta_pishock_debug_path, notice: t("flash.pishock_debug.step1_done")
   end
 
   def step2
     unless debug_ctx_ready?(:username, :apikey, :user_id)
-      redirect_to beta_pishock_debug_path, alert: "Fais d’abord l’étape 1 (UserId manquant)."
+      redirect_to beta_pishock_debug_path, alert: t("flash.pishock_debug.step1_first")
       return
     end
 
@@ -70,12 +70,12 @@ class PishockDebugController < ApplicationController
       **res
     )
 
-    redirect_to beta_pishock_debug_path, notice: "Étape 2 exécutée."
+    redirect_to beta_pishock_debug_path, notice: t("flash.pishock_debug.step2_done")
   end
 
   def step3
     unless debug_ctx_ready?(:username, :apikey, :user_id)
-      redirect_to beta_pishock_debug_path, alert: "Fais d’abord l’étape 1 (UserId manquant)."
+      redirect_to beta_pishock_debug_path, alert: t("flash.pishock_debug.step1_first")
       return
     end
 
@@ -92,18 +92,18 @@ class PishockDebugController < ApplicationController
       **res
     )
 
-    redirect_to beta_pishock_debug_path, notice: "Étape 3 exécutée."
+    redirect_to beta_pishock_debug_path, notice: t("flash.pishock_debug.step3_done")
   end
 
   def step4
     unless debug_ctx_ready?(:username, :apikey, :user_id)
-      redirect_to beta_pishock_debug_path, alert: "Fais d’abord l’étape 1 (UserId manquant)."
+      redirect_to beta_pishock_debug_path, alert: t("flash.pishock_debug.step1_first")
       return
     end
 
     raw_ids = debug_params[:share_ids].to_s.split(/[\s,]+/).map(&:strip).reject(&:blank?)
     if raw_ids.empty?
-      redirect_to beta_pishock_debug_path, alert: "Indique au moins un shareId (nombres séparés par des virgules)."
+      redirect_to beta_pishock_debug_path, alert: t("flash.pishock_debug.share_ids_required")
       return
     end
 
@@ -127,12 +127,12 @@ class PishockDebugController < ApplicationController
       **res
     )
 
-    redirect_to beta_pishock_debug_path, notice: "Étape 4 exécutée."
+    redirect_to beta_pishock_debug_path, notice: t("flash.pishock_debug.step4_done")
   end
 
   def clear
     clear_session
-    redirect_to beta_pishock_debug_path, notice: "Session de debug effacée."
+    redirect_to beta_pishock_debug_path, notice: t("flash.pishock_debug.session_cleared")
   end
 
   private
@@ -140,7 +140,7 @@ class PishockDebugController < ApplicationController
   def require_beta_role!
     return if current_user.beta?
 
-    redirect_to dashboard_path, alert: "Accès réservé aux betas."
+    redirect_to dashboard_path, alert: t("flash.pishock_debug.beta_only")
   end
 
   def debug_params

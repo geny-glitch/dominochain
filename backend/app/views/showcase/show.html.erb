@@ -1,41 +1,41 @@
-<% content_for :title, "Vitrine" %>
+<% content_for :title, t("showcase.hub.title") %>
 
 <div class="showcase-page ds-page">
   <div class="ds-container showcase-container">
     <header class="ds-header">
-      <h1 class="ds-title">Choisis un jeu</h1>
+      <h1 class="ds-title"><%= t("showcase.hub.pick_game") %></h1>
     </header>
 
     <div class="showcase-games">
       <% if @showcase_quiz_enabled %>
         <%= link_to showcase_quiz_path(@beta.nickname), class: "showcase-game-card showcase-game-card--quiz" do %>
           <span class="showcase-game-icon">📻</span>
-          <h2 class="showcase-game-title">Le Jeu des 1000 €</h2>
-          <p class="showcase-game-desc">Quiz culture générale, Banco et Super Banco. Inspiré de France Inter.</p>
+          <h2 class="showcase-game-title"><%= t("showcase.hub.quiz_title") %></h2>
+          <p class="showcase-game-desc"><%= t("showcase.hub.quiz_desc") %></p>
         <% end %>
       <% end %>
 
       <% if @showcase_snake_enabled %>
         <%= link_to showcase_snake_path(@beta.nickname), class: "showcase-game-card showcase-game-card--snake" do %>
           <span class="showcase-game-icon">🐍</span>
-          <h2 class="showcase-game-title">Snake</h2>
-          <p class="showcase-game-desc">Le classique Nokia 3310. Flèches ou swipe pour diriger.</p>
+          <h2 class="showcase-game-title"><%= t("showcase.hub.snake_title") %></h2>
+          <p class="showcase-game-desc"><%= t("showcase.hub.snake_desc") %></p>
         <% end %>
       <% end %>
 
       <% if @showcase_dino_enabled %>
         <%= link_to showcase_dino_path(@beta.nickname), class: "showcase-game-card showcase-game-card--dino" do %>
           <span class="showcase-game-icon">🦖</span>
-          <h2 class="showcase-game-title">Dino Run</h2>
-          <p class="showcase-game-desc">Le dinosaure hors-ligne de Google. Saute les cactus pour ajouter du temps.</p>
+          <h2 class="showcase-game-title"><%= t("showcase.hub.dino_title") %></h2>
+          <p class="showcase-game-desc"><%= t("showcase.hub.dino_desc") %></p>
         <% end %>
       <% end %>
 
       <% if @showcase_tetris_enabled %>
         <%= link_to showcase_tetris_path(@beta.nickname), class: "showcase-game-card showcase-game-card--tetris" do %>
           <span class="showcase-game-icon">🧱</span>
-          <h2 class="showcase-game-title">Tétris</h2>
-          <p class="showcase-game-desc">Empile les pièces : chaque ligne complète ajoute du temps au verrou.</p>
+          <h2 class="showcase-game-title"><%= t("showcase.hub.tetris_title") %></h2>
+          <p class="showcase-game-desc"><%= t("showcase.hub.tetris_desc") %></p>
         <% end %>
       <% end %>
     </div>

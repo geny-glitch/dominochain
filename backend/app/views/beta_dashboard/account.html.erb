@@ -1,0 +1,36 @@
+<% content_for :title, t("beta.account.title", nickname: current_user.nickname) %>
+
+<header class="ds-beta-page-head">
+  <h1 class="ds-beta-page-title"><%= t("beta.account.page_title") %></h1>
+  <p class="ds-beta-page-lead">
+    <%= t("beta.account.lead") %>
+  </p>
+</header>
+
+<section class="ds-beta-section ds-beta-section--first">
+  <h2 class="ds-section-title"><%= t("beta.account.locale_title") %></h2>
+  <div class="ds-beta-control-card">
+    <p class="ds-beta-control-hint"><%= t("beta.account.locale_lead") %></p>
+    <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem;">
+      <%= button_to t("beta.account.locale_submit_en"), user_locale_path, method: :patch, params: { locale: "en" }, class: "ds-btn ds-btn--secondary ds-btn--sm" %>
+      <%= button_to t("beta.account.locale_submit_fr"), user_locale_path, method: :patch, params: { locale: "fr" }, class: "ds-btn ds-btn--secondary ds-btn--sm" %>
+      <%= button_to t("beta.account.locale_submit_es"), user_locale_path, method: :patch, params: { locale: "es" }, class: "ds-btn ds-btn--secondary ds-btn--sm" %>
+    </div>
+  </div>
+</section>
+
+<%= render "account_control" %>
+<%= render "account_tasks" %>
+<%= render "account_devices" %>
+
+<section class="ds-beta-section">
+  <h2 class="ds-section-title"><%= t("beta.account.security_title") %></h2>
+  <div class="ds-beta-control-card">
+    <p class="ds-beta-control-hint"><%= t("beta.account.security_hint") %></p>
+    <%= link_to t("beta.account.edit_account"), edit_user_registration_path, class: "ds-btn ds-btn--secondary ds-btn--sm", style: "margin-top: 0.75rem;" %>
+  </div>
+</section>
+
+<section class="ds-beta-section">
+  <%= button_to t("beta.account.sign_out"), destroy_user_session_path, method: :delete, class: "ds-btn ds-btn--ghost" %>
+</section>

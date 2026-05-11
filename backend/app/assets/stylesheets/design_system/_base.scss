@@ -3,6 +3,10 @@
 @import "variables";
 
 :root {
+  --font-brand: "Space Grotesk", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-ui: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+
   --ds-bg: #{$ds-bg};
   --ds-surface: #{$ds-surface};
   --ds-surface-elevated: #{$ds-surface-elevated};
@@ -30,7 +34,20 @@ html {
 body {
   margin: 0;
   background: $ds-bg;
-  font-family: $ds-font-family;
+  font-family: var(--font-ui);
   color: $ds-text;
   -webkit-font-smoothing: antialiased;
+}
+
+.wordmark {
+  font-family: var(--font-brand);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-size: 0.72em;
 }

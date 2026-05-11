@@ -84,27 +84,37 @@ module Api
 
     def seconds_per_cigarette
       value = current_user.showcase_snake_seconds_per_fruit
-      value.present? && value.positive? ? value : ShowcaseController::SNAKE_SECONDS_PER_FRUIT
+      value.present? && value.positive? ? value : ShowcaseGameConfig::SNAKE_SECONDS_PER_FRUIT
     end
 
     def apply_chaster_time(entry)
-      service = ChasterService.new(current_user)
-      lock = service.current_lock
-
-      unless lock&.dig(:id).present?
-        entry.chaster_error = "Aucun cadenas Chaster actif."
+      seconds = entry.count * entry.chaster_seconds
+      event = BetaEvents::DomainEvent.new(
+        beta: current_user,
+        source: :cigarette,
+        kind: :smoked_add_time,
+        payload: { seconds: seconds }
+      )
+      execution_status = BetaEvents::ActionExecutor.new(beta: current_user, event: event).call
+      if %i[source_disabled no_enabled_actions].include?(execution_status)
+        entry.chaster_applied = false
+        entry.chaster_lock_id = nil
+        entry.chaster_error = "Source ou action désactivée."
         return
       end
-
-      seconds = entry.count * entry.chaster_seconds
-      service.add_time_to_lock(lock[:id], seconds)
-      entry.chaster_lock_id = lock[:id]
+      lock = ChasterService.new(current_user).current_lock
+      entry.chaster_lock_id = lock&.[](:id)
       entry.chaster_applied = true
       entry.chaster_error = nil
-    rescue ChasterService::Unauthorized
-      entry.chaster_error = "Chaster non connecté"
-    rescue ChasterService::Error => e
-      entry.chaster_error = e.message.to_s.truncate(500)
+    rescue BetaEvents::ActionExecutionStopped => e
+      entry.chaster_applied = false
+      entry.chaster_lock_id = nil
+      entry.chaster_error = case e.reason
+      when :no_chaster_lock then "Aucun cadenas Chaster actif."
+      when :chaster_unauthorized then "Chaster non connecté"
+      when :chaster_error, :missing_seconds then (e.detail.presence || "Erreur Chaster")
+      else (e.detail.presence || "Erreur Chaster")
+      end
     end
 
     def entry_to_json(entry)

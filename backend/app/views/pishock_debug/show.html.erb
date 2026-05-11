@@ -3,7 +3,7 @@
 <div class="ds-page">
   <div class="ds-container">
     <header class="ds-header">
-      <%= image_tag "otb-logo.png", alt: "OTB", class: "ds-header-logo", width: 48, height: 48 %>
+      <%= image_tag "domino-chain-logo.png", alt: "Domino Chain", class: "ds-header-logo", width: 48, height: 48 %>
       <div>
         <h1 class="ds-title">Debug PiShock (étapes API)</h1>
         <p class="ds-subtitle"><%= current_user.nickname %> — suivi de la <a href="https://docs.pishock.com/pishock/api-documentation/pishock-api-documentation.html" target="_blank" rel="noopener noreferrer">doc officielle</a></p>
@@ -23,7 +23,7 @@
         <span class="ds-text-muted"> Ici : active <code>bin/rails dev:cache</code> pour des aperçus complets.</span>
       <% end %>
       <%= button_to "Effacer session + journaux", beta_pishock_debug_clear_path, method: :post, class: "ds-btn ds-btn--ghost ds-btn--sm", form: { style: "display:inline;" } %>
-      <%= link_to "← Dashboard beta", beta_dashboard_path, class: "ds-btn ds-btn--secondary ds-btn--sm" %>
+      <%= link_to "← Actions PiShock", beta_actions_pishock_path, class: "ds-btn ds-btn--secondary ds-btn--sm" %>
     </p>
 
     <section class="ds-beta-section">

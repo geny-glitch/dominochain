@@ -1,4 +1,4 @@
-<% content_for :title, "Tâche - #{@task.name}" %>
+<% content_for :title, t("tasks.show_title", name: @task.name) %>
 
 <div class="ds-page">
   <div class="ds-container">
@@ -10,13 +10,13 @@
     <% end %>
 
     <header class="ds-header" style="flex-direction: column; align-items: flex-start;">
-      <%= link_to "← Retour", wallpaper_upload_path(@nickname, device_id: @device_id), class: "ds-back-link" %>
+      <%= link_to t("tasks.back"), wallpaper_upload_path(@nickname, device_id: @device_id), class: "ds-back-link" %>
       <div class="ds-task-header-row">
         <div>
           <h1 class="ds-title"><%= @task.name %></h1>
-          <p class="ds-subtitle">Deadline: <%= @task.deadline_at.strftime("%d/%m/%Y %H:%M") %></p>
+          <p class="ds-subtitle"><%= t("tasks.deadline_label", datetime: l(@task.deadline_at, format: :short)) %></p>
         </div>
-        <%= button_to wallpaper_task_destroy_path(@nickname, @task, device_id: @device_id), method: :delete, form: { data: { turbo_confirm: "Supprimer cette tâche ?" }, class: "ds-btn-icon-form" }, class: "ds-btn-icon ds-btn-icon--delete", title: "Supprimer" do %>
+        <%= button_to wallpaper_task_destroy_path(@nickname, @task, device_id: @device_id), method: :delete, form: { data: { turbo_confirm: t("tasks.destroy_confirm") }, class: "ds-btn-icon-form" }, class: "ds-btn-icon ds-btn-icon--delete", title: t("tasks.delete_title") do %>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
         <% end %>
       </div>
@@ -25,26 +25,26 @@
     <section class="ds-task-detail">
       <% if @task.description.present? %>
         <div class="ds-form-group">
-          <span class="ds-form-label">Description</span>
+          <span class="ds-form-label"><%= t("tasks.description") %></span>
           <p class="ds-task-body"><%= simple_format(@task.description) %></p>
         </div>
       <% end %>
 
       <% if @task.expected_proof.present? %>
         <div class="ds-form-group">
-          <span class="ds-form-label">Preuve attendue</span>
+          <span class="ds-form-label"><%= t("tasks.expected_proof") %></span>
           <p class="ds-task-body"><%= simple_format(@task.expected_proof) %></p>
         </div>
       <% end %>
 
       <div class="ds-form-group">
-        <span class="ds-form-label">Statut</span>
+        <span class="ds-form-label"><%= t("tasks.status") %></span>
         <span class="ds-task-status ds-task-status--<%= @task.effective_status %>"><%= @task.effective_status %></span>
       </div>
 
       <% if @task.proof_of_completion.present? %>
         <div class="ds-proof-section">
-          <h2 class="ds-section-title">Preuve soumise</h2>
+          <h2 class="ds-section-title"><%= t("tasks.proof_heading") %></h2>
           <% proof = @task.proof_of_completion %>
           <% if proof.text.present? %>
             <p class="ds-task-body"><%= simple_format(proof.text) %></p>
@@ -52,31 +52,33 @@
           <% if proof.media.attached? %>
             <div class="ds-proof-media">
               <% if proof.media.content_type.start_with?("image/") %>
-                <%= image_tag proof.media, alt: "Preuve", class: "ds-proof-img" %>
+                <%= image_tag proof.media, alt: t("tasks.proof_alt"), class: "ds-proof-img" %>
               <% elsif proof.media.content_type.start_with?("video/") %>
                 <video controls class="ds-proof-video">
                   <source src="<%= url_for(proof.media) %>" type="<%= proof.media.content_type %>">
                 </video>
               <% else %>
-                <%= link_to "Télécharger", url_for(proof.media), class: "ds-btn ds-btn--secondary ds-btn--sm" %>
+                <%= link_to t("tasks.download"), url_for(proof.media), class: "ds-btn ds-btn--secondary ds-btn--sm" %>
               <% end %>
             </div>
           <% end %>
-          <p class="ds-proof-meta">Soumis le <%= proof.created_at.strftime("%d/%m %H:%M") %></p>
+          <p class="ds-proof-meta"><%= t("tasks.submitted_at", datetime: l(proof.created_at, format: :short)) %></p>
 
           <% if proof.pending? %>
             <%= form_with url: wallpaper_task_review_proof_path(@nickname, @task, device_id: @device_id), method: :post, local: true, class: "ds-proof-review" do |f| %>
-              <label for="proof_review_comment" class="ds-form-label">Commentaire (optionnel)</label>
-              <%= f.text_area :review_comment, id: "proof_review_comment", class: "ds-input ds-textarea ds-proof-review__comment", rows: 2, placeholder: "Ex: Bien vu, ou précise pourquoi tu refuses..." %>
+              <label for="proof_review_comment" class="ds-form-label"><%= t("tasks.comment_label") %></label>
+              <%= f.text_area :review_comment, id: "proof_review_comment", class: "ds-input ds-textarea ds-proof-review__comment", rows: 2, placeholder: t("tasks.comment_placeholder") %>
               <div class="ds-proof-actions">
-                <%= f.submit "Accepter", name: "accept", class: "ds-btn ds-btn--primary" %>
-                <%= f.submit "Refuser", name: "accept", data: { turbo_confirm: "Refuser cette preuve ?" }, class: "ds-btn ds-btn--secondary" %>
+                <%= f.submit t("tasks.accept"), name: "decision", value: "accept", class: "ds-btn ds-btn--primary" %>
+                <%= f.submit t("tasks.reject"), name: "decision", value: "reject", data: { turbo_confirm: t("tasks.reject_confirm") }, class: "ds-btn ds-btn--secondary" %>
               </div>
             <% end %>
           <% else %>
             <p class="ds-proof-result">
-              <%= proof.accepted? ? "✓ Preuve acceptée" : "Preuve refusée" %>
-              le <%= proof.reviewed_at&.strftime("%d/%m %H:%M") %>
+              <%= proof.accepted? ? t("tasks.result_accepted") : t("tasks.result_rejected") %>
+              <% if proof.reviewed_at.present? %>
+                <%= t("tasks.reviewed_at", datetime: l(proof.reviewed_at, format: :short)) %>
+              <% end %>
               <% if proof.review_comment.present? %>
                 — <%= proof.review_comment %>
               <% end %>
@@ -84,17 +86,17 @@
           <% end %>
         </div>
       <% else %>
-        <p class="ds-task-body ds-text-muted">Aucune preuve soumise pour le moment.</p>
+        <p class="ds-task-body ds-text-muted"><%= t("tasks.no_proof") %></p>
       <% end %>
 
       <% if @task.punishments.any? %>
         <div class="ds-proof-section">
-          <h2 class="ds-section-title">Punitions envoyées</h2>
+          <h2 class="ds-section-title"><%= t("tasks.punishments_heading") %></h2>
           <ul class="ds-punishment-list">
             <% @task.punishments.order(created_at: :desc).each do |punishment| %>
               <li class="ds-punishment-item">
-                <p class="ds-punishment-message"><%= punishment.message.presence || "Tâche non terminée à temps..." %></p>
-                <p class="ds-proof-meta">Le <%= punishment.created_at.strftime("%d/%m %H:%M") %></p>
+                <p class="ds-punishment-message"><%= punishment.message.presence || t("tasks.punishment_default") %></p>
+                <p class="ds-proof-meta"><%= t("tasks.punishment_sent_at", datetime: l(punishment.created_at, format: :short)) %></p>
               </li>
             <% end %>
           </ul>
@@ -103,12 +105,12 @@
 
       <% if @task.expired? && !@task.proof_pending? %>
         <div class="ds-proof-section ds-punishment-section">
-          <h2 class="ds-section-title">Punir l'impertinent</h2>
+          <h2 class="ds-section-title"><%= t("tasks.punish_section_title") %></h2>
           <%= form_with url: wallpaper_task_punish_path(@nickname, @task, device_id: @device_id), method: :post, local: true, class: "ds-form ds-proof-review" do |f| %>
-            <label for="punishment_message" class="ds-form-label">Message (optionnel)</label>
-            <%= f.text_area :punishment_message, id: "punishment_message", class: "ds-input ds-textarea ds-proof-review__comment", rows: 2, placeholder: "Ex: Tu aurais dû finir à temps..." %>
+            <label for="punishment_message" class="ds-form-label"><%= t("tasks.punishment_message_label") %></label>
+            <%= f.text_area :punishment_message, id: "punishment_message", class: "ds-input ds-textarea ds-proof-review__comment", rows: 2, placeholder: t("tasks.punishment_placeholder") %>
             <div class="ds-proof-actions">
-              <%= f.submit "Envoyer la punition", class: "ds-btn ds-btn--primary" %>
+              <%= f.submit t("tasks.punishment_submit"), class: "ds-btn ds-btn--primary" %>
             </div>
           <% end %>
         </div>

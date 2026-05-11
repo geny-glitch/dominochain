@@ -29,6 +29,15 @@ val otaVersionCode = System.getenv("OTA_VERSION_CODE")?.let { value ->
     }
 }
 require(otaVersionCode > 0) { "OTA_VERSION_CODE must be a positive integer" }
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localProperties.load(localPropertiesFile.inputStream())
+}
+val apiBaseUrlProd = localProperties.getProperty("API_BASE_URL_PROD", "https://bg-backend.fly.dev")
+val apiBaseUrlStaging = localProperties.getProperty("API_BASE_URL_STAGING", "https://bg-backend-staging.fly.dev")
+val sentryDsnProd = localProperties.getProperty("SENTRY_DSN_PROD", localProperties.getProperty("SENTRY_DSN", ""))
+val sentryDsnStaging = localProperties.getProperty("SENTRY_DSN_STAGING", sentryDsnProd)
 
 android {
     namespace = "com.bg"
@@ -40,16 +49,26 @@ android {
         targetSdk = 34
         versionCode = otaVersionCode
         versionName = "1.0"
+    }
 
-        val localProperties = Properties()
-        val localPropertiesFile = rootProject.file("local.properties")
-        if (localPropertiesFile.exists()) {
-            localProperties.load(localPropertiesFile.inputStream())
+    flavorDimensions += "environment"
+    productFlavors {
+        create("prod") {
+            dimension = "environment"
+            buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrlProd\"")
+            buildConfigField("String", "NOTIFICATION_TITLE", "\"Domino Chain\"")
+            buildConfigField("String", "SENTRY_DSN", "\"$sentryDsnProd\"")
+            resValue("string", "app_name", "Domino Chain")
         }
-        val apiBaseUrl = localProperties.getProperty("API_BASE_URL", "https://bg-backend.fly.dev")
-        buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
-        val sentryDsn = localProperties.getProperty("SENTRY_DSN", "")
-        buildConfigField("String", "SENTRY_DSN", "\"$sentryDsn\"")
+        create("staging") {
+            dimension = "environment"
+            applicationIdSuffix = ".staging"
+            versionNameSuffix = "-staging"
+            buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrlStaging\"")
+            buildConfigField("String", "NOTIFICATION_TITLE", "\"Domino Chain dev\"")
+            buildConfigField("String", "SENTRY_DSN", "\"$sentryDsnStaging\"")
+            resValue("string", "app_name", "Domino Chain Staging")
+        }
     }
 
     signingConfigs {

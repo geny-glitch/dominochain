@@ -22,29 +22,31 @@
   }
 }
 
-// Buttons
+// Buttons (Material-inspired: rounded corners + elevation on primary)
 .ds-btn {
   padding: $ds-space-sm $ds-space-lg;
   border: none;
-  border-radius: $ds-radius-sm;
+  border-radius: var(--md-sys-shape-corner-medium, #{$ds-radius-md});
   font-size: $ds-body-size;
   cursor: pointer;
   font-family: inherit;
-  transition: background $ds-transition, color $ds-transition;
+  transition: background $ds-transition, color $ds-transition, box-shadow $ds-transition;
 
   &--primary {
-    background: $ds-amber;
-    color: $ds-bg;
+    background: var(--md-sys-color-primary, #{$ds-amber});
+    color: var(--md-sys-color-on-primary, #{$ds-bg});
+    box-shadow: var(--md-sys-elevation-1);
 
     &:hover {
       background: $ds-amber-dim;
+      box-shadow: var(--md-sys-elevation-2);
     }
   }
 
   &--secondary {
-    background: $ds-surface-elevated;
-    color: $ds-text-muted;
-    border: 1px solid $ds-border;
+    background: var(--md-sys-color-surface-container-high, #{$ds-surface-elevated});
+    color: var(--md-sys-color-on-surface-variant, #{$ds-text-muted});
+    border: 1px solid var(--md-sys-color-outline, #{$ds-border});
 
     &:hover {
       background: $ds-border;

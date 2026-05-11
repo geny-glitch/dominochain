@@ -1,75 +1,87 @@
-<% content_for :title, "Backdoor" %>
+<% content_for :title, t("showcase.backdoor.title") %>
 
 <div class="backdoor-page ds-page" data-nickname="<%= @beta.nickname %>">
   <div class="ds-container backdoor-container">
     <header class="ds-header">
-      <%= image_tag "otb-logo.png", alt: "OTB", class: "ds-header-logo", width: 48, height: 48 %>
+      <%= image_tag "domino-chain-logo.png", alt: t("layouts.application.logo_alt"), class: "ds-header-logo", width: 48, height: 48 %>
       <div>
-        <h1 class="ds-title">Backdoor</h1>
-        <p class="ds-subtitle">Ajoute du temps sur le cadenas Chaster</p>
+        <h1 class="ds-title"><%= t("showcase.backdoor.title") %></h1>
+        <p class="ds-subtitle"><%= t("showcase.backdoor.subtitle") %></p>
       </div>
     </header>
 
     <p class="backdoor-nav">
-      <%= link_to "← Retour", showcase_path(@beta.nickname), class: "ds-btn ds-btn--ghost ds-btn--sm" %>
+      <%= link_to t("showcase.common.back"), showcase_path(@beta.nickname), class: "ds-btn ds-btn--ghost ds-btn--sm" %>
     </p>
 
     <section class="backdoor-timer-card">
-      <h2 class="backdoor-section-label">Temps restant</h2>
+      <h2 class="backdoor-section-label"><%= t("showcase.backdoor.time_remaining") %></h2>
       <p id="backdoor-lock-title" class="backdoor-lock-title">—</p>
       <p id="backdoor-countdown" class="backdoor-countdown" data-end-date="" data-frozen="false" aria-live="polite">—</p>
       <p id="backdoor-lock-hint" class="ds-text-muted backdoor-hint" hidden></p>
     </section>
 
     <section class="backdoor-form-card" aria-labelledby="backdoor-form-title">
-      <h2 id="backdoor-form-title" class="backdoor-form-title">Add more time</h2>
-      <p class="backdoor-form-intro">Tu peux ajouter du temps sur le cadenas ici.</p>
+      <h2 id="backdoor-form-title" class="backdoor-form-title"><%= t("showcase.backdoor.form_title") %></h2>
+      <p class="backdoor-form-intro"><%= t("showcase.backdoor.form_intro") %></p>
 
-      <div class="backdoor-dhm" role="group" aria-label="Durée à ajouter">
+      <div class="backdoor-dhm" role="group" aria-label="<%= t("showcase.backdoor.duration_group") %>">
         <div class="backdoor-dhm-col">
-          <button type="button" class="backdoor-dhm-btn" data-field="d" data-delta="1" aria-label="Augmenter les jours">+</button>
+          <button type="button" class="backdoor-dhm-btn" data-field="d" data-delta="1" aria-label="<%= t("showcase.backdoor.aria_inc_days") %>">+</button>
           <div class="backdoor-dhm-digits" id="backdoor-d">0</div>
-          <button type="button" class="backdoor-dhm-btn" data-field="d" data-delta="-1" aria-label="Diminuer les jours">−</button>
-          <span class="backdoor-dhm-label">day</span>
+          <button type="button" class="backdoor-dhm-btn" data-field="d" data-delta="-1" aria-label="<%= t("showcase.backdoor.aria_dec_days") %>">−</button>
+          <span class="backdoor-dhm-label"><%= t("showcase.backdoor.label_day") %></span>
         </div>
         <div class="backdoor-dhm-col">
-          <button type="button" class="backdoor-dhm-btn" data-field="h" data-delta="1" aria-label="Augmenter les heures">+</button>
+          <button type="button" class="backdoor-dhm-btn" data-field="h" data-delta="1" aria-label="<%= t("showcase.backdoor.aria_inc_hours") %>">+</button>
           <div class="backdoor-dhm-digits" id="backdoor-h">00</div>
-          <button type="button" class="backdoor-dhm-btn" data-field="h" data-delta="-1" aria-label="Diminuer les heures">−</button>
-          <span class="backdoor-dhm-label">hour</span>
+          <button type="button" class="backdoor-dhm-btn" data-field="h" data-delta="-1" aria-label="<%= t("showcase.backdoor.aria_dec_hours") %>">−</button>
+          <span class="backdoor-dhm-label"><%= t("showcase.backdoor.label_hour") %></span>
         </div>
         <div class="backdoor-dhm-col">
-          <button type="button" class="backdoor-dhm-btn" data-field="m" data-delta="1" aria-label="Augmenter les minutes">+</button>
+          <button type="button" class="backdoor-dhm-btn" data-field="m" data-delta="1" aria-label="<%= t("showcase.backdoor.aria_inc_minutes") %>">+</button>
           <div class="backdoor-dhm-digits" id="backdoor-m">00</div>
-          <button type="button" class="backdoor-dhm-btn" data-field="m" data-delta="-1" aria-label="Diminuer les minutes">−</button>
-          <span class="backdoor-dhm-label">minute</span>
+          <button type="button" class="backdoor-dhm-btn" data-field="m" data-delta="-1" aria-label="<%= t("showcase.backdoor.aria_dec_minutes") %>">−</button>
+          <span class="backdoor-dhm-label"><%= t("showcase.backdoor.label_minute") %></span>
         </div>
       </div>
-      <p class="backdoor-dhm-err" id="backdoor-dhm-err" hidden>Choisis une durée d’au moins 1 minute.</p>
+      <p class="backdoor-dhm-err" id="backdoor-dhm-err" hidden><%= t("showcase.backdoor.duration_error") %></p>
 
       <div class="backdoor-field">
-        <label class="backdoor-label" for="backdoor-name">Nom</label>
-        <input type="text" id="backdoor-name" class="ds-input" maxlength="80" autocomplete="nickname" required placeholder="Ton pseudo" />
+        <label class="backdoor-label" for="backdoor-name"><%= t("showcase.backdoor.name_label") %></label>
+        <input type="text" id="backdoor-name" class="ds-input" maxlength="80" autocomplete="nickname" required placeholder="<%= t("showcase.backdoor.name_placeholder") %>" />
       </div>
       <div class="backdoor-field">
-        <label class="backdoor-label" for="backdoor-message">Message</label>
-        <textarea id="backdoor-message" class="ds-input backdoor-textarea" maxlength="500" required rows="3" placeholder="Un mot pour le beta…"></textarea>
+        <label class="backdoor-label" for="backdoor-message"><%= t("showcase.backdoor.message_label") %></label>
+        <textarea id="backdoor-message" class="ds-input backdoor-textarea" maxlength="500" required rows="3" placeholder="<%= t("showcase.backdoor.message_placeholder") %>"></textarea>
       </div>
 
       <p class="backdoor-form-err" id="backdoor-form-err" hidden></p>
 
       <div class="backdoor-form-actions">
-        <button type="button" class="ds-btn ds-btn--ghost" id="backdoor-reset">Annuler</button>
-        <button type="button" class="ds-btn ds-btn--primary" id="backdoor-submit">Add more time</button>
+        <button type="button" class="ds-btn ds-btn--ghost" id="backdoor-reset"><%= t("showcase.backdoor.cancel") %></button>
+        <button type="button" class="ds-btn ds-btn--primary" id="backdoor-submit"><%= t("showcase.backdoor.submit") %></button>
       </div>
     </section>
   </div>
 </div>
 
+<%= json_script(
+  {
+    js_frozen: t("showcase.backdoor.js_frozen"),
+    js_no_active_lock: t("showcase.backdoor.js_no_active_lock"),
+    js_connect_hint: t("showcase.backdoor.js_connect_hint"),
+    js_active_lock_fallback: t("showcase.backdoor.js_active_lock_fallback")
+  },
+  "backdoor-i18n-json"
+) %>
+
 <script>
 (function() {
   const page = document.querySelector(".backdoor-page");
   const nickname = page.dataset.nickname;
+  const i18nEl = document.getElementById("backdoor-i18n-json");
+  const i18n = i18nEl ? JSON.parse(i18nEl.textContent) : {};
   const urls = {
     lock: `/showcase/${nickname}/backdoor/lock`,
     add: `/showcase/${nickname}/backdoor/add_time`
@@ -115,9 +127,9 @@
     const hours = Math.floor((sec % 86400) / 3600);
     const mins = Math.floor((sec % 3600) / 60);
     const secs = sec % 60;
-    if (days > 0) return days + "j " + hours + "h " + mins + "min " + secs + "s";
-    if (hours > 0) return hours + "h " + mins + "min " + secs + "s";
-    if (mins > 0) return mins + "min " + secs + "s";
+    if (days > 0) return days + "d " + hours + "h " + mins + "m " + secs + "s";
+    if (hours > 0) return hours + "h " + mins + "m " + secs + "s";
+    if (mins > 0) return mins + "m " + secs + "s";
     return secs + "s";
   }
 
@@ -168,7 +180,7 @@
 
   function tick() {
     if (isFrozen) {
-      countdownEl.textContent = "Gelé";
+      countdownEl.textContent = i18n.js_frozen || "Frozen";
       return;
     }
     if (endMs == null) { countdownEl.textContent = "—"; return; }
@@ -179,19 +191,19 @@
   function applyLock(lock) {
     stopTick();
     if (!lock) {
-      titleEl.textContent = "Aucun cadenas actif";
+      titleEl.textContent = i18n.js_no_active_lock || "";
       endMs = null;
       isFrozen = false;
       countdownEl.textContent = "—";
-      hintEl.textContent = "Connecte Chaster côté beta pour afficher le compte à rebours.";
+      hintEl.textContent = i18n.js_connect_hint || "";
       hintEl.hidden = false;
       return;
     }
-    lockTitle = lock.title || "Lock en cours";
+    lockTitle = lock.title || i18n.js_active_lock_fallback || "";
     titleEl.textContent = lockTitle;
     isFrozen = !!lock.is_frozen;
     if (isFrozen) {
-      countdownEl.textContent = "Gelé";
+      countdownEl.textContent = i18n.js_frozen || "Frozen";
       endMs = null;
     } else if (lock.end_date) {
       endMs = new Date(lock.end_date).getTime();

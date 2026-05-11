@@ -1,0 +1,19 @@
+---
+description: Exiger des specs pour toute nouvelle feature
+alwaysApply: true
+---
+
+# Specs obligatoires pour chaque nouvelle feature
+
+Quand tu ajoutes une nouvelle feature (nouveau comportement, nouveau flow, nouveau endpoint, nouvelle UI avec logique), ajoute aussi des specs dans la meme PR.
+
+Regles :
+
+- Ne pas livrer une nouvelle feature sans spec associee.
+- Preferer le niveau de test qui valide le comportement utilisateur (request/system), puis completer avec model/service si besoin.
+- Si la feature modifie une vue critique ou un flow d'auth, verifier le rendu avec `render_views` quand c'est pertinent.
+- Couvrir au minimum : cas nominal + un cas d'echec/edge case.
+
+Exception :
+
+- Si techniquement impossible dans l'instant, expliquer clairement pourquoi et proposer la spec a ajouter juste apres.

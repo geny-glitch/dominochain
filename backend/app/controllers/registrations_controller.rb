@@ -4,6 +4,19 @@ class RegistrationsController < Devise::RegistrationsController
   before_action :configure_sign_up_params, only: [:create]
   layout :layout_for_registration
 
+  def destroy
+    expected_label = I18n.t("devise.registrations.delete_confirmation_label").to_s
+    submitted_label = params.dig(:account_deletion, :confirmation_label).to_s.strip
+
+    if submitted_label != expected_label
+      flash[:alert] = I18n.t("devise.registrations.delete_confirmation_mismatch")
+      redirect_to edit_user_registration_path
+      return
+    end
+
+    super
+  end
+
   protected
 
   def configure_sign_up_params

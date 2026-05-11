@@ -9,7 +9,7 @@ class User < ApplicationRecord
 
   enum role: { beta: 0, boss: 1, admin: 2 }
 
-  has_many :devices, dependent: :nullify
+  has_many :devices, dependent: :destroy
   has_many :tasks, dependent: :destroy
   has_one :control, foreign_key: :beta_id, dependent: :destroy
   has_many :controls, foreign_key: :boss_id, dependent: :destroy
@@ -18,6 +18,7 @@ class User < ApplicationRecord
   has_many :chaster_locks, dependent: :destroy
   has_many :chaster_time_events, dependent: :destroy
   has_many :game_sessions, dependent: :destroy
+  has_many :showcase_add_time_events, dependent: :destroy
   has_many :showcase_time_additions, dependent: :destroy
   has_many :cigarette_entries, dependent: :destroy
   has_many :strava_goals, dependent: :destroy

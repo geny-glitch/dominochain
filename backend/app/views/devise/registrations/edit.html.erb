@@ -1,51 +1,59 @@
-<h2><%= t("devise.registrations.edit_title") %></h2>
+<% content_for :title, t("devise.registrations.edit_title") %>
 
-<%= form_for(resource, as: resource_name, url: registration_path(resource_name), html: { method: :put }) do |f| %>
-  <%= render "devise/shared/error_messages", resource: resource %>
+<header class="ds-beta-page-head">
+  <h1 class="ds-beta-page-title"><%= t("devise.registrations.edit_title") %></h1>
+</header>
 
-  <div class="field">
-    <p><%= f.label :email, t("devise.registrations.email") %></p>
-    <p><%= f.email_field :email, autofocus: true, autocomplete: "email" %></p>
-  </div>
+<section class="ds-beta-section ds-beta-section--first">
+  <div class="ds-beta-control-card">
+    <%= form_for(resource, as: resource_name, url: registration_path(resource_name), html: { method: :put, class: "ds-form" }) do |f| %>
+      <%= render "devise/shared/error_messages", resource: resource %>
 
-  <% if devise_mapping.confirmable? && resource.pending_reconfirmation? %>
-    <div><%= t("devise.registrations.waiting_reconfirm", email: resource.unconfirmed_email) %></div>
-  <% end %>
+      <div class="ds-form-group">
+        <%= f.label :email, t("devise.registrations.email"), class: "ds-form-label" %>
+        <%= f.email_field :email, autofocus: true, autocomplete: "email", class: "ds-input" %>
+      </div>
 
-  <div class="field">
-    <p>
-      <%= f.label :password, t("devise.registrations.password") %>
-      <i><%= t("devise.registrations.password_leave_blank") %></i>
-    </p>
-    <p><%= f.password_field :password, autocomplete: "new-password" %></p>
-    <% if @minimum_password_length %>
-      <p><em><%= t("devise.registrations.password_hint", count: @minimum_password_length) %></em></p>
+      <% if devise_mapping.confirmable? && resource.pending_reconfirmation? %>
+        <div class="ds-flash ds-flash--success" data-turbo-temporary>
+          <%= t("devise.registrations.waiting_reconfirm", email: resource.unconfirmed_email) %>
+        </div>
+      <% end %>
+
+      <div class="ds-form-group">
+        <%= f.label :password, t("devise.registrations.password"), class: "ds-form-label" %>
+        <span class="ds-form-hint"><%= t("devise.registrations.password_leave_blank") %></span>
+        <% if @minimum_password_length %>
+          <span class="ds-form-hint">(<%= t("devise.registrations.password_hint", count: @minimum_password_length) %>)</span>
+        <% end %>
+        <%= f.password_field :password, autocomplete: "new-password", class: "ds-input" %>
+      </div>
+
+      <div class="ds-form-group">
+        <%= f.label :password_confirmation, t("devise.registrations.password_confirmation"), class: "ds-form-label" %>
+        <%= f.password_field :password_confirmation, autocomplete: "new-password", class: "ds-input" %>
+      </div>
+
+      <div class="ds-form-group">
+        <%= f.label :current_password, t("devise.registrations.current_password"), class: "ds-form-label" %>
+        <span class="ds-form-hint"><%= t("devise.registrations.current_password_hint") %></span>
+        <%= f.password_field :current_password, autocomplete: "current-password", class: "ds-input" %>
+      </div>
+
+      <div class="ds-form-actions">
+        <%= f.submit t("devise.registrations.submit_update"), class: "ds-btn ds-btn--primary" %>
+      </div>
     <% end %>
   </div>
+</section>
 
-  <div class="field">
-    <p><%= f.label :password_confirmation, t("devise.registrations.password_confirmation") %></p>
-    <p><%= f.password_field :password_confirmation, autocomplete: "new-password" %></p>
+<section class="ds-beta-section">
+  <h2 class="ds-section-title"><%= t("devise.registrations.cancel_section_title") %></h2>
+  <div class="ds-beta-control-card">
+    <p class="ds-beta-control-hint"><%= t("devise.registrations.unhappy") %></p>
+    <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem;">
+      <%= button_to t("devise.registrations.cancel_account"), registration_path(resource_name), method: :delete, form: { data: { turbo_confirm: t("devise.registrations.cancel_confirm") } }, class: "ds-btn ds-btn--secondary" %>
+      <%= link_to t("devise.registrations.back"), :back, class: "ds-btn ds-btn--ghost" %>
+    </div>
   </div>
-
-  <div class="field">
-    <p>
-      <%= f.label :current_password, t("devise.registrations.current_password") %>
-      <i>(<%= t("devise.registrations.current_password_hint") %>)</i>
-    </p>
-    <p><%= f.password_field :current_password, autocomplete: "current-password" %></p>
-  </div>
-
-  <div class="actions">
-    <%= f.submit t("devise.registrations.submit_update") %>
-  </div>
-<% end %>
-
-<h3><%= t("devise.registrations.cancel_section_title") %></h3>
-
-<div>
-  <%= t("devise.registrations.unhappy") %>
-  <%= button_to t("devise.registrations.cancel_account"), registration_path(resource_name), data: { confirm: t("devise.registrations.cancel_confirm"), turbo_confirm: t("devise.registrations.cancel_confirm") }, method: :delete %>
-</div>
-
-<%= link_to t("devise.registrations.back"), :back %>
+</section>

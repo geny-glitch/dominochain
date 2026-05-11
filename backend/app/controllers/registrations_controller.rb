@@ -2,6 +2,7 @@
 
 class RegistrationsController < Devise::RegistrationsController
   before_action :configure_sign_up_params, only: [:create]
+  layout :layout_for_registration
 
   protected
 
@@ -11,5 +12,11 @@ class RegistrationsController < Devise::RegistrationsController
 
   def build_resource(hash = {})
     super(hash.merge(role: :beta))
+  end
+
+  def layout_for_registration
+    return "beta_dashboard" if user_signed_in? && current_user&.beta? && action_name == "edit"
+
+    "application"
   end
 end

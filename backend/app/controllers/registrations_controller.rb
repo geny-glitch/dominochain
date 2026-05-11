@@ -15,7 +15,7 @@ class RegistrationsController < Devise::RegistrationsController
   end
 
   def layout_for_registration
-    return "beta_dashboard" if user_signed_in? && current_user&.beta? && action_name == "edit"
+    return "beta_dashboard" if user_signed_in? && current_user&.beta?
 
     "application"
   end

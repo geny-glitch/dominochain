@@ -3,7 +3,13 @@ Rails.application.routes.draw do
 
   devise_for :users, path: "", path_names: {
     sign_in: "login", sign_out: "logout", sign_up: "signup"
-  }, controllers: { registrations: "registrations" }
+  }, controllers: {
+    registrations: "registrations",
+    sessions: "sessions",
+    passwords: "passwords",
+    confirmations: "confirmations",
+    unlocks: "unlocks"
+  }
 
   devise_scope :user do
     get "signup/boss", to: "boss_registrations#new", as: :new_boss_registration

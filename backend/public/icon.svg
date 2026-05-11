@@ -1,19 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Domino Chain">
   <defs>
     <linearGradient id="dcGrad" x1="96" y1="72" x2="416" y2="440" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#22d3ee"/>
-      <stop offset="55%" stop-color="#6366f1"/>
-      <stop offset="100%" stop-color="#a855f7"/>
+      <stop offset="0%" stop-color="#22d3ee"></stop>
+      <stop offset="55%" stop-color="#6366f1"></stop>
+      <stop offset="100%" stop-color="#a855f7"></stop>
     </linearGradient>
   </defs>
-  <rect width="512" height="512" rx="112" fill="#101018"/>
-  <!-- Thick “D” silhouette (reads at 16–32px) -->
-  <path fill="url(#dcGrad)" d="M118 96h68c102 0 184 82 184 184s-82 184-184 184h-68V96zm68 56v256h12c72 0 128-56 128-128s-56-128-128-128h-12z"/>
+  <rect width="512" height="512" rx="112" fill="#101018"></rect>
+  
+  <path fill="url(#dcGrad)" d="M118 96h68c102 0 184 82 184 184s-82 184-184 184h-68V96zm68 56v256h12c72 0 128-56 128-128s-56-128-128-128h-12z"></path>
   <g stroke="rgba(255,255,255,0.22)" stroke-width="8" stroke-linecap="round">
-    <path d="M210 168v176"/>
-    <path d="M236 148l44 26"/>
-    <path d="M272 224l36 40"/>
-    <path d="M272 288l36-40"/>
-    <path d="M236 364l44-26"/>
+    <path d="M210 168v176"></path>
+    <path d="M236 148l44 26"></path>
+    <path d="M272 224l36 40"></path>
+    <path d="M272 288l36-40"></path>
+    <path d="M236 364l44-26"></path>
   </g>
 </svg>

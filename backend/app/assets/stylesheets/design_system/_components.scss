@@ -10,15 +10,15 @@
   font-size: $ds-body-size;
 
   &--success {
-    background: rgba(74, 157, 122, 0.15);
+    background: rgba($ds-success, 0.15);
     color: $ds-success;
-    border: 1px solid rgba(74, 157, 122, 0.3);
+    border: 1px solid rgba($ds-success, 0.3);
   }
 
   &--error {
-    background: rgba(199, 92, 92, 0.15);
+    background: rgba($ds-error, 0.15);
     color: $ds-error;
-    border: 1px solid rgba(199, 92, 92, 0.3);
+    border: 1px solid rgba($ds-error, 0.3);
   }
 }
 
@@ -45,12 +45,12 @@
 
   &--secondary {
     background: var(--md-sys-color-surface-container-high, #{$ds-surface-elevated});
-    color: var(--md-sys-color-on-surface-variant, #{$ds-text-muted});
-    border: 1px solid var(--md-sys-color-outline, #{$ds-border});
+    color: $ds-violet;
+    border: 1px solid rgba($ds-violet, 0.45);
 
     &:hover {
-      background: $ds-border;
-      color: $ds-text;
+      background: rgba($ds-violet, 0.1);
+      border-color: $ds-violet;
     }
   }
 
@@ -80,4 +80,131 @@
   text-transform: uppercase;
   color: $ds-text-muted;
   margin: 0 0 $ds-space-md;
+}
+
+.ds-form-group {
+  margin-bottom: $ds-space-md;
+}
+
+.ds-form-label {
+  display: block;
+  margin-bottom: $ds-space-xs;
+  color: $ds-text-muted;
+  font-size: $ds-small-size;
+}
+
+.ds-form-hint {
+  margin-top: $ds-space-xs;
+  color: $ds-text-dim;
+  font-size: $ds-small-size;
+}
+
+.ds-input,
+.ds-textarea {
+  width: 100%;
+  max-width: 100%;
+  background: $ds-bg;
+  border: 1px solid $ds-border;
+  border-radius: $ds-radius-lg;
+  color: $ds-text;
+  font-family: inherit;
+  font-size: $ds-body-size;
+  padding: $ds-space-sm $ds-space-md;
+
+  &:focus {
+    outline: 2px solid rgba($ds-blue, 0.6);
+    outline-offset: 2px;
+    border-color: $ds-blue;
+  }
+}
+
+.ds-textarea {
+  min-height: 6rem;
+  resize: vertical;
+}
+
+.ds-badge,
+.ds-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: $ds-radius-pill;
+  padding: 0.12rem 0.6rem;
+  font-family: $ds-font-mono;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  line-height: 1;
+  border: 1px solid transparent;
+}
+
+.ds-status--on,
+.ds-status--live,
+.ds-badge--success {
+  background: rgba($ds-blue, 0.14);
+  color: $ds-blue;
+  border-color: rgba($ds-blue, 0.32);
+}
+
+.ds-status--pending,
+.ds-badge--pending {
+  background: rgba($ds-magenta, 0.14);
+  color: #f472b6;
+  border-color: rgba($ds-magenta, 0.32);
+}
+
+.ds-status--off,
+.ds-badge--neutral {
+  background: rgba($ds-border, 0.6);
+  color: $ds-text-muted;
+  border-color: $ds-border;
+}
+
+.ds-status--error,
+.ds-badge--error {
+  background: rgba($ds-error, 0.14);
+  color: #f87171;
+  border-color: rgba($ds-error, 0.32);
+}
+
+.ds-status--locked {
+  background: rgba($ds-violet, 0.14);
+  color: #c084fc;
+  border-color: rgba($ds-violet, 0.32);
+}
+
+.ds-toggle {
+  position: relative;
+  width: 2.25rem;
+  height: 1.35rem;
+  border-radius: $ds-radius-pill;
+  background: rgba($ds-border, 0.95);
+  border: 0;
+  display: inline-block;
+  transition: background $ds-transition;
+
+  &::after {
+    content: "";
+    position: absolute;
+    top: 0.14rem;
+    left: 0.14rem;
+    width: 1.05rem;
+    height: 1.05rem;
+    border-radius: $ds-radius-pill;
+    background: $ds-surface;
+    box-shadow: 0 0 0 1px rgba($ds-border, 0.8);
+    transition: transform $ds-transition;
+  }
+
+  &--on {
+    background: $ds-blue;
+    box-shadow: 0 0 12px rgba($ds-blue, 0.3);
+  }
+
+  &--on::after {
+    transform: translateX(0.9rem);
+    background: $ds-text;
+    box-shadow: none;
+  }
 }

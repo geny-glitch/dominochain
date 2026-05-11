@@ -37,9 +37,23 @@ Toujours utiliser les classes du design system pour les pages web. Ne pas écrir
 - **Formulaires** : `ds-form`, `ds-form-group`, `ds-form-label`, `ds-input`, `ds-textarea`
 - **Flash** : `ds-flash ds-flash--success` | `ds-flash--error`
 - **Sections** : `ds-section-title` pour les titres de section
-- **Liens** : utiliser `ds-btn` pour les liens d’action
+- **Badges / statuts** : `ds-badge`, `ds-status` + variantes (`--on`, `--off`, `--pending`, `--error`, `--locked`)
+- **Toggles** : utiliser `ds-toggle` (ou composants DS qui l’embarquent, ex. `ds-beta-catalog-toggle-*`)
+- **Liens d’action** : utiliser `ds-btn` plutôt que des styles custom
 
-## Référence
+## Couleurs / tokens
+
+- Palette courante : `magenta` (CTA primary), `blue` (accent, liens, focus), `violet` (secondary), `error`.
+- Les alias legacy `amber`/`teal` restent autorisés pour compatibilité, mais ne pas introduire de nouveaux noms hors tokens DS.
+- Toujours consommer les variables/tokens DS, jamais de hex en dur dans les vues/SCSS de feature.
+
+## Logos / favicons web
+
+- Le layout doit référencer les assets de `backend/public/favicons/` + `backend/public/icon.svg`.
+- Ne pas réintroduire d’icône/fichier favicon hors de ces chemins sans mise à jour coordonnée de la doc de marque.
+
+## Références
 
 - Spec unifiée : `docs/DESIGN_SYSTEM.md`
+- Marque / icônes : `docs/BRAND_DOMINO_CHAIN.md`
 - Styles : `backend/app/assets/stylesheets/design_system/`

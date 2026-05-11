@@ -20,6 +20,7 @@ Single source for icons and wordmark references across Web + Android.
 | `icon.png` | 512×512 — PWA, `apple-touch-icon`. |
 | `icon-192.png` | PWA install / manifest. |
 | `icon-maskable.png` | 512×512 — `purpose: maskable`, content padded ~80% safe zone. |
+| `favicons/` | Pack favicon complet (`16/32/48/64/96`, `icon-192`, `icon-512`, `apple-touch-icon`, `site.webmanifest`). |
 
 Manifest: `backend/app/views/pwa/manifest.json.erb`.  
 Layout links: `backend/app/views/layouts/application.html.erb`.
@@ -32,10 +33,12 @@ Layout links: `backend/app/views/layouts/application.html.erb`.
 
 | Resource | Use |
 |-----------|-----|
-| `drawable-nodpi/ic_launcher_foreground_art.png` | Adaptive icon foreground (432×432 bitmap, centered). |
-| `drawable/ic_launcher_foreground.xml` | Wraps foreground bitmap for `@mipmap/ic_launcher`. |
-| `drawable/ic_launcher_background.xml` | Circular `ds_bg` backdrop. |
-| `drawable/ic_notification.xml` | Monochrome white simplified “D” for status bar / notifications. |
+| `mipmap-*/ic_launcher.png` + `ic_launcher_round.png` | Launcher assets raster par densité. |
+| `mipmap-*/ic_launcher_foreground.png` | Foreground adaptive icon raster par densité. |
+| `mipmap-anydpi-v26/ic_launcher.xml` | Déclaration adaptive icon (inclut monochrome). |
+| `values/ic_launcher_background.xml` | Couleur de fond adaptive icon. |
+| `drawable/ic_notification.xml` | Notification icon vector (source). |
+| `drawable-*/ic_notification.png` | Fallbacks raster notification par densité. |
 
 Staging no longer overrides the launcher foreground so dev/prod share the same Domino Chain artwork.
 

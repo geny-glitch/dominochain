@@ -14,7 +14,11 @@ Voir `docs/DESIGN_SYSTEM.md` pour la spec complète.
 
 ## Couleurs
 
-Utiliser les couleurs nommées : `@color/ds_bg`, `@color/ds_text`, `@color/ds_text_muted`, `@color/ds_amber`, `@color/ds_teal`, etc. Jamais de hex en dur dans les layouts.
+Utiliser les couleurs nommées : `@color/ds_bg`, `@color/ds_text`, `@color/ds_text_muted`, `@color/ds_magenta`, `@color/ds_blue`, `@color/ds_violet`, etc. Jamais de hex en dur dans les layouts.
+
+Notes :
+- Les alias legacy `@color/ds_amber` et `@color/ds_teal` existent encore pour compatibilité.
+- Pour le nouveau code, privilégier les tokens explicites (`ds_magenta`, `ds_blue`, `ds_violet`).
 
 ## Espacement
 
@@ -27,8 +31,17 @@ Utiliser `@dimen/ds_space_xs` à `@dimen/ds_space_3xl`, `@dimen/ds_page_padding`
 - **Corps** : `@style/DsBody`
 - **Bouton principal** : `@style/DsButton`
 - **Bouton secondaire** : `@style/DsButtonSecondary`
+- **Bouton ghost** : `@style/DsButtonGhost`
 - **Input** : `@style/DsEditText`
 - **Carte** : `@drawable/ds_card_background`
+
+## Branding Android (launcher + notification)
+
+- Utiliser les ressources officielles du DS pour l’icône app/notification :
+  - `@mipmap/ic_launcher`, `@mipmap/ic_launcher_round`
+  - `@drawable/ic_notification`
+  - `@color/ic_launcher_background`
+- Ne pas réintroduire d’assets launcher/notification custom hors des dossiers `mipmap-*` / `drawable-*` alignés avec le DS.
 
 ## Structure de layout
 
@@ -48,3 +61,5 @@ android:padding="@dimen/ds_space_lg"
 - `android/app/src/main/res/values/dimens.xml`
 - `android/app/src/main/res/values/styles.xml`
 - `android/app/src/main/res/values/themes.xml`
+- `android/app/src/main/res/values/ic_launcher_background.xml`
+- `docs/BRAND_DOMINO_CHAIN.md`

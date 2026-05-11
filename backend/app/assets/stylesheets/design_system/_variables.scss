@@ -1,19 +1,31 @@
-// Domino Chain Design System — Blade Runner 2049 inspired
-// Design tokens
+// Domino Chain Design System — shared tokens (web + Android parity)
 
-// Colors
+// Base colors
 $ds-bg: #0a0a0b;
 $ds-surface: #121214;
 $ds-surface-elevated: #1a1a1d;
-$ds-border: #2a2a2e;
-$ds-text: #e8e6e3;
-$ds-text-muted: #8a8784;
-$ds-amber: #e9a03f;
-$ds-amber-dim: #b87d2e;
-$ds-teal: #2ec4b6;
-$ds-teal-dim: #1e9d92;
-$ds-error: #c75c5c;
-$ds-success: #4a9d7a;
+$ds-border: #2f2f34;
+$ds-text: #f0eeea;
+$ds-text-muted: #b8b5b1;
+$ds-text-dim: #8a8784;
+
+// New accent palette
+$ds-magenta: #ec4899;
+$ds-magenta-dim: #db2777;
+$ds-blue: #22d3ee;
+$ds-blue-dim: #06b6d4;
+$ds-violet: #a855f7;
+$ds-violet-dim: #9333ea;
+
+// Legacy aliases used across existing views/components.
+$ds-amber: $ds-magenta;
+$ds-amber-dim: $ds-magenta-dim;
+$ds-teal: $ds-blue;
+$ds-teal-dim: $ds-blue-dim;
+
+// Feedback colors
+$ds-error: #ef6b6b;
+$ds-success: $ds-blue;
 
 // Typography
 $ds-font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
@@ -42,6 +54,9 @@ $ds-space-3xl: 2.5rem;
 $ds-radius-sm: 4px;
 $ds-radius-md: 6px;
 $ds-radius-lg: 8px;
+$ds-radius-xl: 12px;
+$ds-radius-2xl: 16px;
+$ds-radius-pill: 999px;
 
-// Transitions
-$ds-transition: 0.2s;
+// Motion
+$ds-transition: 0.2s ease;

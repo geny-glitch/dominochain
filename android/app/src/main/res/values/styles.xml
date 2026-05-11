@@ -31,7 +31,7 @@
 
     <!-- Buttons -->
     <style name="DsButton" parent="Widget.MaterialComponents.Button">
-        <item name="android:textColor">@color/ds_bg</item>
+        <item name="android:textColor">@color/white</item>
         <item name="backgroundTint">@color/ds_amber</item>
         <item name="cornerRadius">@dimen/ds_radius_sm</item>
         <item name="android:textSize">14sp</item>
@@ -49,7 +49,7 @@
         <item name="android:textSize">14sp</item>
     </style>
     <style name="DsButtonGhost" parent="Widget.MaterialComponents.Button.TextButton">
-        <item name="android:textColor">@color/ds_teal</item>
+        <item name="android:textColor">@color/ds_blue</item>
         <item name="android:background">@android:color/transparent</item>
         <item name="android:textSize">14sp</item>
     </style>

@@ -4,6 +4,14 @@ class BetaCatalog
   PREF_ROOT = "catalog_visibility"
   SOURCES_KEY = "sources"
   ACTIONS_KEY = "actions"
+  SOURCE_FEATURE_FLAGS = {
+    "cigarettes" => "beta_source_cigarettes_enabled",
+    "strava" => "beta_source_strava_enabled",
+    "showcase" => "beta_source_showcase_enabled"
+  }.freeze
+  ACTION_FEATURE_FLAGS = {
+    "pishock" => "beta_action_pishock_enabled"
+  }.freeze
 
   SOURCE_DEFS = [
     {
@@ -60,11 +68,15 @@ class BetaCatalog
   end
 
   def source_items
-    SOURCE_DEFS.map { |d| decorate_source(d) }
+    SOURCE_DEFS
+      .select { |definition| item_available_by_feature_flag?(SOURCES_KEY, definition[:id]) }
+      .map { |d| decorate_source(d) }
   end
 
   def action_items
-    ACTION_DEFS.map { |d| decorate_action(d) }
+    ACTION_DEFS
+      .select { |definition| item_available_by_feature_flag?(ACTIONS_KEY, definition[:id]) }
+      .map { |d| decorate_action(d) }
   end
 
   def visible_source_items
@@ -76,11 +88,11 @@ class BetaCatalog
   end
 
   def source_enabled?(item_id)
-    item_enabled?(SOURCES_KEY, item_id)
+    item_available_by_feature_flag?(SOURCES_KEY, item_id) && item_enabled?(SOURCES_KEY, item_id)
   end
 
   def action_enabled?(item_id)
-    item_enabled?(ACTIONS_KEY, item_id)
+    item_available_by_feature_flag?(ACTIONS_KEY, item_id) && item_enabled?(ACTIONS_KEY, item_id)
   end
 
   def source_enabled_for_event_source?(event_source)
@@ -101,6 +113,7 @@ class BetaCatalog
     key = kind_to_key(kind)
     return false unless key
     return false unless allowed_item_ids_for(key).include?(item_id.to_s)
+    return false unless item_available_by_feature_flag?(key, item_id)
 
     prefs = (@user.beta_ui_prefs || {}).deep_dup
     prefs[PREF_ROOT] ||= {}
@@ -120,6 +133,41 @@ class BetaCatalog
   end
 
   private
+
+  def item_available_by_feature_flag?(kind_key, item_id)
+    flag_key = feature_flag_key_for(kind_key, item_id)
+    return true if flag_key.blank?
+
+    feature_gate_cache.fetch(flag_key) do
+      feature_gate_cache[flag_key] = evaluate_feature_flag(flag_key)
+    end
+  end
+
+  def feature_flag_key_for(kind_key, item_id)
+    item = item_id.to_s
+    case kind_key
+    when SOURCES_KEY then SOURCE_FEATURE_FLAGS[item]
+    when ACTIONS_KEY then ACTION_FEATURE_FLAGS[item]
+    end
+  end
+
+  def evaluate_feature_flag(flag_key)
+    return true if @user.posthog_distinct_id.blank?
+
+    evaluations = PostHog.evaluate_flags(
+      @user.posthog_distinct_id,
+      person_properties: @user.posthog_properties,
+      flag_keys: [ flag_key ]
+    )
+    evaluations.enabled?(flag_key)
+  rescue StandardError => e
+    Rails.logger.warn("[BetaCatalog] feature flag fallback true for #{flag_key}: #{e.class}: #{e.message}")
+    true
+  end
+
+  def feature_gate_cache
+    @feature_gate_cache ||= {}
+  end
 
   def decorate_source(definition)
     id = definition[:id]

@@ -8,6 +8,8 @@ fr:
       control_not_found: "Contrôle introuvable."
       access_denied: "Accès refusé."
       settings_saved: "Liste enregistrée. Images récupérées."
+      feature_flags_cache_invalidated: "Cache des feature flags invalide."
+      feature_flags_cache_invalidation_failed: "Echec de l'invalidation du cache des feature flags."
     chaster:
       oauth_invalid_state: "Connexion Chaster annulée (état invalide)."
       oauth_error: "Chaster : %{message}"

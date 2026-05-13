@@ -17,6 +17,14 @@ class AdminController < ApplicationController
     redirect_to admin_path, alert: t("flash.admin.control_not_found")
   end
 
+  def invalidate_feature_flags_cache
+    BetaCatalog.invalidate_feature_flags_cache!
+    redirect_to admin_path, notice: t("flash.admin.feature_flags_cache_invalidated")
+  rescue StandardError => e
+    Rails.logger.error("[Admin] failed to invalidate feature flags cache: #{e.class}: #{e.message}")
+    redirect_to admin_path, alert: t("flash.admin.feature_flags_cache_invalidation_failed")
+  end
+
   private
 
   def require_admin!

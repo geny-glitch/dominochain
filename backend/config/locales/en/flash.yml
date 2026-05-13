@@ -8,6 +8,8 @@ en:
       control_not_found: "Control not found."
       access_denied: "Access denied."
       settings_saved: "Settings saved. Images fetched."
+      feature_flags_cache_invalidated: "Feature flags cache invalidated."
+      feature_flags_cache_invalidation_failed: "Failed to invalidate feature flags cache."
     chaster:
       oauth_invalid_state: "Chaster connection cancelled (invalid state)."
       oauth_error: "Chaster: %{message}"

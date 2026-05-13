@@ -4,13 +4,18 @@ class BetaCatalog
   PREF_ROOT = "catalog_visibility"
   SOURCES_KEY = "sources"
   ACTIONS_KEY = "actions"
+  CACHE_NAMESPACE_KEY = "beta_catalog:feature_flags:namespace:v1"
+  FLAGS_CACHE_VERSION = 2
+  FLAGS_CACHE_TTL = 5.minutes
   SOURCE_FEATURE_FLAGS = {
-    "cigarettes" => "beta_source_cigarettes_enabled",
-    "strava" => "beta_source_strava_enabled",
-    "showcase" => "beta_source_showcase_enabled"
+    "puryfi" => "beta_source_puryfi",
+    "cigarettes" => "beta_source_cigarettes",
+    "strava" => "beta_source_strava",
+    "showcase" => "beta_source_showcase"
   }.freeze
   ACTION_FEATURE_FLAGS = {
-    "pishock" => "beta_action_pishock_enabled"
+    "chaster" => "beta_action_chaster",
+    "pishock" => "beta_action_pishock"
   }.freeze
 
   SOURCE_DEFS = [
@@ -65,6 +70,19 @@ class BetaCatalog
 
   def initialize(user)
     @user = user
+  end
+
+  def self.expected_feature_flags
+    (SOURCE_FEATURE_FLAGS.values + ACTION_FEATURE_FLAGS.values).compact.uniq.sort
+  end
+
+  def self.invalidate_feature_flags_cache!
+    current_namespace = feature_flags_cache_namespace
+    Rails.cache.write(CACHE_NAMESPACE_KEY, current_namespace + 1)
+  end
+
+  def self.feature_flags_cache_namespace
+    Rails.cache.fetch(CACHE_NAMESPACE_KEY) { 1 }
   end
 
   def source_items
@@ -138,9 +156,7 @@ class BetaCatalog
     flag_key = feature_flag_key_for(kind_key, item_id)
     return true if flag_key.blank?
 
-    feature_gate_cache.fetch(flag_key) do
-      feature_gate_cache[flag_key] = evaluate_feature_flag(flag_key)
-    end
+    feature_gate_cache.fetch(flag_key) { feature_gate_cache[flag_key] = evaluate_feature_flags[flag_key] }
   end
 
   def feature_flag_key_for(kind_key, item_id)
@@ -151,23 +167,45 @@ class BetaCatalog
     end
   end
 
-  def evaluate_feature_flag(flag_key)
-    return true if @user.posthog_distinct_id.blank?
+  def evaluate_feature_flags
+    keys = self.class.expected_feature_flags
+    return default_enabled_flags(keys) if @user.posthog_distinct_id.blank?
 
+    Rails.cache.fetch(feature_flags_cache_key, expires_in: FLAGS_CACHE_TTL, race_condition_ttl: 10.seconds) do
+      evaluate_feature_flags_from_posthog(keys)
+    end
+  rescue StandardError => e
+    Rails.logger.warn("[BetaCatalog] feature flags fallback true: #{e.class}: #{e.message}")
+    default_enabled_flags(self.class.expected_feature_flags)
+  end
+
+  def evaluate_feature_flags_from_posthog(keys)
     evaluations = PostHog.evaluate_flags(
       @user.posthog_distinct_id,
       person_properties: @user.posthog_properties,
-      flag_keys: [ flag_key ]
+      flag_keys: keys
     )
-    evaluations.enabled?(flag_key)
-  rescue StandardError => e
-    Rails.logger.warn("[BetaCatalog] feature flag fallback true for #{flag_key}: #{e.class}: #{e.message}")
-    true
+
+    keys.index_with { |key| evaluations.enabled?(key) }
+  end
+
+  def default_enabled_flags(keys)
+    keys.index_with(true)
+  end
+
+  def feature_flags_cache_key
+    namespace = self.class.feature_flags_cache_namespace
+    "beta_catalog:feature_flags:v#{FLAGS_CACHE_VERSION}:#{namespace}:#{@user.posthog_distinct_id}"
   end
 
   def feature_gate_cache
     @feature_gate_cache ||= {}
   end
+
+  def self.feature_flags_cache_namespace
+    Rails.cache.fetch(CACHE_NAMESPACE_KEY) { 1 }
+  end
+  private_class_method :feature_flags_cache_namespace
 
   def decorate_source(definition)
     id = definition[:id]

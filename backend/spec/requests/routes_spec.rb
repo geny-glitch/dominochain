@@ -324,6 +324,11 @@ RSpec.describe "Routes", type: :request do
         expect(response).to have_http_status(:ok)
       end
 
+      it "POST /admin/feature_flags_cache/invalidate returns redirect" do
+        post admin_invalidate_feature_flags_cache_path, headers: modern_headers
+        expect(response).to have_http_status(:redirect)
+      end
+
       # PATCH /admin/settings route tested in spec/routing/routes_spec.rb
 
       it "POST /admin/controls/:id/release returns redirect" do

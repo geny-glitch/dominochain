@@ -5,10 +5,11 @@
 # - ActiveJob instrumentation for background job failures
 # - User context detection from current_user
 # - Rails.error integration for rescued exceptions
-if ENV["POSTHOG_PROJECT_TOKEN"].present?
+if ENV["POSTHOG_PROJECT_TOKEN"].present? && !Rails.env.test?
   PostHog.init do |config|
     config.api_key = ENV["POSTHOG_PROJECT_TOKEN"]
     config.host = ENV.fetch("POSTHOG_HOST", "https://us.i.posthog.com")
+    config.personal_api_key = ENV["POSTHOG_PERSONAL_API_KEY"] if ENV["POSTHOG_PERSONAL_API_KEY"].present?
     config.on_error = proc { |status, msg|
       Rails.logger.error("PostHog error: #{msg}")
     }

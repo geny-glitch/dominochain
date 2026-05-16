@@ -41,6 +41,7 @@ fr:
       goal_not_found: "Objectif Strava introuvable."
     beta:
       catalog_unknown: "Source/action inconnue."
+      catalog_unavailable: "Cette source ou action n'est pas disponible sur ton compte."
       catalog_activated: "%{label} a été activé."
       catalog_deactivated: "%{label} a été désactivé."
       catalog_element: "Élément"

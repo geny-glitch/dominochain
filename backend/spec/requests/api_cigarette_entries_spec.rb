@@ -27,8 +27,7 @@ RSpec.describe "API cigarette entries", type: :request do
   end
 
   before do
-    allow(PostHog).to receive(:capture)
-    allow(PostHog).to receive(:evaluate_flags).and_return(feature_flag_evaluations)
+    stub_beta_catalog_feature_flags(feature_flag_overrides)
   end
 
   describe "GET /api/cigarettes" do
@@ -119,7 +118,7 @@ RSpec.describe "API cigarette entries", type: :request do
     end
 
     context "when cigarettes source feature flag is disabled" do
-      let(:feature_flag_overrides) { { "beta_source_cigarettes_enabled" => false } }
+      let(:feature_flag_overrides) { { "beta_source_cigarettes" => false } }
 
       it "keeps the entry without applying Chaster time" do
         post api_cigarettes_path, params: {}, headers: headers, as: :json

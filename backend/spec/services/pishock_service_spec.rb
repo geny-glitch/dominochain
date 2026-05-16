@@ -14,7 +14,7 @@ RSpec.describe PishockService do
   end
 
   before do
-    allow(PostHog).to receive(:evaluate_flags).and_return(feature_flag_evaluations)
+    stub_beta_catalog_feature_flags(feature_flag_overrides)
     allow(Net::HTTP).to receive(:start) do |hostname, *_args, **_kwargs, &block|
       expect(hostname).to eq("api.pishock.com")
       http = instance_double(Net::HTTP)
@@ -60,7 +60,7 @@ RSpec.describe PishockService do
     end
 
     context "when pishock feature flag is disabled" do
-      let(:feature_flag_overrides) { { "beta_action_pishock_enabled" => false } }
+      let(:feature_flag_overrides) { { "beta_action_pishock" => false } }
 
       it "returns :skipped without calling PiShock API" do
         user = create_pishock_user

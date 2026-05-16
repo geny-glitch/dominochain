@@ -16,8 +16,7 @@ RSpec.describe "API chaster add_time", type: :request do
   end
 
   before do
-    allow(PostHog).to receive(:evaluate_flags).and_return(feature_flag_evaluations)
-    allow(PostHog).to receive(:capture)
+    stub_beta_catalog_feature_flags(feature_flag_overrides)
   end
 
   it "does not add Chaster time when chaster action is disabled by the user" do
@@ -40,7 +39,7 @@ RSpec.describe "API chaster add_time", type: :request do
   end
 
   context "when source feature flag is disabled" do
-    let(:feature_flag_overrides) { { "beta_source_cigarettes_enabled" => false } }
+    let(:feature_flag_overrides) { { "beta_source_puryfi" => false } }
     let(:service) { instance_double(ChasterService, current_lock: { id: "lock-1" }) }
 
     before do

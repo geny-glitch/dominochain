@@ -35,7 +35,7 @@ RSpec.describe BetaEvents::ActionExecutor do
   let(:action_instance) { instance_double(BetaEvents::Actions::ChasterAddTimeFromEvent, call: true) }
 
   before do
-    allow(PostHog).to receive(:evaluate_flags).and_return(feature_flag_evaluations)
+    stub_beta_catalog_feature_flags(feature_flag_overrides)
     allow(BetaEvents::ConsequenceRegistry).to receive(:actions_for).with(event).and_return([ BetaEvents::Actions::ChasterAddTimeFromEvent ])
     allow(BetaEvents::Actions::ChasterAddTimeFromEvent).to receive(:new).and_return(action_instance)
   end
@@ -66,7 +66,7 @@ RSpec.describe BetaEvents::ActionExecutor do
   end
 
   context "when source feature flag is disabled" do
-    let(:feature_flag_overrides) { { "beta_source_cigarettes_enabled" => false } }
+    let(:feature_flag_overrides) { { "beta_source_cigarettes" => false } }
 
     it "returns source_disabled and does not execute actions" do
       result = described_class.new(beta: beta, event: event).call

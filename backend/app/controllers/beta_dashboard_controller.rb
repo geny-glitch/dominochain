@@ -3,8 +3,21 @@
 class BetaDashboardController < ApplicationController
   layout "beta_dashboard"
 
+  CATALOG_SOURCE_ACTIONS = {
+    "sources_puryfi" => "puryfi",
+    "sources_cigarettes" => "cigarettes",
+    "sources_strava" => "strava",
+    "sources_showcase" => "showcase"
+  }.freeze
+  CATALOG_ACTION_ACTIONS = {
+    "actions_chaster" => "chaster",
+    "actions_pishock" => "pishock"
+  }.freeze
+
   before_action :authenticate_user!
   before_action :require_beta_role!
+  before_action :require_catalog_source_platform_enabled!
+  before_action :require_catalog_action_platform_enabled!
   before_action :set_task, only: [ :task, :submit_proof ]
 
   def home
@@ -234,6 +247,22 @@ class BetaDashboardController < ApplicationController
     return if current_user.beta?
 
     redirect_to dashboard_path, alert: t("flash.beta.beta_only")
+  end
+
+  def require_catalog_source_platform_enabled!
+    source_id = CATALOG_SOURCE_ACTIONS[action_name]
+    return if source_id.blank?
+    return if BetaCatalog.new(current_user).source_platform_enabled?(source_id)
+
+    redirect_to beta_settings_path, alert: t("flash.beta.catalog_unavailable")
+  end
+
+  def require_catalog_action_platform_enabled!
+    action_id = CATALOG_ACTION_ACTIONS[action_name]
+    return if action_id.blank?
+    return if BetaCatalog.new(current_user).action_platform_enabled?(action_id)
+
+    redirect_to beta_settings_path, alert: t("flash.beta.catalog_unavailable")
   end
 
   def set_task

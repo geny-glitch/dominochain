@@ -16,7 +16,7 @@ RSpec.describe ChasterService do
     end
 
     before do
-      allow(PostHog).to receive(:evaluate_flags).and_return(feature_flag_evaluations)
+      stub_beta_catalog_feature_flags(feature_flag_overrides)
     end
 
     it "does not call Chaster API when chaster action is disabled in catalog" do
@@ -29,7 +29,7 @@ RSpec.describe ChasterService do
     end
 
     context "when chaster feature flag is disabled" do
-      let(:feature_flag_overrides) { { "beta_source_cigarettes_enabled" => true } }
+      let(:feature_flag_overrides) { { "beta_action_chaster" => false } }
 
       it "still blocks if catalog action remains disabled" do
         user.update!(beta_ui_prefs: { "catalog_visibility" => { "actions" => { "chaster" => false } } })

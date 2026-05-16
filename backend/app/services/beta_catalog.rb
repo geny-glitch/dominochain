@@ -6,7 +6,7 @@ class BetaCatalog
   ACTIONS_KEY = "actions"
   CACHE_NAMESPACE_KEY = "beta_catalog:feature_flags:namespace:v1"
   FLAGS_CACHE_VERSION = 2
-  FLAGS_CACHE_TTL = 5.minutes
+  FLAGS_CACHE_TTL = 1.minute
   SOURCE_FEATURE_FLAGS = {
     "puryfi" => "beta_source_puryfi",
     "cigarettes" => "beta_source_cigarettes",
@@ -105,8 +105,16 @@ class BetaCatalog
     action_items.select { |item| action_enabled?(item[:id]) }
   end
 
+  def source_platform_enabled?(item_id)
+    item_available_by_feature_flag?(SOURCES_KEY, item_id)
+  end
+
+  def action_platform_enabled?(item_id)
+    item_available_by_feature_flag?(ACTIONS_KEY, item_id)
+  end
+
   def source_enabled?(item_id)
-    item_available_by_feature_flag?(SOURCES_KEY, item_id) && item_enabled?(SOURCES_KEY, item_id)
+    source_platform_enabled?(item_id) && item_enabled?(SOURCES_KEY, item_id)
   end
 
   def action_enabled?(item_id)
@@ -156,7 +164,7 @@ class BetaCatalog
     flag_key = feature_flag_key_for(kind_key, item_id)
     return true if flag_key.blank?
 
-    feature_gate_cache.fetch(flag_key) { feature_gate_cache[flag_key] = evaluate_feature_flags[flag_key] }
+    feature_flags.fetch(flag_key, false)
   end
 
   def feature_flag_key_for(kind_key, item_id)
@@ -175,8 +183,8 @@ class BetaCatalog
       evaluate_feature_flags_from_posthog(keys)
     end
   rescue StandardError => e
-    Rails.logger.warn("[BetaCatalog] feature flags fallback true: #{e.class}: #{e.message}")
-    default_enabled_flags(self.class.expected_feature_flags)
+    Rails.logger.warn("[BetaCatalog] feature flags fallback false: #{e.class}: #{e.message}")
+    default_disabled_flags(self.class.expected_feature_flags)
   end
 
   def evaluate_feature_flags_from_posthog(keys)
@@ -193,13 +201,17 @@ class BetaCatalog
     keys.index_with(true)
   end
 
+  def default_disabled_flags(keys)
+    keys.index_with(false)
+  end
+
+  def feature_flags
+    @feature_flags ||= evaluate_feature_flags
+  end
+
   def feature_flags_cache_key
     namespace = self.class.feature_flags_cache_namespace
     "beta_catalog:feature_flags:v#{FLAGS_CACHE_VERSION}:#{namespace}:#{@user.posthog_distinct_id}"
-  end
-
-  def feature_gate_cache
-    @feature_gate_cache ||= {}
   end
 
   def self.feature_flags_cache_namespace

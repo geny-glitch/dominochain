@@ -4,7 +4,7 @@ function normalizeBase(baseUrl: string): string {
 
 export async function bgLogin(
   baseUrl: string,
-  nickname: string,
+  email: string,
   password: string,
   deviceId: string,
   name = "BG PuryFi",
@@ -14,7 +14,7 @@ export async function bgLogin(
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      nickname,
+      email,
       password,
       device_id: deviceId,
       name,

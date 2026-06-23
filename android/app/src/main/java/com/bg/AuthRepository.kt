@@ -10,7 +10,7 @@ class AuthRepository {
     private val api = RetrofitClient.api
 
     suspend fun login(
-        nickname: String,
+        email: String,
         password: String,
         deviceId: String,
         screenWidth: Int? = null,
@@ -21,7 +21,7 @@ class AuthRepository {
         return try {
             val response = api.login(
                 LoginRequest(
-                    nickname = nickname,
+                    email = email,
                     password = password,
                     device_id = deviceId,
                     screen_width = screenWidth,
@@ -48,10 +48,11 @@ class AuthRepository {
     }
 
     suspend fun register(
-        nickname: String,
+        email: String,
         password: String,
         passwordConfirmation: String,
         deviceId: String,
+        nickname: String? = null,
         screenWidth: Int? = null,
         screenHeight: Int? = null,
         fcmToken: String? = null,
@@ -60,9 +61,10 @@ class AuthRepository {
         return try {
             val response = api.registerAuth(
                 RegisterAuthRequest(
-                    nickname = nickname,
+                    email = email,
                     password = password,
                     password_confirmation = passwordConfirmation,
+                    nickname = nickname,
                     device_id = deviceId,
                     screen_width = screenWidth,
                     screen_height = screenHeight,

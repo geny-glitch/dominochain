@@ -1,12 +1,12 @@
-<% content_for :title, "Le Jeu des 1000 €" %>
+<% content_for :title, t("showcase.quiz.title") %>
 
 <div class="quiz-page ds-page" data-nickname="<%= @beta.nickname %>">
   <div class="ds-container quiz-container">
     <header class="ds-header">
       <%= image_tag "domino-chain-logo.png", alt: "Domino Chain", class: "ds-header-logo", width: 48, height: 48 %>
       <div>
-        <h1 class="ds-title">Le Jeu des 1000 €</h1>
-        <p class="ds-subtitle">Inspiré de France Inter — Culture générale</p>
+        <h1 class="ds-title"><%= t("showcase.quiz.title") %></h1>
+        <p class="ds-subtitle"><%= t("showcase.quiz.subtitle") %></p>
       </div>
     </header>
 
@@ -16,15 +16,15 @@
 
     <div id="quiz-intro" class="quiz-intro">
       <p class="quiz-rules">
-        6 questions : 3 bleues (15€), 2 blanches (30€), 1 rouge (45€). 60 secondes par question, autant d'essais que tu veux — une erreur ne remet pas le timer. Réponds aux 6 pour tenter le Banco (500€), puis le Super Banco (1000€) !
+        <%= t("showcase.quiz.rules") %>
       </p>
-      <button type="button" class="ds-btn ds-btn--primary" id="quiz-start">Jouer</button>
+      <button type="button" class="ds-btn ds-btn--primary" id="quiz-start"><%= t("showcase.quiz.play") %></button>
     </div>
 
     <div id="quiz-game" class="quiz-game" style="display: none;">
       <div class="quiz-progress">
         <span id="quiz-question-num">1</span> / 6
-        <span class="quiz-score">Score : <strong id="quiz-score">0</strong> €</span>
+        <span class="quiz-score"><%= t("showcase.quiz.score") %> : <strong id="quiz-score">0</strong> €</span>
       </div>
       <div id="quiz-difficulty" class="quiz-difficulty quiz-difficulty--bleu"></div>
       <p id="quiz-question" class="quiz-question"></p>
@@ -32,64 +32,73 @@
         <div id="quiz-timer-bar" class="quiz-timer-bar"></div>
       </div>
       <div class="quiz-answer-form">
-        <input type="text" id="quiz-answer" class="ds-input quiz-input" placeholder="Ta réponse..." autocomplete="off" />
-        <button type="button" class="ds-btn ds-btn--primary" id="quiz-submit">Valider</button>
+        <input type="text" id="quiz-answer" class="ds-input quiz-input" placeholder="<%= t("showcase.quiz.answer_placeholder") %>" autocomplete="off" />
+        <button type="button" class="ds-btn ds-btn--primary" id="quiz-submit"><%= t("showcase.quiz.submit_answer") %></button>
       </div>
     </div>
 
     <div id="quiz-banco-choice" class="quiz-choice" style="display: none;">
-      <h2 class="quiz-choice-title">Banco !</h2>
-      <p>Tu as répondu aux 6 questions. Une question difficile : 1 minute, 1 réponse. 500€ ou tu perds tout.</p>
+      <h2 class="quiz-choice-title"><%= t("showcase.quiz.banco_title") %></h2>
+      <p><%= t("showcase.quiz.banco_hint") %></p>
       <div class="quiz-choice-buttons">
-        <button type="button" class="ds-btn ds-btn--secondary" id="quiz-skip-banco">Garder mes gains</button>
-        <button type="button" class="ds-btn ds-btn--primary" id="quiz-do-banco">Tenter le Banco</button>
+        <button type="button" class="ds-btn ds-btn--secondary" id="quiz-skip-banco"><%= t("showcase.quiz.keep_gains") %></button>
+        <button type="button" class="ds-btn ds-btn--primary" id="quiz-do-banco"><%= t("showcase.quiz.try_banco") %></button>
       </div>
     </div>
 
     <div id="quiz-super-choice" class="quiz-choice" style="display: none;">
-      <h2 class="quiz-choice-title">Super Banco !</h2>
-      <p>Bravo ! Une dernière question très difficile : 1 minute, 1 réponse. 1000€ ou tu repars avec 500€.</p>
+      <h2 class="quiz-choice-title"><%= t("showcase.quiz.super_banco_title") %></h2>
+      <p><%= t("showcase.quiz.super_banco_hint") %></p>
       <div class="quiz-choice-buttons">
-        <button type="button" class="ds-btn ds-btn--secondary" id="quiz-skip-super">Garder 500€</button>
-        <button type="button" class="ds-btn ds-btn--primary" id="quiz-do-super">Tenter le Super Banco</button>
+        <button type="button" class="ds-btn ds-btn--secondary" id="quiz-skip-super"><%= t("showcase.quiz.keep_500") %></button>
+        <button type="button" class="ds-btn ds-btn--primary" id="quiz-do-super"><%= t("showcase.quiz.try_super_banco") %></button>
       </div>
     </div>
 
     <div id="quiz-gameover" class="quiz-gameover" style="display: none;">
-      <h2 class="quiz-gameover-title">Fin de partie</h2>
-      <p class="quiz-gameover-score">Score final : <strong id="quiz-final-score">0</strong> €</p>
+      <h2 class="quiz-gameover-title"><%= t("showcase.quiz.game_over") %></h2>
+      <p class="quiz-gameover-score"><%= t("showcase.quiz.final_score") %> : <strong id="quiz-final-score">0</strong> €</p>
       <div class="quiz-leaderboard-form" id="quiz-lb-name-block">
-        <p id="quiz-lb-auto-registered" class="quiz-lb-registered" hidden>Score enregistré pour <strong id="quiz-lb-registered-name"></strong></p>
+        <p id="quiz-lb-auto-registered" class="quiz-lb-registered" hidden><%= t("showcase.quiz.score_saved_prefix") %> <strong id="quiz-lb-registered-name"></strong></p>
         <div id="quiz-lb-name-fields" class="quiz-lb-name-fields">
-          <input type="text" id="quiz-player-name" class="ds-input" placeholder="Ton pseudo pour le leaderboard" maxlength="30" />
-          <button type="button" class="ds-btn ds-btn--primary" id="quiz-save-name">Enregistrer</button>
+          <input type="text" id="quiz-player-name" class="ds-input" placeholder="<%= t("showcase.quiz.name_placeholder") %>" maxlength="30" />
+          <button type="button" class="ds-btn ds-btn--primary" id="quiz-save-name"><%= t("showcase.quiz.save") %></button>
         </div>
       </div>
-      <button type="button" class="ds-btn ds-btn--ghost" id="quiz-replay">Rejouer</button>
+      <button type="button" class="ds-btn ds-btn--ghost" id="quiz-replay"><%= t("showcase.quiz.replay") %></button>
     </div>
 
     <section class="quiz-leaderboard" id="quiz-leaderboard">
-      <h3 class="ds-section-title">Leaderboard</h3>
+      <h3 class="ds-section-title"><%= t("showcase.quiz.leaderboard") %></h3>
       <div class="quiz-leaderboard-toolbar">
-        <label class="quiz-leaderboard-toolbar-label" for="quiz-lb-sort">Trier</label>
-        <select id="quiz-lb-sort" class="ds-input quiz-leaderboard-sort" aria-label="Trier le classement">
-          <option value="score">Meilleur score</option>
-          <option value="recent">Plus récent</option>
+        <label class="quiz-leaderboard-toolbar-label" for="quiz-lb-sort"><%= t("showcase.quiz.sort_label") %></label>
+        <select id="quiz-lb-sort" class="ds-input quiz-leaderboard-sort" aria-label="<%= t("showcase.quiz.sort_aria") %>">
+          <option value="score"><%= t("showcase.quiz.sort_score") %></option>
+          <option value="recent"><%= t("showcase.quiz.sort_recent") %></option>
         </select>
       </div>
       <div id="quiz-leaderboard-list" class="quiz-leaderboard-list">
         <p class="quiz-leaderboard-empty"><%= t("showcase.snake.empty") %></p>
       </div>
       <div id="quiz-leaderboard-pagination" class="quiz-leaderboard-pagination" hidden>
-        <button type="button" class="ds-btn ds-btn--ghost ds-btn--sm" id="quiz-lb-prev" disabled>Précédent</button>
+        <button type="button" class="ds-btn ds-btn--ghost ds-btn--sm" id="quiz-lb-prev" disabled><%= t("showcase.snake.prev") %></button>
         <span class="quiz-leaderboard-page-label" id="quiz-lb-page-label"></span>
-        <button type="button" class="ds-btn ds-btn--ghost ds-btn--sm" id="quiz-lb-next">Suivant</button>
+        <button type="button" class="ds-btn ds-btn--ghost ds-btn--sm" id="quiz-lb-next"><%= t("showcase.snake.next") %></button>
       </div>
     </section>
   </div>
 </div>
 
-<div id="quiz-i18n-strings" data-lb-empty="<%= j t("showcase.snake.empty") %>" data-page-of="<%= j t("showcase.snake.page_of") %>" hidden></div>
+<script type="application/json" id="quiz-i18n-json"><%= raw json_escape({
+  lb_empty: t("showcase.snake.empty"),
+  page_of: t("showcase.snake.page_of"),
+  table_aria: t("showcase.quiz.table_aria"),
+  col_player: t("showcase.snake.col_player"),
+  col_score: t("showcase.snake.col_score"),
+  col_date: t("showcase.snake.col_date"),
+  col_time: t("showcase.snake.col_time"),
+  alert_not_enough_questions: t("showcase.quiz.alert_not_enough_questions")
+}.to_json) %></script>
 
 <% if flash[:notice] %>
   <div class="ds-flash ds-flash--success"><%= flash[:notice] %></div>
@@ -104,10 +113,10 @@
   const TIME_PER_QUESTION = 60; // comme le jeu radio : 60 s, erreur ne reset pas le timer
 
   const nickname = document.querySelector(".quiz-page").dataset.nickname;
-  const quizI18nEl = document.getElementById("quiz-i18n-strings");
-  const quizI18n = quizI18nEl ? quizI18nEl.dataset : {};
-  const LB_EMPTY_HTML = "<p class=\"quiz-leaderboard-empty\">" + (quizI18n.lbEmpty || "") + "</p>";
-  const PAGE_OF_TPL = quizI18n.pageOf || "";
+  const quizI18nEl = document.getElementById("quiz-i18n-json");
+  const quizI18n = quizI18nEl ? JSON.parse(quizI18nEl.textContent) : {};
+  const LB_EMPTY_HTML = "<p class=\"quiz-leaderboard-empty\">" + (quizI18n.lb_empty || "") + "</p>";
+  const PAGE_OF_TPL = quizI18n.page_of || "";
   const LEADERBOARD_PER_PAGE = 10;
   const urls = {
     createSession: `/showcase/${nickname}/sessions`,
@@ -200,7 +209,8 @@
   function formatPlayedTime(iso) {
     const d = parsePlayedAt(iso);
     if (!d) return "—";
-    return d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+    const locale = document.documentElement.lang || navigator.language || "en";
+    return d.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
   }
   function buildLeaderboardUrl() {
     const p = new URLSearchParams({
@@ -431,13 +441,13 @@
       if (Array.isArray(entries) && entries.length > 0) {
         leaderboardList.innerHTML =
           '<div class="quiz-leaderboard-table-wrap">' +
-          '<table class="quiz-leaderboard-table" aria-label="Classement">' +
+          `<table class="quiz-leaderboard-table" aria-label="${escapeHtml(quizI18n.table_aria || "Leaderboard")}">` +
           "<thead><tr>" +
           '<th scope="col" class="quiz-leaderboard-th quiz-leaderboard-th--num">#</th>' +
-          '<th scope="col" class="quiz-leaderboard-th">Joueur</th>' +
-          '<th scope="col" class="quiz-leaderboard-th quiz-leaderboard-th--score">Score</th>' +
-          '<th scope="col" class="quiz-leaderboard-th quiz-leaderboard-th--meta">Date</th>' +
-          '<th scope="col" class="quiz-leaderboard-th quiz-leaderboard-th--meta">Heure</th>' +
+          `<th scope="col" class="quiz-leaderboard-th">${escapeHtml(quizI18n.col_player || "Player")}</th>` +
+          `<th scope="col" class="quiz-leaderboard-th quiz-leaderboard-th--score">${escapeHtml(quizI18n.col_score || "Score")}</th>` +
+          `<th scope="col" class="quiz-leaderboard-th quiz-leaderboard-th--meta">${escapeHtml(quizI18n.col_date || "Date")}</th>` +
+          `<th scope="col" class="quiz-leaderboard-th quiz-leaderboard-th--meta">${escapeHtml(quizI18n.col_time || "Time")}</th>` +
           "</tr></thead><tbody>" +
           entries.map(s =>
             "<tr>" +
@@ -469,7 +479,7 @@
 
     questions = await loadQuestions();
     if (questions.length < 6) {
-      alert("Pas assez de questions disponibles. Lancez les seeds.");
+      alert(quizI18n.alert_not_enough_questions || "Not enough questions available.");
       intro.style.display = "block";
       return;
     }

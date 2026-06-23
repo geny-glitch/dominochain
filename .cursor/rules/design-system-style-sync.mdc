@@ -1,0 +1,17 @@
+description: Sync all design system layers for style change requests
+alwaysApply: true
+---
+
+# Style Change => Mandatory DS Sync
+
+When the user asks for a style change (colors, CTAs, toggles, typography, radii, icons, favicons), apply the change to **all** affected DS layers, not just the current file.
+
+Minimum checklist:
+
+- Web tokens/styles: `backend/app/assets/stylesheets/design_system/` (`_variables.scss`, `_base.scss`, `_material_tokens.scss`, `_components.scss` + impacted DS feature files).
+- Android tokens/styles: `android/app/src/main/res/values/` (`colors.xml`, `styles.xml`, `themes.xml`, `ic_launcher_background.xml` when relevant).
+- Brand/UI assets: `backend/public/favicons/`, `backend/public/icon.svg`, Android launcher/notification assets when relevant.
+- Documentation: keep `docs/DESIGN_SYSTEM.md` aligned (and `docs/BRAND_DOMINO_CHAIN.md` if branding is impacted).
+- Cursor DS rules: update `.cursor/rules/design-system*.mdc` if guidance changes.
+
+Do not leave inconsistencies between web, Android, and docs: if a token changes, verify legacy aliases (`amber`/`teal`) and secondary usages (hover/focus/toggle/checkbox/radio).

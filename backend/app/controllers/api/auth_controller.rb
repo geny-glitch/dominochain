@@ -5,19 +5,29 @@ module Api
     skip_before_action :verify_authenticity_token
 
     def login
-      user = User.find_for_database_authentication(nickname: params[:nickname])
+      user = User.find_for_database_authentication(email: params[:email].to_s.strip.downcase)
       if user&.valid_password?(params[:password])
         device = link_device_to_user(user)
+        PostHog.identify(distinct_id: user.posthog_distinct_id, properties: user.posthog_properties)
+        PostHog.capture(distinct_id: user.posthog_distinct_id, event: 'user_logged_in', properties: { login_method: 'api' })
         render json: auth_response(user, device)
       else
-        render json: { error: "Pseudo ou mot de passe incorrect" }, status: :unauthorized
+        render json: { error: "E-mail ou mot de passe incorrect" }, status: :unauthorized
       end
     end
 
     def register
-      user = User.new(nickname: params[:nickname], password: params[:password], password_confirmation: params[:password_confirmation], role: :beta)
+      user = User.new(
+        email: params[:email],
+        nickname: params[:nickname].presence,
+        password: params[:password],
+        password_confirmation: params[:password_confirmation],
+        role: :beta
+      )
       if user.save
         device = link_device_to_user(user)
+        PostHog.identify(distinct_id: user.posthog_distinct_id, properties: user.posthog_properties)
+        PostHog.capture(distinct_id: user.posthog_distinct_id, event: 'user_registered', properties: { signup_method: 'api' })
         render json: auth_response(user, device), status: :created
       else
         render json: { error: user.errors.full_messages.join(", ") }, status: :unprocessable_entity
@@ -28,6 +38,10 @@ module Api
       token = request.headers["Authorization"]&.sub(/\ABearer\s+/i, "") || request.headers["X-Device-Token"]
       device_id = request.headers["X-Device-Id"] || params[:device_id]
       if token.present? && device_id.present?
+        device = Device.find_by(device_id: device_id, auth_token: token)
+        if device&.user
+          PostHog.capture(distinct_id: device.user.posthog_distinct_id, event: 'user_logged_out')
+        end
         Device.where(device_id: device_id, auth_token: token).update_all(auth_token: nil)
       end
       head :no_content
@@ -54,7 +68,7 @@ module Api
       web_url = device ? "#{request.base_url}/w/#{user.nickname}" : nil
       {
         token: device&.auth_token,
-        user: { nickname: user.nickname },
+        user: { nickname: user.nickname, email: user.email },
         device_id: device&.device_id,
         web_url: web_url
       }

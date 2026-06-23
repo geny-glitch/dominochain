@@ -3,6 +3,7 @@
 FactoryBot.define do
   factory :user do
     sequence(:nickname) { |n| "user#{n}" }
+    sequence(:email) { |n| "user#{n}@dominochain.app" }
     password { "password123" }
     password_confirmation { "password123" }
     role { :beta }

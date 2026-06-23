@@ -3,7 +3,7 @@ es:
     catalog:
       sources:
         puryfi:
-          label: "Purify (PuryFi)"
+          label: "PuryFi"
           subtitle: "Extensión de navegador · detecciones por etiqueta"
           events: "Evento: detection.label"
         cigarettes:
@@ -42,8 +42,8 @@ es:
       chaster_title: "Chaster"
       pill_active: "activo"
       pill_on: "sí"
-      pill_off: "off"
-      pill_live: "live"
+      pill_off: "desactivado"
+      pill_live: "en vivo"
       pill_none: "ninguno"
       pill_in_progress: "en curso"
       pill_no_lock: "sin candado"
@@ -105,7 +105,7 @@ es:
       invite_footer: "También puedes enviar una solicitud desde la app introduciendo el apodo del boss."
     puryfi:
       page_title: "Fuentes · Purify — %{nickname}"
-      heading: "Purify (PuryFi)"
+      heading: "PuryFi"
       lead: "Extensión de navegador — fuente de eventos (detecciones) que añade tiempo en Chaster según tus segundos por etiqueta."
       install_title: "Instalación (WebSocket)"
       drawer_url_title: "URL del plugin PuryFi"
@@ -113,7 +113,12 @@ es:
         one: "Configurado · %{count} evento"
         other: "Configurado · %{count} eventos"
       status_waiting: "Esperando el 1er evento"
-      ws_hint: "Pega esta URL en tu plugin PuryFi (WebSocket). Identifica tu cuenta — no hace falta token API BG en el servidor Fly."
+      ws_hint: |-
+        En Plugin settings:
+        En "Register new plugin", elige "Websocket".
+        Pega esta URL y luego pulsa "+".
+        Debería aparecer una nueva fila con estado "Open".
+        El estado puede tardar unos segundos en actualizarse.
       copy_url: "Copiar URL"
       regenerate: "Regenerar URL"
       regenerate_confirm: "Los plugins que usen la URL antigua dejarán de funcionar. ¿Continuar?"
@@ -124,6 +129,33 @@ es:
       seconds_hint: "Segundos añadidos al candado por etiqueta detectada (0 = ignorada)."
       submit: "Guardar PuryFi"
       seconds_unit: "s"
+      labels:
+        bellye: "Vientre"
+        bellyc: "Vientre (cubierto)"
+        butte: "Nalgas"
+        buttc: "Nalgas (cubiertas)"
+        ftite: "Pecho femenino"
+        ftitc: "Pecho femenino (cubierto)"
+        fgene: "Genitales femeninos"
+        fgenc: "Genitales femeninos (cubiertos)"
+        mgenc: "Genitales masculinos (cubiertos)"
+        mgene: "Genitales masculinos"
+        mtite: "Pecho masculino"
+        mtitc: "Pecho masculino (cubierto)"
+        fface: "Rostro femenino"
+        mface: "Rostro masculino"
+        feetc: "Pie (cubierto)"
+        feete: "Pie"
+        apitc: "Axila (cubierta)"
+        apite: "Axila"
+        anusc: "Ano (cubierto)"
+        anuse: "Ano"
+        eye: "Ojo"
+        mouth: "Boca"
+        nipplec: "Pezon (cubierto)"
+        nipple: "Pezon"
+        handc: "Mano (cubierta)"
+        hand: "Mano"
     signed_duration:
       hours_mins: "%{sign}%{h}h %{m}min"
       mins_secs: "%{sign}%{m}min %{s}s"

@@ -21,7 +21,7 @@ Things you may want to cover:
 
 * Deployment instructions
 
-## Console Rails sur Fly.io
+## Rails Console on Fly.io
 
 ```bash
 fly ssh console --pty -C "/rails/bin/rails console"

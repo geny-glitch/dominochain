@@ -40,6 +40,10 @@ class StravaController < ApplicationController
       strava_athlete_id: tokens[:athlete_id]
     )
 
+    PostHog.capture(
+      distinct_id: current_user.posthog_distinct_id,
+      event: 'strava_connected'
+    )
     redirect_to beta_sources_strava_path, notice: t("flash.strava.connected")
   rescue StravaService::Error => e
     redirect_to beta_sources_strava_path, alert: t("flash.strava.error", message: e.message)
@@ -47,11 +51,17 @@ class StravaController < ApplicationController
 
   def disconnect
     StravaService.new(current_user).disconnect!
+    PostHog.capture(distinct_id: current_user.posthog_distinct_id, event: 'strava_disconnected')
     redirect_to beta_sources_strava_path, notice: t("flash.strava.disconnected")
   end
 
   def create_goal
     goal = current_user.strava_goals.create!(goal_params)
+    PostHog.capture(
+      distinct_id: current_user.posthog_distinct_id,
+      event: 'strava_goal_created',
+      properties: { goal_name: goal.name, window_days: goal.window_days }
+    )
     redirect_to beta_sources_strava_path, notice: t("flash.strava.goal_created", name: goal.name)
   rescue ActiveRecord::RecordInvalid => e
     redirect_to beta_sources_strava_path, alert: e.record.errors.full_messages.join(", ")
@@ -67,11 +77,21 @@ class StravaController < ApplicationController
   def destroy_goal
     name = @goal.name
     @goal.destroy!
+    PostHog.capture(
+      distinct_id: current_user.posthog_distinct_id,
+      event: 'strava_goal_destroyed',
+      properties: { goal_name: name }
+    )
     redirect_to beta_sources_strava_path, notice: t("flash.strava.goal_destroyed", name:)
   end
 
   def check_goal
     check = StravaGoalEvaluator.new(current_user).evaluate_goal!(@goal, due_at: check_due_at)
+    PostHog.capture(
+      distinct_id: current_user.posthog_distinct_id,
+      event: 'strava_goal_checked',
+      properties: { goal_name: @goal.name, status: check.status, valid_count: check.valid_count, required_count: check.required_count }
+    )
     redirect_to beta_sources_strava_path, notice: strava_check_notice(check)
   rescue StravaService::Unauthorized
     redirect_to beta_sources_strava_path, alert: t("flash.strava.not_connected")

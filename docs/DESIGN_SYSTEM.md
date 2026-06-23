@@ -1,40 +1,45 @@
 # Domino Chain Design System
 
-Design system unifié pour le web (Rails) et l'app Android. Inspiré de Blade Runner 2049 — sombre, atmosphérique, accents ambre et teal.
+Unified design system for web (Rails) and Android app. Inspired by Blade Runner 2049 — dark, atmospheric, with a primary magenta accent and blue/violet secondary accents.
 
 ---
 
-## Couleurs
+## Colors
 
 | Token | Hex | Usage |
 |-------|-----|-------|
-| `bg` | `#0a0a0b` | Fond principal |
-| `surface` | `#121214` | Cartes, blocs |
-| `surface-elevated` | `#1a1a1d` | Surfaces surélevées |
-| `border` | `#2a2a2e` | Bordures |
-| `text` | `#e8e6e3` | Texte principal |
-| `text-muted` | `#8a8784` | Labels, texte secondaire |
-| `amber` | `#e9a03f` | Primary / CTA |
-| `amber-dim` | `#b87d2e` | Hover primary |
-| `teal` | `#2ec4b6` | Liens, accents |
-| `teal-dim` | `#1e9d92` | Hover teal |
-| `error` | `#c75c5c` | Erreurs |
-| `success` | `#4a9d7a` | Succès |
+| `bg` | `#0e0e12` | Main background |
+| `surface` | `#16161b` | Cards, blocks |
+| `surface-elevated` | `#1e1e24` | Elevated surfaces |
+| `border` | `#34343b` | Borders |
+| `text` | `#fbfaf7` | Primary text |
+| `text-muted` | `#c4c1bc` | Labels, secondary text |
+| `text-dim` | `#8e8b87` | Tertiary text |
+| `magenta` | `#ec4899` | Primary / CTA |
+| `magenta-dim` | `#db2777` | Primary hover |
+| `blue` | `#22d3ee` | Links, accents, focus |
+| `blue-dim` | `#06b6d4` | Blue hover |
+| `violet` | `#a855f7` | Secondary / premium |
+| `violet-dim` | `#9333ea` | Secondary hover |
+| `error` | `#ef6b6b` | Errors |
+| `success` | `#22d3ee` | Success (aligned with blue accent) |
+
+> Compatibility: `amber` and `teal` remain available as legacy aliases to `magenta` and `blue`.
 
 ---
 
-## Typographie
+## Typography
 
-- **Font** : Inter (web), Roboto (Android)
-- **Title** : 1.75rem / 28sp, weight 300, letter-spacing 0.08em
-- **Subtitle** : 0.8rem / 13sp
-- **Body** : 0.875rem / 14sp
-- **Small** : 0.75rem / 12sp
-- **Tiny** : 0.65rem / 11sp
+- **Font** : Space Grotesk (web), Roboto (Android)
+- **Title** : 1.75rem / 28sp, web weight 500 (`-0.015em`), Android weight 300 (`0.08em`)
+- **Subtitle** : 0.875rem / 14sp
+- **Body** : 0.95rem / 15sp
+- **Small** : 0.825rem / 13sp
+- **Tiny** : 0.72rem / 11sp
 
 ---
 
-## Espacement (dp / rem)
+## Spacing (dp / rem)
 
 | Token | Web | Android |
 |-------|-----|---------|
@@ -48,7 +53,7 @@ Design system unifié pour le web (Rails) et l'app Android. Inspiré de Blade Ru
 
 ---
 
-## Rayons
+## Radius
 
 - **sm** : 4dp
 - **md** : 6dp
@@ -56,56 +61,73 @@ Design system unifié pour le web (Rails) et l'app Android. Inspiré de Blade Ru
 
 ---
 
-## Composants
+## Components
 
-### Boutons
+### Buttons / CTA
 
 | Variant | Usage |
 |---------|-------|
-| `primary` | Action principale (amber) |
-| `secondary` | Action secondaire (surface-elevated) |
-| `ghost` | Liens, actions tertiaires (teal) |
-| `sm` | Petit format |
+| `primary` | Primary action (magenta) |
+| `secondary` | Secondary action (magenta outline) |
+| `ghost` | Links, tertiary actions (blue) |
+| `sm` | Small format |
 
-### Formulaires
+### Forms
 
-- **Form group** : `ds-form-group` — espacement entre champs
-- **Label** : `ds-form-label` — small, text-muted
-- **Input** : `ds-input` — fond bg, bordure border, focus teal
-- **Textarea** : `ds-input ds-textarea`
-- **Hint** : `ds-form-hint` — texte d'aide
+- **Form group**: `ds-form-group` — spacing between fields
+- **Label**: `ds-form-label` — small, text-muted
+- **Input**: `ds-input` — `bg` background, `border` border, blue focus
+- **Textarea**: `ds-input ds-textarea`
+- **Hint**: `ds-form-hint` — helper text
 
 ### Sections
 
-- **Section title** : `ds-section-title` — uppercase, letter-spacing, text-muted
+- **Section title**: `ds-section-title` — uppercase, letter-spacing, text-muted
 
 ### Flash / Feedback
 
-- **Success** : fond vert translucide, bordure success
-- **Error** : fond rouge translucide, bordure error
+- **Success**: translucent accent background, success border
+- **Error**: translucent red background, error border
+
+### Badges / Status / Toggles
+
+- **Badge / status**: `ds-badge`, `ds-status` + variants (`--on`, `--off`, `--pending`, `--error`, `--locked`, `--live`)
+- **Toggle**: `ds-toggle` and variants (`ds-toggle--on`) or DS components embedding it (`ds-beta-catalog-toggle-*`)
+- **Activation color**: toggles, checkboxes, radios, and equivalent controls use `magenta`.
+- **Clickable icons**: icon-only actions (for example settings, refresh, open/share/copy) use primary `magenta`.
+- **Rule**: keep DS variants; do not restyle locally per page.
 
 ---
 
-## Structure de page (web)
+## Page Structure (Web)
 
 ```erb
 <div class="ds-page">
   <div class="ds-container">
     <header class="ds-header">...</header>
-    <!-- contenu -->
+    <!-- content -->
   </div>
 </div>
 ```
 
-## Structure d'écran (Android)
+## Screen Structure (Android)
 
-- `ds_page` : layout racine avec padding
-- `ds_section` : bloc avec espacement
-- `ds_card` : carte avec surface, bordure, radius
+- `ds_page`: root layout with padding
+- `ds_section`: block with spacing
+- `ds_card`: card with surface, border, radius
+
+## Logos / Favicons / App icons
+
+- **Web favicons** : `backend/public/favicons/` (`favicon-16/32/48/64/96`, `icon-192`, `icon-512`, `apple-touch-icon`, `site.webmanifest`)
+- **Web mark SVG** : `backend/public/icon.svg`
+- **Android launcher** : `android/app/src/main/res/mipmap-*/ic_launcher*.png` + `mipmap-anydpi-v26/ic_launcher*.xml`
+- **Android notification** : `android/app/src/main/res/drawable/ic_notification.xml` (+ fallback PNGs `drawable-*/ic_notification.png`)
+- **Launcher background** : `android/app/src/main/res/values/ic_launcher_background.xml`
 
 ---
 
-## Références
+## References
 
 - **Web** : `backend/app/assets/stylesheets/design_system/`
 - **Android** : `android/app/src/main/res/values/` (colors, themes, styles, dimens)
+- **Brand assets** : `docs/BRAND_DOMINO_CHAIN.md`

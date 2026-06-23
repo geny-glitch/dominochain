@@ -3,6 +3,14 @@
 class PasswordsController < Devise::PasswordsController
   layout :layout_for_devise
 
+  # Devise sets a generic notice in flash after reset instructions are sent.
+  # We suppress it so auth pages don't show a raw message above the layout.
+  def create
+    super do
+      flash.delete(:notice)
+    end
+  end
+
   private
 
   def layout_for_devise

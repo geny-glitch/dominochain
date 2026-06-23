@@ -34,14 +34,23 @@ Rails.application.configure do
   # Store uploaded files on the local file system (see config/storage.yml for options).
   config.active_storage.service = :local
 
-  # Don't care if the mailer can't send.
-  config.action_mailer.raise_delivery_errors = false
+  # Send transactional emails through Resend when RESEND_API_KEY is present.
+  config.action_mailer.delivery_method = ENV["RESEND_API_KEY"].present? ? :resend : :test
+  config.action_mailer.raise_delivery_errors = true
 
   # Disable caching for Action Mailer templates even if Action Controller
   # caching is enabled.
   config.action_mailer.perform_caching = false
 
-  config.action_mailer.default_url_options = { host: "localhost", port: 3000 }
+  app_public_base_url = ENV.fetch("APP_PUBLIC_BASE_URL", "http://localhost:3000")
+  app_public_uri = URI.parse(app_public_base_url)
+  config.action_mailer.default_url_options = {
+    host: app_public_uri.host,
+    protocol: app_public_uri.scheme
+  }.tap do |options|
+    options[:port] = app_public_uri.port unless [80, 443].include?(app_public_uri.port)
+  end
+  config.action_mailer.asset_host = app_public_base_url
 
   # Print deprecation notices to the Rails logger.
   config.active_support.deprecation = :log

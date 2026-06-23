@@ -6,12 +6,17 @@
 
 <section class="ds-beta-section ds-beta-section--first">
   <div class="ds-beta-control-card">
-    <%= form_for(resource, as: resource_name, url: registration_path(resource_name), html: { method: :put, class: "ds-form" }) do |f| %>
+    <%= form_for(resource, as: resource_name, url: user_registration_path, html: { method: :put, class: "ds-form" }) do |f| %>
       <%= render "devise/shared/error_messages", resource: resource %>
 
       <div class="ds-form-group">
+        <%= f.label :nickname, t("devise.registrations.nickname"), class: "ds-form-label" %>
+        <%= f.text_field :nickname, autofocus: true, autocomplete: "nickname", class: "ds-input" %>
+      </div>
+
+      <div class="ds-form-group">
         <%= f.label :email, t("devise.registrations.email"), class: "ds-form-label" %>
-        <%= f.email_field :email, autofocus: true, autocomplete: "email", class: "ds-input" %>
+        <%= f.email_field :email, autocomplete: "email", class: "ds-input" %>
       </div>
 
       <% if devise_mapping.confirmable? && resource.pending_reconfirmation? %>
@@ -52,8 +57,105 @@
   <div class="ds-beta-control-card">
     <p class="ds-beta-control-hint"><%= t("devise.registrations.unhappy") %></p>
     <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem;">
-      <%= button_to t("devise.registrations.cancel_account"), registration_path(resource_name), method: :delete, form: { data: { turbo_confirm: t("devise.registrations.cancel_confirm") } }, class: "ds-btn ds-btn--secondary" %>
+      <button type="button" class="ds-btn ds-btn--secondary" data-delete-account-open>
+        <%= t("devise.registrations.cancel_account") %>
+      </button>
       <%= link_to t("devise.registrations.back"), :back, class: "ds-btn ds-btn--ghost" %>
     </div>
   </div>
 </section>
+
+<dialog class="ds-dialog" data-delete-account-dialog aria-labelledby="delete-account-title">
+  <button type="button" class="ds-dialog-close-btn" data-delete-account-close aria-label="<%= t("devise.registrations.delete_modal_close") %>">✕</button>
+  <div class="ds-dialog-content">
+    <h3 id="delete-account-title" class="ds-section-title"><%= t("devise.registrations.delete_modal_title") %></h3>
+    <p class="ds-dialog-text"><%= t("devise.registrations.delete_modal_warning") %></p>
+    <p class="ds-dialog-text"><%= t("devise.registrations.delete_modal_warning_data") %></p>
+    <p class="ds-dialog-text"><%= t("devise.registrations.delete_modal_instruction") %></p>
+
+    <div class="ds-form-group">
+      <label class="ds-form-label" for="delete-account-confirmation-label"><%= t("devise.registrations.delete_modal_label_to_copy") %></label>
+      <input id="delete-account-confirmation-label" type="text" class="ds-input" value="<%= t("devise.registrations.delete_confirmation_label") %>" readonly>
+    </div>
+
+    <div class="ds-dialog-actions" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+      <button type="button" class="ds-btn ds-btn--ghost ds-btn--sm" data-delete-account-copy>
+        <%= t("devise.registrations.delete_modal_copy_label") %>
+      </button>
+    </div>
+
+    <%= form_with url: user_registration_path, method: :delete, scope: :account_deletion, class: "ds-form", data: { delete_account_form: true } do |f| %>
+      <div class="ds-form-group">
+        <%= f.label :confirmation_label, t("devise.registrations.delete_modal_paste_label"), class: "ds-form-label" %>
+        <%= f.text_field :confirmation_label,
+                         class: "ds-input",
+                         autocomplete: "off",
+                         data: { delete_account_input: true },
+                         placeholder: t("devise.registrations.delete_modal_placeholder") %>
+      </div>
+
+      <div class="ds-dialog-actions" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+        <button type="button" class="ds-btn ds-btn--ghost" data-delete-account-close>
+          <%= t("devise.registrations.delete_modal_cancel") %>
+        </button>
+        <%= f.submit t("devise.registrations.delete_modal_confirm"), class: "ds-btn ds-btn--secondary", data: { delete_account_submit: true }, disabled: true %>
+      </div>
+    <% end %>
+  </div>
+</dialog>
+
+<script>
+  (function() {
+    var openButton = document.querySelector("[data-delete-account-open]");
+    var dialog = document.querySelector("[data-delete-account-dialog]");
+    if (!openButton || !dialog || typeof dialog.showModal !== "function") return;
+
+    var expectedLabel = "<%= j(t("devise.registrations.delete_confirmation_label")) %>";
+    var input = dialog.querySelector("[data-delete-account-input]");
+    var submit = dialog.querySelector("[data-delete-account-submit]");
+    var copyButton = dialog.querySelector("[data-delete-account-copy]");
+    var labelField = dialog.querySelector("#delete-account-confirmation-label");
+
+    function syncSubmitState() {
+      if (!input || !submit) return;
+      submit.disabled = input.value.trim() !== expectedLabel;
+    }
+
+    function closeDialog() {
+      dialog.close();
+      if (input) input.value = "";
+      syncSubmitState();
+    }
+
+    openButton.addEventListener("click", function() {
+      dialog.showModal();
+      if (input) input.focus();
+      syncSubmitState();
+    });
+
+    dialog.querySelectorAll("[data-delete-account-close]").forEach(function(button) {
+      button.addEventListener("click", closeDialog);
+    });
+
+    dialog.addEventListener("cancel", function(event) {
+      event.preventDefault();
+      closeDialog();
+    });
+
+    if (input) {
+      input.addEventListener("input", syncSubmitState);
+    }
+
+    if (copyButton && labelField) {
+      copyButton.addEventListener("click", function() {
+        navigator.clipboard.writeText(labelField.value).then(function() {
+          var original = copyButton.textContent;
+          copyButton.textContent = "<%= j(t("js.copied")) %>";
+          setTimeout(function() {
+            copyButton.textContent = original;
+          }, 1500);
+        });
+      });
+    }
+  })();
+</script>

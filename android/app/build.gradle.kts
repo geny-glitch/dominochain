@@ -34,8 +34,8 @@ val localPropertiesFile = rootProject.file("local.properties")
 if (localPropertiesFile.exists()) {
     localProperties.load(localPropertiesFile.inputStream())
 }
-val apiBaseUrlProd = localProperties.getProperty("API_BASE_URL_PROD", "https://bg-backend.fly.dev")
-val apiBaseUrlStaging = localProperties.getProperty("API_BASE_URL_STAGING", "https://bg-backend-staging.fly.dev")
+val apiBaseUrlProd = localProperties.getProperty("API_BASE_URL_PROD", "https://dominochain.app")
+val apiBaseUrlStaging = localProperties.getProperty("API_BASE_URL_STAGING", "https://beta.dominochain.app")
 val sentryDsnProd = localProperties.getProperty("SENTRY_DSN_PROD", localProperties.getProperty("SENTRY_DSN", ""))
 val sentryDsnStaging = localProperties.getProperty("SENTRY_DSN_STAGING", sentryDsnProd)
 

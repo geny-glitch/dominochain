@@ -4,10 +4,32 @@ class RegistrationsController < Devise::RegistrationsController
   before_action :configure_sign_up_params, only: [:create]
   layout :layout_for_registration
 
+  def create
+    super do |user|
+      if user.persisted?
+        PostHog.identify(distinct_id: user.posthog_distinct_id, properties: user.posthog_properties)
+        PostHog.capture(distinct_id: user.posthog_distinct_id, event: 'user_registered', properties: { signup_method: 'web' })
+      end
+    end
+  end
+
+  def destroy
+    expected_label = I18n.t("devise.registrations.delete_confirmation_label").to_s
+    submitted_label = params.dig(:account_deletion, :confirmation_label).to_s.strip
+
+    if submitted_label != expected_label
+      flash[:alert] = I18n.t("devise.registrations.delete_confirmation_mismatch")
+      redirect_to edit_user_registration_path
+      return
+    end
+
+    super
+  end
+
   protected
 
   def configure_sign_up_params
-    devise_parameter_sanitizer.permit(:sign_up, keys: [:nickname, :role])
+    devise_parameter_sanitizer.permit(:sign_up, keys: [:email, :role])
   end
 
   def build_resource(hash = {})

@@ -3,7 +3,26 @@
 require "rails_helper"
 
 RSpec.describe BetaEvents::ActionExecutor do
-  let(:beta) { create(:user, :beta) }
+  let(:beta) do
+    create(:user, :beta).tap do |user|
+      user.update!(
+        beta_ui_prefs: {
+          "catalog_visibility" => {
+            "sources" => { "cigarettes" => true },
+            "actions" => { "chaster" => true }
+          }
+        }
+      )
+    end
+  end
+  let(:feature_flag_overrides) { {} }
+  let(:feature_flag_evaluations) do
+    Struct.new(:overrides) do
+      def enabled?(key)
+        overrides.fetch(key.to_s, true)
+      end
+    end.new(feature_flag_overrides)
+  end
   let(:event) do
     BetaEvents::DomainEvent.new(
       beta: beta,
@@ -16,6 +35,7 @@ RSpec.describe BetaEvents::ActionExecutor do
   let(:action_instance) { instance_double(BetaEvents::Actions::ChasterAddTimeFromEvent, call: true) }
 
   before do
+    stub_beta_catalog_feature_flags(feature_flag_overrides)
     allow(BetaEvents::ConsequenceRegistry).to receive(:actions_for).with(event).and_return([ BetaEvents::Actions::ChasterAddTimeFromEvent ])
     allow(BetaEvents::Actions::ChasterAddTimeFromEvent).to receive(:new).and_return(action_instance)
   end
@@ -43,5 +63,16 @@ RSpec.describe BetaEvents::ActionExecutor do
 
     expect(result).to eq(:ok)
     expect(action_instance).to have_received(:call).once
+  end
+
+  context "when source feature flag is disabled" do
+    let(:feature_flag_overrides) { { "beta_source_cigarettes" => false } }
+
+    it "returns source_disabled and does not execute actions" do
+      result = described_class.new(beta: beta, event: event).call
+
+      expect(result).to eq(:source_disabled)
+      expect(action_instance).not_to have_received(:call)
+    end
   end
 end

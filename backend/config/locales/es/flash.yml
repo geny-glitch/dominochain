@@ -8,6 +8,8 @@ es:
       control_not_found: "Control no encontrado."
       access_denied: "Acceso denegado."
       settings_saved: "Lista guardada. Imágenes recuperadas."
+      feature_flags_cache_invalidated: "Cache de feature flags invalidada."
+      feature_flags_cache_invalidation_failed: "No se pudo invalidar la cache de feature flags."
     chaster:
       oauth_invalid_state: "Conexión Chaster cancelada (estado no válido)."
       oauth_error: "Chaster: %{message}"
@@ -39,10 +41,9 @@ es:
       goal_not_found: "Objetivo Strava no encontrado."
     beta:
       catalog_unknown: "Fuente/acción desconocida."
-      catalog_updated: "%{label} ahora está %{visibility} en el catálogo."
-      catalog_visibility:
-        shown: "visible"
-        hidden: "oculto"
+      catalog_unavailable: "Esta fuente o acción no está disponible en tu cuenta."
+      catalog_activated: "%{label} ha sido activado."
+      catalog_deactivated: "%{label} ha sido desactivado."
       catalog_element: "Elemento"
       game_times_saved: "Tiempos de juego guardados (Quiz %{quiz}s/pt, Snake %{snake}s, Dino %{dino}s, Tetris %{tetris}s/línea)."
       backdoor_enabled: "Página Backdoor activada. URL (no se muestra en el escaparate): %{url}"

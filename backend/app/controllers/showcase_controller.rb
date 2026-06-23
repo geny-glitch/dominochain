@@ -118,6 +118,11 @@ class ShowcaseController < ApplicationController
     )
 
     if result.ok
+      PostHog.capture(
+        distinct_id: @beta.posthog_distinct_id,
+        event: 'showcase_game_completed',
+        properties: { game_kind: game_kind, seconds_added: seconds, beta_nickname: @beta.nickname }
+      )
       return render(json: result.json_body, status: :ok) if result.format_json
       return redirect_to(showcase_path(@beta.nickname), notice: t("flash.showcase.thanks"))
     end
@@ -173,7 +178,7 @@ class ShowcaseController < ApplicationController
 
     if first_name_submission && game_session.player_name.present?
       catalog = BetaCatalog.new(@beta)
-      if catalog.source_enabled_for_event_source?(:showcase_game) && catalog.action_enabled?("pishock")
+      if @beta.pishock_enabled? && catalog.source_enabled_for_event_source?(:showcase_game) && catalog.action_enabled?("pishock")
         intensity = ShowcaseGameConfig.pishock_intensity(game_session.score, @beta)
         duration = game_session.game_type == "tetris" ? [ game_session.score, 15 ].min.clamp(1, 15) : 1
         PishockShockJob.perform_later(@beta.id, intensity, duration)

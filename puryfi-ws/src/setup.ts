@@ -12,8 +12,8 @@ async function main() {
   });
 
   const backend =
-    (await rl.question("URL backend BG (ex: https://bg-backend.fly.dev): ")).trim() ||
-    "https://bg-backend.fly.dev";
+    (await rl.question("URL backend BG (ex: https://dominochain.app): ")).trim() ||
+    "https://dominochain.app";
   rl.close();
 
   const root = path.join(__dirname, "..");

@@ -83,6 +83,7 @@ get "beta/actions/pishock", to: "beta_dashboard#actions_pishock", as: :beta_acti
   get "admin/settings", to: "admin#settings", as: :admin_settings
   patch "admin/settings", to: "admin#update_settings", as: :admin_update_settings
   post "admin/controls/:control_id/release", to: "admin#release_control", as: :admin_release_control
+  post "admin/feature_flags_cache/invalidate", to: "admin#invalidate_feature_flags_cache", as: :admin_invalidate_feature_flags_cache
   get "admin/review", to: "admin#review", as: :admin_review
   get "admin/review/images", to: "admin#review_images", as: :admin_review_images
   post "admin/review/images/:id/like", to: "admin#review_like", as: :admin_review_like

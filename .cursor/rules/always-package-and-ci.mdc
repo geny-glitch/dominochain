@@ -1,21 +1,20 @@
----
-description: Toujours proposer packaging + CI/CD pour tout nouveau composant déployable
+description: Always include packaging and CI/CD for new deployable components
 alwaysApply: true
 ---
 
-# Packaging & CI/CD automatiques
+# Automatic Packaging & CI/CD
 
-Ce projet est maintenu par un solo dev sans temps pour les builds manuels.
+This project is maintained by a solo developer without time for manual builds.
 
-Pour tout nouveau service, plugin, ou composant déployable :
+For every new deployable service, plugin, or component:
 
-- Inclure un `Dockerfile` ou script de build dans `package.json`
-- Créer un workflow GitHub Actions dans `.github/workflows/`
-- Si c'est une extension navigateur : ajouter auto-update (`update_url` + `updates.json`)
-- Si c'est un service Node.js/Rails : ajouter `fly.toml` + job deploy dans la CI
-- Déclencher la CI sur push `main` filtré sur le dossier du composant
+- Include a `Dockerfile` or a build script in `package.json`
+- Create a GitHub Actions workflow in `.github/workflows/`
+- If it is a browser extension: add auto-update (`update_url` + `updates.json`)
+- If it is a Node.js/Rails service: add `fly.toml` + a deploy job in CI
+- Trigger CI on `main` pushes filtered to the component directory
 
-Patterns existants à suivre :
+Existing patterns to follow:
 
 - Fly.io deploy → `.github/workflows/fly-deploy.yml`
 - Android release → `.github/workflows/android-ota-release.yml`

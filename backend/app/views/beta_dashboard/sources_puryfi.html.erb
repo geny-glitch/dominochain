@@ -1,7 +1,19 @@
 <% content_for :title, t("beta.puryfi.page_title", nickname: current_user.nickname) %>
 
 <header class="ds-beta-page-head">
-  <h1 class="ds-beta-page-title"><%= t("beta.puryfi.heading") %></h1>
+  <div class="ds-beta-page-head-row">
+    <h1 class="ds-beta-page-title"><%= t("beta.puryfi.heading") %></h1>
+    <%= form_with url: beta_catalog_visibility_path, method: :patch, local: true, class: "ds-beta-catalog-toggle-form" do %>
+      <%= hidden_field_tag :kind, "source" %>
+      <%= hidden_field_tag :item_id, "puryfi" %>
+      <%= hidden_field_tag :enabled, "0" %>
+      <%= hidden_field_tag :return_to, request.fullpath %>
+      <label class="ds-form-label ds-beta-catalog-toggle" title="<%= t("beta.settings.toggle_aria", label: t("beta.catalog.sources.puryfi.label")) %>">
+        <%= check_box_tag :enabled, "1", beta_catalog_source_enabled?("puryfi"), id: "catalog_source_puryfi_page", class: "ds-beta-catalog-toggle-input", onchange: "this.form.requestSubmit();", "aria-label": t("beta.settings.toggle_aria", label: t("beta.catalog.sources.puryfi.label")) %>
+        <span class="ds-beta-catalog-toggle-switch" aria-hidden="true"></span>
+      </label>
+    <% end %>
+  </div>
   <p class="ds-beta-page-lead">
     <%= t("beta.puryfi.lead") %>
   </p>

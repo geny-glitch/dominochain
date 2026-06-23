@@ -29,6 +29,7 @@ class PishockService
   # Returns :ok, :skipped, :auth_error, :device_error, or :error
   def shock(intensity:, duration:)
     return :skipped unless @user.pishock_enabled?
+    return :skipped unless BetaCatalog.new(@user).action_enabled?("pishock")
     return :skipped unless credentials_complete?
 
     intensity = intensity.to_i.clamp(1, 100)

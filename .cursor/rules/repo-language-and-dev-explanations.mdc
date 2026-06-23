@@ -1,0 +1,24 @@
+---
+description: Keep repository language in English and separate user UI copy from developer explanations
+alwaysApply: true
+---
+
+# Repository Language and Developer Explanations
+
+The repository language is English. French must not be used in code comments, rule files, docs updates, commit messages drafted by the agent, or technical implementation notes.
+
+## Code Comments and Strings
+
+- Write all code comments in English only.
+- Keep user-facing UI text in the product language expected by end users.
+- Do not rewrite existing product copy unless explicitly requested.
+
+## Explaining Implementation to Developers
+
+- Never use user-facing labels/buttons/messages to explain where or how a feature is implemented.
+- When describing implementation details, reference developer-facing identifiers only:
+  - file paths
+  - class/function/component names
+  - route/action names
+  - token/style identifiers
+- If disambiguation is needed, describe UI location structurally (for example: "profile settings page header action"), not by quoting visible labels.

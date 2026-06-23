@@ -20,6 +20,11 @@ module Api
 
       apply_chaster_time(entry)
       entry.save!
+      PostHog.capture(
+        distinct_id: current_user.posthog_distinct_id,
+        event: 'cigarette_entry_logged',
+        properties: { count: entry.count, chaster_applied: entry.chaster_applied }
+      )
 
       render json: tracker_payload(latest_entry: entry), status: :created
     rescue ActiveRecord::RecordInvalid => e

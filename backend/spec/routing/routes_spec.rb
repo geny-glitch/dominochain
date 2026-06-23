@@ -23,6 +23,13 @@ RSpec.describe "Route mapping", type: :routing do
     expect(patch: "/admin/settings").to route_to(controller: "admin", action: "update_settings")
   end
 
+  it "maps POST /admin/feature_flags_cache/invalidate to admin#invalidate_feature_flags_cache" do
+    expect(post: "/admin/feature_flags_cache/invalidate").to route_to(
+      controller: "admin",
+      action: "invalidate_feature_flags_cache"
+    )
+  end
+
   it "maps PATCH /beta/pishock to beta_dashboard#update_pishock" do
     expect(patch: "/beta/pishock").to route_to(controller: "beta_dashboard", action: "update_pishock")
   end

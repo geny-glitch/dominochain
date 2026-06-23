@@ -1,4 +1,4 @@
-<% content_for :title, "Dino Run" %>
+<% content_for :title, t("showcase.dino.title") %>
 <% content_for :body_class, "dino-page-active" %>
 <% content_for :head do %>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
@@ -7,52 +7,66 @@
 <div class="dino-page" data-nickname="<%= @beta.nickname %>" data-dino-seconds-per-obstacle="<%= @dino_seconds_per_obstacle %>">
   <div class="dino-container">
     <div id="dino-intro" class="dino-intro">
-      <h1 class="dino-title">Dino Run</h1>
-      <p class="dino-hint">Espace, flèche haut ou tap pour sauter. Chaque cactus franchi ajoute le même temps qu'une pomme Snake.</p>
-      <button type="button" class="dino-btn dino-btn--start" id="dino-start">Jouer</button>
+      <h1 class="dino-title"><%= t("showcase.dino.title") %></h1>
+      <p class="dino-hint"><%= t("showcase.dino.intro_hint") %></p>
+      <button type="button" class="dino-btn dino-btn--start" id="dino-start"><%= t("showcase.dino.play") %></button>
     </div>
 
     <div id="dino-game" class="dino-game" style="display: none;">
-      <div class="dino-score">Temps: <span id="dino-score">0 seconde</span></div>
+      <div class="dino-score"><%= t("showcase.dino.time_added") %>: <span id="dino-score">0 <%= t("showcase.dino.second_singular") %></span></div>
       <canvas id="dino-canvas" class="dino-canvas" width="720" height="260"></canvas>
-      <p class="dino-tap-hint">Tape sur le terrain pour sauter</p>
+      <p class="dino-tap-hint"><%= t("showcase.dino.tap_hint") %></p>
     </div>
 
     <div id="dino-gameover" class="dino-gameover" style="display: none;">
-      <h2 class="dino-gameover-title">Game Over</h2>
-      <p class="dino-gameover-score">Temps: <span id="dino-final-score">0 seconde</span></p>
+      <h2 class="dino-gameover-title"><%= t("showcase.dino.game_over") %></h2>
+      <p class="dino-gameover-score"><%= t("showcase.dino.time_added") %>: <span id="dino-final-score">0 <%= t("showcase.dino.second_singular") %></span></p>
       <div class="dino-leaderboard-form" id="dino-lb-name-block">
-        <p id="dino-lb-auto-registered" class="dino-lb-registered" hidden>Score enregistré pour <strong id="dino-lb-registered-name"></strong></p>
+        <p id="dino-lb-auto-registered" class="dino-lb-registered" hidden><%= t("showcase.dino.score_saved_prefix") %> <strong id="dino-lb-registered-name"></strong></p>
         <div id="dino-lb-name-fields" class="dino-lb-name-fields">
-          <input type="text" id="dino-player-name" class="dino-input" placeholder="Ton pseudo pour le leaderboard" maxlength="30" />
-          <button type="button" class="dino-btn dino-btn--submit" id="dino-save-name">Enregistrer au leaderboard</button>
+          <input type="text" id="dino-player-name" class="dino-input" placeholder="<%= t("showcase.dino.name_placeholder") %>" maxlength="30" />
+          <button type="button" class="dino-btn dino-btn--submit" id="dino-save-name"><%= t("showcase.dino.save_leaderboard") %></button>
         </div>
       </div>
-      <button type="button" class="dino-btn dino-btn--ghost" id="dino-replay">Rejouer</button>
+      <button type="button" class="dino-btn dino-btn--ghost" id="dino-replay"><%= t("showcase.dino.replay") %></button>
     </div>
   </div>
 
   <section class="dino-leaderboard" id="dino-leaderboard">
-    <h3 class="dino-leaderboard-title">Leaderboard</h3>
+    <h3 class="dino-leaderboard-title"><%= t("showcase.dino.leaderboard") %></h3>
     <div class="dino-leaderboard-toolbar">
-      <label class="dino-leaderboard-toolbar-label" for="dino-lb-sort">Trier</label>
-      <select id="dino-lb-sort" class="dino-input dino-leaderboard-sort" aria-label="Trier le classement">
-        <option value="score">Plus de temps ajouté</option>
-        <option value="recent">Plus récent</option>
+      <label class="dino-leaderboard-toolbar-label" for="dino-lb-sort"><%= t("showcase.dino.sort_label") %></label>
+      <select id="dino-lb-sort" class="dino-input dino-leaderboard-sort" aria-label="<%= t("showcase.dino.sort_aria") %>">
+        <option value="score"><%= t("showcase.dino.sort_score") %></option>
+        <option value="recent"><%= t("showcase.dino.sort_recent") %></option>
       </select>
     </div>
     <div id="dino-leaderboard-list" class="dino-leaderboard-list">
       <p class="dino-leaderboard-empty"><%= t("showcase.snake.empty") %></p>
     </div>
     <div id="dino-leaderboard-pagination" class="dino-leaderboard-pagination" hidden>
-      <button type="button" class="dino-btn dino-btn--ghost dino-btn--sm" id="dino-lb-prev" disabled>Précédent</button>
+      <button type="button" class="dino-btn dino-btn--ghost dino-btn--sm" id="dino-lb-prev" disabled><%= t("showcase.snake.prev") %></button>
       <span class="dino-leaderboard-page-label" id="dino-lb-page-label"></span>
-      <button type="button" class="dino-btn dino-btn--ghost dino-btn--sm" id="dino-lb-next">Suivant</button>
+      <button type="button" class="dino-btn dino-btn--ghost dino-btn--sm" id="dino-lb-next"><%= t("showcase.snake.next") %></button>
     </div>
   </section>
 </div>
 
-<div id="dino-i18n-strings" data-lb-empty="<%= j t("showcase.snake.empty") %>" data-page-of="<%= j t("showcase.snake.page_of") %>" hidden></div>
+<script type="application/json" id="dino-i18n-json"><%= raw json_escape({
+  lb_empty: t("showcase.snake.empty"),
+  page_of: t("showcase.snake.page_of"),
+  table_aria: t("showcase.dino.table_aria"),
+  col_player: t("showcase.snake.col_player"),
+  col_time_added: t("showcase.dino.col_time_added"),
+  col_date: t("showcase.snake.col_date"),
+  col_time: t("showcase.snake.col_time"),
+  minute_short: t("showcase.dino.minute_short"),
+  second_short: t("showcase.dino.second_short"),
+  minute_singular: t("showcase.dino.minute_singular"),
+  minute_plural: t("showcase.dino.minute_plural"),
+  second_singular: t("showcase.dino.second_singular"),
+  second_plural: t("showcase.dino.second_plural")
+}.to_json) %></script>
 
 <% if flash[:notice] %>
   <div class="dino-flash dino-flash--success"><%= flash[:notice] %></div>
@@ -65,10 +79,10 @@
 (function() {
   const pageEl = document.querySelector(".dino-page");
   const nickname = pageEl.dataset.nickname;
-  const dinoI18nEl = document.getElementById("dino-i18n-strings");
-  const dinoI18n = dinoI18nEl ? dinoI18nEl.dataset : {};
-  const LB_EMPTY_HTML = "<p class=\"dino-leaderboard-empty\">" + (dinoI18n.lbEmpty || "") + "</p>";
-  const PAGE_OF_TPL = dinoI18n.pageOf || "";
+  const dinoI18nEl = document.getElementById("dino-i18n-json");
+  const dinoI18n = dinoI18nEl ? JSON.parse(dinoI18nEl.textContent) : {};
+  const LB_EMPTY_HTML = "<p class=\"dino-leaderboard-empty\">" + (dinoI18n.lb_empty || "") + "</p>";
+  const PAGE_OF_TPL = dinoI18n.page_of || "";
   const secondsPerObstacle = Math.max(1, parseInt(pageEl.dataset.dinoSecondsPerObstacle || "300", 10) || 300);
   const LEADERBOARD_PER_PAGE = 10;
   const urls = {
@@ -162,15 +176,16 @@
   function formatPlayedTime(iso) {
     const d = parsePlayedAt(iso);
     if (!d) return "—";
-    return d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+    const locale = document.documentElement.lang || navigator.language || "en";
+    return d.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
   }
   function formatAddedTime(points) {
     const totalSeconds = Math.max(0, (parseInt(points || 0, 10) || 0) * secondsPerObstacle);
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
-    if (minutes > 0 && seconds > 0) return minutes + " min " + seconds + " s";
-    if (minutes > 0) return minutes + " minute" + (minutes > 1 ? "s" : "");
-    return seconds + " seconde" + (seconds > 1 ? "s" : "");
+    if (minutes > 0 && seconds > 0) return minutes + " " + (dinoI18n.minute_short || "min") + " " + seconds + " " + (dinoI18n.second_short || "s");
+    if (minutes > 0) return minutes + " " + (minutes > 1 ? (dinoI18n.minute_plural || "minutes") : (dinoI18n.minute_singular || "minute"));
+    return seconds + " " + (seconds > 1 ? (dinoI18n.second_plural || "seconds") : (dinoI18n.second_singular || "second"));
   }
   function buildLeaderboardUrl() {
     const p = new URLSearchParams({
@@ -235,13 +250,13 @@
       if (Array.isArray(entries) && entries.length > 0) {
         leaderboardList.innerHTML =
           '<div class="dino-leaderboard-table-wrap">' +
-          '<table class="dino-leaderboard-table" aria-label="Classement Dino">' +
+          `<table class="dino-leaderboard-table" aria-label="${escapeHtml(dinoI18n.table_aria || "Leaderboard")}">` +
           "<thead><tr>" +
           '<th scope="col" class="dino-leaderboard-th dino-leaderboard-th--num">#</th>' +
-          '<th scope="col" class="dino-leaderboard-th">Joueur</th>' +
-          '<th scope="col" class="dino-leaderboard-th dino-leaderboard-th--score">Temps</th>' +
-          '<th scope="col" class="dino-leaderboard-th dino-leaderboard-th--meta">Date</th>' +
-          '<th scope="col" class="dino-leaderboard-th dino-leaderboard-th--meta">Heure</th>' +
+          `<th scope="col" class="dino-leaderboard-th">${escapeHtml(dinoI18n.col_player || "Player")}</th>` +
+          `<th scope="col" class="dino-leaderboard-th dino-leaderboard-th--score">${escapeHtml(dinoI18n.col_time_added || "Time added")}</th>` +
+          `<th scope="col" class="dino-leaderboard-th dino-leaderboard-th--meta">${escapeHtml(dinoI18n.col_date || "Date")}</th>` +
+          `<th scope="col" class="dino-leaderboard-th dino-leaderboard-th--meta">${escapeHtml(dinoI18n.col_time || "Time")}</th>` +
           "</tr></thead><tbody>" +
           entries.map(s =>
             "<tr>" +

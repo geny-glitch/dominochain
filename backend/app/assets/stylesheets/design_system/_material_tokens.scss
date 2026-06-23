@@ -3,10 +3,13 @@
 @import "variables";
 
 :root {
-  --md-sys-color-primary: #{$ds-amber};
-  --md-sys-color-on-primary: #{$ds-bg};
-  --md-sys-color-primary-container: #{rgba($ds-amber, 0.22)};
-  --md-sys-color-on-primary-container: #{$ds-amber};
+  --md-sys-color-primary: #{$ds-magenta};
+  --md-sys-color-on-primary: #ffffff;
+  --md-sys-color-primary-container: #{rgba($ds-magenta, 0.22)};
+  --md-sys-color-on-primary-container: #{$ds-magenta};
+  --md-sys-color-secondary: #{$ds-violet};
+  --md-sys-color-secondary-container: #{rgba($ds-violet, 0.22)};
+  --md-sys-color-tertiary: #{$ds-blue};
 
   --md-sys-color-surface: #{$ds-bg};
   --md-sys-color-on-surface: #{$ds-text};
@@ -21,6 +24,6 @@
   --md-sys-elevation-2: 0 1px 4px rgba(0, 0, 0, 0.45);
 
   --md-sys-shape-corner-extra-small: #{$ds-radius-sm};
-  --md-sys-shape-corner-medium: 12px;
+  --md-sys-shape-corner-medium: #{$ds-radius-md};
   --md-sys-shape-corner-large: 16px;
 }

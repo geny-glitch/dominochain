@@ -1,11 +1,49 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- White silhouette on transparent; simplified “D” for status bar. -->
+<!--
+  Android vector drawable — white silhouette notification icon.
+  24dp baseline. Tint via app:tint or android:tint at the call site.
+  Keep this as the *single source*; the PNGs in drawable-*dpi/ are the rasterized fallbacks.
+-->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
     android:viewportWidth="24"
-    android:viewportHeight="24">
-    <path
-        android:fillColor="#FFFFFFFF"
-        android:pathData="M6,4 L6,20 L9,20 C14.5,20 18,16.5 18,12 C18,7.5 14.5,4 9,4 Z" />
+    android:viewportHeight="24"
+    android:tint="?attr/colorControlNormal">
+  <!-- 12 radial dominoes around a 12,12 center, omitting two for the "chain break" -->
+  <group android:pivotX="12" android:pivotY="12">
+    <path android:fillColor="#FFFFFF" android:pathData="M11.1,2.6 L12.9,2.6 A0.9,0.9 0 0 1 13.8,3.5 L13.8,7.5 A0.9,0.9 0 0 1 12.9,8.4 L11.1,8.4 A0.9,0.9 0 0 1 10.2,7.5 L10.2,3.5 A0.9,0.9 0 0 1 11.1,2.6 Z"/>
+  </group>
+  <group android:pivotX="12" android:pivotY="12" android:rotation="30">
+    <path android:fillColor="#FFFFFF" android:pathData="M11.1,2.6 L12.9,2.6 A0.9,0.9 0 0 1 13.8,3.5 L13.8,7.5 A0.9,0.9 0 0 1 12.9,8.4 L11.1,8.4 A0.9,0.9 0 0 1 10.2,7.5 L10.2,3.5 A0.9,0.9 0 0 1 11.1,2.6 Z"/>
+  </group>
+  <group android:pivotX="12" android:pivotY="12" android:rotation="60">
+    <path android:fillColor="#FFFFFF" android:pathData="M11.1,2.6 L12.9,2.6 A0.9,0.9 0 0 1 13.8,3.5 L13.8,7.5 A0.9,0.9 0 0 1 12.9,8.4 L11.1,8.4 A0.9,0.9 0 0 1 10.2,7.5 L10.2,3.5 A0.9,0.9 0 0 1 11.1,2.6 Z"/>
+  </group>
+  <group android:pivotX="12" android:pivotY="12" android:rotation="90">
+    <path android:fillColor="#FFFFFF" android:pathData="M11.1,2.6 L12.9,2.6 A0.9,0.9 0 0 1 13.8,3.5 L13.8,7.5 A0.9,0.9 0 0 1 12.9,8.4 L11.1,8.4 A0.9,0.9 0 0 1 10.2,7.5 L10.2,3.5 A0.9,0.9 0 0 1 11.1,2.6 Z"/>
+  </group>
+  <group android:pivotX="12" android:pivotY="12" android:rotation="120">
+    <path android:fillColor="#FFFFFF" android:pathData="M11.1,2.6 L12.9,2.6 A0.9,0.9 0 0 1 13.8,3.5 L13.8,7.5 A0.9,0.9 0 0 1 12.9,8.4 L11.1,8.4 A0.9,0.9 0 0 1 10.2,7.5 L10.2,3.5 A0.9,0.9 0 0 1 11.1,2.6 Z"/>
+  </group>
+  <group android:pivotX="12" android:pivotY="12" android:rotation="210">
+    <path android:fillColor="#FFFFFF" android:pathData="M11.1,2.6 L12.9,2.6 A0.9,0.9 0 0 1 13.8,3.5 L13.8,7.5 A0.9,0.9 0 0 1 12.9,8.4 L11.1,8.4 A0.9,0.9 0 0 1 10.2,7.5 L10.2,3.5 A0.9,0.9 0 0 1 11.1,2.6 Z"/>
+  </group>
+  <group android:pivotX="12" android:pivotY="12" android:rotation="240">
+    <path android:fillColor="#FFFFFF" android:pathData="M11.1,2.6 L12.9,2.6 A0.9,0.9 0 0 1 13.8,3.5 L13.8,7.5 A0.9,0.9 0 0 1 12.9,8.4 L11.1,8.4 A0.9,0.9 0 0 1 10.2,7.5 L10.2,3.5 A0.9,0.9 0 0 1 11.1,2.6 Z"/>
+  </group>
+  <group android:pivotX="12" android:pivotY="12" android:rotation="270">
+    <path android:fillColor="#FFFFFF" android:pathData="M11.1,2.6 L12.9,2.6 A0.9,0.9 0 0 1 13.8,3.5 L13.8,7.5 A0.9,0.9 0 0 1 12.9,8.4 L11.1,8.4 A0.9,0.9 0 0 1 10.2,7.5 L10.2,3.5 A0.9,0.9 0 0 1 11.1,2.6 Z"/>
+  </group>
+  <group android:pivotX="12" android:pivotY="12" android:rotation="300">
+    <path android:fillColor="#FFFFFF" android:pathData="M11.1,2.6 L12.9,2.6 A0.9,0.9 0 0 1 13.8,3.5 L13.8,7.5 A0.9,0.9 0 0 1 12.9,8.4 L11.1,8.4 A0.9,0.9 0 0 1 10.2,7.5 L10.2,3.5 A0.9,0.9 0 0 1 11.1,2.6 Z"/>
+  </group>
+  <group android:pivotX="12" android:pivotY="12" android:rotation="330">
+    <path android:fillColor="#FFFFFF" android:pathData="M11.1,2.6 L12.9,2.6 A0.9,0.9 0 0 1 13.8,3.5 L13.8,7.5 A0.9,0.9 0 0 1 12.9,8.4 L11.1,8.4 A0.9,0.9 0 0 1 10.2,7.5 L10.2,3.5 A0.9,0.9 0 0 1 11.1,2.6 Z"/>
+  </group>
+  <!-- tipping domino in the gap -->
+  <group android:pivotX="12" android:pivotY="12" android:rotation="170">
+    <group android:pivotX="12" android:pivotY="5" android:rotation="-45">
+      <path android:fillColor="#FFFFFF" android:pathData="M11.1,2 L12.9,2 A0.9,0.9 0 0 1 13.8,2.9 L13.8,7.1 A0.9,0.9 0 0 1 12.9,8 L11.1,8 A0.9,0.9 0 0 1 10.2,7.1 L10.2,2.9 A0.9,0.9 0 0 1 11.1,2 Z"/>
+    </group>
+  </group>
 </vector>

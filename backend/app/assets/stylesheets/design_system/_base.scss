@@ -5,7 +5,7 @@
 :root {
   --font-brand: "Space Grotesk", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
-  --font-ui: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-ui: "Space Grotesk", system-ui, sans-serif;
 
   --ds-bg: #{$ds-bg};
   --ds-surface: #{$ds-surface};
@@ -13,12 +13,34 @@
   --ds-border: #{$ds-border};
   --ds-text: #{$ds-text};
   --ds-text-muted: #{$ds-text-muted};
+  --ds-text-dim: #{$ds-text-dim};
+  --ds-magenta: #{$ds-magenta};
+  --ds-magenta-dim: #{$ds-magenta-dim};
+  --ds-blue: #{$ds-blue};
+  --ds-blue-dim: #{$ds-blue-dim};
+  --ds-violet: #{$ds-violet};
+  --ds-violet-dim: #{$ds-violet-dim};
   --ds-amber: #{$ds-amber};
   --ds-amber-dim: #{$ds-amber-dim};
   --ds-teal: #{$ds-teal};
   --ds-teal-dim: #{$ds-teal-dim};
   --ds-error: #{$ds-error};
   --ds-success: #{$ds-success};
+  --ds-space-xs: #{$ds-space-xs};
+  --ds-space-sm: #{$ds-space-sm};
+  --ds-space-md: #{$ds-space-md};
+  --ds-space-lg: #{$ds-space-lg};
+  --ds-space-xl: #{$ds-space-xl};
+  --ds-space-2xl: #{$ds-space-2xl};
+  --ds-space-3xl: #{$ds-space-3xl};
+  --ds-radius-sm: #{$ds-radius-sm};
+  --ds-radius-md: #{$ds-radius-md};
+  --ds-radius-lg: #{$ds-radius-lg};
+  --ds-radius-xl: #{$ds-radius-xl};
+  --ds-radius-2xl: #{$ds-radius-2xl};
+  --ds-radius-pill: #{$ds-radius-pill};
+  --ds-elev-1: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --ds-elev-2: 0 1px 4px rgba(0, 0, 0, 0.45);
 }
 
 html {
@@ -37,6 +59,7 @@ body {
   font-family: var(--font-ui);
   color: $ds-text;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 .wordmark {

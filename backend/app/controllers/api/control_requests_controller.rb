@@ -23,6 +23,11 @@ module Api
 
       request.status = :pending
       request.save!
+      PostHog.capture(
+        distinct_id: beta.posthog_distinct_id,
+        event: 'control_request_sent',
+        properties: { boss_nickname: boss.nickname }
+      )
       render json: { message: "Demande envoyée à #{boss.nickname}" }, status: :created
     rescue ActiveRecord::RecordInvalid => e
       render json: { error: e.record.errors.full_messages.join(", ") }, status: :unprocessable_entity

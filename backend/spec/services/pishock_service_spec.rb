@@ -4,8 +4,17 @@ require "rails_helper"
 
 RSpec.describe PishockService do
   let(:queue) { [] }
+  let(:feature_flag_overrides) { {} }
+  let(:feature_flag_evaluations) do
+    Struct.new(:overrides) do
+      def enabled?(key)
+        overrides.fetch(key.to_s, true)
+      end
+    end.new(feature_flag_overrides)
+  end
 
   before do
+    stub_beta_catalog_feature_flags(feature_flag_overrides)
     allow(Net::HTTP).to receive(:start) do |hostname, *_args, **_kwargs, &block|
       expect(hostname).to eq("api.pishock.com")
       http = instance_double(Net::HTTP)
@@ -22,19 +31,52 @@ RSpec.describe PishockService do
     r
   end
 
+  def create_pishock_user(**attrs)
+    create(
+      :user,
+      {
+        pishock_enabled: true,
+        pishock_username: "u",
+        pishock_api_key: "k",
+        pishock_share_code: "c"
+      }.merge(attrs)
+    ).tap do |user|
+      user.update!(beta_ui_prefs: { "catalog_visibility" => { "actions" => { "pishock" => true } } })
+    end
+  end
+
   describe "#shock" do
     it "returns :skipped when disabled" do
-      user = create(:user, pishock_enabled: false, pishock_username: "u", pishock_api_key: "k", pishock_share_code: "c")
+      user = create_pishock_user(pishock_enabled: false)
       expect(described_class.new(user).shock(intensity: 5, duration: 1)).to eq(:skipped)
     end
 
+    it "returns :skipped when pishock action is disabled in catalog" do
+      user = create_pishock_user
+      user.update!(beta_ui_prefs: { "catalog_visibility" => { "actions" => { "pishock" => false } } })
+      expect(Net::HTTP).not_to receive(:start)
+
+      expect(described_class.new(user).shock(intensity: 5, duration: 1)).to eq(:skipped)
+    end
+
+    context "when pishock feature flag is disabled" do
+      let(:feature_flag_overrides) { { "beta_action_pishock" => false } }
+
+      it "returns :skipped without calling PiShock API" do
+        user = create_pishock_user
+        expect(Net::HTTP).not_to receive(:start)
+
+        expect(described_class.new(user).shock(intensity: 5, duration: 1)).to eq(:skipped)
+      end
+    end
+
     it "returns :skipped when credentials incomplete" do
-      user = create(:user, pishock_enabled: true, pishock_username: "u", pishock_api_key: "", pishock_share_code: "c")
+      user = create_pishock_user(pishock_api_key: "")
       expect(described_class.new(user).shock(intensity: 5, duration: 1)).to eq(:skipped)
     end
 
     it "returns :ok when operate succeeds (204)" do
-      user = create(:user, pishock_enabled: true, pishock_username: "u", pishock_api_key: "k", pishock_share_code: "c")
+      user = create_pishock_user
       queue << resp(200, body: [{ "Id" => 999, "ShareCode" => "c" }].to_json)
       queue << resp(204, body: "")
 
@@ -42,7 +84,7 @@ RSpec.describe PishockService do
     end
 
     it "returns :error when API body indicates failure (non-2xx operate)" do
-      user = create(:user, pishock_enabled: true, pishock_username: "u", pishock_api_key: "k", pishock_share_code: "c")
+      user = create_pishock_user
       queue << resp(200, body: [{ "Id" => 1, "ShareCode" => "c" }].to_json)
       queue << resp(503, body: "paused", success: false)
 
@@ -50,14 +92,14 @@ RSpec.describe PishockService do
     end
 
     it "maps fractional seconds to milliseconds like before" do
-      user = create(:user, pishock_enabled: true, pishock_username: "u", pishock_api_key: "k", pishock_share_code: "c")
+      user = create_pishock_user
       svc = described_class.new(user)
       expect(svc.send(:duration_to_milliseconds, 0.2)).to eq(200)
       expect(svc.send(:duration_to_milliseconds, 1)).to eq(1000)
     end
 
     it "returns :device_error on operate 404" do
-      user = create(:user, pishock_enabled: true, pishock_username: "u", pishock_api_key: "k", pishock_share_code: "c")
+      user = create_pishock_user
       queue << resp(200, body: [{ "Id" => 1, "ShareCode" => "c" }].to_json)
       queue << resp(404, body: "", success: false)
 
@@ -66,10 +108,10 @@ RSpec.describe PishockService do
   end
 
   describe ".test_connection!" do
-    let(:user) { create(:user, pishock_username: "u", pishock_api_key: "k", pishock_share_code: "c") }
+    let(:user) { create_pishock_user }
 
     it "returns :skipped when credentials incomplete" do
-      incomplete = create(:user, pishock_username: "u", pishock_api_key: "", pishock_share_code: "c")
+      incomplete = create_pishock_user(pishock_api_key: "")
       expect(described_class.test_connection!(user: incomplete)).to eq(:skipped)
     end
 

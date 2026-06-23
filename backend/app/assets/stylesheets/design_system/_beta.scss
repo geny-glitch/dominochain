@@ -27,11 +27,39 @@
   .ds-section-title {
     margin: 0;
   }
+
+  .ds-beta-control-hint {
+    margin: 0;
+  }
+}
+
+.ds-section-header--split {
+  justify-content: space-between;
+}
+
+.ds-section-header--with-action {
+  position: relative;
+  padding-right: calc(2.25rem + #{$ds-space-sm});
+}
+
+.ds-section-header-action {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
 }
 
 .ds-btn--icon {
   padding: $ds-space-sm;
   line-height: 1;
+
+  &.ds-btn--ghost {
+    color: $ds-magenta;
+
+    &:hover {
+      color: $ds-magenta-dim;
+    }
+  }
 
   svg {
     display: block;
@@ -39,7 +67,7 @@
 }
 
 .ds-icon-refresh {
-  color: $ds-teal;
+  color: $ds-magenta;
 }
 
 .ds-beta-control-card {
@@ -48,6 +76,10 @@
   border: 1px solid var(--md-sys-color-outline, #{$ds-border});
   border-radius: var(--md-sys-shape-corner-large, #{$ds-radius-lg});
   box-shadow: var(--md-sys-elevation-1);
+}
+
+.ds-beta-control-card + .ds-beta-control-card {
+  margin-top: $ds-space-lg;
 }
 
 .ds-beta-control-card--invite {
@@ -180,12 +212,19 @@
 }
 
 .ds-beta-sidebar {
+  display: flex;
+  flex-direction: column;
+  align-self: flex-start;
   width: 16rem;
   flex-shrink: 0;
+  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
   padding: $ds-space-lg $ds-space-md;
   background: $ds-surface;
   border-right: 1px solid $ds-border;
-  position: relative;
+  position: sticky;
+  top: 0;
   z-index: 20;
 }
 
@@ -262,7 +301,27 @@
 .ds-beta-sidebar-nav {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
   gap: $ds-space-xs;
+}
+
+.ds-beta-sidebar-footer {
+  margin-top: $ds-space-md;
+  padding-top: $ds-space-lg;
+}
+
+.ds-beta-sidebar-footer form {
+  margin: 0;
+}
+
+.ds-beta-sidebar-signout {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
 }
 
 .ds-beta-nav-heading {
@@ -333,7 +392,6 @@
     box-shadow: 0 0.75rem 2rem rgba(0, 0, 0, 0.22);
     transform: translateX(-105%);
     transition: transform 0.2s ease;
-    overflow-y: auto;
   }
 
   .ds-beta-sidebar-close {
@@ -419,21 +477,34 @@
 }
 
 .ds-beta-page-head {
-  margin-bottom: $ds-space-xl;
+  margin-bottom: $ds-space-lg;
+}
+
+.ds-beta-page-head-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $ds-space-sm;
+}
+
+.ds-beta-page-head-row .ds-beta-page-title {
+  margin-bottom: 0;
 }
 
 .ds-beta-page-title {
-  margin: 0 0 $ds-space-sm;
+  margin: 0 0 $ds-space-xs;
+  font-family: $ds-font-brand;
   font-size: 1.75rem;
-  font-weight: 300;
-  letter-spacing: $ds-title-spacing;
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
   color: $ds-text;
 }
 
 .ds-beta-page-lead {
   margin: 0;
   max-width: 42rem;
-  font-size: 1rem;
+  font-size: $ds-body-size;
   line-height: 1.5;
   color: $ds-text-muted;
 }
@@ -547,7 +618,8 @@
 }
 
 .ds-beta-catalog-toggle-input:checked + .ds-beta-catalog-toggle-switch {
-  background: rgba($ds-teal, 0.6);
+  background: $ds-magenta;
+  box-shadow: 0 0 12px rgba($ds-magenta, 0.45);
 }
 
 .ds-beta-catalog-toggle-input:checked + .ds-beta-catalog-toggle-switch::after {
@@ -555,7 +627,7 @@
 }
 
 .ds-beta-catalog-toggle-input:focus-visible + .ds-beta-catalog-toggle-switch {
-  outline: 2px solid rgba($ds-teal, 0.6);
+  outline: 2px solid rgba($ds-magenta, 0.6);
   outline-offset: 2px;
 }
 
@@ -679,6 +751,42 @@
   display: flex;
   justify-content: flex-end;
   margin-bottom: $ds-space-md;
+}
+
+.ds-chaster-install-drawer {
+  margin: 0;
+}
+
+.ds-chaster-install-summary {
+  list-style: none;
+  cursor: pointer;
+  padding: $ds-space-sm 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $ds-space-sm;
+}
+
+.ds-chaster-install-summary::-webkit-details-marker {
+  display: none;
+}
+
+.ds-chaster-toggle-icon {
+  display: inline-flex;
+  color: $ds-text-muted;
+  transition: transform $ds-transition;
+}
+
+.ds-chaster-install-drawer[open] .ds-chaster-toggle-icon {
+  transform: rotate(180deg);
+}
+
+.ds-chaster-install-body {
+  padding-top: $ds-space-xs;
+}
+
+.ds-chaster-card-action {
+  margin-top: $ds-space-sm;
 }
 
 .ds-puryfi-label-grid {
@@ -826,6 +934,10 @@
   color: $ds-teal;
 }
 
+.ds-puryfi-ws-hint {
+  white-space: pre-line;
+}
+
 .ds-puryfi-install-actions {
   margin-top: $ds-space-sm;
   display: flex;
@@ -862,6 +974,88 @@
   &:hover {
     color: $ds-teal-dim;
   }
+}
+
+.ds-pishock-form {
+  margin-top: $ds-space-md;
+}
+
+.ds-pishock-install-test {
+  margin-top: $ds-space-md;
+}
+
+.ds-pishock-intensity-hint {
+  margin-top: $ds-space-xs;
+}
+
+.ds-showcase-form {
+  margin-top: $ds-space-md;
+}
+
+.ds-showcase-games-hint {
+  margin-bottom: $ds-space-md;
+}
+
+.ds-showcase-backdoor-hint {
+  margin-top: $ds-space-md;
+}
+
+.ds-showcase-availability-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: $ds-space-sm;
+  margin-top: $ds-space-xs;
+}
+
+.ds-showcase-availability-option {
+  margin: 0;
+}
+
+.ds-strava-inline-action {
+  margin-top: $ds-space-sm;
+}
+
+.ds-strava-inline-action-lg {
+  margin-top: $ds-space-md;
+}
+
+.ds-strava-goal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $ds-space-xs;
+  margin-top: $ds-space-md;
+}
+
+.ds-strava-install-drawer {
+  margin: 0;
+}
+
+.ds-strava-install-summary {
+  list-style: none;
+  cursor: pointer;
+  padding: $ds-space-sm 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $ds-space-sm;
+}
+
+.ds-strava-install-summary::-webkit-details-marker {
+  display: none;
+}
+
+.ds-strava-toggle-icon {
+  display: inline-flex;
+  color: $ds-text-muted;
+  transition: transform $ds-transition;
+}
+
+.ds-strava-install-drawer[open] .ds-strava-toggle-icon {
+  transform: rotate(180deg);
+}
+
+.ds-strava-install-body {
+  padding-top: $ds-space-xs;
 }
 
 .ds-beta-task-back {

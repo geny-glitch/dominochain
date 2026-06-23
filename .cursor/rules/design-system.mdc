@@ -1,45 +1,58 @@
----
-description: Toujours utiliser le design system Domino Chain pour les pages et vues
+description: Always use the Domino Chain design system for web pages and views
 globs: backend/app/views/**/*.erb
 alwaysApply: false
 ---
 
 # Design System Domino Chain
 
-Toujours utiliser les classes du design system pour les pages web. Ne pas écrire de HTML/CSS custom sans passer par le design system.
+Always use design system classes for web pages. Do not write custom HTML/CSS outside the design system.
 
-## Structure de page
+## Page Structure
 
-### Pages classiques (hors espace beta)
+### Standard Pages (outside beta area)
 
 ```erb
 <div class="ds-page">
   <div class="ds-container">
     <header class="ds-header">
       <%= image_tag "domino-chain-logo.png", alt: "Domino Chain", class: "ds-header-logo", width: 48, height: 48 %>
-      <h1 class="ds-title">Titre</h1>
-      <p class="ds-subtitle">Sous-titre</p>
+      <h1 class="ds-title">Title</h1>
+      <p class="ds-subtitle">Subtitle</p>
     </header>
-    <!-- contenu -->
+    <!-- content -->
   </div>
 </div>
 ```
 
-### Espace beta (layout `beta_dashboard`)
+### Beta Area (layout `beta_dashboard`)
 
-- Le layout fournit la **sidebar** (`ds-beta-sidebar`, `ds-beta-nav-link`, etc.) et la zone principale (`ds-beta-main-inner`).
-- Chaque vue beta : `content_for :title`, un **en-tête de page** optionnel (`ds-beta-page-head`, `ds-beta-page-title`, `ds-beta-page-lead`), puis du contenu avec les composants ci-dessous (`ds-beta-section`, `ds-beta-control-card`, formulaires DS).
-- Ne pas envelopper tout le `yield` dans `ds-page` / `ds-container` : ces classes sont pour les pages hors layout beta.
+- The layout provides the **sidebar** (`ds-beta-sidebar`, `ds-beta-nav-link`, etc.) and the main area (`ds-beta-main-inner`).
+- Each beta view should include: `content_for :title`, an optional **page header** (`ds-beta-page-head`, `ds-beta-page-title`, `ds-beta-page-lead`), then content using DS components below (`ds-beta-section`, `ds-beta-control-card`, DS forms).
+- Do not wrap the full `yield` in `ds-page` / `ds-container`: those classes are for non-beta layout pages.
 
-## Composants
+## Components
 
-- **Boutons** : `ds-btn ds-btn--primary` | `ds-btn--secondary` | `ds-btn--ghost` (+ `ds-btn--sm` pour petit)
-- **Formulaires** : `ds-form`, `ds-form-group`, `ds-form-label`, `ds-input`, `ds-textarea`
-- **Flash** : `ds-flash ds-flash--success` | `ds-flash--error`
-- **Sections** : `ds-section-title` pour les titres de section
-- **Liens** : utiliser `ds-btn` pour les liens d’action
+- **Buttons**: `ds-btn ds-btn--primary` | `ds-btn--secondary` | `ds-btn--ghost` (+ `ds-btn--sm` for small buttons)
+- **Forms**: `ds-form`, `ds-form-group`, `ds-form-label`, `ds-input`, `ds-textarea`
+- **Flash**: `ds-flash ds-flash--success` | `ds-flash--error`
+- **Sections**: `ds-section-title` for section titles
+- **Badges / statuses**: `ds-badge`, `ds-status` + variants (`--on`, `--off`, `--pending`, `--error`, `--locked`)
+- **Toggles**: use `ds-toggle` (or DS components that embed it, e.g. `ds-beta-catalog-toggle-*`)
+- **Action links**: use `ds-btn` rather than custom styles
 
-## Référence
+## Colors / Tokens
 
-- Spec unifiée : `docs/DESIGN_SYSTEM.md`
-- Styles : `backend/app/assets/stylesheets/design_system/`
+- Current palette: `magenta` (primary CTA + secondary outline + toggles/check/radio), `blue` (accent, links, focus), `violet` (special states), `error`.
+- Legacy aliases `amber`/`teal` remain allowed for compatibility, but do not introduce new names outside DS tokens.
+- Always consume DS variables/tokens, never hardcode hex values in views/feature SCSS.
+
+## Web Logos / Favicons
+
+- The layout must reference assets from `backend/public/favicons/` + `backend/public/icon.svg`.
+- Do not reintroduce icon/favicon files outside these paths without coordinated branding doc updates.
+
+## References
+
+- Unified spec: `docs/DESIGN_SYSTEM.md`
+- Brand / icons: `docs/BRAND_DOMINO_CHAIN.md`
+- Styles: `backend/app/assets/stylesheets/design_system/`

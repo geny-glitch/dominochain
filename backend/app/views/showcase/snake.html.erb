@@ -70,20 +70,17 @@
   <div class="snake-flash snake-flash--error"><%= flash[:alert] %></div>
 <% end %>
 
-<%= json_script(
-  {
-    seconds_foot: t("showcase.snake.seconds_foot", seconds: "__S__"),
-    empty: t("showcase.snake.empty"),
-    page_of: t("showcase.snake.page_of"),
-    table_aria: t("showcase.snake.table_aria"),
-    col_rank: t("showcase.snake.col_rank"),
-    col_player: t("showcase.snake.col_player"),
-    col_score: t("showcase.snake.col_score"),
-    col_date: t("showcase.snake.col_date"),
-    col_time: t("showcase.snake.col_time")
-  },
-  "snake-i18n-json"
-) %>
+<script type="application/json" id="snake-i18n-json"><%= raw json_escape({
+  seconds_foot: t("showcase.snake.seconds_foot", seconds: "__S__"),
+  empty: t("showcase.snake.empty"),
+  page_of: t("showcase.snake.page_of"),
+  table_aria: t("showcase.snake.table_aria"),
+  col_rank: t("showcase.snake.col_rank"),
+  col_player: t("showcase.snake.col_player"),
+  col_score: t("showcase.snake.col_score"),
+  col_date: t("showcase.snake.col_date"),
+  col_time: t("showcase.snake.col_time")
+}.to_json) %></script>
 
 <script>
 (function() {

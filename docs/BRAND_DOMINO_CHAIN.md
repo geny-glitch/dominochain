@@ -4,12 +4,12 @@ Single source for icons and wordmark references across Web + Android.
 
 ## Master
 
-- **Feuille complète** (Gemini / keynote avec grille, variantes de taille, etc.) → extraction automatique du glyphe uniquement :
+- **Full sheet** (Gemini / Keynote with grid, size variants, etc.) → automatic extraction of the glyph only:
   1. `python3 scripts/extract_domino_chain_mark.py --input <full-sheet.png> --output backend/app/assets/images/domino-chain-mark-extracted.png`
   2. `scripts/regenerate_domino_chain_assets.sh` (recalcule `domino-chain-logo.png`, `backend/public/icon*.png`, favicon, foreground Android).
-- Le script détecte les pixels **cyan / violet** du logo, prend la **plus grande composante connexe** (= le bloc principal au milieu), puis crop avec padding — sans avoir à découper à la main.
-- **Référence extraite** commitée : `backend/app/assets/images/domino-chain-mark-extracted.png` (PNG serré sur le « D »).
-- Vector favicon / SVG tab icon : `backend/public/icon.svg` (approximation vectorielle simplifiée du même motif pour favicon SVG).
+- The script detects **cyan / violet** logo pixels, keeps the **largest connected component** (= the main center block), then crops with padding — without manual trimming.
+- **Extracted reference** committed: `backend/app/assets/images/domino-chain-mark-extracted.png` (tight PNG around the "D").
+- Vector favicon / SVG tab icon: `backend/public/icon.svg` (simplified vector approximation of the same motif for SVG favicon).
 
 ## Web (`backend/public/`)
 
@@ -20,6 +20,7 @@ Single source for icons and wordmark references across Web + Android.
 | `icon.png` | 512×512 — PWA, `apple-touch-icon`. |
 | `icon-192.png` | PWA install / manifest. |
 | `icon-maskable.png` | 512×512 — `purpose: maskable`, content padded ~80% safe zone. |
+| `favicons/` | Complete favicon pack (`16/32/48/64/96`, `icon-192`, `icon-512`, `apple-touch-icon`, `site.webmanifest`). |
 
 Manifest: `backend/app/views/pwa/manifest.json.erb`.  
 Layout links: `backend/app/views/layouts/application.html.erb`.
@@ -32,10 +33,12 @@ Layout links: `backend/app/views/layouts/application.html.erb`.
 
 | Resource | Use |
 |-----------|-----|
-| `drawable-nodpi/ic_launcher_foreground_art.png` | Adaptive icon foreground (432×432 bitmap, centered). |
-| `drawable/ic_launcher_foreground.xml` | Wraps foreground bitmap for `@mipmap/ic_launcher`. |
-| `drawable/ic_launcher_background.xml` | Circular `ds_bg` backdrop. |
-| `drawable/ic_notification.xml` | Monochrome white simplified “D” for status bar / notifications. |
+| `mipmap-*/ic_launcher.png` + `ic_launcher_round.png` | Launcher raster assets per density. |
+| `mipmap-*/ic_launcher_foreground.png` | Adaptive icon foreground raster per density. |
+| `mipmap-anydpi-v26/ic_launcher.xml` | Adaptive icon declaration (includes monochrome). |
+| `values/ic_launcher_background.xml` | Adaptive icon background color. |
+| `drawable/ic_notification.xml` | Notification icon vector source. |
+| `drawable-*/ic_notification.png` | Notification raster fallbacks per density. |
 
 Staging no longer overrides the launcher foreground so dev/prod share the same Domino Chain artwork.
 

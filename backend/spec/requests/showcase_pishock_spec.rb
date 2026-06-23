@@ -9,6 +9,28 @@ RSpec.describe "Showcase PiShock hooks", type: :request do
     create(:user, :beta, nickname: "pibeta", pishock_enabled: true,
       pishock_username: "u", pishock_share_code: "c", pishock_api_key: "k")
   end
+  let(:feature_flag_overrides) { {} }
+  let(:feature_flag_evaluations) do
+    Struct.new(:overrides) do
+      def enabled?(key)
+        overrides.fetch(key.to_s, true)
+      end
+    end.new(feature_flag_overrides)
+  end
+
+  before do
+    beta.update!(
+      showcase_snake_enabled: true,
+      showcase_tetris_enabled: true,
+      beta_ui_prefs: {
+        "catalog_visibility" => {
+          "sources" => { "showcase" => true },
+          "actions" => { "chaster" => true, "pishock" => true }
+        }
+      }
+    )
+    stub_beta_catalog_feature_flags(feature_flag_overrides)
+  end
 
   describe "POST /showcase/:nickname/add_time" do
     it "enqueues PishockShockJob for snake" do
@@ -25,6 +47,24 @@ RSpec.describe "Showcase PiShock hooks", type: :request do
       expect do
         post showcase_add_time_path(beta.nickname), params: { game_type: "dino" }
       end.not_to have_enqueued_job(PishockShockJob)
+    end
+
+    it "does not enqueue PishockShockJob when PiShock is disabled by the user" do
+      beta.update!(pishock_enabled: false)
+
+      expect do
+        post showcase_add_time_path(beta.nickname), params: { game_type: "snake" }
+      end.not_to have_enqueued_job(PishockShockJob)
+    end
+
+    context "when pishock action feature flag is disabled" do
+      let(:feature_flag_overrides) { { "beta_action_pishock" => false } }
+
+      it "does not enqueue PishockShockJob" do
+        expect do
+          post showcase_add_time_path(beta.nickname), params: { game_type: "snake" }
+        end.not_to have_enqueued_job(PishockShockJob)
+      end
     end
 
     context "tetris line clears" do
@@ -207,6 +247,45 @@ RSpec.describe "Showcase PiShock hooks", type: :request do
           headers: { "Content-Type" => "application/json" },
           as: :json
       end.not_to have_enqueued_job(PishockShockJob)
+    end
+
+    it "does not enqueue PiShock when PiShock is disabled by the user" do
+      beta.update!(pishock_enabled: false)
+
+      expect do
+        patch showcase_update_session_path(beta.nickname, game_session.id),
+          params: { player_name: "Alice" },
+          headers: { "Content-Type" => "application/json" },
+          as: :json
+      end.not_to have_enqueued_job(PishockShockJob)
+    end
+
+    context "when feature flags disable PiShock action or Showcase source" do
+      context "with pishock action feature flag disabled" do
+        let(:feature_flag_overrides) { { "beta_action_pishock" => false } }
+
+        it "does not enqueue PiShock" do
+          expect do
+            patch showcase_update_session_path(beta.nickname, game_session.id),
+              params: { player_name: "Alice" },
+              headers: { "Content-Type" => "application/json" },
+              as: :json
+          end.not_to have_enqueued_job(PishockShockJob)
+        end
+      end
+
+      context "with showcase source feature flag disabled" do
+        let(:feature_flag_overrides) { { "beta_source_showcase" => false } }
+
+        it "does not enqueue PiShock" do
+          expect do
+            patch showcase_update_session_path(beta.nickname, game_session.id),
+              params: { player_name: "Alice" },
+              headers: { "Content-Type" => "application/json" },
+              as: :json
+          end.not_to have_enqueued_job(PishockShockJob)
+        end
+      end
     end
 
     it "does not enqueue showcase notify when only score is patched" do

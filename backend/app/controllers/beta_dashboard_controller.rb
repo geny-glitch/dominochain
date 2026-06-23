@@ -3,8 +3,21 @@
 class BetaDashboardController < ApplicationController
   layout "beta_dashboard"
 
+  CATALOG_SOURCE_ACTIONS = {
+    "sources_puryfi" => "puryfi",
+    "sources_cigarettes" => "cigarettes",
+    "sources_strava" => "strava",
+    "sources_showcase" => "showcase"
+  }.freeze
+  CATALOG_ACTION_ACTIONS = {
+    "actions_chaster" => "chaster",
+    "actions_pishock" => "pishock"
+  }.freeze
+
   before_action :authenticate_user!
   before_action :require_beta_role!
+  before_action :require_catalog_source_platform_enabled!
+  before_action :require_catalog_action_platform_enabled!
   before_action :set_task, only: [ :task, :submit_proof ]
 
   def home
@@ -46,6 +59,7 @@ class BetaDashboardController < ApplicationController
   end
 
   def update_catalog_visibility
+    redirect_target = catalog_visibility_redirect_target
     catalog = BetaCatalog.new(current_user)
     updated = catalog.update_item_visibility(
       kind: params[:kind],
@@ -55,31 +69,35 @@ class BetaDashboardController < ApplicationController
 
     unless updated
       respond_to do |format|
-        format.html { redirect_to beta_settings_path, alert: t("flash.beta.catalog_unknown") }
+        format.html { redirect_to redirect_target, alert: t("flash.beta.catalog_unknown") }
         format.json { render json: { ok: false, error: t("flash.beta.catalog_unknown") }, status: :unprocessable_entity }
       end
       return
     end
 
     label = catalog.item_label(kind: params[:kind], item_id: params[:item_id]) || t("flash.beta.catalog_element")
-    visibility_label = ActiveModel::Type::Boolean.new.cast(params[:enabled]) ? t("flash.beta.catalog_visibility.shown") : t("flash.beta.catalog_visibility.hidden")
-    message = t("flash.beta.catalog_updated", label:, visibility: visibility_label)
+    enabled = ActiveModel::Type::Boolean.new.cast(params[:enabled])
+    message = if enabled
+      t("flash.beta.catalog_activated", label:)
+    else
+      t("flash.beta.catalog_deactivated", label:)
+    end
     respond_to do |format|
-      format.html { redirect_to beta_settings_path, notice: message }
+      format.html { redirect_to redirect_target, notice: message }
       format.json do
         render json: {
           ok: true,
           message: message,
           kind: params[:kind].to_s,
           item_id: params[:item_id].to_s,
-          enabled: ActiveModel::Type::Boolean.new.cast(params[:enabled])
+          enabled: enabled
         }
       end
     end
   rescue ActiveRecord::RecordInvalid => e
     error_message = e.record.errors.full_messages.join(", ")
     respond_to do |format|
-      format.html { redirect_to beta_settings_path, alert: error_message }
+      format.html { redirect_to redirect_target, alert: error_message }
       format.json { render json: { ok: false, error: error_message }, status: :unprocessable_entity }
     end
   end
@@ -132,16 +150,15 @@ class BetaDashboardController < ApplicationController
 
   def update_pishock
     p = params.permit(:pishock_enabled, :pishock_username, :pishock_share_code, :pishock_api_key, :pishock_intensity_factor)
-    attrs = {
-      pishock_enabled: p[:pishock_enabled] == "1",
-      pishock_username: p[:pishock_username].to_s.strip.presence,
-      pishock_share_code: p[:pishock_share_code].to_s.strip.presence
-    }
+    attrs = {}
+    attrs[:pishock_enabled] = p[:pishock_enabled] == "1" if p.key?(:pishock_enabled)
+    attrs[:pishock_username] = p[:pishock_username].to_s.strip.presence if p.key?(:pishock_username)
+    attrs[:pishock_share_code] = p[:pishock_share_code].to_s.strip.presence if p.key?(:pishock_share_code)
     attrs[:pishock_api_key] = p[:pishock_api_key] if p[:pishock_api_key].present?
-    if p[:pishock_intensity_factor].present?
+    if p.key?(:pishock_intensity_factor) && p[:pishock_intensity_factor].present?
       attrs[:pishock_intensity_factor] = p[:pishock_intensity_factor].to_f.clamp(0.01, 100)
     end
-    current_user.update!(attrs)
+    current_user.update!(attrs) if attrs.any?
     redirect_to beta_actions_pishock_path, notice: t("flash.beta.pishock_saved")
   rescue ActiveRecord::RecordInvalid => e
     redirect_to beta_actions_pishock_path, alert: e.record.errors.full_messages.join(", ")
@@ -232,6 +249,22 @@ class BetaDashboardController < ApplicationController
     redirect_to dashboard_path, alert: t("flash.beta.beta_only")
   end
 
+  def require_catalog_source_platform_enabled!
+    source_id = CATALOG_SOURCE_ACTIONS[action_name]
+    return if source_id.blank?
+    return if BetaCatalog.new(current_user).source_platform_enabled?(source_id)
+
+    redirect_to beta_settings_path, alert: t("flash.beta.catalog_unavailable")
+  end
+
+  def require_catalog_action_platform_enabled!
+    action_id = CATALOG_ACTION_ACTIONS[action_name]
+    return if action_id.blank?
+    return if BetaCatalog.new(current_user).action_platform_enabled?(action_id)
+
+    redirect_to beta_settings_path, alert: t("flash.beta.catalog_unavailable")
+  end
+
   def set_task
     @task = current_user.tasks.find(params[:id])
   rescue ActiveRecord::RecordNotFound
@@ -256,5 +289,18 @@ class BetaDashboardController < ApplicationController
     start_date = 29.days.ago.to_date
     total = current_user.cigarette_entries.where(smoked_on: start_date..Date.current).sum(:count)
     (total / 30.0).round(1)
+  end
+
+  def catalog_visibility_redirect_target
+    candidate = params[:return_to].presence || request.referer
+    return beta_settings_path if candidate.blank?
+
+    uri = URI.parse(candidate)
+    path = uri.path.presence || candidate
+    return beta_settings_path unless path.start_with?("/beta/") && !path.start_with?("//")
+
+    uri.query.present? ? "#{path}?#{uri.query}" : path
+  rescue URI::InvalidURIError
+    beta_settings_path
   end
 end

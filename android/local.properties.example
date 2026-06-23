@@ -2,9 +2,10 @@
 # SDK path - Android Studio sets this automatically
 sdk.dir=/path/to/Android/sdk
 
-# API base URL (optional, defaults to https://bg-backend.fly.dev)
+# API base URL (optional, defaults to https://dominochain.app)
 # Pour backend local: API_BASE_URL=http://10.0.2.2:3000 (émulateur) ou http://VOTRE_IP:3000 (appareil physique)
-# API_BASE_URL=https://bg-backend.fly.dev
+# API_BASE_URL_PROD=https://dominochain.app
+# API_BASE_URL_STAGING=https://beta.dominochain.app
 
 # Sentry error tracking (optional, leave empty to disable)
 # Get your DSN from https://sentry.io

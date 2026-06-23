@@ -10,6 +10,7 @@ module BetaEvents
 
         game_kind = ev[:game_kind].to_s
         beta = context.beta
+        return unless beta.pishock_enabled?
 
         case game_kind
         when "snake"

@@ -164,6 +164,7 @@ class ChasterService
   end
 
   def add_time_to_lock(lock_id, seconds, source: "api", summary: nil, metadata: {})
+    ensure_chaster_action_enabled!
     ensure_valid_token!
     raise Unauthorized, "Chaster non connecté" unless @user.chaster_access_token.present?
 
@@ -189,6 +190,12 @@ class ChasterService
   end
 
   private
+
+  def ensure_chaster_action_enabled!
+    return if BetaCatalog.new(@user).action_enabled?("chaster")
+
+    raise Error, "Chaster action disabled"
+  end
 
   def record_time_event(lock_id, seconds, source:, summary:, metadata:)
     @user.chaster_time_events.create!(

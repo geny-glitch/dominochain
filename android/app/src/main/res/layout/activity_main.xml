@@ -25,6 +25,7 @@
             android:layout_height="40dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_content_copy"
+            android:tint="@color/ds_magenta"
             android:contentDescription="@string/copy"
             android:scaleType="centerInside" />
 
@@ -34,6 +35,7 @@
             android:layout_height="40dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_share"
+            android:tint="@color/ds_magenta"
             android:contentDescription="@string/share"
             android:scaleType="centerInside" />
 
@@ -59,6 +61,7 @@
             android:layout_height="40dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_open_in_new"
+            android:tint="@color/ds_magenta"
             android:contentDescription="@string/open"
             android:scaleType="centerInside" />
     </LinearLayout>
@@ -251,6 +254,7 @@
                             android:layout_height="40dp"
                             android:background="?attr/selectableItemBackgroundBorderless"
                             android:src="@drawable/ic_refresh"
+                            android:tint="@color/ds_magenta"
                             android:contentDescription="@string/refresh"
                             android:scaleType="centerInside" />
                     </LinearLayout>

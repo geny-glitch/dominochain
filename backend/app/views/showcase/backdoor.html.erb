@@ -66,15 +66,12 @@
   </div>
 </div>
 
-<%= json_script(
-  {
-    js_frozen: t("showcase.backdoor.js_frozen"),
-    js_no_active_lock: t("showcase.backdoor.js_no_active_lock"),
-    js_connect_hint: t("showcase.backdoor.js_connect_hint"),
-    js_active_lock_fallback: t("showcase.backdoor.js_active_lock_fallback")
-  },
-  "backdoor-i18n-json"
-) %>
+<script type="application/json" id="backdoor-i18n-json"><%= raw json_escape({
+  js_frozen: t("showcase.backdoor.js_frozen"),
+  js_no_active_lock: t("showcase.backdoor.js_no_active_lock"),
+  js_connect_hint: t("showcase.backdoor.js_connect_hint"),
+  js_active_lock_fallback: t("showcase.backdoor.js_active_lock_fallback")
+}.to_json) %></script>
 
 <script>
 (function() {

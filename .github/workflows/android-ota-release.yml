@@ -40,12 +40,12 @@ jobs:
         run: |
           if [ "${GITHUB_REF_NAME}" = "staging" ]; then
             echo "APK_FLAVOR=staging" >> "${GITHUB_ENV}"
-            echo "BACKEND_NOTIFY_URL=https://bg-backend-staging.fly.dev/android/version" >> "${GITHUB_ENV}"
+            echo "BACKEND_NOTIFY_URL=https://beta.dominochain.app/android/version" >> "${GITHUB_ENV}"
             echo "LATEST_TAG=latest-staging" >> "${GITHUB_ENV}"
             echo "BUILD_TAG_PREFIX=build-staging" >> "${GITHUB_ENV}"
           else
             echo "APK_FLAVOR=prod" >> "${GITHUB_ENV}"
-            echo "BACKEND_NOTIFY_URL=https://bg-backend.fly.dev/android/version" >> "${GITHUB_ENV}"
+            echo "BACKEND_NOTIFY_URL=https://dominochain.app/android/version" >> "${GITHUB_ENV}"
             echo "LATEST_TAG=latest" >> "${GITHUB_ENV}"
             echo "BUILD_TAG_PREFIX=build" >> "${GITHUB_ENV}"
           fi

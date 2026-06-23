@@ -14,7 +14,7 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <%= yield :head %>
 
     <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
@@ -55,6 +55,10 @@
           <p class="ds-beta-nav-heading"><%= t("layouts.beta_dashboard.nav.personal") %></p>
           <%= beta_nav_link t("layouts.beta_dashboard.nav.account"), beta_account_path, active: %w[account task].include?(controller.action_name) %>
         </nav>
+
+        <div class="ds-beta-sidebar-footer">
+          <%= button_to t("beta.account.sign_out"), destroy_user_session_path, method: :delete, class: "ds-beta-nav-link ds-beta-sidebar-signout" %>
+        </div>
       </aside>
       <button type="button" class="ds-beta-sidebar-overlay" data-beta-nav-close aria-label="<%= t("js.close_menu") %>"></button>
 

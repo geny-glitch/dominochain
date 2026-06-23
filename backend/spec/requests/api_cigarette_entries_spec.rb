@@ -3,9 +3,32 @@
 require "rails_helper"
 
 RSpec.describe "API cigarette entries", type: :request do
-  let(:beta) { create(:user, :beta, showcase_snake_seconds_per_fruit: 120) }
+  let(:beta) do
+    create(:user, :beta, showcase_snake_seconds_per_fruit: 120).tap do |user|
+      user.update!(
+        beta_ui_prefs: {
+          "catalog_visibility" => {
+            "sources" => { "cigarettes" => true },
+            "actions" => { "chaster" => true }
+          }
+        }
+      )
+    end
+  end
   let(:device) { create(:device, user: beta) }
   let(:headers) { { "X-Device-Id" => device.device_id, "X-Device-Token" => device.auth_token } }
+  let(:feature_flag_overrides) { {} }
+  let(:feature_flag_evaluations) do
+    Struct.new(:overrides) do
+      def enabled?(key)
+        overrides.fetch(key.to_s, true)
+      end
+    end.new(feature_flag_overrides)
+  end
+
+  before do
+    stub_beta_catalog_feature_flags(feature_flag_overrides)
+  end
 
   describe "GET /api/cigarettes" do
     it "returns today count and daily history" do
@@ -92,6 +115,21 @@ RSpec.describe "API cigarette entries", type: :request do
       json = JSON.parse(response.body)
       expect(json["entry"]["chaster_applied"]).to be false
       expect(json["entry"]["chaster_error"]).to eq("Source ou action désactivée.")
+    end
+
+    context "when cigarettes source feature flag is disabled" do
+      let(:feature_flag_overrides) { { "beta_source_cigarettes" => false } }
+
+      it "keeps the entry without applying Chaster time" do
+        post api_cigarettes_path, params: {}, headers: headers, as: :json
+
+        expect(response).to have_http_status(:created)
+        expect(service).not_to have_received(:add_time_to_lock)
+
+        json = JSON.parse(response.body)
+        expect(json["entry"]["chaster_applied"]).to be false
+        expect(json["entry"]["chaster_error"]).to eq("Source ou action désactivée.")
+      end
     end
   end
 end

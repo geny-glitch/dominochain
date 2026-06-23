@@ -2,22 +2,31 @@
 <!-- Domino Chain Design System — Blade Runner 2049 inspired -->
 <resources>
     <!-- Base -->
-    <color name="ds_bg">#0a0a0b</color>
-    <color name="ds_surface">#121214</color>
-    <color name="ds_surface_elevated">#1a1a1d</color>
-    <color name="ds_border">#2a2a2e</color>
-    <color name="ds_text">#e8e6e3</color>
-    <color name="ds_text_muted">#8a8784</color>
+    <color name="ds_bg">#0e0e12</color>
+    <color name="ds_surface">#16161b</color>
+    <color name="ds_surface_elevated">#1e1e24</color>
+    <color name="ds_border">#34343b</color>
+    <color name="ds_text">#fbfaf7</color>
+    <color name="ds_text_muted">#c4c1bc</color>
+    <color name="ds_text_dim">#8e8b87</color>
 
     <!-- Accents -->
-    <color name="ds_amber">#e9a03f</color>
-    <color name="ds_amber_dim">#b87d2e</color>
-    <color name="ds_teal">#2ec4b6</color>
-    <color name="ds_teal_dim">#1e9d92</color>
+    <color name="ds_magenta">#ec4899</color>
+    <color name="ds_magenta_dim">#db2777</color>
+    <color name="ds_blue">#22d3ee</color>
+    <color name="ds_blue_dim">#06b6d4</color>
+    <color name="ds_violet">#a855f7</color>
+    <color name="ds_violet_dim">#9333ea</color>
+
+    <!-- Legacy aliases -->
+    <color name="ds_amber">@color/ds_magenta</color>
+    <color name="ds_amber_dim">@color/ds_magenta_dim</color>
+    <color name="ds_teal">@color/ds_blue</color>
+    <color name="ds_teal_dim">@color/ds_blue_dim</color>
 
     <!-- Feedback -->
-    <color name="ds_error">#c75c5c</color>
-    <color name="ds_success">#4a9d7a</color>
+    <color name="ds_error">#ef6b6b</color>
+    <color name="ds_success">@color/ds_blue</color>
 
     <!-- Legacy (theme compatibility) -->
     <color name="primary">@color/ds_amber</color>

@@ -1,0 +1,21 @@
+---
+description: Keep all Markdown documentation in English
+globs: "**/*.md"
+alwaysApply: false
+---
+
+# Markdown Documentation Language
+
+All Markdown files in this repository must be written in English, including:
+
+- `README.md` files
+- `GLOSSAIRE.md` and glossary-like docs
+- Files under `docs/`
+- Internal Markdown notes and technical references
+
+## Rules
+
+- Do not write French content in Markdown documentation.
+- Preserve proper names, product names, and third-party brand names as-is.
+- If a file mixes French and English, normalize it to English in the same change.
+- Keep user-facing copy in product UI files independent from documentation language decisions.

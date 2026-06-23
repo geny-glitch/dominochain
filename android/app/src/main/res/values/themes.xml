@@ -8,7 +8,9 @@
         <item name="android:windowLightStatusBar">false</item>
         <item name="colorPrimary">@color/ds_amber</item>
         <item name="colorPrimaryVariant">@color/ds_amber_dim</item>
-        <item name="colorOnPrimary">@color/ds_bg</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">@color/ds_magenta</item>
+        <item name="colorOnSecondary">@color/white</item>
         <item name="colorSurface">@color/ds_surface</item>
         <item name="colorOnSurface">@color/ds_text</item>
         <item name="colorError">@color/ds_error</item>

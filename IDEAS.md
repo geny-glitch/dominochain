@@ -1,45 +1,45 @@
-# Idées / Roadmap
+# Ideas / Roadmap
 
-## Accès
+## Access
 
-- **Utilisateurs et authentification** : login / mot de passe pour restreindre l’upload aux seuls utilisateurs autorisés
-- **Rôles** : l’admin peut voir les images mais pas uploader
+- **Users and authentication**: username/password to restrict uploads to authorized users only
+- **Roles**: admin can view images but cannot upload
 
-## Différents modes
+## Different Modes
 
-- **Dossier** : envoi d’un dossier d’images → itération entre les images avec un timer
-- **Compte Instagram public** : fournir un compte → cycle entre les images avec timer
-- **Compte Twitter public** : fournir un compte → cycle entre les images avec timer
-- **Hashtag Twitter** : fournir un hashtag → cycle entre les images avec timer
+- **Folder**: upload a folder of images → rotate through images with a timer
+- **Public Instagram account**: provide an account → cycle through images with a timer
+- **Public Twitter account**: provide an account → cycle through images with a timer
+- **Twitter hashtag**: provide a hashtag → cycle through images with a timer
 
 ## UI Desktop
 
-- Page show visible d’un coup d’œil sur desktop (meilleure mise en page pour grand écran)
+- Show page readable at a glance on desktop (better large-screen layout)
 
 
-x Prendre un screenshot de l'écran
-x Réorg l'app
-x Réorg le web
-x Déverrouiller si on prend un screenshot ?
-x Pouvoir blur / éditer des photos dans le web avant upload
+x Take a screenshot of the screen
+x Reorganize the app
+x Reorganize the web app
+x Unlock if a screenshot is taken?
+x Blur / edit photos on web before upload
 Real time update of web interface
-Ajout d'une sanction
-- privacy renouncement : screenshot toutes les 5 secondes :
-- image flood : overlay flux d'images sur le téléphone
-- sound flood : jouer des sons aléatoires ou bien des phrases parlées
+Add a penalty
+- privacy renouncement: screenshot every 5 seconds
+- image flood: overlay a stream of images on the phone
+- sound flood: play random sounds or spoken phrases
 
 Collaterals
-connexion à pishock
-connexion à la block chain
-connexion à airdroid / ou remplacement d'airdroid
-controle à distance
-tests côté app ?
+connect to PiShock
+connect to the blockchain
+connect to AirDroid / or replace AirDroid
+remote control
+app-side tests?
 
 
-mettre à dispo l'éditeur de photo sans login
+make the photo editor available without login
 
-détection
+Detection
 - nude on screen
-- fautes d'orthographe
-- strava (fréquence / vitesse / intensité)
-- echecs : objectif elo, streak de défaites
+- spelling mistakes
+- Strava (frequency / speed / intensity)
+- chess: Elo target, losing streak

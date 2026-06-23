@@ -1,0 +1,19 @@
+---
+description: Keep translation files in sync when modifying locale keys
+alwaysApply: true
+---
+
+# Translation Sync Discipline
+
+When adding, renaming, or changing a translation key in any locale file under `backend/config/locales`, always verify whether the same key exists in sibling locale files and should be updated too.
+
+## Required workflow
+
+- If a key is edited in one locale, check the equivalent key in `en`, `fr`, and `es` files for the same namespace.
+- If the key is user-facing copy, update all corresponding locales in the same change whenever possible.
+- If a locale cannot be updated immediately, explicitly mention the gap in the final response and mark it as follow-up.
+- For keys intentionally different by locale (legal/compliance/tone), keep the difference but still verify all locales were reviewed.
+
+## Practical example
+
+- If you change `devise.passwords.send_instructions` in `fr/pages.yml`, also review and update `en/pages.yml` and `es/pages.yml` (or clearly state why not).

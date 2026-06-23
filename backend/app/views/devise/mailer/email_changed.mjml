@@ -1,0 +1,35 @@
+<mjml>
+  <mj-head>
+    <mj-preview><%= t("devise.mailer.email_changed.preview") %></mj-preview>
+    <mj-attributes>
+      <mj-all font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" color="#e8e6e3" />
+      <mj-text font-size="14px" line-height="22px" color="#e8e6e3" />
+    </mj-attributes>
+  </mj-head>
+  <mj-body background-color="#0a0a0b">
+    <mj-section padding="32px 24px 12px">
+      <mj-column>
+        <mj-image src="<%= image_url("domino-chain-logo.png") %>" alt="<%= t("layouts.application.logo_alt") %>" width="56px" padding="0 0 12px" />
+        <mj-text align="center" font-size="24px" line-height="32px" font-weight="300" letter-spacing="2px" padding="0">DominoChain</mj-text>
+      </mj-column>
+    </mj-section>
+
+    <mj-section background-color="#121214" border="1px solid #2a2a2e" border-radius="8px" padding="24px">
+      <mj-column>
+        <mj-text color="#8a8784" font-size="12px" letter-spacing="1.4px" text-transform="uppercase" padding="0 0 10px">
+          <%= t("devise.mailer.email_changed.eyebrow") %>
+        </mj-text>
+        <mj-text font-size="22px" line-height="30px" font-weight="600" padding="0 0 12px">
+          <%= t("devise.mailer.email_changed.heading") %>
+        </mj-text>
+        <mj-text padding="0">
+          <% if @resource.try(:unconfirmed_email?) %>
+            <%= t("devise.mailer.email_changed.pending_body", email: @resource.unconfirmed_email) %>
+          <% else %>
+            <%= t("devise.mailer.email_changed.body", email: @resource.email) %>
+          <% end %>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>

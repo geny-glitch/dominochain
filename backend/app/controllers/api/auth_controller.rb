@@ -5,7 +5,7 @@ module Api
     skip_before_action :verify_authenticity_token
 
     def login
-      user = User.find_for_database_authentication(email: params[:email].to_s.strip.downcase)
+      user = find_user_for_api_login
       if user&.valid_password?(params[:password])
         device = link_device_to_user(user)
         PostHog.identify(distinct_id: user.posthog_distinct_id, properties: user.posthog_properties)
@@ -18,7 +18,7 @@ module Api
 
     def register
       user = User.new(
-        email: params[:email],
+        email: resolved_register_email,
         nickname: params[:nickname].presence,
         password: params[:password],
         password_confirmation: params[:password_confirmation],
@@ -48,6 +48,26 @@ module Api
     end
 
     private
+
+    def find_user_for_api_login
+      email = params[:email].to_s.strip.downcase
+      return User.find_for_database_authentication(email: email) if email.present?
+
+      nickname = params[:nickname].to_s.strip
+      User.find_by(nickname: nickname) if nickname.present?
+    end
+
+    def resolved_register_email
+      email = params[:email].to_s.strip.downcase
+      return email if email.present?
+
+      nickname = params[:nickname].to_s.strip
+      return nil if nickname.blank?
+
+      local_part = nickname.downcase.gsub(/[^a-z0-9_]/, "_")
+      local_part = "user" if local_part.blank?
+      "#{local_part}@dominochain.app"
+    end
 
     def link_device_to_user(user)
       device_id = params[:device_id]

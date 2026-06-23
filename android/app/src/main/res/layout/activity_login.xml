@@ -34,15 +34,15 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Pseudo"
+                android:text="E-mail"
                 style="@style/DsSmall"
                 android:layout_marginBottom="@dimen/ds_space_xs" />
             <EditText
-                android:id="@+id/login_nickname"
+                android:id="@+id/login_email"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Pseudo"
-                android:inputType="text"
+                android:hint="E-mail"
+                android:inputType="textEmailAddress"
                 android:maxLines="1"
                 style="@style/DsEditText"
                 android:layout_marginBottom="@dimen/ds_space_md" />
@@ -81,15 +81,15 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Pseudo"
+                android:text="E-mail"
                 style="@style/DsSmall"
                 android:layout_marginBottom="@dimen/ds_space_xs" />
             <EditText
-                android:id="@+id/register_nickname"
+                android:id="@+id/register_email"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Pseudo"
-                android:inputType="text"
+                android:hint="E-mail"
+                android:inputType="textEmailAddress"
                 android:maxLines="1"
                 style="@style/DsEditText"
                 android:layout_marginBottom="@dimen/ds_space_md" />

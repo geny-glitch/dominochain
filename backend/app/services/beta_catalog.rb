@@ -214,11 +214,6 @@ class BetaCatalog
     "beta_catalog:feature_flags:v#{FLAGS_CACHE_VERSION}:#{namespace}:#{@user.posthog_distinct_id}"
   end
 
-  def self.feature_flags_cache_namespace
-    Rails.cache.fetch(CACHE_NAMESPACE_KEY) { 1 }
-  end
-  private_class_method :feature_flags_cache_namespace
-
   def decorate_source(definition)
     id = definition[:id]
     definition.merge(

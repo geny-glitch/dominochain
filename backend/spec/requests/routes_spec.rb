@@ -446,6 +446,24 @@ RSpec.describe "Routes", type: :request do
         expect(response).to have_http_status(:ok)
       end
 
+      it "POST /api/auth/login accepts nickname for legacy clients" do
+        user = create(:user, :beta, nickname: "legacyuser", email: "legacyuser@dominochain.app", password: "password123")
+        post api_auth_login_path, params: {
+          nickname: user.nickname, password: "password123", device_id: "test-device"
+        }
+        expect(response).to have_http_status(:ok)
+      end
+
+      it "POST /api/auth/register returns 201 with nickname only for legacy clients" do
+        post api_auth_register_path, params: {
+          nickname: "legacybeta", password: "password123", password_confirmation: "password123",
+          device_id: "device-legacy"
+        }
+        expect(response).to have_http_status(:created)
+        user = User.find_by!(email: "legacybeta@dominochain.app")
+        expect(user.nickname).to eq("legacybeta")
+      end
+
       it "POST /api/auth/register returns 201" do
         post api_auth_register_path, params: {
           email: "newapi@dominochain.app", password: "password123", password_confirmation: "password123",

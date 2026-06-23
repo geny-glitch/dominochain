@@ -53,10 +53,10 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun doLogin() {
-        val nickname = binding.loginNickname.text.toString().trim()
+        val email = binding.loginEmail.text.toString().trim()
         val password = binding.loginPassword.text.toString()
-        if (nickname.isBlank() || password.isBlank()) {
-            Toast.makeText(this, "Pseudo et mot de passe requis", Toast.LENGTH_SHORT).show()
+        if (email.isBlank() || password.isBlank()) {
+            Toast.makeText(this, "E-mail et mot de passe requis", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -69,7 +69,7 @@ class LoginActivity : AppCompatActivity() {
         binding.loginButton.isEnabled = false
         lifecycleScope.launch {
             val result = authRepository.login(
-                nickname = nickname,
+                email = email,
                 password = password,
                 deviceId = deviceId
             )
@@ -86,11 +86,11 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun doRegister() {
-        val nickname = binding.registerNickname.text.toString().trim()
+        val email = binding.registerEmail.text.toString().trim()
         val password = binding.registerPassword.text.toString()
         val passwordConfirm = binding.registerPasswordConfirm.text.toString()
-        if (nickname.isBlank() || password.isBlank()) {
-            Toast.makeText(this, "Pseudo et mot de passe requis", Toast.LENGTH_SHORT).show()
+        if (email.isBlank() || password.isBlank()) {
+            Toast.makeText(this, "E-mail et mot de passe requis", Toast.LENGTH_SHORT).show()
             return
         }
         if (password.length < 6) {
@@ -111,7 +111,7 @@ class LoginActivity : AppCompatActivity() {
         binding.registerButton.isEnabled = false
         lifecycleScope.launch {
             val result = authRepository.register(
-                nickname = nickname,
+                email = email,
                 password = password,
                 passwordConfirmation = passwordConfirm,
                 deviceId = deviceId

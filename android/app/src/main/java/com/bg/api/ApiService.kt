@@ -28,7 +28,7 @@ data class RegisterResponse(
 )
 
 data class LoginRequest(
-    val nickname: String,
+    val email: String,
     val password: String,
     val device_id: String,
     val screen_width: Int? = null,
@@ -38,9 +38,10 @@ data class LoginRequest(
 )
 
 data class RegisterAuthRequest(
-    val nickname: String,
+    val email: String,
     val password: String,
     val password_confirmation: String,
+    val nickname: String? = null,
     val device_id: String,
     val screen_width: Int? = null,
     val screen_height: Int? = null,

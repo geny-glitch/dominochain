@@ -51,11 +51,11 @@ jobs:
       - name: Ensure one worker machine is started
         working-directory: backend
         run: |
-          worker_started_count=$(flyctl machine list -a bg-backend --json | jq '[.[] | select((.config.processes // []) | index("worker")) | select(.state == "started")] | length')
+          worker_started_count=$(flyctl machine list -a "${FLY_APP}" --json | jq '[.[] | select(.config.metadata.fly_process_group == "worker") | select(.state == "started")] | length')
           if [ "$worker_started_count" -eq 0 ]; then
-            worker_id=$(flyctl machine list -a bg-backend --json | jq -r '[.[] | select((.config.processes // []) | index("worker"))][0].id // empty')
+            worker_id=$(flyctl machine list -a "${FLY_APP}" --json | jq -r '[.[] | select(.config.metadata.fly_process_group == "worker")][0].id // empty')
             if [ -n "$worker_id" ]; then
-              flyctl machine start "$worker_id" -a bg-backend
+              flyctl machine start "$worker_id" -a "${FLY_APP}"
             else
               echo "No worker machine found after scaling" >&2
               exit 1

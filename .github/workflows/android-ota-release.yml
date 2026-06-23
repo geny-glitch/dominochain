@@ -1,6 +1,7 @@
 name: Android OTA Release
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -127,29 +128,20 @@ jobs:
         env:
           VERSION_CODE: ${{ steps.version.outputs.code }}
 
-      - name: Commit version metadata
-        if: github.ref_name == 'main'
-        run: |
-          if git diff --quiet -- version.json; then
-            echo "version.json is already up to date"
-          else
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add version.json
-            git commit -m "Update Android OTA version metadata [skip ci]"
-            git push
-          fi
-
       - name: Prepare APK asset
         run: cp "android/app/build/outputs/apk/${APK_FLAVOR}/release/app-${APK_FLAVOR}-release.apk" app.apk
 
       - name: Notify backend of new version (prod)
         if: github.ref_name == 'main'
         run: |
-          curl --fail -s -X POST "${BACKEND_NOTIFY_URL}" \
+          http_code=$(curl -s -o /tmp/notify-response.txt -w "%{http_code}" -X POST "${BACKEND_NOTIFY_URL}" \
             -H "Authorization: Bearer ${DEPLOY_SECRET}" \
             -F "versionCode=${{ steps.version.outputs.code }}" \
-            -F "apk=@app.apk;type=application/vnd.android.package-archive"
+            -F "apk=@app.apk;type=application/vnd.android.package-archive")
+          if [ "$http_code" -ge 400 ]; then
+            echo "Backend returned HTTP ${http_code}: $(cat /tmp/notify-response.txt)" >&2
+            exit 1
+          fi
         env:
           DEPLOY_SECRET: ${{ secrets.DEPLOY_SECRET }}
 
@@ -180,3 +172,30 @@ jobs:
           fi
         env:
           GH_TOKEN: ${{ github.token }}
+
+      - name: Commit version metadata
+        if: github.ref_name == 'main'
+        continue-on-error: true
+        run: |
+          git fetch origin "${GITHUB_REF_NAME}"
+
+          if git show "origin/${GITHUB_REF_NAME}:version.json" >/dev/null 2>&1; then
+            REMOTE_CODE=$(git show "origin/${GITHUB_REF_NAME}:version.json" | python3 -c 'import json,sys; print(json.load(sys.stdin)["versionCode"])')
+            LOCAL_CODE=$(python3 -c 'import json; print(json.load(open("version.json"))["versionCode"])')
+            if [ "$REMOTE_CODE" -ge "$LOCAL_CODE" ]; then
+              echo "Remote version.json already at ${REMOTE_CODE} (>= ${LOCAL_CODE}); skipping commit"
+              exit 0
+            fi
+          fi
+
+          if git diff --quiet -- version.json; then
+            echo "version.json is already up to date"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add version.json
+          git commit -m "Update Android OTA version metadata [skip ci]"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

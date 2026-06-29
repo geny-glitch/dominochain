@@ -116,4 +116,49 @@ RSpec.describe WallpaperScreenshotComparator do
 
     expect { compare }.to raise_error(ImagePreviewVariant::PreviewNotReady)
   end
+
+  context "with a wallpaper sample" do
+    let(:sample) { create(:device_wallpaper_sample, device: device) }
+
+    def compare_sample
+      described_class.new(sample: sample, wallpaper: wallpaper, device: device).compare
+    end
+
+    def attach_matching_sample
+      WallpaperVerificationTestImages.attach_png(
+        sample,
+        attachment_name: :image,
+        width: device.screen_width,
+        height: device.screen_height,
+        color: [120, 80, 200]
+      )
+      perform_enqueued_jobs
+    end
+
+    it "marks identical wallpaper samples as verified without screenshot heuristics" do
+      attach_matching_sample
+
+      result = compare_sample
+
+      expect(result.status).to eq("verified")
+      expect(result.score).to be >= 0.9
+    end
+
+    it "marks clearly different wallpaper samples as mismatch" do
+      WallpaperVerificationTestImages.attach_pattern_png(
+        sample,
+        attachment_name: :image,
+        width: device.screen_width,
+        height: device.screen_height,
+        color_a: [0, 0, 0],
+        color_b: [255, 255, 255]
+      )
+      perform_enqueued_jobs
+
+      result = compare_sample
+
+      expect(result.status).to eq("mismatch")
+      expect(result.score).to be <= 0.55
+    end
+  end
 end

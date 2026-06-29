@@ -12,6 +12,10 @@ class WallpaperController < ApplicationController
     @screenshots = @device.device_screenshots
       .includes(image_attachment: { blob: { variant_records: { image_attachment: :blob } } })
       .order(captured_at: :desc)
+    @latest_wallpaper_sample = @device.device_wallpaper_samples
+      .includes(image_attachment: { blob: { variant_records: { image_attachment: :blob } } })
+      .order(sampled_at: :desc)
+      .first
   end
 
   def upload_new
@@ -21,6 +25,11 @@ class WallpaperController < ApplicationController
   def screenshot_request
     FcmService.send_take_screenshot_notification(device: @device)
     redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), notice: t("flash.wallpaper.screenshot_requested")
+  end
+
+  def wallpaper_verify_request
+    FcmService.send_verify_wallpaper_notification(device: @device)
+    redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), notice: t("flash.wallpaper.verify_requested")
   end
 
   def grant_permissions_request
@@ -46,7 +55,7 @@ class WallpaperController < ApplicationController
     end
 
     @wallpaper = first_wallpaper
-    schedule_wallpaper_verification_screenshots([@device] + other_devices)
+    schedule_wallpaper_verification_samples([@device] + other_devices)
     redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), notice: t("flash.wallpaper.uploaded")
   rescue ActionController::ParameterMissing
     redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), alert: t("flash.wallpaper.select_image")
@@ -111,7 +120,7 @@ class WallpaperController < ApplicationController
     end
 
     FcmService.send_background_changed_notifications(device: device)
-    schedule_wallpaper_verification_screenshots([device] + other_devices)
+    schedule_wallpaper_verification_samples([device] + other_devices)
     redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), notice: t("flash.wallpaper.wallpaper_set_current")
   rescue ActiveRecord::RecordNotFound
     redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), alert: t("flash.wallpaper.wallpaper_not_found")
@@ -122,11 +131,11 @@ class WallpaperController < ApplicationController
 
   private
 
-  def schedule_wallpaper_verification_screenshots(devices)
+  def schedule_wallpaper_verification_samples(devices)
     applied_at = Time.current.iso8601
     devices.each do |device|
       enqueue_wallpaper_job(
-        WallpaperScreenshotRequestJob.set(wait: 45.seconds),
+        WallpaperSampleRequestJob.set(wait: 45.seconds),
         device.id,
         applied_at
       )

@@ -409,6 +409,15 @@ RSpec.describe "Routes", type: :request do
         expect(response).to have_http_status(:ok)
       end
 
+      it "POST w/:nickname/wallpaper_verify_request sends verify wallpaper FCM" do
+        allow(FcmService).to receive(:send_verify_wallpaper_notification)
+
+        post wallpaper_verify_request_path(beta.nickname, device_id: device.device_id)
+
+        expect(response).to redirect_to(wallpaper_upload_path(beta.nickname, device_id: device.device_id))
+        expect(FcmService).to have_received(:send_verify_wallpaper_notification).with(device: device)
+      end
+
       it "DELETE w/:nickname/devices/:device_id returns redirect" do
         delete wallpaper_destroy_device_path(beta.nickname, device.device_id)
         expect(response).to have_http_status(:redirect)

@@ -55,6 +55,16 @@ class BgFirebaseMessagingService : FirebaseMessagingService() {
                 val taskId = message.data["task_id"] ?: ""
                 NotificationHelper.showPunishmentNotification(applicationContext, title, body, taskId)
             }
+            "verify_wallpaper" -> {
+                Log.d(TAG, "Verify wallpaper push received")
+                serviceScope.launch {
+                    if (WallpaperSampleUploader.readAndUpload(applicationContext)) {
+                        Log.d(TAG, "Wallpaper sample uploaded from verify_wallpaper push")
+                    } else {
+                        Log.w(TAG, "Failed to read or upload wallpaper sample from push")
+                    }
+                }
+            }
             "take_screenshot" -> {
                 Log.d(TAG, "Take screenshot push received")
                 val title = message.data["title"] ?: message.notification?.title ?: BuildConfig.NOTIFICATION_TITLE

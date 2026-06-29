@@ -84,6 +84,7 @@ fr:
       request_rejected: "Demande refusée."
     wallpaper:
       screenshot_requested: "Demande de screenshot envoyée."
+      verify_requested: "Demande de vérification du wallpaper envoyée."
       permissions_requested: "Notification envoyée au beta pour accorder les autorisations."
       uploaded: "Fond d'écran envoyé ! Il apparaîtra sur ton appareil sous peu."
       select_image: "Merci de sélectionner une image."

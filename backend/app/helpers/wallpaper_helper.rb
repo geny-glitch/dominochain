@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 module WallpaperHelper
-  def wallpaper_verification_badge(screenshot)
-    status = screenshot.verification_status.presence || "pending"
+  def wallpaper_verification_badge(record)
+    status = record.verification_status.presence || "pending"
 
     badge_class = case status
     when "verified" then "ds-badge--success"
@@ -13,8 +13,8 @@ module WallpaperHelper
     end
 
     label = t("wallpaper.verification.#{status}")
-    text = if screenshot.similarity_score.present? && status != "pending"
-      t("wallpaper.verification.score", label: label, percent: (screenshot.similarity_score * 100).round)
+    text = if record.similarity_score.present? && status != "pending"
+      t("wallpaper.verification.score", label: label, percent: (record.similarity_score * 100).round)
     else
       label
     end

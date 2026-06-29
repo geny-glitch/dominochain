@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_06_29_120000) do
+ActiveRecord::Schema[7.2].define(version: 2026_06_30_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -135,6 +135,21 @@ ActiveRecord::Schema[7.2].define(version: 2026_06_29_120000) do
     t.index ["device_id"], name: "index_device_screenshots_on_device_id"
     t.index ["verification_status"], name: "index_device_screenshots_on_verification_status"
     t.index ["wallpaper_id"], name: "index_device_screenshots_on_wallpaper_id"
+  end
+
+  create_table "device_wallpaper_samples", force: :cascade do |t|
+    t.bigint "device_id", null: false
+    t.bigint "wallpaper_id"
+    t.datetime "sampled_at", null: false
+    t.float "similarity_score"
+    t.string "verification_status", default: "pending", null: false
+    t.datetime "verified_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["device_id", "sampled_at"], name: "index_device_wallpaper_samples_on_device_id_and_sampled_at"
+    t.index ["device_id"], name: "index_device_wallpaper_samples_on_device_id"
+    t.index ["verification_status"], name: "index_device_wallpaper_samples_on_verification_status"
+    t.index ["wallpaper_id"], name: "index_device_wallpaper_samples_on_wallpaper_id"
   end
 
   create_table "devices", force: :cascade do |t|
@@ -508,6 +523,8 @@ ActiveRecord::Schema[7.2].define(version: 2026_06_29_120000) do
   add_foreign_key "controls", "users", column: "boss_id"
   add_foreign_key "device_screenshots", "devices"
   add_foreign_key "device_screenshots", "wallpapers"
+  add_foreign_key "device_wallpaper_samples", "devices"
+  add_foreign_key "device_wallpaper_samples", "wallpapers"
   add_foreign_key "devices", "users"
   add_foreign_key "game_sessions", "users"
   add_foreign_key "proof_of_completions", "tasks"

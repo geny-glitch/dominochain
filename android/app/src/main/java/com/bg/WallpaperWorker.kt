@@ -68,10 +68,10 @@ class WallpaperWorker(
             Log.d(TAG, "Wallpaper set successfully (updated_at=${wallpaper.updated_at})")
 
             delay(2000)
-            if (BgAccessibilityService.requestCapture()) {
-                Log.d(TAG, "Verification screenshot requested after wallpaper change")
+            if (WallpaperSampleUploader.readAndUpload(applicationContext)) {
+                Log.d(TAG, "Verification wallpaper sample uploaded after wallpaper change")
             } else {
-                Log.w(TAG, "Accessibility service unavailable for verification screenshot")
+                Log.w(TAG, "Failed to read or upload wallpaper sample for verification")
             }
 
             Result.success()

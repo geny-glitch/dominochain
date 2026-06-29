@@ -39,18 +39,26 @@ jobs:
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 
-      # Fly can keep multiple machines per process group; one worker is enough for Solid Queue.
+      # Legacy safety net when fly.toml defines a separate worker process group.
+      # Staging and production run Solid Queue inside Puma (SOLID_QUEUE_IN_PUMA), so skip otherwise.
       - name: Scale worker group to one machine
         working-directory: backend
-        run: flyctl scale count worker=1 -y --app "${FLY_APP}"
+        run: |
+          if grep -Eq '^[[:space:]]*worker[[:space:]]*=' "${FLY_CONFIG}"; then
+            flyctl scale count worker=1 -y --app "${FLY_APP}"
+          else
+            echo "No worker process group in ${FLY_CONFIG}; skipping scale"
+          fi
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 
-      # Safety net: after some deployments, only a stopped standby worker may remain.
-      # Ensure at least one worker machine is actually started to process Solid Queue jobs.
       - name: Ensure one worker machine is started
         working-directory: backend
         run: |
+          if ! grep -Eq '^[[:space:]]*worker[[:space:]]*=' "${FLY_CONFIG}"; then
+            echo "No worker process group in ${FLY_CONFIG}; skipping worker start check"
+            exit 0
+          fi
           worker_started_count=$(flyctl machine list -a "${FLY_APP}" --json | jq '[.[] | select(.config.metadata.fly_process_group == "worker") | select(.state == "started")] | length')
           if [ "$worker_started_count" -eq 0 ]; then
             worker_id=$(flyctl machine list -a "${FLY_APP}" --json | jq -r '[.[] | select(.config.metadata.fly_process_group == "worker")][0].id // empty')

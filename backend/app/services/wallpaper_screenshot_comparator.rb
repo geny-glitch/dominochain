@@ -11,18 +11,21 @@ class WallpaperScreenshotComparator
   TOP_MARGIN_RATIO = 0.08
   BOTTOM_MARGIN_RATIO = 0.05
 
-  def initialize(screenshot:, wallpaper:, device:)
+  def initialize(screenshot:, wallpaper:, device:, timer: nil)
     @screenshot = screenshot
     @wallpaper = wallpaper
     @device = device
+    @timer = timer
   end
 
   def compare
-    screenshot_image = load_attachment(@screenshot.image)
-    reference_image = load_wallpaper_reference
+    screenshot_image = measure(:load_screenshot) { load_attachment(@screenshot.image) }
+    reference_image = measure(:load_wallpaper) { load_wallpaper_reference }
 
-    full_metrics = metrics_for(screenshot_image, reference_image)
-    edge_metrics = metrics_for(screenshot_image, reference_image, edges_only: true)
+    full_metrics = measure(:compare_full) { metrics_for(screenshot_image, reference_image) }
+    edge_metrics = measure(:compare_edges) do
+      metrics_for(screenshot_image, reference_image, edges_only: true)
+    end
 
     best_metrics = [full_metrics, edge_metrics].max_by { |metrics| metrics[:score] }
     classify(**best_metrics.slice(:ssim, :dhash_distance, :mad))
@@ -45,8 +48,16 @@ class WallpaperScreenshotComparator
 
   private
 
+  def measure(step, &block)
+    if @timer
+      @timer.measure(step, &block)
+    else
+      yield
+    end
+  end
+
   def load_attachment(attachment)
-    attachment.blob.open do |file|
+    ImagePreviewVariant.open_processed_preview(attachment.blob) do |file|
       image = Vips::Image.new_from_file(file.path, access: :sequential)
       materialize_image(downscale_if_large(image))
     end
@@ -54,7 +65,7 @@ class WallpaperScreenshotComparator
 
   def load_wallpaper_reference
     width, height = comparison_device_dimensions
-    @wallpaper.image.blob.open do |file|
+    ImagePreviewVariant.open_processed_preview(@wallpaper.image.blob) do |file|
       image = Vips::Image.new_from_file(file.path, access: :sequential)
       image = downscale_if_large(image)
       if width && height

@@ -221,7 +221,7 @@ module Api
     end
 
     def enqueue_wallpaper_verification(screenshot_id)
-      WallpaperVerificationJob.perform_later(screenshot_id)
+      WallpaperVerificationJob.enqueue_for(screenshot_id)
     rescue SolidQueue::Job::EnqueueError, ActiveRecord::ConnectionNotEstablished,
            ActiveRecord::ConnectionFailed, PG::ConnectionBad => e
       Rails.logger.warn(

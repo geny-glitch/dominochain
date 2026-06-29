@@ -66,6 +66,40 @@ RSpec.describe ImagePreviewVariant do
 
       expect(wallpaper.preview_image).to eq(wallpaper.image)
     end
+
+    it "opens processed preview blobs for verification" do
+      wallpaper = create(:wallpaper)
+      WallpaperVerificationTestImages.attach_png(
+        wallpaper,
+        attachment_name: :image,
+        width: 1080,
+        height: 1920,
+        color: [120, 80, 200]
+      )
+      perform_enqueued_jobs
+
+      opened = false
+      ImagePreviewVariant.open_processed_preview(wallpaper.image.blob) do |file|
+        opened = File.exist?(file.path)
+      end
+
+      expect(opened).to be(true)
+    end
+
+    it "raises PreviewNotReady when the boss preview is missing" do
+      wallpaper = create(:wallpaper)
+      WallpaperVerificationTestImages.attach_png(
+        wallpaper,
+        attachment_name: :image,
+        width: 1080,
+        height: 1920,
+        color: [120, 80, 200]
+      )
+
+      expect {
+        ImagePreviewVariant.open_processed_preview(wallpaper.image.blob) { |_file| }
+      }.to raise_error(ImagePreviewVariant::PreviewNotReady)
+    end
   end
 
   describe ".backfill!" do

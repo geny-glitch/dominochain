@@ -3,6 +3,8 @@
 require "rails_helper"
 
 RSpec.describe WallpaperVerificationJob, type: :job do
+  include ActiveJob::TestHelper
+
   let(:device) { create(:device, screen_width: 540, screen_height: 960) }
   let(:wallpaper) { create(:wallpaper, device: device) }
   let(:screenshot) { create(:device_screenshot, device: device, captured_at: Time.current) }
@@ -23,6 +25,7 @@ RSpec.describe WallpaperVerificationJob, type: :job do
       color: [120, 80, 200]
     )
     device.wallpaper_applications.create!(wallpaper: wallpaper, applied_at: 1.minute.ago)
+    perform_enqueued_jobs
   end
 
   it "persists a verified result for matching images" do
@@ -54,6 +57,41 @@ RSpec.describe WallpaperVerificationJob, type: :job do
     screenshot.reload
     expect(screenshot.verification_status).to eq("skipped")
   end
+
+  it "defers verification until boss_preview variants are processed" do
+    allow(ImagePreviewVariant).to receive(:preview_variant_processed?).and_return(false)
+
+    expect {
+      described_class.perform_now(screenshot.id)
+    }.to have_enqueued_job(described_class).with(screenshot.id, defer_attempt: 1)
+
+    expect(screenshot.reload.verification_status).to eq("pending")
+  end
+
+  it "marks inconclusive after too many variant defer attempts" do
+    allow(ImagePreviewVariant).to receive(:preview_variant_processed?).and_return(false)
+
+    described_class.perform_now(screenshot.id, defer_attempt: WallpaperVerificationJob::MAX_DEFER_ATTEMPTS)
+
+    expect(screenshot.reload.verification_status).to eq("inconclusive")
+  end
+
+  describe ".enqueue_for" do
+    it "skips enqueue when a job is already pending" do
+      allow(described_class).to receive(:job_pending?).with(screenshot.id).and_return(true)
+
+      expect(described_class.enqueue_for(screenshot.id)).to be(false)
+      expect(described_class).not_to have_been_enqueued
+    end
+
+    it "enqueues when no job is pending" do
+      allow(described_class).to receive(:job_pending?).with(screenshot.id).and_return(false)
+
+      expect {
+        expect(described_class.enqueue_for(screenshot.id)).to be(true)
+      }.to have_enqueued_job(described_class).with(screenshot.id)
+    end
+  end
 end
 
 RSpec.describe WallpaperScreenshotRequestJob, type: :job do
@@ -74,27 +112,5 @@ RSpec.describe WallpaperScreenshotRequestJob, type: :job do
     described_class.perform_now(device.id, 1.minute.ago.iso8601)
 
     expect(FcmService).not_to have_received(:send_take_screenshot_notification)
-  end
-end
-
-RSpec.describe WallpaperStaleVerificationSweepJob, type: :job do
-  let(:device) { create(:device) }
-
-  it "enqueues verification for stale pending screenshots" do
-    stale = create(:device_screenshot, device: device, verification_status: "pending", created_at: 1.minute.ago)
-    fresh = create(:device_screenshot, device: device, verification_status: "pending", created_at: 5.seconds.ago)
-    create(:device_screenshot, device: device, verification_status: "verified", created_at: 1.minute.ago)
-
-    expect {
-      described_class.perform_now(device.id)
-    }.to have_enqueued_job(WallpaperVerificationJob).with(stale.id).once
-
-    expect(WallpaperVerificationJob).not_to have_been_enqueued.with(fresh.id)
-  end
-
-  it "does nothing when the device does not exist" do
-    expect {
-      described_class.perform_now(-1)
-    }.not_to have_enqueued_job(WallpaperVerificationJob)
   end
 end

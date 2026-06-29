@@ -12,7 +12,6 @@ class WallpaperController < ApplicationController
     @screenshots = @device.device_screenshots
       .includes(image_attachment: { blob: { variant_records: { image_attachment: :blob } } })
       .order(captured_at: :desc)
-    schedule_stale_pending_verifications(@device)
   end
 
   def upload_new
@@ -132,26 +131,6 @@ class WallpaperController < ApplicationController
         applied_at
       )
     end
-  end
-
-  def schedule_stale_pending_verifications(device)
-    return unless stale_pending_verifications?(device)
-
-    Rails.cache.fetch(stale_sweep_cache_key(device.id), expires_in: 30.seconds) do
-      enqueue_wallpaper_job(WallpaperStaleVerificationSweepJob, device.id)
-      true
-    end
-  end
-
-  def stale_pending_verifications?(device)
-    device.device_screenshots
-      .where(verification_status: "pending")
-      .where(created_at: ...WallpaperStaleVerificationSweepJob::STALE_PENDING_AFTER.ago)
-      .exists?
-  end
-
-  def stale_sweep_cache_key(device_id)
-    "wallpaper_stale_sweep:#{device_id}"
   end
 
   def enqueue_wallpaper_job(job, *args)

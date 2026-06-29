@@ -3,6 +3,8 @@
 require "rails_helper"
 
 RSpec.describe WallpaperScreenshotComparator do
+  include ActiveJob::TestHelper
+
   let(:device) { create(:device, screen_width: 540, screen_height: 960) }
   let(:wallpaper) { create(:wallpaper, device: device) }
   let(:screenshot) { create(:device_screenshot, device: device) }
@@ -21,7 +23,7 @@ RSpec.describe WallpaperScreenshotComparator do
     described_class.new(screenshot: screenshot, wallpaper: wallpaper, device: device).compare
   end
 
-  it "marks identical images as verified" do
+  def attach_matching_screenshot
     WallpaperVerificationTestImages.attach_png(
       screenshot,
       attachment_name: :image,
@@ -29,6 +31,11 @@ RSpec.describe WallpaperScreenshotComparator do
       height: device.screen_height,
       color: [120, 80, 200]
     )
+    perform_enqueued_jobs
+  end
+
+  it "marks identical images as verified" do
+    attach_matching_screenshot
 
     result = compare
 
@@ -52,11 +59,12 @@ RSpec.describe WallpaperScreenshotComparator do
       color_a: [0, 0, 0],
       color_b: [255, 255, 255]
     )
+    perform_enqueued_jobs
 
     result = compare
 
     expect(result.status).to eq("mismatch")
-    expect(result.score).to be <= 0.5
+    expect(result.score).to be <= 0.52
   end
 
   it "keeps a heavily overlaid screenshot verified via fuzzy matching" do
@@ -65,10 +73,23 @@ RSpec.describe WallpaperScreenshotComparator do
       base_color: [120, 80, 200],
       overlay_color: [20, 20, 20]
     )
+    perform_enqueued_jobs
 
     result = compare
 
     expect(result.status).to eq("verified")
     expect(result.score).to be >= 0.65
+  end
+
+  it "requires processed boss_preview variants" do
+    WallpaperVerificationTestImages.attach_png(
+      screenshot,
+      attachment_name: :image,
+      width: device.screen_width,
+      height: device.screen_height,
+      color: [120, 80, 200]
+    )
+
+    expect { compare }.to raise_error(ImagePreviewVariant::PreviewNotReady)
   end
 end

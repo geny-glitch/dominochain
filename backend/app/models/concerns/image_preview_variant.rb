@@ -9,6 +9,8 @@ module ImagePreviewVariant
   BOSS_PREVIEW_VARIANT_NAME = :boss_preview
   BACKFILL_MODEL_NAMES = %w[Wallpaper DeviceScreenshot].freeze
 
+  class PreviewNotReady < StandardError; end
+
   module AttachmentConfig
     module_function
 
@@ -67,6 +69,14 @@ module ImagePreviewVariant
 
     def preview_variant_for(blob)
       blob.representation(boss_preview_named_transformations)
+    end
+
+    def open_processed_preview(blob, &block)
+      raise PreviewNotReady unless preview_variant_processed?(blob)
+
+      variant = preview_variant_for(blob)
+      record = blob.variant_records.find_by!(variation_digest: variant.variation.digest)
+      record.image.blob.open(&block)
     end
 
     def boss_preview_named_transformations

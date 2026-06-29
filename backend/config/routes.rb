@@ -78,6 +78,8 @@ get "beta/actions/pishock", to: "beta_dashboard#actions_pishock", as: :beta_acti
 
   root "home#index"
 
+  mount MissionControl::Jobs::Engine, at: "/admin/jobs"
+
   # Admin
   get "admin", to: "admin#index", as: :admin
   get "admin/settings", to: "admin#settings", as: :admin_settings

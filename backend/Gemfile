@@ -88,3 +88,5 @@ gem "mrml", "~> 1.10"
 
 gem "posthog-ruby", "~> 3.8"
 gem "posthog-rails", "~> 3.8"
+
+gem "mission_control-jobs", "~> 1.1"

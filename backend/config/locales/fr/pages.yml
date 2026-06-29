@@ -205,6 +205,7 @@ fr:
     invalidate_feature_flags_cache_confirm: "Invalider maintenant tous les feature flags en cache ?"
     settings_link: "Paramètres"
     review_link: "Revue"
+    jobs_link: "Jobs"
     review_images_link: "Revue images"
     beta_table: "Betas"
     active_controls_title: "Controls actifs"

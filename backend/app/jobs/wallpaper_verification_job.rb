@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class WallpaperVerificationJob < ApplicationJob
+  queue_as :wallpaper_verification
+
   def perform(screenshot_id)
     screenshot = DeviceScreenshot.find_by(id: screenshot_id)
     return unless screenshot&.image&.attached?

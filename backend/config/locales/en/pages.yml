@@ -169,6 +169,7 @@ en:
     invalidate_feature_flags_cache_confirm: "Invalidate all cached feature flags now?"
     settings_link: "Settings"
     review_link: "Review"
+    jobs_link: "Jobs"
     review_images_link: "Review images"
     beta_table: "Betas"
     active_controls_title: "Active controls"

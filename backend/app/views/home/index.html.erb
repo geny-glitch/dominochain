@@ -27,7 +27,7 @@
         <% else %>
           <%= link_to t("home.dashboard"), dashboard_path, class: "ds-btn ds-btn--primary ds-btn--sm" %>
         <% end %>
-        <%= link_to t("home.sign_out"), destroy_user_session_path, data: { turbo_method: :delete }, class: "ds-btn ds-btn--ghost ds-btn--sm" %>
+        <%= button_to t("home.sign_out"), destroy_user_session_path, method: :delete, class: "ds-btn ds-btn--ghost ds-btn--sm", form: { style: "display: contents" } %>
       <% else %>
         <%= link_to t("home.sign_in"), new_user_session_path, class: "ds-btn ds-btn--primary ds-btn--sm" %>
         <%= link_to t("home.sign_up_beta"), new_user_registration_path, class: "ds-btn ds-btn--secondary ds-btn--sm" %>

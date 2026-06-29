@@ -66,6 +66,18 @@ RSpec.describe "Routes", type: :request do
       expect(user.reload.reset_password_token).to be_present
       expect(ActionMailer::Base.deliveries.last.subject).to eq("Reset your DominoChain password")
     end
+
+    it "GET /logout signs out and redirects" do
+      sign_in user
+      get destroy_user_session_path
+      expect(response).to have_http_status(:redirect)
+    end
+
+    it "DELETE /logout signs out and redirects" do
+      sign_in user
+      delete destroy_user_session_path
+      expect(response).to have_http_status(:redirect)
+    end
   end
 
   describe "Dashboard (boss only)" do

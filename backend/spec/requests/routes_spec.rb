@@ -312,6 +312,11 @@ RSpec.describe "Routes", type: :request do
       expect(response).to redirect_to(root_path)
     end
 
+    it "GET /admin/jobs redirects to login when not authenticated" do
+      get "/admin/jobs"
+      expect(response).to redirect_to(new_user_session_path)
+    end
+
     context "when admin is authenticated" do
       let(:admin) { create(:user, :admin) }
       let(:modern_headers) do
@@ -333,6 +338,11 @@ RSpec.describe "Routes", type: :request do
 
       it "GET /admin/review returns 200" do
         get admin_review_path, headers: modern_headers
+        expect(response).to have_http_status(:ok)
+      end
+
+      it "GET /admin/jobs returns 200" do
+        get "/admin/jobs", headers: modern_headers
         expect(response).to have_http_status(:ok)
       end
 

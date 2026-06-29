@@ -36,8 +36,8 @@ Rails.application.configure do
   # config.action_dispatch.x_sendfile_header = "X-Sendfile" # for Apache
   # config.action_dispatch.x_sendfile_header = "X-Accel-Redirect" # for NGINX
 
-  # Store uploaded files on the local file system (see config/storage.yml for options).
-  config.active_storage.service = :local
+  # Object storage on Tigris (Fly). Override with ACTIVE_STORAGE_SERVICE=local for migration/rollback.
+  config.active_storage.service = ENV.fetch("ACTIVE_STORAGE_SERVICE", "tigris").to_sym
   # Serve variants in one cacheable request instead of redirect → expiring disk URL.
   config.active_storage.resolve_model_to_route = :rails_storage_proxy
   config.active_storage.track_variants = true

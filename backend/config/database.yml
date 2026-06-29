@@ -18,10 +18,12 @@ default: &default
   # For details on connection pooling, see Rails configuration guide
   # https://guides.rubyonrails.org/configuring.html#database-pooling
   pool: <%= ENV.fetch("DB_POOL") {
-    if ENV["SOLID_QUEUE_IN_PUMA"]
-      ENV.fetch("RAILS_MAX_THREADS", 3).to_i + 7
+    if ENV["FLY_PROCESS_GROUP"] == "worker"
+      wallpaper_threads = 1
+      default_threads = ENV.fetch("SOLID_QUEUE_DEFAULT_THREADS", 2).to_i
+      default_threads + wallpaper_threads + 3
     else
-      ENV.fetch("RAILS_MAX_THREADS", 5)
+      ENV.fetch("RAILS_MAX_THREADS", 5).to_i + 2
     end
   } %>
 

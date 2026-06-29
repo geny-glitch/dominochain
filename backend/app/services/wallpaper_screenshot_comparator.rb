@@ -6,7 +6,7 @@ class WallpaperScreenshotComparator
   ComparisonResult = Struct.new(:score, :status, :ssim, :dhash_distance, :mad, keyword_init: true)
 
   COMPARE_SIZE = 64
-  # Cap longest side during comparison so Vips stays within Fly 1GB RAM while Solid Queue runs in Puma.
+  # Cap longest side during comparison so Vips stays within the worker VM RAM budget.
   WORKING_MAX_SIDE = 960
   TOP_MARGIN_RATIO = 0.08
   BOTTOM_MARGIN_RATIO = 0.05

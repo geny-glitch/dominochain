@@ -1,7 +1,7 @@
+# frozen_string_literal: true
+
 class AndroidVersionController < ApplicationController
   skip_before_action :verify_authenticity_token, only: [:update]
-
-  APK_PATH = Rails.root.join("storage", "android", "app.apk")
 
   def show
     setting = AppSetting.instance
@@ -12,14 +12,11 @@ class AndroidVersionController < ApplicationController
   end
 
   def apk
-    if File.exist?(APK_PATH)
-      send_file APK_PATH,
-        type: "application/vnd.android.package-archive",
-        disposition: "attachment",
-        filename: "app.apk"
-    else
-      render json: { error: "Not found" }, status: :not_found
+    unless AndroidApkStorage.present?
+      return render json: { error: "Not found" }, status: :not_found
     end
+
+    redirect_to AndroidApkStorage.presigned_download_url, allow_other_host: true
   end
 
   def update
@@ -34,8 +31,7 @@ class AndroidVersionController < ApplicationController
     apk_file     = params[:apk]
 
     if apk_file.present?
-      FileUtils.mkdir_p(APK_PATH.dirname)
-      FileUtils.cp(apk_file.tempfile.path, APK_PATH)
+      AndroidApkStorage.upload_io(apk_file.tempfile)
     end
 
     apk_url = "#{request.base_url}/android/app.apk"

@@ -1,7 +1,7 @@
 # fly.toml app configuration file for bg-backend-staging
 #
 # Staging mirrors production settings as closely as possible while
-# using a dedicated Fly app, volume, and secrets.
+# using a dedicated Fly app and secrets.
 
 app = 'bg-backend-staging'
 primary_region = 'cdg'
@@ -13,9 +13,10 @@ console_command = '/rails/bin/rails console'
   RAILS_ENV = 'production'
   RAILS_LOG_TO_STDOUT = '1'
   BG_ENV = 'staging'
-  SOLID_QUEUE_IN_PUMA = '1'
-  RAILS_MAX_THREADS = '2'
-  SOLID_QUEUE_DEFAULT_THREADS = '1'
+  ACTIVE_STORAGE_SERVICE = 'tigris'
+  ACTIVE_STORAGE_KEY_PREFIX = 'staging/'
+  RAILS_MAX_THREADS = '3'
+  SOLID_QUEUE_DEFAULT_THREADS = '2'
   # Wallpaper fuzzy verification thresholds (optional; same defaults as code)
   WALLPAPER_SSIM_THRESHOLD = '0.75'
   WALLPAPER_DHASH_THRESHOLD = '15'
@@ -29,11 +30,7 @@ console_command = '/rails/bin/rails console'
 
 [processes]
   app = "./bin/rails server"
-
-[[mounts]]
-  source = 'storage_volume'
-  destination = '/rails/storage'
-  initial_size = '1gb'
+  worker = "bin/jobs"
 
 [http_service]
   internal_port = 3000
@@ -57,6 +54,13 @@ console_command = '/rails/bin/rails console'
 
 [[vm]]
   processes = ['app']
+  memory = '512mb'
+  cpu_kind = 'shared'
+  cpus = 1
+  memory_mb = 512
+
+[[vm]]
+  processes = ['worker']
   memory = '2gb'
   cpu_kind = 'shared'
   cpus = 1

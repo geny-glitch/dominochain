@@ -154,6 +154,7 @@ module Api
       sample.image.attach(params[:image])
       sample.save!
 
+      Rails.logger.info("[Devices] wallpaper_sample created id=#{sample.id} device=#{device.device_id}")
       enqueue_wallpaper_verification(sample.id)
 
       render json: {

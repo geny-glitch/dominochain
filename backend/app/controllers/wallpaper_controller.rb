@@ -28,6 +28,7 @@ class WallpaperController < ApplicationController
   end
 
   def wallpaper_verify_request
+    Rails.logger.info("[Wallpaper] verify_request device=#{@device.device_id} fcm=#{@device.fcm_token.present?}")
     FcmService.send_verify_wallpaper_notification(device: @device)
     redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), notice: t("flash.wallpaper.verify_requested")
   end

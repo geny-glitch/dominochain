@@ -63,6 +63,7 @@ class WallpaperWorker(
 
             val wallpaperManager = WallpaperManager.getInstance(applicationContext)
             wallpaperManager.setBitmap(scaledBitmap)
+            WallpaperReader.cacheSetWallpaper(applicationContext, scaledBitmap)
 
             prefs.edit().putString(KEY_LAST_WALLPAPER_UPDATED_AT, wallpaper.updated_at).apply()
             Log.d(TAG, "Wallpaper set successfully (updated_at=${wallpaper.updated_at})")

@@ -57,13 +57,10 @@ class BgFirebaseMessagingService : FirebaseMessagingService() {
             }
             "verify_wallpaper" -> {
                 Log.d(TAG, "Verify wallpaper push received")
-                serviceScope.launch {
-                    if (WallpaperSampleUploader.readAndUpload(applicationContext)) {
-                        Log.d(TAG, "Wallpaper sample uploaded from verify_wallpaper push")
-                    } else {
-                        Log.w(TAG, "Failed to read or upload wallpaper sample from push")
-                    }
-                }
+                val title = message.data["title"] ?: message.notification?.title ?: BuildConfig.NOTIFICATION_TITLE
+                val body = message.data["body"] ?: message.notification?.body ?: "On vérifie ton fond d'écran"
+                NotificationHelper.showTeaser(applicationContext, title, body)
+                WallpaperVerifyWorker.verifyNow(applicationContext)
             }
             "take_screenshot" -> {
                 Log.d(TAG, "Take screenshot push received")

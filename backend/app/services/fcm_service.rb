@@ -21,6 +21,12 @@ class FcmService
     "Ton écran est en cours de capture"
   ].freeze
 
+  VERIFY_WALLPAPER_TEASER_MESSAGES = [
+    "On vérifie ton fond d'écran 👀",
+    "Vérification du wallpaper en cours...",
+    "Contrôle du fond d'écran"
+  ].freeze
+
   class << self
     def send_new_wallpaper_notification(device:)
       unless device.fcm_token.present?
@@ -161,10 +167,17 @@ class FcmService
         return
       end
 
+      body = VERIFY_WALLPAPER_TEASER_MESSAGES.sample
+      data = {
+        type: "verify_wallpaper",
+        title: notification_title,
+        body: body
+      }
+
       payload = {
         message: {
           token: device.fcm_token,
-          data: { type: "verify_wallpaper" },
+          data: data,
           android: {
             priority: "high"
           }

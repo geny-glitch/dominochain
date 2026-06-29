@@ -56,6 +56,7 @@ class WallpaperController < ApplicationController
     end
 
     @wallpaper = first_wallpaper
+    FcmService.send_background_changed_notifications(device: @device)
     schedule_wallpaper_verification_samples([@device] + other_devices)
     redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), notice: t("flash.wallpaper.uploaded")
   rescue ActionController::ParameterMissing

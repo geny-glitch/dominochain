@@ -160,7 +160,12 @@ class DeviceRepository {
         return try {
             val part = MultipartBody.Part.createFormData("image", imageFile.name, imageFile.asRequestBody("image/jpeg".toMediaType()))
             val response = api.uploadWallpaperSample(deviceId, part)
-            if (response.isSuccessful) Result.success(Unit) else Result.failure(Exception("Upload failed: ${response.code()}"))
+            if (response.isSuccessful) {
+                Result.success(Unit)
+            } else {
+                val errorBody = response.errorBody()?.string()?.take(200)
+                Result.failure(Exception("Wallpaper sample upload failed: ${response.code()} $errorBody"))
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }

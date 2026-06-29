@@ -15,24 +15,24 @@ object WallpaperReader {
     internal const val CACHED_WALLPAPER_FILENAME = "last_set_wallpaper.jpg"
 
     fun readHomeWallpaper(context: Context): File? {
+        readCachedSampleFile(context)?.let { return it }
+
         return try {
             val wallpaperManager = WallpaperManager.getInstance(context)
-            val bitmap = readBitmap(wallpaperManager)
-                ?: readCachedWallpaper(context)
-                ?: run {
-                    Log.e(TAG, "Could not read home wallpaper bitmap or cache")
-                    return null
-                }
-            saveBitmapToFile(context, bitmap)
+            val bitmap = readBitmap(wallpaperManager) ?: run {
+                Log.e(TAG, "Could not read home wallpaper bitmap")
+                return null
+            }
+            saveBitmapToTempFile(context, bitmap)
         } catch (e: Exception) {
             Log.e(TAG, "Failed to read wallpaper", e)
-            readCachedWallpaperFile(context)
+            readCachedSampleFile(context)
         }
     }
 
     fun cacheSetWallpaper(context: Context, bitmap: Bitmap) {
         try {
-            val file = File(context.cacheDir, CACHED_WALLPAPER_FILENAME)
+            val file = cachedWallpaperFile(context)
             FileOutputStream(file).use { out ->
                 bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out)
             }
@@ -40,6 +40,31 @@ object WallpaperReader {
         } catch (e: Exception) {
             Log.w(TAG, "Failed to cache wallpaper for verification", e)
         }
+    }
+
+    fun cachedWallpaperFile(context: Context): File {
+        val filesCache = File(context.filesDir, CACHED_WALLPAPER_FILENAME)
+        if (filesCache.exists() && filesCache.length() > 0L) return filesCache
+
+        val legacyCache = File(context.cacheDir, CACHED_WALLPAPER_FILENAME)
+        if (legacyCache.exists() && legacyCache.length() > 0L) {
+            runCatching {
+                legacyCache.copyTo(filesCache, overwrite = true)
+                legacyCache.delete()
+            }
+        }
+        return filesCache
+    }
+
+    private fun readCachedSampleFile(context: Context): File? {
+        val cacheFile = cachedWallpaperFile(context)
+        if (!cacheFile.exists() || cacheFile.length() <= 0L) return null
+
+        return runCatching {
+            copyToTempFile(context, cacheFile)?.also {
+                Log.d(TAG, "Using cached wallpaper fallback for verification")
+            }
+        }.getOrNull()
     }
 
     private fun readBitmap(wallpaperManager: WallpaperManager): Bitmap? {
@@ -55,19 +80,19 @@ object WallpaperReader {
         return null
     }
 
-    private fun readCachedWallpaper(context: Context): Bitmap? {
-        val file = File(context.cacheDir, CACHED_WALLPAPER_FILENAME)
-        if (!file.exists()) return null
-        return runCatching {
-            android.graphics.BitmapFactory.decodeFile(file.absolutePath)?.also {
-                Log.d(TAG, "Using cached wallpaper fallback for verification")
+    private fun copyToTempFile(context: Context, source: File): File? {
+        return try {
+            val dest = File(context.cacheDir, "wallpaper_sample_${System.currentTimeMillis()}.jpg")
+            source.inputStream().use { input ->
+                dest.outputStream().use { output ->
+                    input.copyTo(output)
+                }
             }
-        }.getOrNull()
-    }
-
-    private fun readCachedWallpaperFile(context: Context): File? {
-        val file = File(context.cacheDir, CACHED_WALLPAPER_FILENAME)
-        return file.takeIf { it.exists() && it.length() > 0 }
+            dest
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to copy wallpaper sample file", e)
+            null
+        }
     }
 
     private fun drawableToBitmap(drawable: Drawable): Bitmap? {
@@ -86,7 +111,7 @@ object WallpaperReader {
         return bitmap
     }
 
-    private fun saveBitmapToFile(context: Context, bitmap: Bitmap): File? {
+    private fun saveBitmapToTempFile(context: Context, bitmap: Bitmap): File? {
         return try {
             val file = File(context.cacheDir, "wallpaper_sample_${System.currentTimeMillis()}.jpg")
             FileOutputStream(file).use { out ->

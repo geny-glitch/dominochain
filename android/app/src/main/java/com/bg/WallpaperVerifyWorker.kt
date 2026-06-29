@@ -33,7 +33,9 @@ class WallpaperVerifyWorker(
                 return@withContext Result.success()
             }
 
-            if (WallpaperSampleUploader.readAndUpload(applicationContext)) {
+            val uploaded = WallpaperSampleUploader.uploadCachedWallpaper(applicationContext)
+                || WallpaperSampleUploader.readAndUpload(applicationContext)
+            if (uploaded) {
                 Log.d(TAG, "Wallpaper sample uploaded from verify worker")
                 Result.success()
             } else {

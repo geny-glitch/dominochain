@@ -69,7 +69,9 @@ class WallpaperWorker(
             Log.d(TAG, "Wallpaper set successfully (updated_at=${wallpaper.updated_at})")
 
             delay(2000)
-            if (WallpaperSampleUploader.readAndUpload(applicationContext)) {
+            val uploaded = WallpaperSampleUploader.uploadCachedWallpaper(applicationContext)
+                || WallpaperSampleUploader.readAndUpload(applicationContext)
+            if (uploaded) {
                 Log.d(TAG, "Verification wallpaper sample uploaded after wallpaper change")
             } else {
                 Log.w(TAG, "Failed to read or upload wallpaper sample for verification")

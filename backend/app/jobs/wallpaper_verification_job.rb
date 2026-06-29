@@ -33,7 +33,7 @@ class WallpaperVerificationJob < ApplicationJob
   def self.job_pending?(screenshot_id)
     SolidQueue::Job
       .where(finished_at: nil, class_name: name)
-      .where("arguments->'arguments'->>0 = ?", screenshot_id.to_s)
+      .where("(arguments::jsonb -> 'arguments' ->> 0) = ?", screenshot_id.to_s)
       .exists?
   end
 

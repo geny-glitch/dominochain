@@ -64,30 +64,10 @@ class WallpaperScreenshotComparator
   end
 
   def load_wallpaper_reference
-    width, height = comparison_device_dimensions
     ImagePreviewVariant.open_processed_preview(@wallpaper.image.blob) do |file|
       image = Vips::Image.new_from_file(file.path, access: :sequential)
-      image = downscale_if_large(image)
-      if width && height
-        image = image.resize(
-          width.to_f / image.width,
-          vscale: height.to_f / image.height
-        )
-      end
-      materialize_image(image)
+      materialize_image(downscale_if_large(image))
     end
-  end
-
-  def comparison_device_dimensions
-    return [nil, nil] unless @device.screen_width.present? && @device.screen_height.present?
-
-    width = @device.screen_width.to_i
-    height = @device.screen_height.to_i
-    longest = [width, height].max
-    return [width, height] if longest <= WORKING_MAX_SIDE
-
-    scale = WORKING_MAX_SIDE.to_f / longest
-    [(width * scale).round, (height * scale).round]
   end
 
   def materialize_image(image)
@@ -114,13 +94,17 @@ class WallpaperScreenshotComparator
   end
 
   def fit_to_device_aspect(image)
-    target_width = @device.screen_width.presence || image.width
-    target_height = @device.screen_height.presence || image.height
-    fitted = image.resize(
-      target_width.to_f / image.width,
-      vscale: target_height.to_f / image.height
-    )
-    downscale_if_large(fitted)
+    target_width = (@device.screen_width.presence || image.width).to_i
+    target_height = (@device.screen_height.presence || image.height).to_i
+    scale_w = target_width.to_f / image.width
+    scale_h = target_height.to_f / image.height
+    # Preview blobs are already small; upscaling to full device resolution is slow and pointless.
+    scale = [scale_w, scale_h].min
+    scale = 1.0 if scale > 1.0
+
+    return image if scale == 1.0
+
+    downscale_if_large(image.resize(scale, vscale: scale))
   end
 
   def crop_edges(image)

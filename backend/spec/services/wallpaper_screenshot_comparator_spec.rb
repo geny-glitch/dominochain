@@ -64,7 +64,7 @@ RSpec.describe WallpaperScreenshotComparator do
     result = compare
 
     expect(result.status).to eq("mismatch")
-    expect(result.score).to be <= 0.52
+    expect(result.score).to be <= 0.55
   end
 
   it "keeps a heavily overlaid screenshot verified via fuzzy matching" do

@@ -9,7 +9,7 @@ object WallpaperSampleUploader {
     private const val TAG = "WallpaperSampleUpload"
 
     suspend fun uploadForVerification(context: Context): Boolean {
-        return uploadCachedWallpaper(context) || readAndUpload(context)
+        return readAndUpload(context) || uploadCachedWallpaper(context)
     }
 
     suspend fun readAndUpload(context: Context): Boolean {

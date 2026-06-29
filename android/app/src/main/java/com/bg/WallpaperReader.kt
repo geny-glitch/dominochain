@@ -15,18 +15,16 @@ object WallpaperReader {
     internal const val CACHED_WALLPAPER_FILENAME = "last_set_wallpaper.jpg"
 
     fun readHomeWallpaper(context: Context): File? {
-        readCachedSampleFile(context)?.let { return it }
-
-        return try {
+        try {
             val wallpaperManager = WallpaperManager.getInstance(context)
             val bitmap = readBitmap(wallpaperManager) ?: run {
-                Log.e(TAG, "Could not read home wallpaper bitmap")
-                return null
+                Log.w(TAG, "Could not read home wallpaper bitmap, trying cache fallback")
+                return readCachedSampleFile(context)
             }
-            saveBitmapToTempFile(context, bitmap)
+            return saveBitmapToTempFile(context, bitmap)
         } catch (e: Exception) {
             Log.e(TAG, "Failed to read wallpaper", e)
-            readCachedSampleFile(context)
+            return readCachedSampleFile(context)
         }
     }
 

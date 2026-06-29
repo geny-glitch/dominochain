@@ -13,6 +13,7 @@ console_command = '/rails/bin/rails console'
   RAILS_ENV = 'production'
   RAILS_LOG_TO_STDOUT = '1'
   BG_ENV = 'staging'
+  SOLID_QUEUE_IN_PUMA = '1'
   # Wallpaper fuzzy verification thresholds (optional; same defaults as code)
   WALLPAPER_SSIM_THRESHOLD = '0.75'
   WALLPAPER_DHASH_THRESHOLD = '15'
@@ -23,7 +24,6 @@ console_command = '/rails/bin/rails console'
 
 [processes]
   app = "./bin/rails server"
-  worker = "./bin/jobs"
 
 [[mounts]]
   source = 'storage_volume'
@@ -56,10 +56,3 @@ console_command = '/rails/bin/rails console'
   cpu_kind = 'shared'
   cpus = 1
   memory_mb = 1024
-
-[[vm]]
-  processes = ['worker']
-  memory = '512mb'
-  cpu_kind = 'shared'
-  cpus = 1
-  memory_mb = 512

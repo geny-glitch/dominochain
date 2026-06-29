@@ -42,8 +42,8 @@ class WallpaperVerificationJob < ApplicationJob
       "[WallpaperVerification] screenshot=#{screenshot.id} device=#{device.device_id} " \
       "status=#{result.status} score=#{result.score} ssim=#{result.ssim} dhash=#{result.dhash_distance}"
     )
-  rescue Vips::Error => e
-    Rails.logger.warn("[WallpaperVerification] screenshot=#{screenshot_id} failed: #{e.message}")
+  rescue Vips::Error, ActiveStorage::FileNotFoundError => e
+    Rails.logger.warn("[WallpaperVerification] screenshot=#{screenshot_id} failed: #{e.class}: #{e.message}")
     screenshot&.update!(
       verification_status: "inconclusive",
       verified_at: Time.current

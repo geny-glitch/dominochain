@@ -75,6 +75,10 @@ bind "tcp://0.0.0.0:#{ENV.fetch("PORT", 3000)}"
 # Allow puma to be restarted by `bin/rails restart` command.
 plugin :tmp_restart
 
+# Run Solid Queue inside Puma on Fly app machines that mount Active Storage local disk.
+# A separate worker machine cannot read blobs stored on the app volume.
+plugin :solid_queue if ENV["SOLID_QUEUE_IN_PUMA"]
+
 # Specify the PID file. Defaults to tmp/pids/server.pid in development.
 # In other environments, only set the PID file if requested.
 pidfile ENV["PIDFILE"] if ENV["PIDFILE"]

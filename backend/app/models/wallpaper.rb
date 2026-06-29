@@ -4,7 +4,9 @@ class Wallpaper < ApplicationRecord
   belongs_to :device
   has_many :wallpaper_applications, dependent: :destroy
   has_many :device_screenshots, dependent: :nullify
-  has_one_attached :image
+  has_one_attached :image do |attachable|
+    ImagePreviewVariant::AttachmentConfig.call(attachable)
+  end
 
   after_create_commit :send_push_notification
 

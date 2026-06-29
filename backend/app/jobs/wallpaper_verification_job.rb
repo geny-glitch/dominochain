@@ -112,7 +112,7 @@ class WallpaperVerificationJob < ApplicationJob
     timer.log_action(action: "timeout", reason: "compare_timeout")
   rescue ImagePreviewVariant::PreviewNotReady
     defer_verification(sample_id, sample, wallpaper, timer, defer_attempt) if sample && wallpaper
-  rescue Vips::Error, ActiveStorage::FileNotFoundError => e
+  rescue ::Vips::Error, ActiveStorage::FileNotFoundError => e
     Rails.logger.warn("[WallpaperVerification] sample=#{sample_id} failed: #{e.class}: #{e.message}")
     timer.measure(:persist) { update_sample!(sample, verification_status: "inconclusive") } if sample
     timer.log_action(action: "failed", reason: e.class.name)

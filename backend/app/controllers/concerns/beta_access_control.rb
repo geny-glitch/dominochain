@@ -28,7 +28,7 @@ module BetaAccessControl
       return
     end
 
-    @devices = @beta.devices
+    @devices = @beta.devices.order(created_at: :desc)
     # Un beta n'a qu'un device actif à la fois : on utilise toujours le dernier enregistré
     @device = @devices.order(created_at: :desc).first
     @device_id = @device&.device_id

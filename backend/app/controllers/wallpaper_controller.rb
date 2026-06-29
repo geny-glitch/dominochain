@@ -5,9 +5,13 @@ class WallpaperController < ApplicationController
 
   def show
     @device_id = @device.device_id
-    @applications = @device.wallpaper_applications.includes(:wallpaper).recent
+    @applications = @device.wallpaper_applications
+      .includes(wallpaper: { image_attachment: { blob: { variant_records: { image_attachment: :blob } } } })
+      .recent
     @tasks = @beta.tasks.recent
-    @screenshots = @device.device_screenshots.order(captured_at: :desc)
+    @screenshots = @device.device_screenshots
+      .includes(image_attachment: { blob: { variant_records: { image_attachment: :blob } } })
+      .order(captured_at: :desc)
     schedule_stale_pending_verifications(@device)
   end
 

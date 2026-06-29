@@ -246,7 +246,7 @@
         <summary class="ds-debug-summary"><%= t("wallpaper.devices_debug") %></summary>
         <div class="ds-debug-content">
           <ul class="ds-debug-device-list">
-            <% @devices.order(created_at: :desc).each do |d| %>
+            <% @devices.each do |d| %>
               <li class="ds-debug-device-item <%= 'ds-debug-device-item--current' if d.id == @device.id %>">
                 <span class="ds-debug-device-info">
                   <span class="ds-device-name"><%= d.display_name %></span>

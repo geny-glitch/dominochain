@@ -55,8 +55,12 @@ module ImagePreviewVariant
     def preview_variant_processed?(blob)
       return true unless blob.representable?
 
-      digest = preview_variant_for(blob).variation.digest
-      blob.variant_records.exists?(variation_digest: digest)
+      variant = preview_variant_for(blob)
+      if ActiveStorage.track_variants
+        blob.variant_records.exists?(variation_digest: variant.variation.digest)
+      else
+        variant.send(:processed?)
+      end
     rescue ActiveStorage::UnrepresentableError
       true
     end

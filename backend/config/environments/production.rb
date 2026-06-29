@@ -38,6 +38,9 @@ Rails.application.configure do
 
   # Store uploaded files on the local file system (see config/storage.yml for options).
   config.active_storage.service = :local
+  # Serve variants in one cacheable request instead of redirect → expiring disk URL.
+  config.active_storage.resolve_model_to_route = :rails_storage_proxy
+  config.active_storage.track_variants = true
 
   # Mount Action Cable outside main process or domain.
   # config.action_cable.mount_path = nil

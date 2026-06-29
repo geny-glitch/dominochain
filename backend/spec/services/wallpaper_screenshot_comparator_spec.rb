@@ -81,6 +81,30 @@ RSpec.describe WallpaperScreenshotComparator do
     expect(result.score).to be >= 0.65
   end
 
+  it "marks a lock screen screenshot with heavy system overlays as verified" do
+    device = create(:device, screen_width: 1170, screen_height: 2532)
+    wallpaper = create(:wallpaper, device: device)
+    screenshot = create(:device_screenshot, device: device)
+
+    WallpaperVerificationTestImages.attach_fixture(
+      wallpaper,
+      attachment_name: :image,
+      filename: "wallpaper_reference.png"
+    )
+    WallpaperVerificationTestImages.attach_fixture(
+      screenshot,
+      attachment_name: :image,
+      filename: "wallpaper_lock_screen_screenshot.png"
+    )
+    perform_enqueued_jobs
+
+    result = described_class.new(screenshot: screenshot, wallpaper: wallpaper, device: device).compare
+
+    expect(result.status).to eq("verified")
+    expect(result.score).to be >= 0.48
+    expect(result.score).to be <= 0.65
+  end
+
   it "requires processed boss_preview variants" do
     WallpaperVerificationTestImages.attach_png(
       screenshot,

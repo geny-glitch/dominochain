@@ -194,6 +194,8 @@ class WallpaperScreenshotComparator
     score_threshold = ENV.fetch("WALLPAPER_SCORE_THRESHOLD", "0.65").to_f
     score_dhash_max = ENV.fetch("WALLPAPER_SCORE_DHASH_MAX", "18").to_i
     score_mad_max = ENV.fetch("WALLPAPER_SCORE_MAD_MAX", "35").to_f
+    overlay_score_threshold = ENV.fetch("WALLPAPER_OVERLAY_SCORE_THRESHOLD", "0.48").to_f
+    overlay_dhash_max = ENV.fetch("WALLPAPER_OVERLAY_DHASH_MAX", "35").to_i
     mismatch_ssim = ENV.fetch("WALLPAPER_MISMATCH_SSIM", "0.5").to_f
     mismatch_dhash = ENV.fetch("WALLPAPER_MISMATCH_DHASH", "20").to_i
     mad_match_threshold = ENV.fetch("WALLPAPER_MAD_MATCH_THRESHOLD", "35").to_f
@@ -204,8 +206,12 @@ class WallpaperScreenshotComparator
     score_match = score >= score_threshold &&
                   dhash_distance <= score_dhash_max &&
                   mad <= score_mad_max
+    overlay_match = score >= overlay_score_threshold &&
+                    dhash_distance <= overlay_dhash_max &&
+                    mad <= mad_mismatch_threshold
 
-    status = if ssim >= ssim_threshold || dhash_match || score_match || mad <= (mad_match_threshold / 2.0)
+    status = if ssim >= ssim_threshold || dhash_match || score_match || overlay_match ||
+                  mad <= (mad_match_threshold / 2.0)
       "verified"
     elsif (ssim < mismatch_ssim && dhash_distance > mismatch_dhash && mad > mad_mismatch_threshold) ||
           mad > (mad_mismatch_threshold * 1.5)

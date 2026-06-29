@@ -55,4 +55,13 @@ module WallpaperVerificationTestImages
       content_type: "image/png"
     )
   end
+
+  def attach_fixture(record, attachment_name:, filename:)
+    path = Rails.root.join("spec/fixtures/files", filename)
+    record.public_send(attachment_name).attach(
+      io: File.open(path, "rb"),
+      filename: filename,
+      content_type: Marcel::MimeType.for(path)
+    )
+  end
 end

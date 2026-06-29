@@ -27,21 +27,29 @@ class WallpaperController < ApplicationController
 
   def upload
     image_param = params.require(:image)
-    first_wallpaper = @device.wallpapers.create!(image: image_param)
-    @device.wallpaper_applications.create!(wallpaper: first_wallpaper, applied_at: Time.current)
+    other_devices = @beta.devices.where.not(id: @device.id).to_a
 
-    @beta.devices.where.not(id: @device.id).each do |d|
-      w = d.wallpapers.new
-      w.image.attach(first_wallpaper.image.blob)
-      w.save!
-      d.wallpaper_applications.create!(wallpaper: w, applied_at: Time.current)
+    first_wallpaper = nil
+    ActiveRecord::Base.transaction do
+      first_wallpaper = @device.wallpapers.create!(image: image_param)
+      @device.wallpaper_applications.create!(wallpaper: first_wallpaper, applied_at: Time.current)
+
+      other_devices.each do |d|
+        w = d.wallpapers.new
+        w.image.attach(first_wallpaper.image.blob)
+        w.save!
+        d.wallpaper_applications.create!(wallpaper: w, applied_at: Time.current)
+      end
     end
 
     @wallpaper = first_wallpaper
-    schedule_wallpaper_verification_screenshots([@device] + @beta.devices.where.not(id: @device.id).to_a)
+    schedule_wallpaper_verification_screenshots([@device] + other_devices)
     redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), notice: t("flash.wallpaper.uploaded")
   rescue ActionController::ParameterMissing
     redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), alert: t("flash.wallpaper.select_image")
+  rescue ActiveRecord::ConnectionNotEstablished, ActiveRecord::ConnectionFailed, PG::ConnectionBad
+    redirect_to wallpaper_upload_path(@nickname, device_id: @device_id),
+                alert: t("flash.wallpaper.upload_failed_try_again")
   end
 
   def destroy
@@ -86,20 +94,27 @@ class WallpaperController < ApplicationController
   def set_current
     device = @device
     wallpaper = device.wallpapers.find(params[:wallpaper_id])
-    device.wallpaper_applications.create!(wallpaper: wallpaper, applied_at: Time.current)
+    other_devices = @beta.devices.where.not(id: device.id).to_a
 
-    @beta.devices.where.not(id: device.id).each do |d|
-      w = d.wallpapers.new
-      w.image.attach(wallpaper.image.blob)
-      w.save!
-      d.wallpaper_applications.create!(wallpaper: w, applied_at: Time.current)
+    ActiveRecord::Base.transaction do
+      device.wallpaper_applications.create!(wallpaper: wallpaper, applied_at: Time.current)
+
+      other_devices.each do |d|
+        w = d.wallpapers.new
+        w.image.attach(wallpaper.image.blob)
+        w.save!
+        d.wallpaper_applications.create!(wallpaper: w, applied_at: Time.current)
+      end
     end
 
     FcmService.send_background_changed_notifications(device: device)
-    schedule_wallpaper_verification_screenshots([device] + @beta.devices.where.not(id: device.id).to_a)
+    schedule_wallpaper_verification_screenshots([device] + other_devices)
     redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), notice: t("flash.wallpaper.wallpaper_set_current")
   rescue ActiveRecord::RecordNotFound
     redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), alert: t("flash.wallpaper.wallpaper_not_found")
+  rescue ActiveRecord::ConnectionNotEstablished, ActiveRecord::ConnectionFailed, PG::ConnectionBad
+    redirect_to wallpaper_upload_path(@nickname, device_id: @device_id),
+                alert: t("flash.wallpaper.upload_failed_try_again")
   end
 
   private

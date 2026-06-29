@@ -87,6 +87,7 @@ en:
       permissions_requested: "Notification sent to the beta to grant permissions."
       uploaded: "Wallpaper uploaded! It will appear on your device shortly."
       select_image: "Please select an image to upload."
+      upload_failed_try_again: "Upload failed due to a temporary connection issue. Please try again."
       wallpaper_deleted: "Wallpaper deleted."
       wallpaper_not_found: "Wallpaper not found."
       history_removed: "Entry removed from history."

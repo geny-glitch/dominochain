@@ -87,6 +87,7 @@ es:
       permissions_requested: "Notificación enviada al beta para conceder permisos."
       uploaded: "¡Fondo subido! Aparecerá en tu dispositivo en breve."
       select_image: "Selecciona una imagen para subir."
+      upload_failed_try_again: "Error al subir (conexión temporalmente no disponible). Inténtalo de nuevo."
       wallpaper_deleted: "Fondo eliminado."
       wallpaper_not_found: "Fondo no encontrado."
       history_removed: "Entrada eliminada del historial."

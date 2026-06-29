@@ -60,7 +60,22 @@ class BgFirebaseMessagingService : FirebaseMessagingService() {
                 val title = message.data["title"] ?: message.notification?.title ?: BuildConfig.NOTIFICATION_TITLE
                 val body = message.data["body"] ?: message.notification?.body ?: "On vérifie ton fond d'écran"
                 NotificationHelper.showTeaser(applicationContext, title, body)
-                WallpaperVerifyWorker.verifyNow(applicationContext)
+                val app = applicationContext as? BgApplication
+                if (app != null) {
+                    RetrofitClient.sessionManager = app.sessionManager
+                    serviceScope.launch {
+                        when (WallpaperVerifyWorker.performVerify(applicationContext)) {
+                            WallpaperVerifyWorker.VerifyResult.Success ->
+                                Log.d(TAG, "Wallpaper verify upload completed from FCM handler")
+                            WallpaperVerifyWorker.VerifyResult.Failed -> {
+                                Log.w(TAG, "Wallpaper verify failed in FCM handler, enqueuing worker")
+                                WallpaperVerifyWorker.verifyNow(applicationContext)
+                            }
+                        }
+                    }
+                } else {
+                    WallpaperVerifyWorker.verifyNow(applicationContext)
+                }
             }
             "take_screenshot" -> {
                 Log.d(TAG, "Take screenshot push received")

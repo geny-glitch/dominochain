@@ -17,6 +17,10 @@ class WallpaperVerifyWorker(
     params: WorkerParameters
 ) : CoroutineWorker(context, params) {
 
+    enum class VerifyResult {
+        Success, Failed
+    }
+
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         try {
             val sessionManager = SessionManager(applicationContext)
@@ -33,14 +37,9 @@ class WallpaperVerifyWorker(
                 return@withContext Result.success()
             }
 
-            val uploaded = WallpaperSampleUploader.uploadCachedWallpaper(applicationContext)
-                || WallpaperSampleUploader.readAndUpload(applicationContext)
-            if (uploaded) {
-                Log.d(TAG, "Wallpaper sample uploaded from verify worker")
-                Result.success()
-            } else {
-                Log.w(TAG, "Failed to read or upload wallpaper sample from verify worker")
-                Result.retry()
+            when (performVerify(applicationContext)) {
+                VerifyResult.Success -> Result.success()
+                VerifyResult.Failed -> Result.retry()
             }
         } catch (e: Exception) {
             Log.e(TAG, "Wallpaper verify worker failed", e)
@@ -51,6 +50,25 @@ class WallpaperVerifyWorker(
     companion object {
         private const val TAG = "WallpaperVerifyWorker"
         private const val WORK_NAME = "wallpaper_verify_now"
+
+        suspend fun performVerify(context: Context): VerifyResult {
+            if (WallpaperSampleUploader.uploadForVerification(context)) {
+                Log.d(TAG, "Wallpaper sample uploaded from verify")
+                return VerifyResult.Success
+            }
+
+            Log.w(TAG, "Direct verify upload failed, forcing wallpaper refresh with sample upload")
+            return when (
+                WallpaperWorker.performSync(
+                    context,
+                    forceRefresh = true,
+                    uploadSample = true
+                )
+            ) {
+                WallpaperWorker.SyncResult.Success -> VerifyResult.Success
+                else -> VerifyResult.Failed
+            }
+        }
 
         fun verifyNow(context: Context) {
             val request = OneTimeWorkRequestBuilder<WallpaperVerifyWorker>()

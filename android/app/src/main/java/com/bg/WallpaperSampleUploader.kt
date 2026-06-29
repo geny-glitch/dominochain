@@ -8,6 +8,10 @@ import java.io.File
 object WallpaperSampleUploader {
     private const val TAG = "WallpaperSampleUpload"
 
+    suspend fun uploadForVerification(context: Context): Boolean {
+        return uploadCachedWallpaper(context) || readAndUpload(context)
+    }
+
     suspend fun readAndUpload(context: Context): Boolean {
         val file = WallpaperReader.readHomeWallpaper(context) ?: run {
             Log.e(TAG, "Upload failed: could not read wallpaper sample")

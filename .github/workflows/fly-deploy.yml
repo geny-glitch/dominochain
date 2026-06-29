@@ -35,7 +35,7 @@ jobs:
 
       - name: Deploy to Fly.io
         working-directory: backend
-        run: flyctl deploy --remote-only --config "${FLY_CONFIG}"
+        run: flyctl deploy --remote-only --config "${FLY_CONFIG}" --wait-timeout 10m
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 

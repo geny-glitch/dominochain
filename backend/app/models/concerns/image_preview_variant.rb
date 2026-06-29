@@ -7,6 +7,7 @@ module ImagePreviewVariant
   BOSS_PREVIEW_MAX_WIDTH = 360
   BOSS_PREVIEW_MAX_HEIGHT = 640
   BOSS_PREVIEW_VARIANT_NAME = :boss_preview
+  BACKFILL_MODEL_NAMES = %w[Wallpaper DeviceScreenshot].freeze
 
   module AttachmentConfig
     module_function
@@ -18,6 +19,55 @@ module ImagePreviewVariant
         saver: { quality: 75 },
         preprocessed: true
       )
+    end
+  end
+
+  class << self
+    def backfill!(async: true)
+      blobs = backfill_blobs
+      needing = blobs.reject { |blob| preview_variant_processed?(blob) }
+
+      puts "Found #{blobs.size} image blobs, #{needing.size} missing #{BOSS_PREVIEW_VARIANT_NAME} variant"
+
+      needing.each_with_index do |blob, index|
+        if async
+          blob.preprocessed(boss_preview_named_transformations)
+          puts "[#{index + 1}/#{needing.size}] Enqueued #{blob.key}"
+        else
+          preview_variant_for(blob).processed
+          puts "[#{index + 1}/#{needing.size}] Processed #{blob.key}"
+        end
+      end
+
+      puts async ? "Done. Transform jobs enqueued." : "Done. All variants processed inline."
+      needing.size
+    end
+
+    def backfill_blobs
+      blob_ids = ActiveStorage::Attachment.where(
+        record_type: BACKFILL_MODEL_NAMES,
+        name: "image"
+      ).distinct.pluck(:blob_id)
+
+      ActiveStorage::Blob.where(id: blob_ids).to_a
+    end
+
+    def preview_variant_processed?(blob)
+      return true unless blob.representable?
+
+      digest = preview_variant_for(blob).variation.digest
+      blob.variant_records.exists?(variation_digest: digest)
+    rescue ActiveStorage::UnrepresentableError
+      true
+    end
+
+    def preview_variant_for(blob)
+      blob.representation(boss_preview_named_transformations)
+    end
+
+    def boss_preview_named_transformations
+      @boss_preview_named_transformations ||= Wallpaper.reflect_on_attachment(:image)
+        .named_variants.fetch(BOSS_PREVIEW_VARIANT_NAME).transformations
     end
   end
 

@@ -13,6 +13,13 @@ console_command = '/rails/bin/rails console'
   RAILS_ENV = 'production'
   RAILS_LOG_TO_STDOUT = '1'
   BG_ENV = 'staging'
+  # Wallpaper fuzzy verification thresholds (optional; same defaults as code)
+  WALLPAPER_SSIM_THRESHOLD = '0.75'
+  WALLPAPER_DHASH_THRESHOLD = '15'
+  WALLPAPER_MISMATCH_SSIM = '0.5'
+  WALLPAPER_MISMATCH_DHASH = '20'
+  WALLPAPER_MAD_MATCH_THRESHOLD = '18'
+  WALLPAPER_MAD_MISMATCH_THRESHOLD = '45'
 
 [processes]
   app = "./bin/rails server"

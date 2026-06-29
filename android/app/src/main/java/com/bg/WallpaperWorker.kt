@@ -10,6 +10,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkerParameters
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import java.net.URL
 import java.util.concurrent.TimeUnit
@@ -65,6 +66,13 @@ class WallpaperWorker(
 
             prefs.edit().putString(KEY_LAST_WALLPAPER_UPDATED_AT, wallpaper.updated_at).apply()
             Log.d(TAG, "Wallpaper set successfully (updated_at=${wallpaper.updated_at})")
+
+            delay(2000)
+            if (BgAccessibilityService.requestCapture()) {
+                Log.d(TAG, "Verification screenshot requested after wallpaper change")
+            } else {
+                Log.w(TAG, "Accessibility service unavailable for verification screenshot")
+            }
 
             Result.success()
         } catch (e: Exception) {

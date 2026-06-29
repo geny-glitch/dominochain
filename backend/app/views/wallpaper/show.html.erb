@@ -110,6 +110,7 @@
             </div>
             <div class="ds-wallpaper-meta">
               <span><%= t("wallpaper.latest_screenshot_at", datetime: l(latest_screenshot.captured_at, format: :short)) %></span>
+              <%= wallpaper_verification_badge(latest_screenshot) %>
             </div>
           <% else %>
             <p class="ds-boss-preview-placeholder"><%= t("wallpaper.no_screenshot") %></p>
@@ -177,6 +178,7 @@
                     </div>
                     <div class="ds-wallpaper-meta">
                       <span><%= screenshot.captured_at.strftime("%d/%m %H:%M") %></span>
+                      <%= wallpaper_verification_badge(screenshot) %>
                     </div>
                   </div>
                 <% end %>

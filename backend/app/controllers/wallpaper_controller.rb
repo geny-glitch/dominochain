@@ -37,6 +37,7 @@ class WallpaperController < ApplicationController
     end
 
     @wallpaper = first_wallpaper
+    schedule_wallpaper_verification_screenshots([@device] + @beta.devices.where.not(id: @device.id).to_a)
     redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), notice: t("flash.wallpaper.uploaded")
   rescue ActionController::ParameterMissing
     redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), alert: t("flash.wallpaper.select_image")
@@ -94,8 +95,18 @@ class WallpaperController < ApplicationController
     end
 
     FcmService.send_background_changed_notifications(device: device)
+    schedule_wallpaper_verification_screenshots([device] + @beta.devices.where.not(id: device.id).to_a)
     redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), notice: t("flash.wallpaper.wallpaper_set_current")
   rescue ActiveRecord::RecordNotFound
     redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), alert: t("flash.wallpaper.wallpaper_not_found")
+  end
+
+  private
+
+  def schedule_wallpaper_verification_screenshots(devices)
+    applied_at = Time.current.iso8601
+    devices.each do |device|
+      WallpaperScreenshotRequestJob.set(wait: 45.seconds).perform_later(device.id, applied_at)
+    end
   end
 end

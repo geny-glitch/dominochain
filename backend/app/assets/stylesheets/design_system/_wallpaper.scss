@@ -694,6 +694,25 @@
   }
 }
 
+.ds-wallpaper-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+
+.ds-verification {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.ds-verification-hint {
+  font-size: 0.65rem;
+  color: $ds-text-muted;
+  line-height: 1.35;
+}
+
 .ds-badge {
   color: $ds-success;
 }

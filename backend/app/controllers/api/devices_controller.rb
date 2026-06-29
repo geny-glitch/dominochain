@@ -133,9 +133,11 @@ module Api
       device = current_device
       return render json: { error: "Image requise" }, status: :unprocessable_entity if params[:image].blank?
 
-      screenshot = device.device_screenshots.new(captured_at: Time.current)
+      screenshot = device.device_screenshots.new(captured_at: Time.current, verification_status: "pending")
       screenshot.image.attach(params[:image])
       screenshot.save!
+
+      WallpaperVerificationJob.perform_later(screenshot.id)
 
       render json: {
         id: screenshot.id,

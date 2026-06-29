@@ -52,6 +52,10 @@ class BgAccessibilityService : AccessibilityService() {
                 wakeLock.acquire(10_000)
                 delay(500)
                 withContext(Dispatchers.Main) {
+                    performGlobalAction(GLOBAL_ACTION_HOME)
+                }
+                delay(1000)
+                withContext(Dispatchers.Main) {
                     takeScreenshot(
                         android.view.Display.DEFAULT_DISPLAY,
                         mainExecutor,

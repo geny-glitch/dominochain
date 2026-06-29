@@ -107,14 +107,25 @@ class WallpaperController < ApplicationController
   def schedule_wallpaper_verification_screenshots(devices)
     applied_at = Time.current.iso8601
     devices.each do |device|
-      WallpaperScreenshotRequestJob.set(wait: 45.seconds).perform_later(device.id, applied_at)
+      enqueue_wallpaper_job(
+        WallpaperScreenshotRequestJob.set(wait: 45.seconds),
+        device.id,
+        applied_at
+      )
     end
   end
 
   def schedule_stale_pending_verifications(device)
-    device.device_screenshots
-      .where(verification_status: "pending")
-      .where(created_at: ...15.seconds.ago)
-      .find_each { |screenshot| WallpaperVerificationJob.perform_later(screenshot.id) }
+    enqueue_wallpaper_job(WallpaperStaleVerificationSweepJob, device.id)
+  end
+
+  def enqueue_wallpaper_job(job, *args)
+    job.perform_later(*args)
+  rescue SolidQueue::Job::EnqueueError, ActiveRecord::ConnectionNotEstablished,
+         ActiveRecord::ConnectionFailed, PG::ConnectionBad => e
+    job_name = job.is_a?(Class) ? job.name : job.job_class.name
+    Rails.logger.warn(
+      "[Wallpaper] Could not enqueue #{job_name}: #{e.class}: #{e.message}"
+    )
   end
 end

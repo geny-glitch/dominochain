@@ -76,3 +76,25 @@ RSpec.describe WallpaperScreenshotRequestJob, type: :job do
     expect(FcmService).not_to have_received(:send_take_screenshot_notification)
   end
 end
+
+RSpec.describe WallpaperStaleVerificationSweepJob, type: :job do
+  let(:device) { create(:device) }
+
+  it "enqueues verification for stale pending screenshots" do
+    stale = create(:device_screenshot, device: device, verification_status: "pending", created_at: 1.minute.ago)
+    fresh = create(:device_screenshot, device: device, verification_status: "pending", created_at: 5.seconds.ago)
+    create(:device_screenshot, device: device, verification_status: "verified", created_at: 1.minute.ago)
+
+    expect {
+      described_class.perform_now(device.id)
+    }.to have_enqueued_job(WallpaperVerificationJob).with(stale.id).once
+
+    expect(WallpaperVerificationJob).not_to have_been_enqueued.with(fresh.id)
+  end
+
+  it "does nothing when the device does not exist" do
+    expect {
+      described_class.perform_now(-1)
+    }.not_to have_enqueued_job(WallpaperVerificationJob)
+  end
+end

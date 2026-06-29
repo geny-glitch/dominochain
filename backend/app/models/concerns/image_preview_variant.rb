@@ -78,6 +78,9 @@ module ImagePreviewVariant
   def preview_image
     return image unless image.attached?
 
+    blob = image.blob
+    return image unless ImagePreviewVariant.preview_variant_processed?(blob)
+
     image.variant(BOSS_PREVIEW_VARIANT_NAME)
   end
 end

@@ -34,7 +34,27 @@ RSpec.describe ImagePreviewVariant do
       end.to have_enqueued_job(ActiveStorage::TransformJob)
     end
 
-    it "returns the named boss preview variant" do
+    it "returns the named boss preview variant when processed" do
+      wallpaper = create(:wallpaper)
+      WallpaperVerificationTestImages.attach_png(
+        wallpaper,
+        attachment_name: :image,
+        width: 1080,
+        height: 1920,
+        color: [120, 80, 200]
+      )
+      perform_enqueued_jobs
+
+      preview = wallpaper.preview_image
+
+      expect(preview).to be_a(ActiveStorage::VariantWithRecord)
+      expect(preview.variation.transformations).to include(
+        resize_to_limit: [ImagePreviewVariant::BOSS_PREVIEW_MAX_WIDTH, ImagePreviewVariant::BOSS_PREVIEW_MAX_HEIGHT],
+        saver: { quality: 75 }
+      )
+    end
+
+    it "falls back to the original attachment while the boss preview is still processing" do
       wallpaper = create(:wallpaper)
       WallpaperVerificationTestImages.attach_png(
         wallpaper,
@@ -44,13 +64,7 @@ RSpec.describe ImagePreviewVariant do
         color: [120, 80, 200]
       )
 
-      preview = wallpaper.preview_image
-
-      expect(preview).to be_a(ActiveStorage::VariantWithRecord)
-      expect(preview.variation.transformations).to include(
-        resize_to_limit: [ImagePreviewVariant::BOSS_PREVIEW_MAX_WIDTH, ImagePreviewVariant::BOSS_PREVIEW_MAX_HEIGHT],
-        saver: { quality: 75 }
-      )
+      expect(wallpaper.preview_image).to eq(wallpaper.image)
     end
   end
 

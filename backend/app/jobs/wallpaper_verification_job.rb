@@ -2,6 +2,9 @@
 
 class WallpaperVerificationJob < ApplicationJob
   queue_as :wallpaper_verification
+  limits_concurrency to: 1, key: ->(screenshot_id) { "wallpaper_verification/#{screenshot_id}" }
+
+  COMPARE_TIMEOUT = 90.seconds
 
   retry_on ActiveRecord::ConnectionNotEstablished, wait: 5.seconds, attempts: 3
   retry_on ActiveRecord::ConnectionFailed, wait: 5.seconds, attempts: 3
@@ -31,11 +34,14 @@ class WallpaperVerificationJob < ApplicationJob
     # Vips is memory-heavy; release DB pool slots before image work so web requests keep connections.
     ActiveRecord::Base.connection_handler.clear_active_connections!(:all)
 
-    result = WallpaperScreenshotComparator.new(
-      screenshot: screenshot,
-      wallpaper: wallpaper,
-      device: device
-    ).compare
+    result = nil
+    Timeout.timeout(COMPARE_TIMEOUT) do
+      result = WallpaperScreenshotComparator.new(
+        screenshot: screenshot,
+        wallpaper: wallpaper,
+        device: device
+      ).compare
+    end
 
     update_screenshot!(
       screenshot,
@@ -48,6 +54,9 @@ class WallpaperVerificationJob < ApplicationJob
       "[WallpaperVerification] screenshot=#{screenshot.id} device=#{device.device_id} " \
       "status=#{result.status} score=#{result.score} ssim=#{result.ssim} dhash=#{result.dhash_distance}"
     )
+  rescue Timeout::Error
+    Rails.logger.warn("[WallpaperVerification] screenshot=#{screenshot_id} timed out after #{COMPARE_TIMEOUT}s")
+    update_screenshot!(screenshot, verification_status: "inconclusive") if screenshot
   rescue Vips::Error, ActiveStorage::FileNotFoundError => e
     Rails.logger.warn("[WallpaperVerification] screenshot=#{screenshot_id} failed: #{e.class}: #{e.message}")
     update_screenshot!(screenshot, verification_status: "inconclusive") if screenshot

@@ -54,13 +54,15 @@ class WallpaperScreenshotComparator
 
   def load_wallpaper_reference
     width, height = comparison_device_dimensions
-    blob = if width && height
-      @wallpaper.image.variant(resize_to_fill: [width, height]).processed.blob
-    else
-      @wallpaper.image.blob
-    end
-    blob.open do |file|
+    @wallpaper.image.blob.open do |file|
       image = Vips::Image.new_from_file(file.path, access: :sequential)
+      image = downscale_if_large(image)
+      if width && height
+        image = image.resize(
+          width.to_f / image.width,
+          vscale: height.to_f / image.height
+        )
+      end
       materialize_image(image)
     end
   end

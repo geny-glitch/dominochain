@@ -20,11 +20,13 @@ fr:
     no_screenshot: "Aucune capture"
     take_screenshot: "Prendre un screenshot"
     verification:
+      pending: "Vérification…"
       verified: "Vérifié"
       mismatch: "Non conforme"
       inconclusive: "Incertain"
       skipped: "Ignoré"
       score: "%{label} · %{percent} % de similarité"
+      pending_hint: "Comparaison de la capture avec le fond d'écran choisi en cours."
       mismatch_hint: "Le fond affiché ne correspond pas à l'image choisie."
       inconclusive_hint: "Écran verrouillé, fond changé récemment, ou launcher très chargé."
     task_history_title: "Historique des tâches"

@@ -20,11 +20,13 @@ en:
     no_screenshot: "No screenshot"
     take_screenshot: "Take a screenshot"
     verification:
+      pending: "Checking…"
       verified: "Verified"
       mismatch: "Mismatch"
       inconclusive: "Inconclusive"
       skipped: "Skipped"
       score: "%{label} · %{percent}% similarity"
+      pending_hint: "Comparing the screenshot with the chosen wallpaper."
       mismatch_hint: "The wallpaper on screen does not match the chosen image."
       inconclusive_hint: "Locked screen, recent wallpaper change, or heavy launcher overlay."
     task_history_title: "Task history"

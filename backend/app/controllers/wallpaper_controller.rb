@@ -8,6 +8,7 @@ class WallpaperController < ApplicationController
     @applications = @device.wallpaper_applications.includes(:wallpaper).recent
     @tasks = @beta.tasks.recent
     @screenshots = @device.device_screenshots.order(captured_at: :desc)
+    schedule_stale_pending_verifications(@device)
   end
 
   def upload_new
@@ -108,5 +109,12 @@ class WallpaperController < ApplicationController
     devices.each do |device|
       WallpaperScreenshotRequestJob.set(wait: 45.seconds).perform_later(device.id, applied_at)
     end
+  end
+
+  def schedule_stale_pending_verifications(device)
+    device.device_screenshots
+      .where(verification_status: "pending")
+      .where(created_at: ...15.seconds.ago)
+      .find_each { |screenshot| WallpaperVerificationJob.perform_later(screenshot.id) }
   end
 end

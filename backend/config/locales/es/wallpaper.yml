@@ -20,11 +20,13 @@ es:
     no_screenshot: "Sin captura"
     take_screenshot: "Tomar captura"
     verification:
+      pending: "Comprobando…"
       verified: "Verificado"
       mismatch: "No coincide"
       inconclusive: "Inconcluso"
       skipped: "Omitido"
       score: "%{label} · %{percent} % de similitud"
+      pending_hint: "Comparando la captura con el fondo elegido."
       mismatch_hint: "El fondo en pantalla no coincide con la imagen elegida."
       inconclusive_hint: "Pantalla bloqueada, fondo cambiado recientemente o launcher muy cargado."
     task_history_title: "Historial de tareas"

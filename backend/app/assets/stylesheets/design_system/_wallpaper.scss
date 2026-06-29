@@ -713,6 +713,28 @@
   line-height: 1.35;
 }
 
+.ds-badge--verification-pending {
+  background: rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.95);
+  border-color: rgba(255, 255, 255, 0.45);
+  animation: ds-verification-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes ds-verification-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.16);
+    border-color: rgba(255, 255, 255, 0.5);
+  }
+
+  50% {
+    opacity: 0.45;
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+}
+
 .ds-badge {
   color: $ds-success;
 }

@@ -5,7 +5,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.BitmapDrawable
-import android.os.Build
+import android.graphics.drawable.Drawable
 import android.util.Log
 import java.io.File
 import java.io.FileOutputStream
@@ -28,17 +28,20 @@ object WallpaperReader {
     }
 
     private fun readBitmap(wallpaperManager: WallpaperManager): Bitmap? {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
-            wallpaperManager.getBitmap()?.let { return it }
-        }
+        val drawable = wallpaperManager.getDrawable(WallpaperManager.FLAG_SYSTEM)
+            ?: wallpaperManager.drawable
+            ?: return null
 
-        val drawable = wallpaperManager.drawable ?: return null
+        return drawableToBitmap(drawable)
+    }
+
+    private fun drawableToBitmap(drawable: Drawable): Bitmap {
         if (drawable is BitmapDrawable) {
             drawable.bitmap?.let { return it }
         }
 
-        val width = drawable.intrinsicWidth.coerceAtLeast(1)
-        val height = drawable.intrinsicHeight.coerceAtLeast(1)
+        val width = if (drawable.intrinsicWidth > 0) drawable.intrinsicWidth else 1
+        val height = if (drawable.intrinsicHeight > 0) drawable.intrinsicHeight else 1
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
         drawable.setBounds(0, 0, width, height)

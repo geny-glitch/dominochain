@@ -137,7 +137,7 @@ module Api
       screenshot.image.attach(params[:image])
       screenshot.save!
 
-      WallpaperVerificationJob.perform_later(screenshot.id)
+      enqueue_wallpaper_verification(screenshot.id)
 
       render json: {
         id: screenshot.id,
@@ -218,6 +218,16 @@ module Api
 
     def wallpaper_upload_url(nickname)
       "#{request.base_url}/w/#{nickname}"
+    end
+
+    def enqueue_wallpaper_verification(screenshot_id)
+      WallpaperVerificationJob.perform_later(screenshot_id)
+    rescue SolidQueue::Job::EnqueueError, ActiveRecord::ConnectionNotEstablished,
+           ActiveRecord::ConnectionFailed, PG::ConnectionBad => e
+      Rails.logger.warn(
+        "[Devices] Could not enqueue WallpaperVerificationJob screenshot=#{screenshot_id}: " \
+        "#{e.class}: #{e.message}"
+      )
     end
   end
 end

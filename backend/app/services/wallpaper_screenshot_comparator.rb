@@ -6,6 +6,8 @@ class WallpaperScreenshotComparator
   ComparisonResult = Struct.new(:score, :status, :ssim, :dhash_distance, :mad, keyword_init: true)
 
   COMPARE_SIZE = 64
+  # Cap longest side during comparison so Vips stays within Fly 1GB RAM while Solid Queue runs in Puma.
+  WORKING_MAX_SIDE = 960
   TOP_MARGIN_RATIO = 0.08
   BOTTOM_MARGIN_RATIO = 0.05
 
@@ -45,30 +47,67 @@ class WallpaperScreenshotComparator
 
   def load_attachment(attachment)
     attachment.blob.open do |file|
-      materialize(Vips::Image.new_from_file(file.path, access: :sequential))
+      image = Vips::Image.new_from_file(file.path, access: :sequential)
+      materialize_image(downscale_if_large(image))
     end
   end
 
   def load_wallpaper_reference
-    variant = @wallpaper.variant_for(@device)
-    variant.processed.blob.open do |file|
-      materialize(Vips::Image.new_from_file(file.path, access: :sequential))
+    width, height = comparison_device_dimensions
+    blob = if width && height
+      @wallpaper.image.variant(resize_to_fill: [width, height]).processed.blob
+    else
+      @wallpaper.image.blob
+    end
+    blob.open do |file|
+      image = Vips::Image.new_from_file(file.path, access: :sequential)
+      materialize_image(image)
     end
   end
 
-  def materialize(image)
+  def comparison_device_dimensions
+    return [nil, nil] unless @device.screen_width.present? && @device.screen_height.present?
+
+    width = @device.screen_width.to_i
+    height = @device.screen_height.to_i
+    longest = [width, height].max
+    return [width, height] if longest <= WORKING_MAX_SIDE
+
+    scale = WORKING_MAX_SIDE.to_f / longest
+    [(width * scale).round, (height * scale).round]
+  end
+
+  def materialize_image(image)
     data = image.write_to_memory
     Vips::Image.new_from_memory(data, image.width, image.height, image.bands, :uchar)
+  end
+
+  def downscale_if_large(image)
+    longest = [image.width, image.height].max
+    return image if longest <= WORKING_MAX_SIDE
+
+    scale = WORKING_MAX_SIDE.to_f / longest
+    image.resize(scale, vscale: scale)
   end
 
   def normalize(image, edges_only: false)
     cropped = crop_margins(image)
     cropped = crop_edges(cropped) if edges_only
-    resized = resize_to_device(cropped)
-    blurred = resized.gaussblur(1.5)
+    fitted = fit_to_device_aspect(cropped)
+    blurred = fitted.gaussblur(1.5)
     grey = blurred.colourspace("b-w")
     scale = COMPARE_SIZE.to_f / [grey.width, grey.height].max
-    materialize(grey.resize(scale, vscale: scale))
+    materialize_image(grey.resize(scale, vscale: scale))
+  end
+
+  def fit_to_device_aspect(image)
+    target_width = @device.screen_width.presence || image.width
+    target_height = @device.screen_height.presence || image.height
+    fitted = image.resize(
+      target_width.to_f / image.width,
+      vscale: target_height.to_f / image.height
+    )
+    downscale_if_large(fitted)
   end
 
   def crop_edges(image)
@@ -86,15 +125,6 @@ class WallpaperScreenshotComparator
     bottom = (height * BOTTOM_MARGIN_RATIO).round
     crop_height = [height - top - bottom, 1].max
     image.crop(0, top, width, crop_height)
-  end
-
-  def resize_to_device(image)
-    target_width = @device.screen_width.presence || image.width
-    target_height = @device.screen_height.presence || image.height
-    image.resize(
-      target_width.to_f / image.width,
-      vscale: target_height.to_f / image.height
-    )
   end
 
   def compute_dhash(image)

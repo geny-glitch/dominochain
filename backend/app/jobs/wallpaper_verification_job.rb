@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "vips"
+
 class WallpaperVerificationJob < ApplicationJob
   queue_as :wallpaper_verification
   limits_concurrency to: 1, key: ->(sample_id, **) { "wallpaper_verification/#{sample_id}" }
@@ -112,13 +114,17 @@ class WallpaperVerificationJob < ApplicationJob
     timer.log_action(action: "timeout", reason: "compare_timeout")
   rescue ImagePreviewVariant::PreviewNotReady
     defer_verification(sample_id, sample, wallpaper, timer, defer_attempt) if sample && wallpaper
-  rescue ::Vips::Error, ActiveStorage::FileNotFoundError => e
-    Rails.logger.warn("[WallpaperVerification] sample=#{sample_id} failed: #{e.class}: #{e.message}")
-    timer.measure(:persist) { update_sample!(sample, verification_status: "inconclusive") } if sample
-    timer.log_action(action: "failed", reason: e.class.name)
+  rescue ActiveStorage::FileNotFoundError, ActiveRecord::RecordNotFound, ::Vips::Error => e
+    mark_compare_failed(sample, sample_id, timer, e)
   end
 
   private
+
+  def mark_compare_failed(sample, sample_id, timer, error)
+    Rails.logger.warn("[WallpaperVerification] sample=#{sample_id} failed: #{error.class}: #{error.message}")
+    timer.measure(:persist) { update_sample!(sample, verification_status: "inconclusive") } if sample
+    timer.log_action(action: "failed", reason: error.class.name)
+  end
 
   def previews_ready?(sample, wallpaper)
     ImagePreviewVariant.preview_variant_processed?(sample.image.blob) &&

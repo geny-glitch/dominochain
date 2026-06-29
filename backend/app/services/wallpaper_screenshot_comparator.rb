@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "vips"
+
 class WallpaperScreenshotComparator
   ComparisonResult = Struct.new(:score, :status, :ssim, :dhash_distance, :mad, keyword_init: true)
 

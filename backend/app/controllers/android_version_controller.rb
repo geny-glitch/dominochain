@@ -41,6 +41,8 @@ class AndroidVersionController < ApplicationController
       android_apk_url: apk_url
     )
 
+    AppUpdateNotifyJob.perform_later(version_code, apk_url)
+
     render json: { versionCode: version_code, url: apk_url }
   end
 end

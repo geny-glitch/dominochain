@@ -53,6 +53,10 @@ class SettingsActivity : AppCompatActivity() {
         setupAccount()
         setupShowcaseVitrine()
         fetchBossStatus()
+
+        if (intent.getBooleanExtra(EXTRA_OPEN_UPDATE, false)) {
+            AppUpdateManager(this).checkForUpdates(force = true)
+        }
     }
 
     override fun onResume() {
@@ -388,6 +392,7 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     companion object {
+        const val EXTRA_OPEN_UPDATE = "open_update"
         private const val PREFS_NAME = "bg_prefs"
         private const val KEY_DEVICE_NAME = "device_name"
     }

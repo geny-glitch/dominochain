@@ -13,9 +13,6 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
 import java.io.File
-import java.net.HttpURLConnection
-import java.net.URL
-import org.json.JSONObject
 
 class AppUpdateManager(private val activity: AppCompatActivity) {
 
@@ -30,14 +27,15 @@ class AppUpdateManager(private val activity: AppCompatActivity) {
         }
         Thread {
             prefs.edit().putLong(KEY_LAST_CHECK_MS, System.currentTimeMillis()).apply()
-            val (update, error) = fetchUpdateInfo()
+            val (update, error) = AppUpdateChecker.fetchUpdateInfo()
             activity.runOnUiThread {
                 if (activity.isFinishing) return@runOnUiThread
                 if (update == null) {
                     if (force) Toast.makeText(activity, error ?: activity.getString(R.string.update_check_failed), Toast.LENGTH_LONG).show()
                     return@runOnUiThread
                 }
-                if (update.versionCode > BuildConfig.VERSION_CODE) {
+                if (AppUpdateChecker.isUpdateAvailable(update)) {
+                    AppUpdateChecker.markNotified(activity, update.versionCode)
                     showUpdateDialog(update)
                 } else if (force) {
                     Toast.makeText(activity, R.string.update_up_to_date, Toast.LENGTH_SHORT).show()
@@ -46,7 +44,7 @@ class AppUpdateManager(private val activity: AppCompatActivity) {
         }.start()
     }
 
-    private fun showUpdateDialog(update: UpdateInfo) {
+    private fun showUpdateDialog(update: AppUpdateChecker.UpdateInfo) {
         AlertDialog.Builder(activity)
             .setTitle(R.string.update_available_title)
             .setMessage(activity.getString(R.string.update_available_message))
@@ -132,37 +130,11 @@ class AppUpdateManager(private val activity: AppCompatActivity) {
         activity.startActivity(intent)
     }
 
-    private fun fetchUpdateInfo(): Pair<UpdateInfo?, String?> {
-        val connection = (URL(UpdateConfig.VERSION_JSON_URL).openConnection() as HttpURLConnection).apply {
-            connectTimeout = HTTP_TIMEOUT_MS
-            readTimeout = HTTP_TIMEOUT_MS
-            requestMethod = "GET"
-        }
-
-        return try {
-            val code = connection.responseCode
-            if (code !in 200..299) return Pair(null, "HTTP $code — ${UpdateConfig.VERSION_JSON_URL}")
-            val body = connection.inputStream.bufferedReader().use { it.readText() }
-            val json = JSONObject(body)
-            Pair(UpdateInfo(versionCode = json.getInt("versionCode"), url = json.getString("url")), null)
-        } catch (e: Exception) {
-            Pair(null, e.message ?: e.javaClass.simpleName)
-        } finally {
-            connection.disconnect()
-        }
-    }
-
-    private data class UpdateInfo(
-        val versionCode: Int,
-        val url: String
-    )
-
     private companion object {
         private const val APK_FILE_NAME = "app.apk"
         private const val APK_MIME_TYPE = "application/vnd.android.package-archive"
-        private const val HTTP_TIMEOUT_MS = 10_000
         private const val PREFS_NAME = "bg_update_prefs"
         private const val KEY_LAST_CHECK_MS = "last_update_check_ms"
-        private const val COOLDOWN_MS = 60 * 60 * 1000L // 1 heure
+        private const val COOLDOWN_MS = 60 * 60 * 1000L
     }
 }

@@ -115,6 +115,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         WallpaperWorker.schedule(this)
+        AppUpdateCheckWorker.schedule(this)
         PermissionsWorker.schedule(this)
         PermissionsWorker.checkNow(this)
         refreshTrackers()

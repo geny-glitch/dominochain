@@ -55,6 +55,19 @@ class BgFirebaseMessagingService : FirebaseMessagingService() {
                 val taskId = message.data["task_id"] ?: ""
                 NotificationHelper.showPunishmentNotification(applicationContext, title, body, taskId)
             }
+            "app_update" -> {
+                Log.d(TAG, "App update push received")
+                val versionCode = message.data["version_code"]?.toIntOrNull()
+                if (versionCode != null && versionCode > BuildConfig.VERSION_CODE) {
+                    val title = message.data["title"] ?: message.notification?.title ?: BuildConfig.NOTIFICATION_TITLE
+                    val body = message.data["body"] ?: message.notification?.body
+                        ?: applicationContext.getString(R.string.update_available_message)
+                    if (AppUpdateChecker.shouldNotify(applicationContext, versionCode)) {
+                        AppUpdateChecker.markNotified(applicationContext, versionCode)
+                        NotificationHelper.showAppUpdateNotification(applicationContext, title, body)
+                    }
+                }
+            }
             "verify_wallpaper" -> {
                 Log.d(TAG, "Verify wallpaper push received")
                 val title = message.data["title"] ?: message.notification?.title ?: BuildConfig.NOTIFICATION_TITLE

@@ -157,6 +157,37 @@ class FcmService
       send_request(device, payload)
     end
 
+    def send_app_update_notification(device:, version_code:, apk_url:)
+      unless device.fcm_token.present?
+        Rails.logger.info "[FCM] Skipped app_update: no fcm_token for device #{device.device_id}"
+        return
+      end
+      unless credentials_configured?
+        Rails.logger.warn "[FCM] Skipped app_update: credentials not configured."
+        return
+      end
+
+      data = {
+        type: "app_update",
+        title: notification_title,
+        body: "Une nouvelle version de l'application est disponible.",
+        version_code: version_code.to_s,
+        url: apk_url.to_s
+      }
+
+      payload = {
+        message: {
+          token: device.fcm_token,
+          data: data,
+          android: {
+            priority: "high"
+          }
+        }
+      }
+
+      send_request(device, payload)
+    end
+
     def send_verify_wallpaper_notification(device:)
       unless device.fcm_token.present?
         Rails.logger.info "[FCM] Skipped verify_wallpaper: no fcm_token for device #{device.device_id}"

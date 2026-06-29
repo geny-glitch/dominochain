@@ -1,4 +1,6 @@
 class Wallpaper < ApplicationRecord
+  include ImagePreviewVariant
+
   belongs_to :device
   has_many :wallpaper_applications, dependent: :destroy
   has_many :device_screenshots, dependent: :nullify

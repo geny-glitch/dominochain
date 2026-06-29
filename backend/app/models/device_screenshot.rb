@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class DeviceScreenshot < ApplicationRecord
+  include ImagePreviewVariant
+
   belongs_to :device
   belongs_to :wallpaper, optional: true
 

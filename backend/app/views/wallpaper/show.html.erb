@@ -88,9 +88,8 @@
       <div class="ds-boss-preview-grid" style="--device-ratio: <%= device_ratio %>;">
         <div class="ds-boss-preview-card <%= 'ds-boss-preview-card--empty' unless current_wallpaper&.image&.attached? %>">
           <% if current_wallpaper&.image&.attached? %>
-            <% variant = @device.screen_width.present? && @device.screen_height.present? ? current_wallpaper.variant_for(@device) : current_wallpaper.image %>
             <div class="ds-boss-preview-thumb">
-              <%= image_tag variant, alt: t("wallpaper.alt_chosen_wallpaper"), class: "ds-wallpaper-img" %>
+              <%= image_tag current_wallpaper.preview_image, alt: t("wallpaper.alt_chosen_wallpaper"), class: "ds-wallpaper-img", loading: "lazy" %>
             </div>
             <div class="ds-wallpaper-meta">
               <span><%= t("wallpaper.chosen_wallpaper_at", datetime: l(current_application.applied_at, format: :short)) %></span>
@@ -103,7 +102,7 @@
         <div class="ds-boss-preview-card <%= 'ds-boss-preview-card--empty' unless latest_screenshot&.image&.attached? %>">
           <% if latest_screenshot&.image&.attached? %>
             <div class="ds-boss-preview-thumb">
-              <%= image_tag latest_screenshot.image, alt: t("wallpaper.alt_latest_screenshot"), class: "ds-wallpaper-img" %>
+              <%= image_tag latest_screenshot.preview_image, alt: t("wallpaper.alt_latest_screenshot"), class: "ds-wallpaper-img" %>
               <a href="<%= url_for(latest_screenshot.image) %>" download="screenshot-<%= latest_screenshot.captured_at.strftime('%Y%m%d-%H%M') %>.jpg" class="ds-download-icon" title="<%= t("wallpaper.download") %>">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               </a>
@@ -166,7 +165,7 @@
                 <% screenshots_with_images.each do |screenshot| %>
                   <div class="ds-wallpaper-card ds-history-item">
                     <div class="ds-wallpaper-thumb" style="aspect-ratio: <%= device_ratio %>;">
-                      <%= image_tag screenshot.image, alt: t("wallpaper.screenshot_alt"), class: "ds-wallpaper-img" %>
+                      <%= image_tag screenshot.preview_image, alt: t("wallpaper.screenshot_alt"), class: "ds-wallpaper-img", loading: "lazy" %>
                       <a href="<%= url_for(screenshot.image) %>" download="screenshot-<%= screenshot.captured_at.strftime('%Y%m%d-%H%M') %>.jpg" class="ds-download-icon" title="<%= t("wallpaper.download") %>">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                       </a>
@@ -208,12 +207,11 @@
               <div class="ds-history-grid" id="wallpapers-grid">
                 <% applications_with_images.each_with_index do |application, index| %>
                   <% wallpaper = application.wallpaper %>
-                  <% variant = @device.screen_width.present? && @device.screen_height.present? ? wallpaper.variant_for(@device) : wallpaper.image %>
-                  <% download_url = url_for(variant) %>
+                  <% download_url = url_for(wallpaper.image) %>
                   <% is_current = index == 0 %>
                   <div class="ds-wallpaper-card wallpaper-card ds-history-item" data-download-url="<%= download_url %>" data-filename="wallpaper-<%= application.applied_at.strftime('%Y%m%d-%H%M') %>-<%= wallpaper.id %>.jpg">
                     <div class="ds-wallpaper-thumb" style="aspect-ratio: <%= device_ratio %>;">
-                      <%= image_tag variant, alt: "", class: "ds-wallpaper-img" %>
+                      <%= image_tag wallpaper.preview_image, alt: "", class: "ds-wallpaper-img", loading: "lazy" %>
                       <a href="<%= download_url %>" download="wallpaper-<%= application.applied_at.strftime('%Y%m%d-%H%M') %>-<%= wallpaper.id %>.jpg" class="ds-download-icon" title="<%= t("wallpaper.download") %>">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                       </a>

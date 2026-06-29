@@ -196,10 +196,10 @@ class WallpaperScreenshotComparator
     dhash_threshold = ENV.fetch("WALLPAPER_DHASH_THRESHOLD", "15").to_i
     score_threshold = ENV.fetch("WALLPAPER_SCORE_THRESHOLD", "0.65").to_f
     score_dhash_max = ENV.fetch("WALLPAPER_SCORE_DHASH_MAX", "18").to_i
-    score_mad_max = ENV.fetch("WALLPAPER_SCORE_MAD_MAX", "25").to_f
+    score_mad_max = ENV.fetch("WALLPAPER_SCORE_MAD_MAX", "35").to_f
     mismatch_ssim = ENV.fetch("WALLPAPER_MISMATCH_SSIM", "0.5").to_f
     mismatch_dhash = ENV.fetch("WALLPAPER_MISMATCH_DHASH", "20").to_i
-    mad_match_threshold = ENV.fetch("WALLPAPER_MAD_MATCH_THRESHOLD", "18").to_f
+    mad_match_threshold = ENV.fetch("WALLPAPER_MAD_MATCH_THRESHOLD", "35").to_f
     mad_mismatch_threshold = ENV.fetch("WALLPAPER_MAD_MISMATCH_THRESHOLD", "45").to_f
 
     score = composite_score(ssim, dhash_distance, mad)

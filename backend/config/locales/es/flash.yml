@@ -66,6 +66,10 @@ es:
       task_not_found: "Tarea no encontrada."
       wallpaper:
         config_saved: "Ajustes de cumplimiento del fondo guardados."
+        test_triggered: "Comprobación iniciada. Se envió una solicitud de captura a tu dispositivo."
+        test_staging_only: "Las comprobaciones manuales del fondo solo están disponibles en staging."
+        test_enable_first: "Activa las comprobaciones automáticas antes de ejecutar una prueba."
+        test_source_disabled: "Activa la fuente fondo de pantalla en el catálogo antes de ejecutar una prueba."
         uploaded: "Fondo de pantalla actualizado."
         no_device: "Registra primero un dispositivo en la app Android."
         boss_controls_wallpaper: "Tu boss controla el fondo. No puedes cambiarlo aquí."

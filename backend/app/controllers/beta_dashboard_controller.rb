@@ -69,6 +69,36 @@ class BetaDashboardController < ApplicationController
     redirect_to beta_sources_wallpaper_path, alert: e.record.errors.full_messages.join(", ")
   end
 
+  def test_wallpaper_enforcement_check
+    unless bg_env_staging?
+      redirect_to beta_sources_wallpaper_path, alert: t("flash.beta.wallpaper.test_staging_only")
+      return
+    end
+
+    config = current_user.ensure_wallpaper_enforcement_config!
+    unless config.enabled?
+      redirect_to beta_sources_wallpaper_path, alert: t("flash.beta.wallpaper.test_enable_first")
+      return
+    end
+
+    unless BetaCatalog.new(current_user).source_enabled?("wallpaper")
+      redirect_to beta_sources_wallpaper_path, alert: t("flash.beta.wallpaper.test_source_disabled")
+      return
+    end
+
+    device = current_user.primary_device
+    unless device
+      redirect_to beta_sources_wallpaper_path, alert: t("flash.beta.wallpaper.no_device")
+      return
+    end
+
+    WallpaperEnforcementEvaluator.new(current_user).evaluate_scheduled_check!(
+      device: device,
+      reference_time: Time.current
+    )
+    redirect_to beta_sources_wallpaper_path, notice: t("flash.beta.wallpaper.test_triggered")
+  end
+
   def actions_chaster
     @chaster_lock = fetch_chaster_lock
   end

@@ -66,6 +66,10 @@ fr:
       task_not_found: "Tâche non trouvée."
       wallpaper:
         config_saved: "Paramètres de contrôle du fond d'écran enregistrés."
+        test_triggered: "Vérification déclenchée. Une demande de capture a été envoyée à ton appareil."
+        test_staging_only: "Les vérifications manuelles du fond d'écran sont disponibles uniquement en staging."
+        test_enable_first: "Active les vérifications automatiques avant de lancer un test."
+        test_source_disabled: "Active la source fond d'écran dans le catalogue avant de lancer un test."
         uploaded: "Fond d'écran mis à jour."
         no_device: "Enregistre d'abord un appareil dans l'app Android."
         boss_controls_wallpaper: "Ton boss contrôle le fond d'écran. Tu ne peux pas le modifier ici."

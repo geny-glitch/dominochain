@@ -14,6 +14,11 @@ class ApplicationController < ActionController::Base
 
   protected
 
+  def bg_env_staging?
+    ENV["BG_ENV"] == "staging"
+  end
+  helper_method :bg_env_staging?
+
   def configure_permitted_parameters
     devise_parameter_sanitizer.permit(:sign_up, keys: [:email, :role])
     devise_parameter_sanitizer.permit(:account_update, keys: [:email, :nickname])

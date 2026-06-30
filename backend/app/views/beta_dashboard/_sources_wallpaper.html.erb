@@ -106,6 +106,17 @@
 
       <%= submit_tag t("beta.wallpaper_source.save"), class: "ds-btn ds-btn--primary" %>
     <% end %>
+
+    <% if bg_env_staging? %>
+      <div class="ds-beta-control-actions ds-beta-control-actions--spaced">
+        <%= button_to t("beta.wallpaper_source.run_test_check"),
+              beta_wallpaper_enforcement_test_path,
+              method: :post,
+              class: "ds-btn ds-btn--secondary ds-btn--sm",
+              form: { data: { turbo_confirm: t("beta.wallpaper_source.run_test_check_confirm") } } %>
+        <p class="ds-beta-control-hint"><%= t("beta.wallpaper_source.run_test_check_hint") %></p>
+      </div>
+    <% end %>
   </div>
 </section>
 

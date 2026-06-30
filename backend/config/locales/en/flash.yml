@@ -66,6 +66,10 @@ en:
       task_not_found: "Task not found."
       wallpaper:
         config_saved: "Wallpaper enforcement settings saved."
+        test_triggered: "Wallpaper check triggered. A screenshot request was sent to your device."
+        test_staging_only: "Manual wallpaper checks are only available on staging."
+        test_enable_first: "Enable automatic checks before running a test check."
+        test_source_disabled: "Enable the wallpaper source in the catalog before running a test check."
         uploaded: "Wallpaper updated."
         no_device: "Register a device in the Android app first."
         boss_controls_wallpaper: "Your boss controls the wallpaper. You cannot change it here."

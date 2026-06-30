@@ -24,6 +24,7 @@ get "beta/sources/strava", to: "beta_dashboard#sources_strava", as: :beta_source
 get "beta/sources/vitrine", to: "beta_dashboard#sources_showcase", as: :beta_sources_showcase
   get "beta/sources/wallpaper", to: "beta_dashboard#sources_wallpaper", as: :beta_sources_wallpaper
   patch "beta/wallpaper/enforcement", to: "beta_dashboard#update_wallpaper_enforcement", as: :beta_wallpaper_enforcement
+  post "beta/wallpaper/enforcement/test", to: "beta_dashboard#test_wallpaper_enforcement_check", as: :beta_wallpaper_enforcement_test
   get "beta/wallpaper/upload", to: "beta_wallpaper#upload", as: :beta_wallpaper_upload
   post "beta/wallpaper/upload", to: "beta_wallpaper#create", as: :beta_wallpaper_create
   get "beta/actions/chaster", to: "beta_dashboard#actions_chaster", as: :beta_actions_chaster

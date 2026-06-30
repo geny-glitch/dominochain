@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class WallpaperEnforcementConfig < ApplicationRecord
-  MIN_INTERVAL_MINUTES = 15
+  MIN_INTERVAL_MINUTES = 1
   MAX_INTERVAL_MINUTES = 24 * 60
   MIN_DELAY_MINUTES = 0
   MAX_DELAY_MINUTES = 7 * 24 * 60

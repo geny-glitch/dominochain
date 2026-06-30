@@ -138,6 +138,13 @@ RSpec.describe WallpaperScreenshotComparator do
     expect(result.score).to be >= 0.48
   end
 
+  it "verifies the staging nominal2 wallpaper pair" do
+    result, manifest = compare_wallpaper_pair("nominal2")
+
+    expect(result.status).to eq(manifest.fetch("staging_verification_status"))
+    expect(result.score).to be >= 0.48
+  end
+
   it "marks the staging mismatch wallpaper pair as mismatch" do
     result, _manifest = compare_wallpaper_pair("mismatch")
 

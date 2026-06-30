@@ -195,6 +195,7 @@ class WallpaperScreenshotComparator
     score_dhash_max = ENV.fetch("WALLPAPER_SCORE_DHASH_MAX", "18").to_i
     score_mad_max = ENV.fetch("WALLPAPER_SCORE_MAD_MAX", "35").to_f
     overlay_score_threshold = ENV.fetch("WALLPAPER_OVERLAY_SCORE_THRESHOLD", "0.48").to_f
+    overlay_ssim_min = ENV.fetch("WALLPAPER_OVERLAY_SSIM_MIN", "0.1").to_f
     mismatch_ssim = ENV.fetch("WALLPAPER_MISMATCH_SSIM", "0.5").to_f
     mismatch_dhash = ENV.fetch("WALLPAPER_MISMATCH_DHASH", "20").to_i
     mad_match_threshold = ENV.fetch("WALLPAPER_MAD_MATCH_THRESHOLD", "35").to_f
@@ -203,7 +204,7 @@ class WallpaperScreenshotComparator
     score = composite_score(ssim, dhash_distance, mad)
     clearly_mismatch = mismatch?(
       score:, ssim:, dhash_distance:, mad:,
-      overlay_score_threshold:, mismatch_ssim:, mismatch_dhash:, mad_mismatch_threshold:
+      overlay_score_threshold:, overlay_ssim_min:, mismatch_ssim:, mismatch_dhash:, mad_mismatch_threshold:
     )
     dhash_match = dhash_distance <= dhash_threshold && mad <= mad_match_threshold
     score_match = score >= score_threshold &&
@@ -232,11 +233,16 @@ class WallpaperScreenshotComparator
     )
   end
 
-  def mismatch?(score:, ssim:, dhash_distance:, mad:, overlay_score_threshold:, mismatch_ssim:, mismatch_dhash:, mad_mismatch_threshold:)
-    return true if mad > (mad_mismatch_threshold * 1.5)
+  def mismatch?(score:, ssim:, dhash_distance:, mad:, overlay_score_threshold:, overlay_ssim_min:, mismatch_ssim:, mismatch_dhash:, mad_mismatch_threshold:)
+    if score >= overlay_score_threshold
+      # Composite score can stay high when dHash stays low on unrelated images; require
+      # minimal structural similarity before trusting the overlay band over extreme MAD.
+      return true if ssim < overlay_ssim_min
 
-    # In the overlay band, trust the composite score unless pixels diverge extremely.
-    return false if score >= overlay_score_threshold
+      return false
+    end
+
+    return true if mad > (mad_mismatch_threshold * 1.5)
 
     ssim < mismatch_ssim && dhash_distance > mismatch_dhash && mad > mad_mismatch_threshold
   end

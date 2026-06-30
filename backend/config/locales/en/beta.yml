@@ -204,6 +204,7 @@ en:
       boss_sets_wallpaper: "Your boss sets the wallpaper via the control link."
       actions_hint_html: "Sanctions use %{chaster} and %{pishock} when enabled in the catalog."
       enabled: "Enable automatic checks"
+      enabled_save_hint: "Toggle on, then click Save settings below to apply."
       check_interval: "Check interval (minutes)"
       dismiss_apps: "Close apps before capture (show home screen)"
       run_test_check: "Run check now (staging test)"

@@ -59,11 +59,13 @@
 
     <%= form_with url: beta_wallpaper_enforcement_path, method: :patch, local: true, class: "ds-form" do %>
       <div class="ds-form-group">
-        <label class="ds-form-label ds-beta-catalog-toggle">
+        <label class="ds-form-label ds-beta-catalog-toggle" for="wallpaper_enforcement_enabled">
           <%= hidden_field_tag :enabled, "0" %>
-          <%= check_box_tag :enabled, "1", @config.enabled, class: "ds-beta-catalog-toggle-input" %>
+          <%= check_box_tag :enabled, "1", @config.enabled, id: "wallpaper_enforcement_enabled", class: "ds-beta-catalog-toggle-input" %>
+          <span class="ds-beta-catalog-toggle-switch" aria-hidden="true"></span>
           <span><%= t("beta.wallpaper_source.enabled") %></span>
         </label>
+        <p class="ds-beta-control-hint"><%= t("beta.wallpaper_source.enabled_save_hint") %></p>
       </div>
 
       <div class="ds-form-group">
@@ -72,9 +74,10 @@
       </div>
 
       <div class="ds-form-group">
-        <label class="ds-form-label ds-beta-catalog-toggle">
+        <label class="ds-form-label ds-beta-catalog-toggle" for="wallpaper_dismiss_apps_before_capture">
           <%= hidden_field_tag :dismiss_apps_before_capture, "0" %>
-          <%= check_box_tag :dismiss_apps_before_capture, "1", @config.dismiss_apps_before_capture, class: "ds-beta-catalog-toggle-input" %>
+          <%= check_box_tag :dismiss_apps_before_capture, "1", @config.dismiss_apps_before_capture, id: "wallpaper_dismiss_apps_before_capture", class: "ds-beta-catalog-toggle-input" %>
+          <span class="ds-beta-catalog-toggle-switch" aria-hidden="true"></span>
           <span><%= t("beta.wallpaper_source.dismiss_apps") %></span>
         </label>
       </div>

@@ -204,6 +204,7 @@ fr:
       boss_sets_wallpaper: "Ton boss définit le fond d'écran via le lien de contrôle."
       actions_hint_html: "Les sanctions utilisent %{chaster} et %{pishock} lorsqu'ils sont activés dans le catalogue."
       enabled: "Activer les vérifications automatiques"
+      enabled_save_hint: "Active le toggle, puis clique sur Enregistrer ci-dessous pour appliquer."
       check_interval: "Intervalle de vérification (minutes)"
       dismiss_apps: "Fermer les apps avant capture (afficher l'écran d'accueil)"
       run_test_check: "Lancer une vérification (test staging)"

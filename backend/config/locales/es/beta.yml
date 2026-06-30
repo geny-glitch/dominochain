@@ -204,6 +204,7 @@ es:
       boss_sets_wallpaper: "Tu boss define el fondo mediante el enlace de control."
       actions_hint_html: "Las sanciones usan %{chaster} y %{pishock} cuando están activos en el catálogo."
       enabled: "Activar comprobaciones automáticas"
+      enabled_save_hint: "Activa el toggle y luego pulsa Guardar ajustes abajo para aplicar."
       check_interval: "Intervalo de comprobación (minutos)"
       dismiss_apps: "Cerrar apps antes de capturar (mostrar inicio)"
       run_test_check: "Ejecutar comprobación (test staging)"

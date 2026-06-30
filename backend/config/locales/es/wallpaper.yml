@@ -28,6 +28,12 @@ es:
       pending_hint: "Comparando la última captura con el fondo elegido."
       mismatch_hint: "La captura no coincide con el fondo elegido."
       inconclusive_hint: "Fondo cambiado recientemente o captura difícil de comparar."
+      inconclusive_reason:
+        capture_before_wallpaper_change: "La captura es anterior al último fondo aplicado."
+        variants_not_ready: "Las previews no estuvieron listas a tiempo para comparar."
+        compare_timeout: "La comparación tardó demasiado y se detuvo."
+        compare_error: "La comparación falló por un error técnico."
+        ambiguous_match: "La captura no coincide ni difiere claramente."
     task_history_title: "Historial de tareas"
     create_task_summary: "Crear tarea"
     task_deadline: "Plazo: %{datetime}"

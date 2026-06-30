@@ -28,6 +28,12 @@ en:
       pending_hint: "Comparing the latest screenshot with the chosen wallpaper."
       mismatch_hint: "The screenshot does not match the chosen wallpaper."
       inconclusive_hint: "Wallpaper changed recently or the screenshot could not be compared clearly."
+      inconclusive_reason:
+        capture_before_wallpaper_change: "Screenshot was taken before the latest wallpaper was applied."
+        variants_not_ready: "Image previews were not ready in time to compare."
+        compare_timeout: "Image comparison took too long and was stopped."
+        compare_error: "Image comparison failed due to a technical error."
+        ambiguous_match: "Screenshot is neither clearly matching nor clearly different."
     task_history_title: "Task history"
     create_task_summary: "Create a task"
     task_deadline: "Deadline: %{datetime}"

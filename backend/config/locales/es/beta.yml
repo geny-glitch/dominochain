@@ -252,3 +252,9 @@ es:
         permissions_missing: "Permisos faltantes"
         app_unreachable: "App inalcanzable"
         chaster_error: "Error Chaster"
+      inconclusive_reason:
+        capture_before_wallpaper_change: "Captura anterior al último fondo"
+        variants_not_ready: "Previews de imagen no listas"
+        compare_timeout: "Comparación expirada"
+        compare_error: "Error de comparación"
+        ambiguous_match: "Coincidencia ambigua"

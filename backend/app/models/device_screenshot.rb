@@ -12,9 +12,17 @@ class DeviceScreenshot < ApplicationRecord
   end
 
   VERIFICATION_STATUSES = %w[pending verified mismatch inconclusive skipped].freeze
+  INCONCLUSIVE_REASONS = %w[
+    capture_before_wallpaper_change
+    variants_not_ready
+    compare_timeout
+    compare_error
+    ambiguous_match
+  ].freeze
 
   validates :captured_at, presence: true
   validates :verification_status, inclusion: { in: VERIFICATION_STATUSES }
+  validates :inconclusive_reason, inclusion: { in: INCONCLUSIVE_REASONS }, allow_nil: true
 
   scope :labelable, lambda {
     where.not(wallpaper_id: nil)

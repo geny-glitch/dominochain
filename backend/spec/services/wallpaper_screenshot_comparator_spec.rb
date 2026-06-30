@@ -152,6 +152,33 @@ RSpec.describe WallpaperScreenshotComparator do
     end
   end
 
+  it "compares previews with different boss_preview dimensions without error" do
+    device = create(:device, screen_width: 1344, screen_height: 2769)
+    wallpaper = create(:wallpaper, device: device)
+    screenshot = create(:device_screenshot, device: device)
+
+    WallpaperVerificationTestImages.attach_png(
+      wallpaper,
+      attachment_name: :image,
+      width: 248,
+      height: 512,
+      color: [120, 80, 200]
+    )
+    WallpaperVerificationTestImages.attach_png(
+      screenshot,
+      attachment_name: :image,
+      width: 287,
+      height: 640,
+      color: [120, 80, 200]
+    )
+    perform_enqueued_jobs
+
+    result = described_class.new(screenshot: screenshot, wallpaper: wallpaper, device: device).compare
+
+    expect(result.status).to eq("verified")
+    expect(result.score).to be >= 0.9
+  end
+
   it "requires processed boss_preview variants" do
     WallpaperVerificationTestImages.attach_png(
       screenshot,

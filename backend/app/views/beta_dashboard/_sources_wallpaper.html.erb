@@ -161,6 +161,10 @@
         <li>
           <%= l(check.checked_at, format: :short) %>
           · <%= t("beta.wallpaper_source.check_status.#{check.status}") %>
+          <% inconclusive_reason = check.details.is_a?(Hash) ? check.details["inconclusive_reason"] : nil %>
+          <% if check.status == "inconclusive" && inconclusive_reason.present? %>
+            · <%= wallpaper_inconclusive_reason_label(inconclusive_reason) %>
+          <% end %>
           <% if check.status == "permissions_missing" && check.details.is_a?(Hash) && check.details["permissions_missing"].present? %>
             · <%= Array(check.details["permissions_missing"]).map { |key| Device::PERMISSION_LABELS[key] || key }.join(", ") %>
           <% end %>

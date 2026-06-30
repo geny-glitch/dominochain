@@ -54,6 +54,7 @@ class WallpaperEnforcementEvaluator
     sanctions = []
     status = verification_status
     details = { "verification_status" => verification_status }
+    details["inconclusive_reason"] = screenshot.inconclusive_reason if verification_status == "inconclusive" && screenshot.inconclusive_reason.present?
 
     case verification_status
     when "verified"

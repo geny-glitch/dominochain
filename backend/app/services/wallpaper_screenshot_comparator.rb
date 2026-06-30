@@ -90,7 +90,7 @@ class WallpaperScreenshotComparator
 
   def grid_metrics_for(captured_image, reference_image)
     captured_prep = preprocess_for_grid(captured_image)
-    reference_prep = preprocess_for_grid(reference_image)
+    reference_prep = resize_to_match(preprocess_for_grid(reference_image), captured_prep)
 
     width = captured_prep.width
     height = captured_prep.height
@@ -188,6 +188,17 @@ class WallpaperScreenshotComparator
   def normalize_cell(cell)
     scale = COMPARE_SIZE.to_f / [cell.width, cell.height].max
     materialize_image(cell.resize(scale, vscale: scale))
+  end
+
+  def resize_to_match(image, target)
+    return image if image.width == target.width && image.height == target.height
+
+    materialize_image(
+      image.resize(
+        target.width.to_f / image.width,
+        vscale: target.height.to_f / image.height
+      )
+    )
   end
 
   def fixed_ui_mask?(row, col)

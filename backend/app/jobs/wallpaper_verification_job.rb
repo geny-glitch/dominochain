@@ -62,14 +62,18 @@ class WallpaperVerificationJob < ApplicationJob
     latest_application = device.wallpaper_applications.recent.first
     if latest_application && screenshot.captured_at < latest_application.applied_at
       timer.measure(:persist) do
-        update_screenshot!(
+        mark_inconclusive!(
           screenshot,
+          reason: "capture_before_wallpaper_change",
           wallpaper_id: wallpaper.id,
-          verification_status: "inconclusive"
+          extra: {
+            latest_wallpaper_applied_at: latest_application.applied_at.iso8601,
+            screenshot_captured_at: screenshot.captured_at.iso8601
+          }
         )
       end
       evaluate_enforcement!(screenshot)
-      timer.finish(status: "inconclusive")
+      timer.finish(status: "inconclusive", reason: "capture_before_wallpaper_change")
       return
     end
 
@@ -95,12 +99,13 @@ class WallpaperVerificationJob < ApplicationJob
     end
 
     timer.measure(:persist) do
-      update_screenshot!(
-        screenshot,
+      attrs = {
         wallpaper_id: wallpaper.id,
         similarity_score: result.score,
         verification_status: result.status
-      )
+      }
+      attrs[:inconclusive_reason] = result.status == "inconclusive" ? "ambiguous_match" : nil
+      update_screenshot!(screenshot, **attrs)
     end
 
     evaluate_enforcement!(screenshot)
@@ -109,10 +114,15 @@ class WallpaperVerificationJob < ApplicationJob
       status: result.status,
       score: result.score,
       ssim: result.ssim,
-      dhash: result.dhash_distance
+      dhash: result.dhash_distance,
+      reason: (result.status == "inconclusive" ? "ambiguous_match" : nil)
     )
   rescue Timeout::Error
-    timer.measure(:persist) { update_screenshot!(screenshot, verification_status: "inconclusive") } if screenshot
+    if screenshot
+      timer.measure(:persist) do
+        mark_inconclusive!(screenshot, reason: "compare_timeout")
+      end
+    end
     evaluate_enforcement!(screenshot) if screenshot
     timer.log_action(action: "timeout", reason: "compare_timeout")
   rescue ImagePreviewVariant::PreviewNotReady
@@ -123,9 +133,34 @@ class WallpaperVerificationJob < ApplicationJob
 
   private
 
+  def mark_inconclusive!(screenshot, reason:, wallpaper_id: nil, similarity_score: nil, error: nil, extra: {})
+    update_screenshot!(
+      screenshot,
+      wallpaper_id: wallpaper_id,
+      similarity_score: similarity_score,
+      verification_status: "inconclusive",
+      inconclusive_reason: reason
+    )
+    WallpaperVerificationSentry.report_unexpected_inconclusive!(
+      screenshot: screenshot,
+      reason: reason,
+      error: error,
+      extra: extra
+    )
+  end
+
   def mark_compare_failed(screenshot, screenshot_id, timer, error)
     Rails.logger.warn("[WallpaperVerification] screenshot=#{screenshot_id} failed: #{error.class}: #{error.message}")
-    timer.measure(:persist) { update_screenshot!(screenshot, verification_status: "inconclusive") } if screenshot
+    if screenshot
+      timer.measure(:persist) do
+        mark_inconclusive!(
+          screenshot,
+          reason: "compare_error",
+          error: error,
+          extra: { error_class: error.class.name, error_message: error.message }
+        )
+      end
+    end
     evaluate_enforcement!(screenshot) if screenshot
     timer.log_action(action: "failed", reason: error.class.name)
   end
@@ -138,14 +173,14 @@ class WallpaperVerificationJob < ApplicationJob
   def defer_verification(screenshot_id, screenshot, wallpaper, timer, defer_attempt)
     if defer_attempt >= MAX_DEFER_ATTEMPTS
       timer.measure(:persist) do
-        update_screenshot!(
+        mark_inconclusive!(
           screenshot,
-          wallpaper_id: wallpaper.id,
-          verification_status: "inconclusive"
+          reason: "variants_not_ready",
+          wallpaper_id: wallpaper.id
         )
       end
       evaluate_enforcement!(screenshot)
-      timer.log_action(action: "variants_timeout", reason: "variants_timeout", attempt: defer_attempt)
+      timer.log_action(action: "variants_timeout", reason: "variants_not_ready", attempt: defer_attempt)
       return
     end
 
@@ -158,6 +193,9 @@ class WallpaperVerificationJob < ApplicationJob
   end
 
   def update_screenshot!(screenshot, **attrs)
+    status = attrs[:verification_status]
+    attrs[:inconclusive_reason] = nil if status.present? && status != "inconclusive"
+
     screenshot.update!(attrs.merge(verified_at: Time.current))
   end
 

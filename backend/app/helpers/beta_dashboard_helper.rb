@@ -25,6 +25,11 @@ module BetaDashboardHelper
     beta_catalog.action_enabled?(item_id)
   end
 
+  def wallpaper_inconclusive_reason_label(reason)
+    key = "beta.wallpaper_source.inconclusive_reason.#{reason}"
+    I18n.exists?(key) ? t(key) : reason.to_s.humanize
+  end
+
   def beta_nav_link(text, path, active: false)
     classes = [ "ds-beta-nav-link" ]
     classes << "ds-beta-nav-link--active" if active

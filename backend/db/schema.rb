@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_06_30_160000) do
+ActiveRecord::Schema[7.2].define(version: 2026_06_30_170000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -131,8 +131,10 @@ ActiveRecord::Schema[7.2].define(version: 2026_06_30_160000) do
     t.float "similarity_score"
     t.string "verification_status", default: "pending", null: false
     t.datetime "verified_at"
+    t.string "inconclusive_reason"
     t.index ["device_id", "captured_at"], name: "index_device_screenshots_on_device_id_and_captured_at"
     t.index ["device_id"], name: "index_device_screenshots_on_device_id"
+    t.index ["inconclusive_reason"], name: "index_device_screenshots_on_inconclusive_reason"
     t.index ["verification_status"], name: "index_device_screenshots_on_verification_status"
     t.index ["wallpaper_id"], name: "index_device_screenshots_on_wallpaper_id"
   end

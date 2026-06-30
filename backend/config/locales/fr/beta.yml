@@ -252,3 +252,9 @@ fr:
         permissions_missing: "Autorisations manquantes"
         app_unreachable: "App injoignable"
         chaster_error: "Erreur Chaster"
+      inconclusive_reason:
+        capture_before_wallpaper_change: "Capture avant le dernier fond"
+        variants_not_ready: "Previews image non prêtes"
+        compare_timeout: "Comparaison expirée"
+        compare_error: "Erreur de comparaison"
+        ambiguous_match: "Correspondance ambiguë"

@@ -22,7 +22,14 @@ module WallpaperHelper
     hint = case status
     when "pending" then t("wallpaper.verification.pending_hint")
     when "mismatch" then t("wallpaper.verification.mismatch_hint")
-    when "inconclusive" then t("wallpaper.verification.inconclusive_hint")
+    when "inconclusive"
+      reason = record.inconclusive_reason
+      if reason.present?
+        key = "wallpaper.verification.inconclusive_reason.#{reason}"
+        I18n.exists?(key) ? t(key) : t("wallpaper.verification.inconclusive_hint")
+      else
+        t("wallpaper.verification.inconclusive_hint")
+      end
     end
 
     content_tag(:div, class: "ds-verification") do

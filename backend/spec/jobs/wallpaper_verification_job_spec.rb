@@ -46,6 +46,7 @@ RSpec.describe WallpaperVerificationJob, type: :job do
 
     screenshot.reload
     expect(screenshot.verification_status).to eq("inconclusive")
+    expect(screenshot.inconclusive_reason).to eq("capture_before_wallpaper_change")
   end
 
   it "skips verification when no current wallpaper exists" do
@@ -74,6 +75,7 @@ RSpec.describe WallpaperVerificationJob, type: :job do
     described_class.perform_now(screenshot.id, defer_attempt: WallpaperVerificationJob::MAX_DEFER_ATTEMPTS)
 
     expect(screenshot.reload.verification_status).to eq("inconclusive")
+    expect(screenshot.inconclusive_reason).to eq("variants_not_ready")
   end
 
   describe ".enqueue_for" do

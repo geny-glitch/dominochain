@@ -252,3 +252,9 @@ en:
         permissions_missing: "Permissions missing"
         app_unreachable: "App unreachable"
         chaster_error: "Chaster error"
+      inconclusive_reason:
+        capture_before_wallpaper_change: "Capture before latest wallpaper"
+        variants_not_ready: "Image previews not ready"
+        compare_timeout: "Comparison timed out"
+        compare_error: "Comparison error"
+        ambiguous_match: "Ambiguous match"

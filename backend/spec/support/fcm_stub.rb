@@ -6,6 +6,7 @@ RSpec.configure do |config|
     allow(FcmService).to receive(:send_background_changed_notifications)
     allow(FcmService).to receive(:send_proof_reviewed_notification)
     allow(FcmService).to receive(:send_showcase_game_started_notification)
+    allow(FcmService).to receive(:send_wallpaper_check_result_notification)
     allow(WikimediaCommonsService).to receive(:fetch_and_store_all).and_return(0)
   end
 end

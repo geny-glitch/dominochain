@@ -1,0 +1,30 @@
+en:
+  fcm:
+    wallpaper_check:
+      title: "Background check"
+      body:
+        verified: "✅"
+        mismatch: "❌ Naughty — wrong wallpaper"
+        mismatch_warning: "❌ Naughty — fix it before +%{duration} is added (%{remaining} left)"
+        mismatch_punished: "❌ Naughty — +%{duration} added to your lock"
+        mismatch_frozen: "❌ Naughty — lock frozen until you're compliant"
+        mismatch_pishock: "❌ Naughty — you've been zapped"
+        inconclusive: "🤷 Couldn't tell — we'll check again"
+        permissions_missing: "⚠️ Open the app and fix your permissions"
+        app_unreachable: "⚠️ Where did you go? Open the app"
+        chaster_error: "😬 Something went wrong with your lock"
+        other: "👀 Background check done"
+      duration:
+        zero: "0 s"
+        days:
+          one: "1 day"
+          other: "%{count} days"
+        hours:
+          one: "1 h"
+          other: "%{count} h"
+        minutes:
+          one: "1 min"
+          other: "%{count} min"
+        seconds:
+          one: "1 s"
+          other: "%{count} s"

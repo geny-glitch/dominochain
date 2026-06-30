@@ -6,7 +6,7 @@ RSpec.describe WallpaperEnforcementEvaluator do
   include ActiveSupport::Testing::TimeHelpers
 
   let(:user) { create(:user, :beta) }
-  let!(:device) { create(:device, user: user, last_seen_at: Time.current, permissions_ok: true) }
+  let!(:device) { create(:device, user: user, last_seen_at: Time.current, permissions_ok: true, fcm_token: "fcm-token") }
   let!(:config) do
     create(
       :wallpaper_enforcement_config,
@@ -52,6 +52,9 @@ RSpec.describe WallpaperEnforcementEvaluator do
       end.to change { user.wallpaper_compliance_checks.count }.by(1)
 
       expect(config.reload.add_time_sanction_applied_at).to be_present
+      expect(FcmService).to have_received(:send_wallpaper_check_result_notification).with(
+        hash_including(device: device, check: an_instance_of(WallpaperComplianceCheck))
+      )
     end
 
     it "resets mismatch state and unfreezes when verified" do

@@ -1,0 +1,30 @@
+fr:
+  fcm:
+    wallpaper_check:
+      title: "Background check"
+      body:
+        verified: "✅"
+        mismatch: "❌ Vilaine — mauvais fond d'écran"
+        mismatch_warning: "❌ Vilaine — remets le bon fond avant qu'on ajoute %{duration} (encore %{remaining})"
+        mismatch_punished: "❌ Vilaine — +%{duration} sur ton lock"
+        mismatch_frozen: "❌ Vilaine — lock gelé jusqu'à ce que tu te conformes"
+        mismatch_pishock: "❌ Vilaine — tu as pris une décharge"
+        inconclusive: "🤷 On n'a pas pu vérifier — on réessaie"
+        permissions_missing: "⚠️ Ouvre l'app et règle tes autorisations"
+        app_unreachable: "⚠️ T'es où ? Ouvre l'app"
+        chaster_error: "😬 Problème avec ton lock"
+        other: "👀 Vérif fond d'écran faite"
+      duration:
+        zero: "0 s"
+        days:
+          one: "1 jour"
+          other: "%{count} jours"
+        hours:
+          one: "1 h"
+          other: "%{count} h"
+        minutes:
+          one: "1 min"
+          other: "%{count} min"
+        seconds:
+          one: "1 s"
+          other: "%{count} s"

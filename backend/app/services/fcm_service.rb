@@ -342,6 +342,38 @@ class FcmService
       send_request(device, payload)
     end
 
+    def send_wallpaper_check_result_notification(device:, check:, title:, body:)
+      unless device.fcm_token.present?
+        Rails.logger.info "[FCM] Skipped wallpaper_check_result: no fcm_token for device #{device.device_id}"
+        return
+      end
+      unless credentials_configured?
+        Rails.logger.warn "[FCM] Skipped wallpaper_check_result: credentials not configured."
+        return
+      end
+
+      data = {
+        type: "wallpaper_check_result",
+        title: title,
+        body: body,
+        check_id: check.id.to_s,
+        status: check.status.to_s,
+        similarity_score: check.similarity_score&.to_s,
+        check_kind: check.check_kind.to_s
+      }
+
+      payload = {
+        message: {
+          token: device.fcm_token,
+          notification: { title: title, body: body },
+          data: data,
+          android: { priority: "high" }
+        }
+      }
+
+      send_request(device, payload)
+    end
+
     def send_punishment_notification(device:, task:, message: nil)
       unless device.fcm_token.present?
         Rails.logger.info "[FCM] Skipped punishment: no fcm_token for device #{device.device_id}"

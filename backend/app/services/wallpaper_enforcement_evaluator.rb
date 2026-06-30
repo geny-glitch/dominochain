@@ -196,9 +196,24 @@ class WallpaperEnforcementEvaluator
         "kind" => kind.to_s,
         "action" => sanction.action,
         "result" => result,
-        "applied_at" => reference_time.iso8601
+        "applied_at" => reference_time.iso8601,
+        **sanction_metadata(sanction)
       }
     ]
+  end
+
+  def sanction_metadata(sanction)
+    case sanction.action
+    when "chaster_add_time"
+      { "chaster_seconds" => sanction.chaster_seconds }
+    when "pishock"
+      {
+        "pishock_intensity" => sanction.pishock_intensity,
+        "pishock_duration" => sanction.pishock_duration
+      }
+    else
+      {}
+    end
   end
 
   def unfreeze_if_needed!(config)
@@ -257,7 +272,7 @@ class WallpaperEnforcementEvaluator
   end
 
   def create_check!(device:, status:, check_kind:, reference_time:, device_screenshot: nil, similarity_score: nil, sanctions_applied: [], details: {})
-    @user.wallpaper_compliance_checks.create!(
+    check = @user.wallpaper_compliance_checks.create!(
       device: device,
       device_screenshot: device_screenshot,
       status: status,
@@ -267,5 +282,7 @@ class WallpaperEnforcementEvaluator
       details: details,
       checked_at: reference_time
     )
+    WallpaperCheckResultNotifier.notify!(check)
+    check
   end
 end

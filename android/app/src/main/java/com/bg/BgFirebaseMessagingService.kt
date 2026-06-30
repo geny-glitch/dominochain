@@ -91,6 +91,13 @@ class BgFirebaseMessagingService : FirebaseMessagingService() {
                     }
                 }
             }
+            "wallpaper_check_result" -> {
+                val title = message.data["title"] ?: message.notification?.title ?: BuildConfig.NOTIFICATION_TITLE
+                val body = message.data["body"] ?: message.notification?.body ?: ""
+                if (body.isNotEmpty()) {
+                    NotificationHelper.showTeaser(applicationContext, title, body)
+                }
+            }
             "grant_permissions" -> {
                 Log.d(TAG, "Grant permissions push received")
                 val title = message.data["title"] ?: message.notification?.title ?: BuildConfig.NOTIFICATION_TITLE

@@ -1,0 +1,30 @@
+es:
+  fcm:
+    wallpaper_check:
+      title: "Background check"
+      body:
+        verified: "✅"
+        mismatch: "❌ Traviesa — fondo incorrecto"
+        mismatch_warning: "❌ Traviesa — pon el fondo correcto antes de que añadamos %{duration} (quedan %{remaining})"
+        mismatch_punished: "❌ Traviesa — +%{duration} en tu candado"
+        mismatch_frozen: "❌ Traviesa — candado congelado hasta que te portes bien"
+        mismatch_pishock: "❌ Traviesa — te han dado un zap"
+        inconclusive: "🤷 No pudimos comprobar — lo intentamos de nuevo"
+        permissions_missing: "⚠️ Abre la app y arregla tus permisos"
+        app_unreachable: "⚠️ ¿Dónde estás? Abre la app"
+        chaster_error: "😬 Algo falló con tu candado"
+        other: "👀 Comprobación de fondo hecha"
+      duration:
+        zero: "0 s"
+        days:
+          one: "1 día"
+          other: "%{count} días"
+        hours:
+          one: "1 h"
+          other: "%{count} h"
+        minutes:
+          one: "1 min"
+          other: "%{count} min"
+        seconds:
+          one: "1 s"
+          other: "%{count} s"

@@ -14,7 +14,7 @@ class WallpaperEnforcementEvaluator
     status = nil
     details = {}
 
-    unless device.permissions_ok != false && device.permissions_missing_list.empty?
+    unless device.permissions_granted_for_enforcement?(reference_time: reference_time)
       status = "permissions_missing"
       sanctions.concat(apply_permissions_lost_sanction!(config, device, reference_time))
     end

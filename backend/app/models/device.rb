@@ -29,11 +29,25 @@ class Device < ApplicationRecord
     "optimisation batterie" => "Désactiver l'optimisation batterie",
     "notifications" => "Autoriser les notifications"
   }.freeze
+  PERMISSIONS_REPORT_STALE_AFTER = 30.minutes
 
   def permissions_missing_list
     return [] if permissions_missing.blank?
     JSON.parse(permissions_missing)
   rescue JSON::ParserError
     []
+  end
+
+  def permissions_report_fresh?(reference_time = Time.current)
+    permissions_checked_at.present? && permissions_checked_at >= reference_time - PERMISSIONS_REPORT_STALE_AFTER
+  end
+
+  # Uses the last Android permissions sync when recent; ignores stale negative reports
+  # so scheduled checks do not false-positive before take_screenshot refreshes state.
+  def permissions_granted_for_enforcement?(reference_time: Time.current)
+    return true if permissions_ok != false && permissions_missing_list.empty?
+    return false if permissions_report_fresh?(reference_time)
+
+    true
   end
 end

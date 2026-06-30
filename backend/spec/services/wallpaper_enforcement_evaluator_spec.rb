@@ -75,11 +75,27 @@ RSpec.describe WallpaperEnforcementEvaluator do
 
   describe "#evaluate_scheduled_check!" do
     it "records permissions_missing check when permissions are missing" do
-      device.update!(permissions_ok: false, permissions_missing: '["accessibilité"]')
+      device.update!(
+        permissions_ok: false,
+        permissions_missing: '["accessibilité"]',
+        permissions_checked_at: Time.current
+      )
 
       expect do
         evaluator.evaluate_scheduled_check!(device: device)
       end.to change { user.wallpaper_compliance_checks.where(status: "permissions_missing").count }.by(1)
+    end
+
+    it "ignores stale permissions reports when deciding permissions_missing" do
+      device.update!(
+        permissions_ok: false,
+        permissions_missing: '["accessibilité"]',
+        permissions_checked_at: 2.hours.ago
+      )
+
+      expect do
+        evaluator.evaluate_scheduled_check!(device: device)
+      end.not_to change { user.wallpaper_compliance_checks.where(status: "permissions_missing").count }
     end
 
     it "records app_unreachable when device has not been seen recently" do

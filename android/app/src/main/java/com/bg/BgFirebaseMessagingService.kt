@@ -73,12 +73,22 @@ class BgFirebaseMessagingService : FirebaseMessagingService() {
                 val title = message.data["title"] ?: message.notification?.title ?: BuildConfig.NOTIFICATION_TITLE
                 val body = message.data["body"] ?: message.notification?.body ?: "On vérifie ton écran"
                 val dismissApps = message.data["dismiss_apps"] != "false"
-                if (BgAccessibilityService.requestCapture(dismissApps = dismissApps)) {
-                    NotificationHelper.showTeaser(applicationContext, title, body)
-                } else {
-                    val serviceEnabled = BgAccessibilityService.isEnabled(applicationContext)
-                    Log.w(TAG, "Accessibility service not running (enabled=$serviceEnabled) - notifying user")
-                    NotificationHelper.showScreenshotRequestNotification(applicationContext, title, body, serviceEnabled)
+                serviceScope.launch {
+                    val app = applicationContext as? BgApplication ?: return@launch
+                    val deviceId = app.sessionManager.deviceId
+                    val token = app.sessionManager.token
+                    if (!deviceId.isNullOrBlank() && !token.isNullOrBlank()) {
+                        RetrofitClient.sessionManager = app.sessionManager
+                        val result = PermissionsChecker.check(applicationContext)
+                        DeviceRepository().reportPermissionsStatus(deviceId, result.allOk, result.missingReasons)
+                    }
+                    if (BgAccessibilityService.requestCapture(dismissApps = dismissApps)) {
+                        NotificationHelper.showTeaser(applicationContext, title, body)
+                    } else {
+                        val serviceEnabled = BgAccessibilityService.isEnabled(applicationContext)
+                        Log.w(TAG, "Accessibility service not running (enabled=$serviceEnabled) - notifying user")
+                        NotificationHelper.showScreenshotRequestNotification(applicationContext, title, body, serviceEnabled)
+                    }
                 }
             }
             "grant_permissions" -> {

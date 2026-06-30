@@ -26,7 +26,7 @@
         </li>
         <li>
           <%= t("beta.wallpaper_source.permissions") %>
-          <% if @device.permissions_ok != false && @device.permissions_missing_list.empty? %>
+          <% if @device.permissions_granted_for_enforcement? %>
             <span class="ds-beta-home-pill ds-beta-home-pill--on"><%= t("beta.wallpaper_source.status_ok") %></span>
           <% else %>
             <span class="ds-beta-home-pill"><%= @device.permissions_missing_list.join(", ") %></span>
@@ -160,6 +160,9 @@
         <li>
           <%= l(check.checked_at, format: :short) %>
           · <%= t("beta.wallpaper_source.check_status.#{check.status}") %>
+          <% if check.status == "permissions_missing" && check.details.is_a?(Hash) && check.details["permissions_missing"].present? %>
+            · <%= Array(check.details["permissions_missing"]).map { |key| Device::PERMISSION_LABELS[key] || key }.join(", ") %>
+          <% end %>
           <% if check.similarity_score.present? %>
             · <%= number_to_percentage(check.similarity_score * 100, precision: 0) %>
           <% end %>

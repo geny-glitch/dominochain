@@ -91,7 +91,7 @@ module Api
       device = Device.find_by!(device_id: params[:id])
       missing = params[:permissions_missing]
       missing = missing.to_a.map(&:to_s) if missing.respond_to?(:to_a)
-      permissions_ok = params.require(:permissions_ok)
+      permissions_ok = ActiveModel::Type::Boolean.new.cast(params.require(:permissions_ok))
       device.update!(
         permissions_ok: permissions_ok,
         permissions_missing: permissions_ok ? nil : (missing.presence&.to_json),

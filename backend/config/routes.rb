@@ -36,6 +36,7 @@ get "beta/actions/pishock", to: "beta_dashboard#actions_pishock", as: :beta_acti
   post "beta/pishock/test", to: "beta_dashboard#test_pishock", as: :beta_pishock_test
   get "beta/pishock/debug", to: "pishock_debug#show", as: :beta_pishock_debug
   patch "beta/backdoor", to: "beta_dashboard#update_backdoor", as: :beta_backdoor
+  patch "beta/public_boss", to: "beta_dashboard#update_public_boss", as: :beta_public_boss
   patch "beta/snake_seconds", to: "beta_dashboard#update_snake_seconds", as: :beta_snake_seconds
   patch "beta/puryfi", to: "beta_dashboard#update_puryfi", as: :beta_puryfi
   post "beta/puryfi/regenerate_token", to: "beta_dashboard#regenerate_puryfi_token", as: :beta_puryfi_regenerate_token
@@ -44,6 +45,9 @@ get "beta/actions/pishock", to: "beta_dashboard#actions_pishock", as: :beta_acti
   post "beta/pishock/debug/step3", to: "pishock_debug#step3", as: :beta_pishock_debug_step3
   post "beta/pishock/debug/step4", to: "pishock_debug#step4", as: :beta_pishock_debug_step4
   post "beta/pishock/debug/clear", to: "pishock_debug#clear", as: :beta_pishock_debug_clear
+
+  # Public read-only boss view (no authentication)
+  get "watch/:nickname", to: "public_boss#show", as: :public_boss
 
   # Vitrine du beta (page publique)
   get "showcase/:nickname", to: "showcase#show", as: :showcase

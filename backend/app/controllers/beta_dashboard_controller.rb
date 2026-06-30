@@ -201,6 +201,19 @@ class BetaDashboardController < ApplicationController
     redirect_to beta_sources_showcase_path, alert: e.record.errors.full_messages.join(", ")
   end
 
+  def update_public_boss
+    enabled = params[:public_boss_enabled] == "1"
+    current_user.update!(public_boss_enabled: enabled)
+    if enabled
+      redirect_to beta_sources_wallpaper_path,
+        notice: t("flash.beta.public_boss_enabled", url: "#{request.base_url}#{public_boss_path(current_user.nickname)}")
+    else
+      redirect_to beta_sources_wallpaper_path, notice: t("flash.beta.public_boss_disabled")
+    end
+  rescue ActiveRecord::RecordInvalid => e
+    redirect_to beta_sources_wallpaper_path, alert: e.record.errors.full_messages.join(", ")
+  end
+
   def update_pishock
     p = params.permit(:pishock_enabled, :pishock_username, :pishock_share_code, :pishock_api_key, :pishock_intensity_factor)
     attrs = {}

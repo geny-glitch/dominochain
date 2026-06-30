@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_07_01_120000) do
+ActiveRecord::Schema[7.2].define(version: 2026_07_01_120001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -474,6 +474,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_01_120000) do
     t.string "strava_athlete_id"
     t.jsonb "beta_ui_prefs", default: {}, null: false
     t.string "uuid", null: false
+    t.boolean "public_boss_enabled", default: false, null: false
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["nickname"], name: "index_users_on_nickname", unique: true
     t.index ["provider", "uid"], name: "index_users_on_provider_and_uid"

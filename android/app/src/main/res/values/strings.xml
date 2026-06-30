@@ -12,6 +12,7 @@
     <string name="permission_notifications">Notifications</string>
     <string name="permission_granted">Accordée</string>
     <string name="permission_missing">Manquante</string>
+    <string name="settings_open_failed">Impossible d\'ouvrir les réglages</string>
     <string name="user_nickname">Pseudo</string>
     <string name="device_name">Nom du device</string>
     <string name="change_password">Changer le mot de passe</string>

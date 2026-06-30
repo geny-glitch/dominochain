@@ -137,6 +137,7 @@ class User < ApplicationRecord
     self.showcase_dino_enabled = false
     self.showcase_tetris_enabled = false
     self.showcase_backdoor_enabled = false
+    self.public_boss_enabled = false
 
     prefs = (beta_ui_prefs || {}).deep_dup
     prefs["catalog_visibility"] ||= {}

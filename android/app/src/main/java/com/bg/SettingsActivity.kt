@@ -265,12 +265,8 @@ class SettingsActivity : AppCompatActivity() {
 
     private fun setupPermissions() {
         binding.permissionAccessibilityAction.setOnClickListener {
-            try {
-                startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).apply {
-                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                })
-            } catch (_: Exception) {
-                Toast.makeText(this, "Impossible d'ouvrir les réglages", Toast.LENGTH_SHORT).show()
+            if (!RestrictedSettingsHelper.openAccessibilitySetup(this)) {
+                Toast.makeText(this, R.string.settings_open_failed, Toast.LENGTH_SHORT).show()
             }
         }
         binding.permissionBatteryAction.setOnClickListener {

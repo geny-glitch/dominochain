@@ -102,8 +102,8 @@ object NotificationHelper {
             notificationManager.createNotificationChannel(channel)
         }
 
-        val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        val intent = RestrictedSettingsHelper.createAccessibilitySetupIntent(context).apply {
+            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
         }
         val pendingIntent = PendingIntent.getActivity(
             context,

@@ -50,6 +50,8 @@ es:
       game_times_saved: "Tiempos de juego guardados (Quiz %{quiz}s/pt, Snake %{snake}s, Dino %{dino}s, Tetris %{tetris}s/línea)."
       backdoor_enabled: "Página Backdoor activada. URL (no se muestra en el escaparate): %{url}"
       backdoor_disabled: "Página Backdoor desactivada."
+      public_boss_enabled: "Página boss pública activada. URL: %{url}"
+      public_boss_disabled: "Página boss pública desactivada."
       pishock_saved: "PiShock guardado."
       pishock_test_ok: "PiShock: cuenta validada (api.pishock.com) y pitido de prueba OK — revisa el dispositivo o los logs en pishock.com."
       pishock_test_auth: "PiShock: usuario o clave API rechazados (API pública v1). Revisa pishock.com → Account."

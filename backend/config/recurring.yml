@@ -19,3 +19,7 @@ production:
   strava_due_goal_checks:
     class: StravaGoalCheckJob
     schedule: "5 * * * *"
+
+  wallpaper_scheduled_checks:
+    class: WallpaperScheduledCheckJob
+    schedule: "*/5 * * * *"

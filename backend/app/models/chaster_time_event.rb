@@ -8,6 +8,7 @@ class ChasterTimeEvent < ApplicationRecord
     showcase_backdoor
     showcase_game
     strava_goal
+    wallpaper
   ].freeze
 
   belongs_to :user

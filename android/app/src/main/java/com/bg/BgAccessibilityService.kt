@@ -40,7 +40,7 @@ class BgAccessibilityService : AccessibilityService() {
         if (instance === this) instance = null
     }
 
-    fun captureAndUpload() {
+    fun captureAndUpload(dismissApps: Boolean = true) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             serviceScope.launch {
                 val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
@@ -51,10 +51,12 @@ class BgAccessibilityService : AccessibilityService() {
                 )
                 wakeLock.acquire(10_000)
                 delay(500)
-                withContext(Dispatchers.Main) {
-                    performGlobalAction(GLOBAL_ACTION_HOME)
+                if (dismissApps) {
+                    withContext(Dispatchers.Main) {
+                        performGlobalAction(GLOBAL_ACTION_HOME)
+                    }
+                    delay(1000)
                 }
-                delay(1000)
                 withContext(Dispatchers.Main) {
                     takeScreenshot(
                         android.view.Display.DEFAULT_DISPLAY,
@@ -175,9 +177,9 @@ class BgAccessibilityService : AccessibilityService() {
         }
 
         /** Returns true if the service is running and the capture was dispatched. */
-        fun requestCapture(): Boolean {
+        fun requestCapture(dismissApps: Boolean = true): Boolean {
             val svc = instance ?: return false
-            svc.captureAndUpload()
+            svc.captureAndUpload(dismissApps)
             return true
         }
     }

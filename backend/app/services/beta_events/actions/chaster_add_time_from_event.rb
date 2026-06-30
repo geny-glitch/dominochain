@@ -17,7 +17,13 @@ module BetaEvents
           raise ActionExecutionStopped.new(:no_chaster_lock)
         end
 
-        service.add_time_to_lock(lock[:id], seconds)
+        service.add_time_to_lock(
+          lock[:id],
+          seconds,
+          source: ev[:source].presence || default_source(context),
+          summary: ev[:summary],
+          metadata: ev[:metadata] || {}
+        )
         context.chaster_lock_snapshot = lock
       rescue ChasterService::Unauthorized
         on_chaster_unauthorized(context)
@@ -34,6 +40,17 @@ module BetaEvents
           { id: ev[:lock_id].to_s }
         else
           service.current_lock
+        end
+      end
+
+      def default_source(context)
+        case context.event.source
+        when :strava_goal then "strava_goal"
+        when :cigarette then "cigarettes"
+        when :showcase_game then "showcase_game"
+        when :showcase_backdoor then "showcase_backdoor"
+        when :wallpaper then "wallpaper"
+        else "api"
         end
       end
 

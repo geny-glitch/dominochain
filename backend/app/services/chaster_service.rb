@@ -189,7 +189,57 @@ class ChasterService
     @user.chaster_locks.where(chaster_lock_id: lock_id).update_all(updated_at: 2.hours.ago)
   end
 
+  def freeze_lock(lock_id, source: "api", summary: nil, metadata: {})
+    ensure_chaster_action_enabled!
+    ensure_valid_token!
+    raise Unauthorized, "Chaster non connecté" unless @user.chaster_access_token.present?
+
+    post_lock_action(lock_id, "freeze")
+    record_freeze_event(lock_id, frozen: true, source: source, summary: summary, metadata: metadata)
+    @user.chaster_locks.where(chaster_lock_id: lock_id).update_all(updated_at: 2.hours.ago, is_frozen: true)
+  end
+
+  def unfreeze_lock(lock_id, source: "api", summary: nil, metadata: {})
+    ensure_chaster_action_enabled!
+    ensure_valid_token!
+    raise Unauthorized, "Chaster non connecté" unless @user.chaster_access_token.present?
+
+    post_lock_action(lock_id, "unfreeze")
+    record_freeze_event(lock_id, frozen: false, source: source, summary: summary, metadata: metadata)
+    @user.chaster_locks.where(chaster_lock_id: lock_id).update_all(updated_at: 2.hours.ago, is_frozen: false)
+  end
+
   private
+
+  def post_lock_action(lock_id, action)
+    uri = URI("#{API_BASE}/locks/#{lock_id}/#{action}")
+    req = Net::HTTP::Post.new(uri)
+    req["Authorization"] = "Bearer #{@user.chaster_access_token}"
+    req["Content-Type"] = "application/json"
+    req.body = {}.to_json
+
+    res = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) { |http| http.request(req) }
+
+    if res.code == "401"
+      refresh_tokens!
+      return post_lock_action(lock_id, action)
+    end
+
+    raise Error, "Chaster: #{res.body}" unless res.is_a?(Net::HTTPSuccess)
+  end
+
+  def record_freeze_event(lock_id, frozen:, source:, summary:, metadata:)
+    @user.chaster_time_events.create!(
+      chaster_lock_id: lock_id,
+      seconds: frozen ? 1 : -1,
+      source: source,
+      summary: summary.presence || (frozen ? "Lock frozen" : "Lock unfrozen"),
+      metadata: (metadata.presence || {}).merge("freeze_action" => frozen),
+      occurred_at: Time.current
+    )
+  rescue ActiveRecord::ActiveRecordError => e
+    Rails.logger.warn("Chaster freeze event not recorded for user=#{@user.id} lock=#{lock_id}: #{e.class}: #{e.message}")
+  end
 
   def ensure_chaster_action_enabled!
     return if BetaCatalog.new(@user).action_enabled?("chaster")

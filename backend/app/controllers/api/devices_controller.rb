@@ -97,6 +97,7 @@ module Api
         permissions_missing: permissions_ok ? nil : (missing.presence&.to_json),
         permissions_checked_at: Time.current
       )
+      sync_wallpaper_permissions_state!(device, permissions_ok)
       head :no_content
     end
 
@@ -229,6 +230,18 @@ module Api
         "[Devices] Could not enqueue WallpaperVerificationJob screenshot=#{screenshot_id}: " \
         "#{e.class}: #{e.message}"
       )
+    end
+
+    def sync_wallpaper_permissions_state!(device, permissions_ok)
+      user = device.user
+      return unless user
+
+      config = user.wallpaper_enforcement_config
+      return unless config
+
+      if permissions_ok
+        config.update!(last_permissions_ok_at: Time.current, permissions_lost_sanction_applied_at: nil)
+      end
     end
   end
 end

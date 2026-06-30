@@ -23,6 +23,8 @@ class User < ApplicationRecord
   has_many :cigarette_entries, dependent: :destroy
   has_many :strava_goals, dependent: :destroy
   has_many :strava_goal_checks, dependent: :destroy
+  has_one :wallpaper_enforcement_config, dependent: :destroy
+  has_many :wallpaper_compliance_checks, dependent: :destroy
 
   validates :nickname, presence: true, uniqueness: true
   validates :nickname, format: { with: /\A[a-zA-Z0-9_]+\z/, message: :invalid_nickname_format }
@@ -99,6 +101,18 @@ class User < ApplicationRecord
     update_column(:puryfi_plugin_token, SecureRandom.hex(32))
   end
 
+  def ensure_wallpaper_enforcement_config!
+    wallpaper_enforcement_config || create_wallpaper_enforcement_config!
+  end
+
+  def controlled_by_boss?
+    control&.accepted?
+  end
+
+  def primary_device
+    devices.order(last_seen_at: :desc, updated_at: :desc).first
+  end
+
   private
 
   def normalize_email
@@ -130,7 +144,8 @@ class User < ApplicationRecord
       "puryfi" => false,
       "cigarettes" => false,
       "strava" => false,
-      "showcase" => false
+      "showcase" => false,
+      "wallpaper" => false
     }
     prefs["catalog_visibility"]["actions"] = {
       "chaster" => false,

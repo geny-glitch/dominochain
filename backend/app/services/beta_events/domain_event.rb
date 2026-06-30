@@ -6,7 +6,7 @@ module BetaEvents
   class DomainEvent
     attr_reader :beta, :source, :kind, :payload, :occurred_at
 
-    SOURCES = %i[showcase_game showcase_backdoor strava_goal api_chaster cigarette].freeze
+    SOURCES = %i[showcase_game showcase_backdoor strava_goal api_chaster cigarette wallpaper].freeze
 
     def initialize(beta:, source:, kind:, payload: {}, occurred_at: Time.current)
       @beta = beta

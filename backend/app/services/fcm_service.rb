@@ -119,7 +119,7 @@ class FcmService
       send_request(device, payload)
     end
 
-    def send_take_screenshot_notification(device:)
+    def send_take_screenshot_notification(device:, dismiss_apps: true)
       unless device.fcm_token.present?
         Rails.logger.info "[FCM] Skipped take_screenshot: no fcm_token for device #{device.device_id}"
         return
@@ -135,7 +135,8 @@ class FcmService
       data = {
         type: "take_screenshot",
         title: notification_title,
-        body: body
+        body: body,
+        dismiss_apps: dismiss_apps ? "true" : "false"
       }
 
       payload = {

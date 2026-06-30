@@ -24,6 +24,7 @@ module ApiAuthenticatable
     if device&.user_id?
       @current_user = device.user
       @current_device = device
+      device.touch_last_seen!
       return
     end
 

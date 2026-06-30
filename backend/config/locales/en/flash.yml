@@ -62,6 +62,11 @@ en:
       proof_submitted: "Proof submitted. Pending validation."
       beta_only: "Beta access only."
       task_not_found: "Task not found."
+      wallpaper:
+        config_saved: "Wallpaper enforcement settings saved."
+        uploaded: "Wallpaper updated."
+        no_device: "Register a device in the Android app first."
+        boss_controls_wallpaper: "Your boss controls the wallpaper. You cannot change it here."
     pishock_debug:
       fill_username_api: "Enter username and API key."
       step1_done: "Step 1 completed."

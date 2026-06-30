@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_06_30_143000) do
+ActiveRecord::Schema[7.2].define(version: 2026_06_30_150000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -150,8 +150,10 @@ ActiveRecord::Schema[7.2].define(version: 2026_06_30_143000) do
     t.boolean "permissions_ok"
     t.datetime "permissions_checked_at"
     t.string "permissions_missing"
+    t.datetime "last_seen_at"
     t.index ["auth_token"], name: "index_devices_on_auth_token", unique: true
     t.index ["device_id"], name: "index_devices_on_device_id", unique: true
+    t.index ["last_seen_at"], name: "index_devices_on_last_seen_at"
     t.index ["user_id"], name: "index_devices_on_user_id"
   end
 
@@ -484,9 +486,55 @@ ActiveRecord::Schema[7.2].define(version: 2026_06_30_143000) do
     t.datetime "applied_at", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "applied_by", default: "boss", null: false
+    t.index ["applied_by"], name: "index_wallpaper_applications_on_applied_by"
     t.index ["device_id", "applied_at"], name: "index_wallpaper_applications_on_device_id_and_applied_at"
     t.index ["device_id"], name: "index_wallpaper_applications_on_device_id"
     t.index ["wallpaper_id"], name: "index_wallpaper_applications_on_wallpaper_id"
+  end
+
+  create_table "wallpaper_compliance_checks", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "device_id", null: false
+    t.bigint "device_screenshot_id"
+    t.string "status", null: false
+    t.string "check_kind", default: "scheduled", null: false
+    t.float "similarity_score"
+    t.jsonb "sanctions_applied", default: [], null: false
+    t.jsonb "details", default: {}, null: false
+    t.datetime "checked_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["device_id", "checked_at"], name: "index_wallpaper_compliance_checks_on_device_id_and_checked_at"
+    t.index ["device_id"], name: "index_wallpaper_compliance_checks_on_device_id"
+    t.index ["device_screenshot_id"], name: "index_wallpaper_compliance_checks_on_device_screenshot_id"
+    t.index ["status"], name: "index_wallpaper_compliance_checks_on_status"
+    t.index ["user_id", "checked_at"], name: "index_wallpaper_compliance_checks_on_user_id_and_checked_at"
+    t.index ["user_id"], name: "index_wallpaper_compliance_checks_on_user_id"
+  end
+
+  create_table "wallpaper_enforcement_configs", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.boolean "enabled", default: false, null: false
+    t.integer "check_interval_minutes", default: 60, null: false
+    t.boolean "dismiss_apps_before_capture", default: true, null: false
+    t.integer "mismatch_add_time_delay_minutes", default: 30, null: false
+    t.integer "mismatch_freeze_delay_minutes", default: 60, null: false
+    t.integer "app_unreachable_threshold_minutes", default: 120, null: false
+    t.jsonb "mismatch_add_time_sanction", default: {"action"=>"none", "chaster_seconds"=>3600, "pishock_duration"=>1, "pishock_intensity"=>50}, null: false
+    t.jsonb "mismatch_freeze_sanction", default: {"action"=>"none", "chaster_seconds"=>3600, "pishock_duration"=>1, "pishock_intensity"=>50}, null: false
+    t.jsonb "permissions_lost_sanction", default: {"action"=>"none", "chaster_seconds"=>3600, "pishock_duration"=>1, "pishock_intensity"=>50}, null: false
+    t.jsonb "app_unreachable_sanction", default: {"action"=>"none", "chaster_seconds"=>3600, "pishock_duration"=>1, "pishock_intensity"=>50}, null: false
+    t.datetime "mismatch_since"
+    t.datetime "add_time_sanction_applied_at"
+    t.boolean "frozen_by_enforcement", default: false, null: false
+    t.datetime "last_scheduled_check_at"
+    t.datetime "last_permissions_ok_at"
+    t.datetime "permissions_lost_sanction_applied_at"
+    t.datetime "app_unreachable_sanction_applied_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_wallpaper_enforcement_configs_on_user_id", unique: true
   end
 
   create_table "wallpapers", force: :cascade do |t|
@@ -526,5 +574,9 @@ ActiveRecord::Schema[7.2].define(version: 2026_06_30_143000) do
   add_foreign_key "tasks", "users"
   add_foreign_key "wallpaper_applications", "devices"
   add_foreign_key "wallpaper_applications", "wallpapers"
+  add_foreign_key "wallpaper_compliance_checks", "device_screenshots"
+  add_foreign_key "wallpaper_compliance_checks", "devices"
+  add_foreign_key "wallpaper_compliance_checks", "users"
+  add_foreign_key "wallpaper_enforcement_configs", "users"
   add_foreign_key "wallpapers", "devices"
 end

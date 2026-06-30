@@ -1,0 +1,26 @@
+<%# locals: field_prefix, sanction, allowed_actions: WallpaperSanction::ACTIONS %>
+<% sanction_obj = WallpaperSanction.from_hash(sanction) %>
+<% allowed = local_assigns.fetch(:allowed_actions, WallpaperSanction::ACTIONS) %>
+<div class="ds-form-group">
+  <%= label_tag "#{field_prefix}_action", t("beta.wallpaper_source.sanction.action"), class: "ds-form-label" %>
+  <%= select_tag "#{field_prefix}[action]",
+        options_for_select(
+          allowed.map { |action| [t("beta.wallpaper_source.sanction.actions.#{action}"), action] },
+          sanction_obj.action
+        ),
+        class: "ds-input" %>
+</div>
+<div class="ds-form-group">
+  <%= label_tag "#{field_prefix}_chaster_seconds", t("beta.wallpaper_source.sanction.chaster_seconds"), class: "ds-form-label" %>
+  <%= number_field_tag "#{field_prefix}[chaster_seconds]", sanction_obj.chaster_seconds, min: 1, max: 86_400, class: "ds-input" %>
+</div>
+<div class="ds-form-row">
+  <div class="ds-form-group">
+    <%= label_tag "#{field_prefix}_pishock_intensity", t("beta.wallpaper_source.sanction.pishock_intensity"), class: "ds-form-label" %>
+    <%= number_field_tag "#{field_prefix}[pishock_intensity]", sanction_obj.pishock_intensity, min: 1, max: 100, class: "ds-input" %>
+  </div>
+  <div class="ds-form-group">
+    <%= label_tag "#{field_prefix}_pishock_duration", t("beta.wallpaper_source.sanction.pishock_duration"), class: "ds-form-label" %>
+    <%= number_field_tag "#{field_prefix}[pishock_duration]", sanction_obj.pishock_duration, min: 1, max: 15, class: "ds-input" %>
+  </div>
+</div>

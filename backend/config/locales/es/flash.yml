@@ -62,6 +62,11 @@ es:
       proof_submitted: "Prueba enviada. Pendiente de validación."
       beta_only: "Solo para betas."
       task_not_found: "Tarea no encontrada."
+      wallpaper:
+        config_saved: "Ajustes de cumplimiento del fondo guardados."
+        uploaded: "Fondo de pantalla actualizado."
+        no_device: "Registra primero un dispositivo en la app Android."
+        boss_controls_wallpaper: "Tu boss controla el fondo. No puedes cambiarlo aquí."
     pishock_debug:
       fill_username_api: "Introduce el nombre de usuario y la clave API."
       step1_done: "Paso 1 completado."

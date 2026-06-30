@@ -62,6 +62,11 @@ fr:
       proof_submitted: "Preuve soumise. En attente de validation."
       beta_only: "Accès réservé aux betas."
       task_not_found: "Tâche non trouvée."
+      wallpaper:
+        config_saved: "Paramètres de contrôle du fond d'écran enregistrés."
+        uploaded: "Fond d'écran mis à jour."
+        no_device: "Enregistre d'abord un appareil dans l'app Android."
+        boss_controls_wallpaper: "Ton boss contrôle le fond d'écran. Tu ne peux pas le modifier ici."
     pishock_debug:
       fill_username_api: "Renseigne le nom d'utilisateur et la clé API."
       step1_done: "Étape 1 exécutée."

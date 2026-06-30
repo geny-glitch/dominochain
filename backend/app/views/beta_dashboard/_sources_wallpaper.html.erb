@@ -1,0 +1,158 @@
+<section class="ds-beta-section ds-beta-section--first">
+  <h2 class="ds-section-title"><%= t("beta.integration_sections.installation") %></h2>
+  <div class="ds-beta-control-card">
+    <p class="ds-beta-control-text"><%= t("beta.wallpaper_source.install_lead") %></p>
+    <p class="ds-beta-control-hint">
+      <%= link_to t("beta.wallpaper_source.download_apk"), @apk_url, class: "ds-inline-link", target: "_blank", rel: "noopener" %>
+    </p>
+
+    <% if @device %>
+      <ul class="ds-beta-bullet-list">
+        <li>
+          <%= t("beta.wallpaper_source.device_connected") %>
+          <% if @device.reachable?(threshold_minutes: @config.app_unreachable_threshold_minutes) %>
+            <span class="ds-beta-home-pill ds-beta-home-pill--on"><%= t("beta.wallpaper_source.status_online") %></span>
+          <% else %>
+            <span class="ds-beta-home-pill"><%= t("beta.wallpaper_source.status_offline") %></span>
+          <% end %>
+        </li>
+        <li>
+          <%= t("beta.wallpaper_source.push_notifications") %>
+          <% if @device.fcm_token.present? %>
+            <span class="ds-beta-home-pill ds-beta-home-pill--on"><%= t("beta.wallpaper_source.status_on") %></span>
+          <% else %>
+            <span class="ds-beta-home-pill"><%= t("beta.wallpaper_source.status_off") %></span>
+          <% end %>
+        </li>
+        <li>
+          <%= t("beta.wallpaper_source.permissions") %>
+          <% if @device.permissions_ok != false && @device.permissions_missing_list.empty? %>
+            <span class="ds-beta-home-pill ds-beta-home-pill--on"><%= t("beta.wallpaper_source.status_ok") %></span>
+          <% else %>
+            <span class="ds-beta-home-pill"><%= @device.permissions_missing_list.join(", ") %></span>
+          <% end %>
+        </li>
+      </ul>
+      <% if @device.last_seen_at.present? %>
+        <p class="ds-beta-control-hint"><%= t("beta.wallpaper_source.last_seen", time: l(@device.last_seen_at, format: :short)) %></p>
+      <% end %>
+    <% else %>
+      <p class="ds-beta-control-hint"><%= t("beta.wallpaper_source.no_device") %></p>
+    <% end %>
+
+    <% unless current_user.controlled_by_boss? %>
+      <div class="ds-beta-control-actions">
+        <%= link_to t("beta.wallpaper_source.choose_wallpaper"), beta_wallpaper_upload_path, class: "ds-btn ds-btn--secondary ds-btn--sm" %>
+      </div>
+    <% else %>
+      <p class="ds-beta-control-hint"><%= t("beta.wallpaper_source.boss_sets_wallpaper") %></p>
+    <% end %>
+  </div>
+</section>
+
+<section class="ds-beta-section ds-beta-section--tight-top">
+  <h2 class="ds-section-title"><%= t("beta.integration_sections.configuration") %></h2>
+  <div class="ds-beta-control-card">
+    <p class="ds-beta-control-hint">
+      <%= t("beta.wallpaper_source.actions_hint_html", chaster: link_to(t("beta.catalog.actions.chaster.label"), beta_actions_chaster_path, class: "ds-inline-link"), pishock: link_to(t("beta.catalog.actions.pishock.label"), beta_actions_pishock_path, class: "ds-inline-link")).html_safe %>
+    </p>
+
+    <%= form_with url: beta_wallpaper_enforcement_path, method: :patch, local: true, class: "ds-form" do %>
+      <div class="ds-form-group">
+        <label class="ds-form-label ds-beta-catalog-toggle">
+          <%= hidden_field_tag :enabled, "0" %>
+          <%= check_box_tag :enabled, "1", @config.enabled, class: "ds-beta-catalog-toggle-input" %>
+          <span><%= t("beta.wallpaper_source.enabled") %></span>
+        </label>
+      </div>
+
+      <div class="ds-form-group">
+        <%= label_tag :check_interval_minutes, t("beta.wallpaper_source.check_interval"), class: "ds-form-label" %>
+        <%= number_field_tag :check_interval_minutes, @config.check_interval_minutes, min: WallpaperEnforcementConfig::MIN_INTERVAL_MINUTES, max: WallpaperEnforcementConfig::MAX_INTERVAL_MINUTES, class: "ds-input" %>
+      </div>
+
+      <div class="ds-form-group">
+        <label class="ds-form-label ds-beta-catalog-toggle">
+          <%= hidden_field_tag :dismiss_apps_before_capture, "0" %>
+          <%= check_box_tag :dismiss_apps_before_capture, "1", @config.dismiss_apps_before_capture, class: "ds-beta-catalog-toggle-input" %>
+          <span><%= t("beta.wallpaper_source.dismiss_apps") %></span>
+        </label>
+      </div>
+
+      <div class="ds-form-group">
+        <%= label_tag :app_unreachable_threshold_minutes, t("beta.wallpaper_source.unreachable_threshold"), class: "ds-form-label" %>
+        <%= number_field_tag :app_unreachable_threshold_minutes, @config.app_unreachable_threshold_minutes, min: WallpaperEnforcementConfig::MIN_UNREACHABLE_MINUTES, max: WallpaperEnforcementConfig::MAX_UNREACHABLE_MINUTES, class: "ds-input" %>
+      </div>
+
+      <h3 class="ds-section-subtitle"><%= t("beta.wallpaper_source.mismatch_add_time_title") %></h3>
+      <div class="ds-form-group">
+        <%= label_tag :mismatch_add_time_delay_minutes, t("beta.wallpaper_source.delay_minutes"), class: "ds-form-label" %>
+        <%= number_field_tag :mismatch_add_time_delay_minutes, @config.mismatch_add_time_delay_minutes, min: 0, class: "ds-input" %>
+      </div>
+      <%= render "wallpaper_sanction_fields", field_prefix: "mismatch_add_time_sanction", sanction: @config.mismatch_add_time_sanction, allowed_actions: %w[none chaster_add_time pishock] %>
+
+      <h3 class="ds-section-subtitle"><%= t("beta.wallpaper_source.mismatch_freeze_title") %></h3>
+      <div class="ds-form-group">
+        <%= label_tag :mismatch_freeze_delay_minutes, t("beta.wallpaper_source.delay_minutes"), class: "ds-form-label" %>
+        <%= number_field_tag :mismatch_freeze_delay_minutes, @config.mismatch_freeze_delay_minutes, min: 0, class: "ds-input" %>
+      </div>
+      <%= render "wallpaper_sanction_fields", field_prefix: "mismatch_freeze_sanction", sanction: @config.mismatch_freeze_sanction, allowed_actions: %w[none chaster_freeze] %>
+
+      <h3 class="ds-section-subtitle"><%= t("beta.wallpaper_source.permissions_lost_title") %></h3>
+      <%= render "wallpaper_sanction_fields", field_prefix: "permissions_lost_sanction", sanction: @config.permissions_lost_sanction %>
+
+      <h3 class="ds-section-subtitle"><%= t("beta.wallpaper_source.app_unreachable_title") %></h3>
+      <%= render "wallpaper_sanction_fields", field_prefix: "app_unreachable_sanction", sanction: @config.app_unreachable_sanction %>
+
+      <%= submit_tag t("beta.wallpaper_source.save"), class: "ds-btn ds-btn--primary" %>
+    <% end %>
+  </div>
+</section>
+
+<section class="ds-beta-section ds-beta-section--tight-top">
+  <h2 class="ds-section-title"><%= t("beta.wallpaper_source.history_wallpapers_title") %></h2>
+  <% if @wallpaper_applications.any? %>
+    <ul class="ds-beta-bullet-list">
+      <% @wallpaper_applications.each do |application| %>
+        <% next unless application.wallpaper.image.attached? %>
+        <li>
+          <%= l(application.applied_at, format: :short) %>
+          · <%= t("beta.wallpaper_source.applied_by.#{application.applied_by}") %>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <p class="ds-beta-control-hint"><%= t("beta.wallpaper_source.no_wallpaper_history") %></p>
+  <% end %>
+</section>
+
+<section class="ds-beta-section ds-beta-section--tight-top">
+  <div class="ds-section-header">
+    <h2 class="ds-section-title"><%= t("beta.wallpaper_source.history_checks_title") %></h2>
+    <%= form_with url: beta_sources_wallpaper_path, method: :get, local: true, class: "ds-form ds-form--inline" do %>
+      <%= label_tag :status, t("beta.wallpaper_source.filter_status"), class: "ds-form-label" %>
+      <%= select_tag :status,
+            options_for_select(
+              [[t("beta.wallpaper_source.all_statuses"), ""]] + WallpaperComplianceCheck::STATUSES.map { |s| [t("beta.wallpaper_source.check_status.#{s}"), s] },
+              @status_filter
+            ),
+            class: "ds-input ds-input--sm",
+            onchange: "this.form.requestSubmit();" %>
+    <% end %>
+  </div>
+  <% if @compliance_checks.any? %>
+    <ul class="ds-beta-bullet-list">
+      <% @compliance_checks.each do |check| %>
+        <li>
+          <%= l(check.checked_at, format: :short) %>
+          · <%= t("beta.wallpaper_source.check_status.#{check.status}") %>
+          <% if check.similarity_score.present? %>
+            · <%= number_to_percentage(check.similarity_score * 100, precision: 0) %>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <p class="ds-beta-control-hint"><%= t("beta.wallpaper_source.no_check_history") %></p>
+  <% end %>
+</section>

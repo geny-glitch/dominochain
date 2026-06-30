@@ -7,7 +7,8 @@ class BetaDashboardController < ApplicationController
     "sources_puryfi" => "puryfi",
     "sources_cigarettes" => "cigarettes",
     "sources_strava" => "strava",
-    "sources_showcase" => "showcase"
+    "sources_showcase" => "showcase",
+    "sources_wallpaper" => "wallpaper"
   }.freeze
   CATALOG_ACTION_ACTIONS = {
     "actions_chaster" => "chaster",
@@ -46,6 +47,26 @@ class BetaDashboardController < ApplicationController
 
   def sources_showcase
     @showcase_qr = generate_showcase_qr
+  end
+
+  def sources_wallpaper
+    @config = current_user.ensure_wallpaper_enforcement_config!
+    @device = current_user.primary_device
+    @apk_url = android_app_apk_url
+    @status_filter = params[:status].presence
+    @wallpaper_applications = wallpaper_history_scope.limit(24)
+    @compliance_checks = compliance_checks_scope.limit(24)
+  end
+
+  def update_wallpaper_enforcement
+    config = current_user.ensure_wallpaper_enforcement_config!
+    config.assign_attributes(enforcement_config_params)
+    config.enabled = ActiveModel::Type::Boolean.new.cast(params[:enabled]) if params.key?(:enabled)
+    config.save!
+
+    redirect_to beta_sources_wallpaper_path, notice: t("flash.beta.wallpaper.config_saved")
+  rescue ActiveRecord::RecordInvalid => e
+    redirect_to beta_sources_wallpaper_path, alert: e.record.errors.full_messages.join(", ")
   end
 
   def actions_chaster
@@ -302,5 +323,51 @@ class BetaDashboardController < ApplicationController
     uri.query.present? ? "#{path}?#{uri.query}" : path
   rescue URI::InvalidURIError
     beta_settings_path
+  end
+
+  def enforcement_config_params
+    {
+      check_interval_minutes: params[:check_interval_minutes],
+      dismiss_apps_before_capture: params[:dismiss_apps_before_capture],
+      mismatch_add_time_delay_minutes: params[:mismatch_add_time_delay_minutes],
+      mismatch_freeze_delay_minutes: params[:mismatch_freeze_delay_minutes],
+      app_unreachable_threshold_minutes: params[:app_unreachable_threshold_minutes],
+      mismatch_add_time_sanction: parse_sanction_params(:mismatch_add_time_sanction),
+      mismatch_freeze_sanction: parse_sanction_params(:mismatch_freeze_sanction),
+      permissions_lost_sanction: parse_sanction_params(:permissions_lost_sanction),
+      app_unreachable_sanction: parse_sanction_params(:app_unreachable_sanction)
+    }.compact
+  end
+
+  def parse_sanction_params(key)
+    raw = params[key]
+    return nil unless raw.is_a?(ActionController::Parameters) || raw.is_a?(Hash)
+
+    {
+      "action" => raw[:action].presence || "none",
+      "chaster_seconds" => raw[:chaster_seconds].to_i,
+      "pishock_intensity" => raw[:pishock_intensity].to_i,
+      "pishock_duration" => raw[:pishock_duration].to_i
+    }
+  end
+
+  def wallpaper_history_scope
+    device = current_user.primary_device
+    return WallpaperApplication.none unless device
+
+    scope = device.wallpaper_applications.includes(wallpaper: { image_attachment: :blob }).recent
+    scope = scope.by_boss if current_user.controlled_by_boss?
+    scope
+  end
+
+  def compliance_checks_scope
+    scope = current_user.wallpaper_compliance_checks.recent
+    scope = scope.with_status(@status_filter) if @status_filter.present?
+    scope
+  end
+
+  def android_app_apk_url
+    setting = AppSetting.instance
+    setting.android_apk_url.presence || "#{request.base_url}/android/app.apk"
   end
 end

@@ -1,0 +1,25 @@
+<% content_for :title, t("beta.wallpaper_source.upload_title", nickname: current_user.nickname) %>
+
+<header class="ds-beta-page-head">
+  <h1 class="ds-beta-page-title"><%= t("beta.wallpaper_source.upload_heading") %></h1>
+  <p class="ds-beta-page-lead"><%= t("beta.wallpaper_source.upload_lead") %></p>
+</header>
+
+<section class="ds-beta-section ds-beta-section--first">
+  <div class="ds-beta-control-card">
+    <% unless @device %>
+      <p class="ds-beta-control-text"><%= t("beta.wallpaper_source.no_device") %></p>
+    <% else %>
+      <%= form_with url: beta_wallpaper_create_path, method: :post, local: true, multipart: true, class: "ds-form" do %>
+        <div class="ds-form-group">
+          <%= label_tag :image, t("beta.wallpaper_source.upload_label"), class: "ds-form-label" %>
+          <%= file_field_tag :image, accept: "image/*", required: true, class: "ds-input" %>
+        </div>
+        <%= submit_tag t("beta.wallpaper_source.upload_submit"), class: "ds-btn ds-btn--primary" %>
+      <% end %>
+    <% end %>
+    <p class="ds-beta-control-hint">
+      <%= link_to t("beta.wallpaper_source.back_to_source"), beta_sources_wallpaper_path, class: "ds-inline-link" %>
+    </p>
+  </div>
+</section>

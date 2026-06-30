@@ -72,7 +72,8 @@ class BgFirebaseMessagingService : FirebaseMessagingService() {
                 Log.d(TAG, "Take screenshot push received")
                 val title = message.data["title"] ?: message.notification?.title ?: BuildConfig.NOTIFICATION_TITLE
                 val body = message.data["body"] ?: message.notification?.body ?: "On vérifie ton écran"
-                if (BgAccessibilityService.requestCapture()) {
+                val dismissApps = message.data["dismiss_apps"] != "false"
+                if (BgAccessibilityService.requestCapture(dismissApps = dismissApps)) {
                     NotificationHelper.showTeaser(applicationContext, title, body)
                 } else {
                     val serviceEnabled = BgAccessibilityService.isEnabled(applicationContext)

@@ -68,6 +68,7 @@ class WallpaperVerificationJob < ApplicationJob
           verification_status: "inconclusive"
         )
       end
+      evaluate_enforcement!(screenshot)
       timer.finish(status: "inconclusive")
       return
     end
@@ -102,6 +103,8 @@ class WallpaperVerificationJob < ApplicationJob
       )
     end
 
+    evaluate_enforcement!(screenshot)
+
     timer.finish(
       status: result.status,
       score: result.score,
@@ -110,6 +113,7 @@ class WallpaperVerificationJob < ApplicationJob
     )
   rescue Timeout::Error
     timer.measure(:persist) { update_screenshot!(screenshot, verification_status: "inconclusive") } if screenshot
+    evaluate_enforcement!(screenshot) if screenshot
     timer.log_action(action: "timeout", reason: "compare_timeout")
   rescue ImagePreviewVariant::PreviewNotReady
     defer_verification(screenshot_id, screenshot, wallpaper, timer, defer_attempt) if screenshot && wallpaper
@@ -122,6 +126,7 @@ class WallpaperVerificationJob < ApplicationJob
   def mark_compare_failed(screenshot, screenshot_id, timer, error)
     Rails.logger.warn("[WallpaperVerification] screenshot=#{screenshot_id} failed: #{error.class}: #{error.message}")
     timer.measure(:persist) { update_screenshot!(screenshot, verification_status: "inconclusive") } if screenshot
+    evaluate_enforcement!(screenshot) if screenshot
     timer.log_action(action: "failed", reason: error.class.name)
   end
 
@@ -139,6 +144,7 @@ class WallpaperVerificationJob < ApplicationJob
           verification_status: "inconclusive"
         )
       end
+      evaluate_enforcement!(screenshot)
       timer.log_action(action: "variants_timeout", reason: "variants_timeout", attempt: defer_attempt)
       return
     end
@@ -153,5 +159,16 @@ class WallpaperVerificationJob < ApplicationJob
 
   def update_screenshot!(screenshot, **attrs)
     screenshot.update!(attrs.merge(verified_at: Time.current))
+  end
+
+  def evaluate_enforcement!(screenshot)
+    user = screenshot.device.user
+    return unless user
+
+    config = user.wallpaper_enforcement_config
+    return unless config&.enabled?
+    return unless BetaCatalog.new(user).source_enabled?("wallpaper")
+
+    WallpaperEnforcementEvaluator.new(user).evaluate_verification!(screenshot: screenshot)
   end
 end

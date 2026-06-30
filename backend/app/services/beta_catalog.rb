@@ -11,7 +11,8 @@ class BetaCatalog
     "puryfi" => "beta_source_puryfi",
     "cigarettes" => "beta_source_cigarettes",
     "strava" => "beta_source_strava",
-    "showcase" => "beta_source_showcase"
+    "showcase" => "beta_source_showcase",
+    "wallpaper" => "beta_source_wallpaper"
   }.freeze
   ACTION_FEATURE_FLAGS = {
     "chaster" => "beta_action_chaster",
@@ -38,6 +39,11 @@ class BetaCatalog
       id: "showcase",
       path_helper: :beta_sources_showcase_path,
       action_name: "sources_showcase"
+    },
+    {
+      id: "wallpaper",
+      path_helper: :beta_sources_wallpaper_path,
+      action_name: "sources_wallpaper"
     }
   ].freeze
 
@@ -59,13 +65,17 @@ class BetaCatalog
     "showcase_backdoor" => "showcase",
     "strava_goal" => "strava",
     "cigarette" => "cigarettes",
-    "api_chaster" => "puryfi"
+    "api_chaster" => "puryfi",
+    "wallpaper" => "wallpaper"
   }.freeze
 
   ACTION_CLASS_TO_CATALOG_ACTION_ID = {
     "BetaEvents::Actions::ChasterAddTimeFromEvent" => "chaster",
+    "BetaEvents::Actions::ChasterFreezeFromEvent" => "chaster",
+    "BetaEvents::Actions::ChasterUnfreezeFromEvent" => "chaster",
     "BetaEvents::Actions::RecordShowcaseLimiterFromEvent" => "chaster",
-    "BetaEvents::Actions::EnqueuePishockForShowcaseGame" => "pishock"
+    "BetaEvents::Actions::EnqueuePishockForShowcaseGame" => "pishock",
+    "BetaEvents::Actions::EnqueuePishockFromEvent" => "pishock"
   }.freeze
 
   def initialize(user)

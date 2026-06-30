@@ -190,6 +190,7 @@ es:
       lead: "Comprobaciones automáticas del fondo en tu app Android con sanciones configurables."
       install_lead: "Instala la app Android y mantén los permisos activos para la verificación por captura."
       download_apk: "Descargar app Android"
+      active_device: "Dispositivo activo: %{name}"
       device_connected: "Conexión de la app"
       push_notifications: "Notificaciones push"
       permissions: "Permisos"

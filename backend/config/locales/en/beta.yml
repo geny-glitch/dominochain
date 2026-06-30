@@ -190,6 +190,7 @@ en:
       lead: "Automatic wallpaper checks on your Android device with configurable sanctions."
       install_lead: "Install the Android app and keep permissions enabled for screenshot verification."
       download_apk: "Download Android app"
+      active_device: "Active device: %{name}"
       device_connected: "App connection"
       push_notifications: "Push notifications"
       permissions: "Permissions"

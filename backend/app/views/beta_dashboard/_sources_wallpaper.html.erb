@@ -7,6 +7,7 @@
     </p>
 
     <% if @device %>
+      <p class="ds-beta-control-hint"><%= t("beta.wallpaper_source.active_device", name: @device.display_name) %></p>
       <ul class="ds-beta-bullet-list">
         <li>
           <%= t("beta.wallpaper_source.device_connected") %>

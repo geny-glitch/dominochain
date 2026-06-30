@@ -110,7 +110,7 @@ class User < ApplicationRecord
   end
 
   def primary_device
-    devices.order(last_seen_at: :desc, updated_at: :desc).first
+    devices.order(Arel.sql("last_seen_at DESC NULLS LAST"), updated_at: :desc).first
   end
 
   private

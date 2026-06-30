@@ -81,6 +81,7 @@ module Api
       device.fcm_token = params[:fcm_token] if params[:fcm_token].present?
       device.name = params[:name].presence if params.key?(:name)
       device.save!
+      device.touch_last_seen!
       device
     end
 

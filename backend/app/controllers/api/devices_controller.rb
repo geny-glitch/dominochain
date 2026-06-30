@@ -15,6 +15,7 @@ module Api
       updates[:name] = params[:name].presence if params.key?(:name)
       device.assign_attributes(updates)
       device.save!
+      device.touch_last_seen!
       render json: {
         id: device.id,
         device_id: device.device_id,

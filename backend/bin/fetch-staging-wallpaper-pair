@@ -1,0 +1,140 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Download a wallpaper + screenshot pair from staging into spec fixtures.
+
+Usage:
+  bin/fetch-staging-wallpaper-pair --name PAIR_NAME [options]
+
+Required:
+  --name NAME           Output folder under spec/fixtures/files/wallpaper_pairs/NAME/
+
+Options:
+  --nickname NICK       Staging beta nickname (default: latest screenshot for this user)
+  --screenshot-id ID    Specific device_screenshot id (overrides --nickname latest pick)
+  --app APP             Fly app name (default: bg-backend-staging)
+  --list                List recent screenshots for --nickname and exit
+  --list-limit N        Rows for --list (default: 10)
+  --dry-run             Print export JSON only; do not download files
+  -h, --help            Show this help
+
+Examples:
+  bin/fetch-staging-wallpaper-pair --list --nickname luk
+  bin/fetch-staging-wallpaper-pair --name nominal --nickname luk
+  bin/fetch-staging-wallpaper-pair --name nominal --screenshot-id 20
+  bin/fetch-staging-wallpaper-pair --name mismatch --nickname luk --screenshot-id 24
+
+Requires: fly CLI (logged in), curl, jq, base64
+EOF
+}
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+EXPORT_RB="$ROOT/script/export_staging_wallpaper_pair.rb"
+
+APP="bg-backend-staging"
+NICKNAME=""
+SCREENSHOT_ID=""
+PAIR_NAME=""
+LIST=0
+LIST_LIMIT=10
+DRY_RUN=0
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --app) APP="$2"; shift 2 ;;
+    --nickname) NICKNAME="$2"; shift 2 ;;
+    --screenshot-id) SCREENSHOT_ID="$2"; shift 2 ;;
+    --name) PAIR_NAME="$2"; shift 2 ;;
+    --list) LIST=1; shift ;;
+    --list-limit) LIST_LIMIT="$2"; shift 2 ;;
+    --dry-run) DRY_RUN=1; shift ;;
+    -h|--help) usage; exit 0 ;;
+    *) echo "Unknown option: $1" >&2; usage >&2; exit 1 ;;
+  esac
+done
+
+for cmd in fly curl jq base64; do
+  if ! command -v "$cmd" >/dev/null 2>&1; then
+    echo "Missing required command: $cmd" >&2
+    exit 1
+  fi
+done
+
+if [[ ! -f "$EXPORT_RB" ]]; then
+  echo "Missing export script: $EXPORT_RB" >&2
+  exit 1
+fi
+
+if [[ "$LIST" -eq 1 ]]; then
+  if [[ -z "$NICKNAME" ]]; then
+    echo "--nickname is required with --list" >&2
+    exit 1
+  fi
+  PAYLOAD_B64="$(base64 < "$EXPORT_RB" | tr -d '\n')"
+  fly ssh console -a "$APP" -C "sh -c 'echo ${PAYLOAD_B64} | base64 -d > /tmp/wp_export.rb && LIST=1 NICKNAME=${NICKNAME} LIST_LIMIT=${LIST_LIMIT} FLY_APP=${APP} bin/rails runner /tmp/wp_export.rb'"
+  exit 0
+fi
+
+if [[ -z "$PAIR_NAME" ]]; then
+  echo "--name is required" >&2
+  usage >&2
+  exit 1
+fi
+
+if [[ -z "$SCREENSHOT_ID" && -z "$NICKNAME" ]]; then
+  echo "Provide --nickname and/or --screenshot-id" >&2
+  exit 1
+fi
+
+PAYLOAD_B64="$(base64 < "$EXPORT_RB" | tr -d '\n')"
+ENV_PREFIX="FLY_APP=${APP}"
+[[ -n "$NICKNAME" ]] && ENV_PREFIX="${ENV_PREFIX} NICKNAME=${NICKNAME}"
+[[ -n "$SCREENSHOT_ID" ]] && ENV_PREFIX="${ENV_PREFIX} SCREENSHOT_ID=${SCREENSHOT_ID}"
+
+JSON="$(fly ssh console -a "$APP" -C "sh -c 'echo ${PAYLOAD_B64} | base64 -d > /tmp/wp_export.rb && ${ENV_PREFIX} bin/rails runner /tmp/wp_export.rb'" 2>&1 | awk '/^\{/{found=1} found')"
+
+if [[ -z "$JSON" ]]; then
+  echo "No JSON received from staging export" >&2
+  exit 1
+fi
+
+if jq -e '.error' >/dev/null <<<"$JSON"; then
+  jq -r '.error' <<<"$JSON" >&2
+  exit 1
+fi
+
+if [[ "$DRY_RUN" -eq 1 ]]; then
+  echo "$JSON"
+  exit 0
+fi
+
+OUT_DIR="$ROOT/spec/fixtures/files/wallpaper_pairs/${PAIR_NAME}"
+mkdir -p "$OUT_DIR"
+
+REFERENCE_EXT=".png"
+SCREENSHOT_EXT=".png"
+REF_CT="$(jq -r '.wallpaper.content_type // empty' <<<"$JSON")"
+SS_CT="$(jq -r '.screenshot.content_type // empty' <<<"$JSON")"
+[[ "$REF_CT" == "image/jpeg" ]] && REFERENCE_EXT=".jpg"
+[[ "$SS_CT" == "image/jpeg" ]] && SCREENSHOT_EXT=".jpg"
+
+REFERENCE_FILE="reference${REFERENCE_EXT}"
+SCREENSHOT_FILE="screenshot${SCREENSHOT_EXT}"
+
+curl -fsSL "$(jq -r '.wallpaper.download_url' <<<"$JSON")" -o "$OUT_DIR/$REFERENCE_FILE"
+curl -fsSL "$(jq -r '.screenshot.download_url' <<<"$JSON")" -o "$OUT_DIR/$SCREENSHOT_FILE"
+
+jq \
+  --arg reference "$REFERENCE_FILE" \
+  --arg screenshot "$SCREENSHOT_FILE" \
+  'del(.wallpaper.download_url, .screenshot.download_url) |
+   .files = {reference: $reference, screenshot: $screenshot}' \
+  <<<"$JSON" > "$OUT_DIR/manifest.json"
+
+echo "Saved pair to $OUT_DIR"
+echo "  $REFERENCE_FILE ($(wc -c < "$OUT_DIR/$REFERENCE_FILE" | tr -d ' ') bytes)"
+echo "  $SCREENSHOT_FILE ($(wc -c < "$OUT_DIR/$SCREENSHOT_FILE" | tr -d ' ') bytes)"
+echo "  manifest.json"
+jq -r '"  screenshot #\(.device_screenshot_id) · \(.staging_verification_status) · score \(.staging_similarity_score // "n/a")"' <<<"$JSON"

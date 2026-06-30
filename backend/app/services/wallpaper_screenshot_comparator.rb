@@ -195,26 +195,29 @@ class WallpaperScreenshotComparator
     score_dhash_max = ENV.fetch("WALLPAPER_SCORE_DHASH_MAX", "18").to_i
     score_mad_max = ENV.fetch("WALLPAPER_SCORE_MAD_MAX", "35").to_f
     overlay_score_threshold = ENV.fetch("WALLPAPER_OVERLAY_SCORE_THRESHOLD", "0.48").to_f
-    overlay_dhash_max = ENV.fetch("WALLPAPER_OVERLAY_DHASH_MAX", "35").to_i
     mismatch_ssim = ENV.fetch("WALLPAPER_MISMATCH_SSIM", "0.5").to_f
     mismatch_dhash = ENV.fetch("WALLPAPER_MISMATCH_DHASH", "20").to_i
     mad_match_threshold = ENV.fetch("WALLPAPER_MAD_MATCH_THRESHOLD", "35").to_f
     mad_mismatch_threshold = ENV.fetch("WALLPAPER_MAD_MISMATCH_THRESHOLD", "45").to_f
 
     score = composite_score(ssim, dhash_distance, mad)
+    clearly_mismatch = mismatch?(
+      score:, ssim:, dhash_distance:, mad:,
+      overlay_score_threshold:, mismatch_ssim:, mismatch_dhash:, mad_mismatch_threshold:
+    )
     dhash_match = dhash_distance <= dhash_threshold && mad <= mad_match_threshold
     score_match = score >= score_threshold &&
                   dhash_distance <= score_dhash_max &&
                   mad <= score_mad_max
-    overlay_match = score >= overlay_score_threshold &&
-                    dhash_distance <= overlay_dhash_max &&
-                    mad <= mad_mismatch_threshold
+    # Nominal lock-screen captures (status bar, icons, widgets) land in the overlay score
+    # band. The composite score already folds in SSIM, dHash and MAD — extra per-metric
+    # caps here caused false rejections when UI chrome pushed dHash/MAD up slightly.
+    overlay_match = score >= overlay_score_threshold && !clearly_mismatch
 
     status = if ssim >= ssim_threshold || dhash_match || score_match || overlay_match ||
                   mad <= (mad_match_threshold / 2.0)
       "verified"
-    elsif (ssim < mismatch_ssim && dhash_distance > mismatch_dhash && mad > mad_mismatch_threshold) ||
-          mad > (mad_mismatch_threshold * 1.5)
+    elsif clearly_mismatch
       "mismatch"
     else
       "inconclusive"
@@ -227,5 +230,14 @@ class WallpaperScreenshotComparator
       dhash_distance: dhash_distance,
       mad: mad.round(2)
     )
+  end
+
+  def mismatch?(score:, ssim:, dhash_distance:, mad:, overlay_score_threshold:, mismatch_ssim:, mismatch_dhash:, mad_mismatch_threshold:)
+    return true if mad > (mad_mismatch_threshold * 1.5)
+
+    # In the overlay band, trust the composite score unless pixels diverge extremely.
+    return false if score >= overlay_score_threshold
+
+    ssim < mismatch_ssim && dhash_distance > mismatch_dhash && mad > mad_mismatch_threshold
   end
 end

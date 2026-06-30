@@ -81,28 +81,67 @@ RSpec.describe WallpaperScreenshotComparator do
     expect(result.score).to be >= 0.65
   end
 
-  it "marks a lock screen screenshot with heavy system overlays as verified" do
-    device = create(:device, screen_width: 1170, screen_height: 2532)
-    wallpaper = create(:wallpaper, device: device)
-    screenshot = create(:device_screenshot, device: device)
+  it "verifies nominal lock-screen metrics with elevated dHash and MAD from system chrome" do
+    result = described_class.new(screenshot: screenshot, wallpaper: wallpaper, device: device)
+      .send(:classify, ssim: 0.4, dhash_distance: 38, mad: 42)
 
-    WallpaperVerificationTestImages.attach_fixture(
-      wallpaper,
-      attachment_name: :image,
-      filename: "wallpaper_reference.png"
-    )
-    WallpaperVerificationTestImages.attach_fixture(
-      screenshot,
-      attachment_name: :image,
-      filename: "wallpaper_lock_screen_screenshot.png"
-    )
-    perform_enqueued_jobs
+    expect(result.status).to eq("verified")
+    expect(result.score).to be >= 0.52
+    expect(result.score).to be <= 0.56
+  end
 
-    result = described_class.new(screenshot: screenshot, wallpaper: wallpaper, device: device).compare
+  it "verifies overlay-band scores even when MAD exceeds the old strict overlay cap" do
+    result = described_class.new(screenshot: screenshot, wallpaper: wallpaper, device: device)
+      .send(:classify, ssim: 0.38, dhash_distance: 36, mad: 48)
 
     expect(result.status).to eq("verified")
     expect(result.score).to be >= 0.48
-    expect(result.score).to be <= 0.65
+    expect(result.score).to be <= 0.56
+  end
+
+  def compare_wallpaper_pair(pair_name)
+    manifest = JSON.parse(Rails.root.join("spec/fixtures/files/wallpaper_pairs/#{pair_name}/manifest.json").read)
+    files = manifest.fetch("files")
+    pair_device = create(
+      :device,
+      screen_width: manifest.fetch("device_screen_width"),
+      screen_height: manifest.fetch("device_screen_height")
+    )
+    pair_wallpaper = create(:wallpaper, device: pair_device)
+    pair_screenshot = create(:device_screenshot, device: pair_device)
+
+    WallpaperVerificationTestImages.attach_fixture(
+      pair_wallpaper,
+      attachment_name: :image,
+      filename: "wallpaper_pairs/#{pair_name}/#{files.fetch('reference')}"
+    )
+    WallpaperVerificationTestImages.attach_fixture(
+      pair_screenshot,
+      attachment_name: :image,
+      filename: "wallpaper_pairs/#{pair_name}/#{files.fetch('screenshot')}"
+    )
+    perform_enqueued_jobs
+
+    result = described_class.new(
+      screenshot: pair_screenshot,
+      wallpaper: pair_wallpaper,
+      device: pair_device
+    ).compare
+
+    [result, manifest]
+  end
+
+  it "verifies the staging nominal wallpaper pair" do
+    result, _manifest = compare_wallpaper_pair("nominal")
+
+    expect(result.status).to eq("verified")
+    expect(result.score).to be >= 0.48
+  end
+
+  it "marks the staging mismatch wallpaper pair as mismatch" do
+    result, _manifest = compare_wallpaper_pair("mismatch")
+
+    expect(result.status).to eq("mismatch")
   end
 
   it "requires processed boss_preview variants" do

@@ -209,6 +209,17 @@ class ChasterService
     @user.chaster_locks.where(chaster_lock_id: lock_id).update_all(updated_at: 2.hours.ago, is_frozen: false)
   end
 
+  def self.freeze_supported?(lock_data)
+    hash = lock_data.is_a?(Hash) ? lock_data.stringify_keys : {}
+    return false if hash["limitLockTime"] == false
+    return false if hash["endDate"].blank?
+
+    keyholder = hash["keyholder"]
+    return false if keyholder.present?
+
+    true
+  end
+
   private
 
   def post_lock_action(lock_id, action)
@@ -260,6 +271,7 @@ class ChasterService
     Rails.logger.warn("Chaster time event not recorded for user=#{@user.id} lock=#{lock_id}: #{e.class}: #{e.message}")
   end
 
+
   def upsert_lock(lock_data)
     end_date_str = lock_data["endDate"]
     end_date = end_date_str.present? ? Time.zone.parse(end_date_str) : nil
@@ -292,6 +304,7 @@ class ChasterService
       title: lock.title,
       end_date: lock.end_date&.iso8601,
       is_frozen: lock.is_frozen,
+      can_freeze: self.class.freeze_supported?(lock.raw_data),
       remaining_seconds: remaining_seconds,
       display_remaining_time: true
     }
@@ -305,7 +318,7 @@ class ChasterService
     end_date = end_date_str.present? ? Time.zone.parse(end_date_str) : nil
 
     remaining_seconds = if is_frozen
-                          nil # temps gelé, pas de compte à rebours
+                          nil # frozen lock, no countdown
                         elsif end_date
                           [end_date - Time.current, 0].max.to_i
                         else
@@ -317,6 +330,7 @@ class ChasterService
       title: lock["title"],
       end_date: end_date&.iso8601,
       is_frozen: is_frozen,
+      can_freeze: self.class.freeze_supported?(lock),
       remaining_seconds: remaining_seconds,
       display_remaining_time: lock["displayRemainingTime"] != false
     }

@@ -34,7 +34,7 @@ module BetaEvents
       when [ :wallpaper, :enforcement_unfreeze ]
         [ Actions::ChasterUnfreezeFromEvent ]
       else
-        if event.source == :wallpaper && WALLPAPER_KINDS.include?(event.kind)
+        if event.source == :wallpaper
           wallpaper_actions_for(event)
         else
           []

@@ -41,4 +41,30 @@ RSpec.describe ChasterService do
       end
     end
   end
+
+  describe ".freeze_supported?" do
+    it "returns true for a timed self-lock" do
+      expect(described_class.freeze_supported?(
+        "limitLockTime" => true,
+        "endDate" => 1.hour.from_now.iso8601,
+        "keyholder" => nil
+      )).to eq(true)
+    end
+
+    it "returns false when lock has a keyholder" do
+      expect(described_class.freeze_supported?(
+        "limitLockTime" => true,
+        "endDate" => 1.hour.from_now.iso8601,
+        "keyholder" => { "_id" => "kh-1" }
+      )).to eq(false)
+    end
+
+    it "returns false for unlimited locks" do
+      expect(described_class.freeze_supported?(
+        "limitLockTime" => false,
+        "endDate" => nil,
+        "keyholder" => nil
+      )).to eq(false)
+    end
+  end
 end

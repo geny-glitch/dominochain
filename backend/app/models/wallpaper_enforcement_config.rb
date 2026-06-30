@@ -12,7 +12,7 @@ class WallpaperEnforcementConfig < ApplicationRecord
 
   validates :check_interval_minutes,
     numericality: { only_integer: true, greater_than_or_equal_to: MIN_INTERVAL_MINUTES, less_than_or_equal_to: MAX_INTERVAL_MINUTES }
-  validates :mismatch_add_time_delay_minutes, :mismatch_freeze_delay_minutes,
+  validates :mismatch_delay_minutes, :permissions_lost_delay_minutes, :app_unreachable_delay_minutes,
     numericality: { only_integer: true, greater_than_or_equal_to: MIN_DELAY_MINUTES, less_than_or_equal_to: MAX_DELAY_MINUTES }
   validates :app_unreachable_threshold_minutes,
     numericality: { only_integer: true, greater_than_or_equal_to: MIN_UNREACHABLE_MINUTES, less_than_or_equal_to: MAX_UNREACHABLE_MINUTES }
@@ -25,12 +25,8 @@ class WallpaperEnforcementConfig < ApplicationRecord
     )
   }
 
-  def mismatch_add_time_sanction_object
-    WallpaperSanction.from_hash(mismatch_add_time_sanction)
-  end
-
-  def mismatch_freeze_sanction_object
-    WallpaperSanction.from_hash(mismatch_freeze_sanction)
+  def mismatch_sanction_object
+    WallpaperSanction.from_hash(mismatch_sanction)
   end
 
   def permissions_lost_sanction_object
@@ -56,17 +52,30 @@ class WallpaperEnforcementConfig < ApplicationRecord
     )
   end
 
+  def reset_permissions_lost_state!
+    update!(
+      permissions_lost_since: nil,
+      permissions_lost_sanction_applied_at: nil
+    )
+  end
+
+  def reset_app_unreachable_state!
+    update!(
+      app_unreachable_since: nil,
+      app_unreachable_sanction_applied_at: nil
+    )
+  end
+
   private
 
   def sanctions_are_valid
     {
-      mismatch_add_time_sanction: mismatch_add_time_sanction,
-      mismatch_freeze_sanction: mismatch_freeze_sanction,
+      mismatch_sanction: mismatch_sanction,
       permissions_lost_sanction: permissions_lost_sanction,
       app_unreachable_sanction: app_unreachable_sanction
     }.each do |attr, value|
       sanction = WallpaperSanction.from_hash(value)
-      next if WallpaperSanction::ACTIONS.include?(sanction.action)
+      next unless sanction.chaster_add_time_enabled && sanction.chaster_seconds.blank?
 
       errors.add(attr, :invalid)
     end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_06_30_170000) do
+ActiveRecord::Schema[7.2].define(version: 2026_07_01_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -520,11 +520,9 @@ ActiveRecord::Schema[7.2].define(version: 2026_06_30_170000) do
     t.boolean "enabled", default: false, null: false
     t.integer "check_interval_minutes", default: 60, null: false
     t.boolean "dismiss_apps_before_capture", default: true, null: false
-    t.integer "mismatch_add_time_delay_minutes", default: 30, null: false
-    t.integer "mismatch_freeze_delay_minutes", default: 60, null: false
+    t.integer "mismatch_delay_minutes", default: 30, null: false
     t.integer "app_unreachable_threshold_minutes", default: 120, null: false
-    t.jsonb "mismatch_add_time_sanction", default: {"action"=>"none", "chaster_seconds"=>3600, "pishock_duration"=>1, "pishock_intensity"=>50}, null: false
-    t.jsonb "mismatch_freeze_sanction", default: {"action"=>"none", "chaster_seconds"=>3600, "pishock_duration"=>1, "pishock_intensity"=>50}, null: false
+    t.jsonb "mismatch_sanction", default: {"action"=>"none", "chaster_seconds"=>3600, "pishock_duration"=>1, "pishock_intensity"=>50}, null: false
     t.jsonb "permissions_lost_sanction", default: {"action"=>"none", "chaster_seconds"=>3600, "pishock_duration"=>1, "pishock_intensity"=>50}, null: false
     t.jsonb "app_unreachable_sanction", default: {"action"=>"none", "chaster_seconds"=>3600, "pishock_duration"=>1, "pishock_intensity"=>50}, null: false
     t.datetime "mismatch_since"
@@ -536,6 +534,10 @@ ActiveRecord::Schema[7.2].define(version: 2026_06_30_170000) do
     t.datetime "app_unreachable_sanction_applied_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "permissions_lost_delay_minutes", default: 0, null: false
+    t.integer "app_unreachable_delay_minutes", default: 0, null: false
+    t.datetime "permissions_lost_since"
+    t.datetime "app_unreachable_since"
     t.index ["user_id"], name: "index_wallpaper_enforcement_configs_on_user_id", unique: true
   end
 

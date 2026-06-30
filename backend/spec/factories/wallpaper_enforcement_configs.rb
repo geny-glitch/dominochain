@@ -6,20 +6,39 @@ FactoryBot.define do
     enabled { true }
     check_interval_minutes { 60 }
     dismiss_apps_before_capture { true }
-    mismatch_add_time_delay_minutes { 30 }
-    mismatch_freeze_delay_minutes { 60 }
+    mismatch_delay_minutes { 30 }
+    permissions_lost_delay_minutes { 0 }
+    app_unreachable_delay_minutes { 0 }
     app_unreachable_threshold_minutes { 120 }
-    mismatch_add_time_sanction do
-      { "action" => "chaster_add_time", "chaster_seconds" => 3600, "pishock_intensity" => 50, "pishock_duration" => 1 }
-    end
-    mismatch_freeze_sanction do
-      { "action" => "none", "chaster_seconds" => 3600, "pishock_intensity" => 50, "pishock_duration" => 1 }
+    mismatch_sanction do
+      {
+        "chaster_add_time_enabled" => true,
+        "chaster_seconds" => 3600,
+        "chaster_freeze_enabled" => false,
+        "pishock_enabled" => false,
+        "pishock_intensity" => 50,
+        "pishock_duration" => 1
+      }
     end
     permissions_lost_sanction do
-      { "action" => "none", "chaster_seconds" => 3600, "pishock_intensity" => 50, "pishock_duration" => 1 }
+      {
+        "chaster_add_time_enabled" => false,
+        "chaster_seconds" => nil,
+        "chaster_freeze_enabled" => false,
+        "pishock_enabled" => false,
+        "pishock_intensity" => 50,
+        "pishock_duration" => 1
+      }
     end
     app_unreachable_sanction do
-      { "action" => "none", "chaster_seconds" => 3600, "pishock_intensity" => 50, "pishock_duration" => 1 }
+      {
+        "chaster_add_time_enabled" => false,
+        "chaster_seconds" => nil,
+        "chaster_freeze_enabled" => false,
+        "pishock_enabled" => false,
+        "pishock_intensity" => 50,
+        "pishock_duration" => 1
+      }
     end
   end
 end

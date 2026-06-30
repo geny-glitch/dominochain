@@ -78,8 +78,8 @@ class WallpaperCheckResultNotifier
     config = enforcement_config
     return false unless config
 
-    sanction = config.mismatch_add_time_sanction_object
-    return false unless sanction.active? && sanction.action == "chaster_add_time"
+    sanction = config.mismatch_sanction_object
+    return false unless sanction.chaster_add_time_active?
     return false if config.add_time_sanction_applied_at.present?
     return false if config.mismatch_since.blank?
 
@@ -90,13 +90,13 @@ class WallpaperCheckResultNotifier
     config = enforcement_config
     return 0 unless config&.mismatch_since
 
-    delay = config.mismatch_add_time_delay_minutes.minutes
+    delay = config.mismatch_delay_minutes.minutes
     elapsed = @check.checked_at - config.mismatch_since
     [delay - elapsed, 0].max.to_i
   end
 
   def pending_chaster_seconds
-    enforcement_config&.mismatch_add_time_sanction_object&.chaster_seconds.to_i
+    enforcement_config&.mismatch_sanction_object&.chaster_seconds.to_i
   end
 
   def enforcement_config

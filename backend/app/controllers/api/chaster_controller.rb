@@ -26,6 +26,7 @@ module Api
           title: lock_info[:title],
           end_date: lock_info[:end_date],
           is_frozen: lock_info[:is_frozen],
+          can_freeze: lock_info[:can_freeze],
           remaining_seconds: lock_info[:remaining_seconds],
           display_remaining_time: lock_info[:display_remaining_time]
         },

@@ -88,28 +88,54 @@
         <%= number_field_tag :app_unreachable_threshold_minutes, @config.app_unreachable_threshold_minutes, min: WallpaperEnforcementConfig::MIN_UNREACHABLE_MINUTES, max: WallpaperEnforcementConfig::MAX_UNREACHABLE_MINUTES, class: "ds-input" %>
       </div>
 
-      <h3 class="ds-section-subtitle"><%= t("beta.wallpaper_source.mismatch_add_time_title") %></h3>
-      <div class="ds-form-group">
-        <%= label_tag :mismatch_add_time_delay_minutes, t("beta.wallpaper_source.delay_minutes"), class: "ds-form-label" %>
-        <%= number_field_tag :mismatch_add_time_delay_minutes, @config.mismatch_add_time_delay_minutes, min: 0, class: "ds-input" %>
-      </div>
-      <%= render "wallpaper_sanction_fields", field_prefix: "mismatch_add_time_sanction", sanction: @config.mismatch_add_time_sanction, allowed_actions: %w[none chaster_add_time pishock] %>
-
-      <h3 class="ds-section-subtitle"><%= t("beta.wallpaper_source.mismatch_freeze_title") %></h3>
-      <div class="ds-form-group">
-        <%= label_tag :mismatch_freeze_delay_minutes, t("beta.wallpaper_source.delay_minutes"), class: "ds-form-label" %>
-        <%= number_field_tag :mismatch_freeze_delay_minutes, @config.mismatch_freeze_delay_minutes, min: 0, class: "ds-input" %>
-      </div>
-      <%= render "wallpaper_sanction_fields", field_prefix: "mismatch_freeze_sanction", sanction: @config.mismatch_freeze_sanction, allowed_actions: %w[none chaster_freeze] %>
+      <h3 class="ds-section-subtitle"><%= t("beta.wallpaper_source.mismatch_title") %></h3>
+      <%= render "wallpaper_scenario_sanction_fields",
+            field_prefix: "mismatch_sanction",
+            sanction: @config.mismatch_sanction,
+            delay_field: :mismatch_delay_minutes,
+            delay_value: @config.mismatch_delay_minutes,
+            chaster_lock_can_freeze: @chaster_lock_can_freeze %>
 
       <h3 class="ds-section-subtitle"><%= t("beta.wallpaper_source.permissions_lost_title") %></h3>
-      <%= render "wallpaper_sanction_fields", field_prefix: "permissions_lost_sanction", sanction: @config.permissions_lost_sanction %>
+      <%= render "wallpaper_scenario_sanction_fields",
+            field_prefix: "permissions_lost_sanction",
+            sanction: @config.permissions_lost_sanction,
+            delay_field: :permissions_lost_delay_minutes,
+            delay_value: @config.permissions_lost_delay_minutes,
+            chaster_lock_can_freeze: @chaster_lock_can_freeze %>
 
       <h3 class="ds-section-subtitle"><%= t("beta.wallpaper_source.app_unreachable_title") %></h3>
-      <%= render "wallpaper_sanction_fields", field_prefix: "app_unreachable_sanction", sanction: @config.app_unreachable_sanction %>
+      <%= render "wallpaper_scenario_sanction_fields",
+            field_prefix: "app_unreachable_sanction",
+            sanction: @config.app_unreachable_sanction,
+            delay_field: :app_unreachable_delay_minutes,
+            delay_value: @config.app_unreachable_delay_minutes,
+            chaster_lock_can_freeze: @chaster_lock_can_freeze %>
 
       <%= submit_tag t("beta.wallpaper_source.save"), class: "ds-btn ds-btn--primary" %>
     <% end %>
+
+    <script>
+      (function () {
+        document.querySelectorAll("[data-wallpaper-scenario]").forEach(function (scenario) {
+          scenario.querySelectorAll(".ds-wallpaper-sanction-toggle-input").forEach(function (toggle) {
+            toggle.addEventListener("change", function () {
+              var key = toggle.dataset.wallpaperSanctionToggle;
+              var enabled = toggle.checked;
+              scenario.querySelectorAll("[data-wallpaper-sanction-input]").forEach(function (input) {
+                if (key === "pishock") {
+                  if (input.dataset.wallpaperSanctionInput === "pishock_intensity" || input.dataset.wallpaperSanctionInput === "pishock_duration") {
+                    input.disabled = !enabled;
+                  }
+                } else if (input.dataset.wallpaperSanctionInput === key) {
+                  input.disabled = !enabled;
+                }
+              });
+            });
+          });
+        });
+      })();
+    </script>
 
     <% if bg_env_staging? %>
       <div class="ds-beta-control-actions ds-beta-control-actions--spaced">

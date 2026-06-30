@@ -16,15 +16,19 @@ class WallpaperEnforcementEvaluator
 
     unless device.permissions_granted_for_enforcement?(reference_time: reference_time)
       status = "permissions_missing"
-      sanctions.concat(apply_permissions_lost_sanction!(config, device, reference_time))
+      sanctions.concat(handle_permissions_lost!(config, device, reference_time))
+    else
+      config.reset_permissions_lost_state! if config.permissions_lost_since.present?
     end
 
     unless device.reachable?(threshold_minutes: config.app_unreachable_threshold_minutes, reference_time: reference_time)
       if status.blank?
         status = "app_unreachable"
-        sanctions.concat(apply_app_unreachable_sanction!(config, device, reference_time))
+        sanctions.concat(handle_app_unreachable!(config, device, reference_time))
       end
       details["last_seen_at"] = device.last_seen_at&.iso8601
+    else
+      config.reset_app_unreachable_state! if config.app_unreachable_since.present?
     end
 
     if status.present?
@@ -39,9 +43,6 @@ class WallpaperEnforcementEvaluator
     end
 
     config.update!(last_scheduled_check_at: reference_time)
-    if device.reachable?(threshold_minutes: config.app_unreachable_threshold_minutes, reference_time: reference_time)
-      config.update!(app_unreachable_sanction_applied_at: nil) if config.app_unreachable_sanction_applied_at.present?
-    end
     request_screenshot_if_due!(device, config, reference_time)
   end
 
@@ -111,105 +112,183 @@ class WallpaperEnforcementEvaluator
     config.save! if config.changed?
 
     mismatch_duration = reference_time - config.mismatch_since
+    return sanctions unless should_apply_mismatch_sanctions?(config, mismatch_duration)
 
-    if should_apply_add_time_sanction?(config, mismatch_duration, reference_time)
-      sanctions.concat(apply_sanction!(
-        config: config,
-        sanction: config.mismatch_add_time_sanction_object,
-        kind: :mismatch_add_time,
-        reference_time: reference_time
-      ))
-      config.update!(add_time_sanction_applied_at: reference_time)
-    end
-
-    if should_apply_freeze_sanction?(config, mismatch_duration)
-      sanction = config.mismatch_freeze_sanction_object
-      if sanction.action == "chaster_freeze" && !config.frozen_by_enforcement?
-        sanctions.concat(apply_sanction!(
-          config: config,
-          sanction: sanction,
-          kind: :mismatch_freeze,
-          reference_time: reference_time
-        ))
-        config.update!(frozen_by_enforcement: true)
-      end
-    end
-
+    sanctions.concat(apply_scenario_sanctions!(
+      config: config,
+      sanction: config.mismatch_sanction_object,
+      reference_time: reference_time,
+      details: {},
+      kinds: {
+        chaster_add_time: :mismatch_add_time,
+        chaster_freeze: :mismatch_freeze,
+        pishock: :mismatch_pishock
+      },
+      track_freeze: true
+    ))
+    config.update!(add_time_sanction_applied_at: reference_time)
     sanctions
   end
 
-  def should_apply_add_time_sanction?(config, mismatch_duration, reference_time)
-    return false unless config.mismatch_add_time_sanction_object.active?
-    return false if config.add_time_sanction_applied_at.present?
+  def handle_permissions_lost!(config, device, reference_time)
+    config.permissions_lost_since ||= reference_time
+    config.save! if config.changed?
 
-    mismatch_duration >= config.mismatch_add_time_delay_minutes.minutes
-  end
+    duration = reference_time - config.permissions_lost_since
+    return [] unless should_apply_scenario_sanctions?(
+      config.permissions_lost_sanction_object,
+      duration,
+      config.permissions_lost_delay_minutes,
+      config.permissions_lost_sanction_applied_at
+    )
 
-  def should_apply_freeze_sanction?(config, mismatch_duration)
-    return false unless config.mismatch_freeze_sanction_object.action == "chaster_freeze"
-    return false if config.frozen_by_enforcement?
-
-    mismatch_duration >= config.mismatch_freeze_delay_minutes.minutes
-  end
-
-  def apply_permissions_lost_sanction!(config, device, reference_time)
-    return [] unless config.permissions_lost_sanction_object.active?
-    return [] if config.permissions_lost_sanction_applied_at.present? &&
-      config.last_permissions_ok_at.present? &&
-      config.permissions_lost_sanction_applied_at >= config.last_permissions_ok_at
-
-    sanctions = apply_sanction!(
+    sanctions = apply_scenario_sanctions!(
       config: config,
       sanction: config.permissions_lost_sanction_object,
-      kind: :permissions_lost,
       reference_time: reference_time,
-      details: { "permissions_missing" => device.permissions_missing_list }
+      details: { "permissions_missing" => device.permissions_missing_list },
+      kinds: {
+        chaster_add_time: :permissions_lost_add_time,
+        chaster_freeze: :permissions_lost_freeze,
+        pishock: :permissions_lost_pishock
+      },
+      track_freeze: true
     )
     config.update!(permissions_lost_sanction_applied_at: reference_time)
     sanctions
   end
 
-  def apply_app_unreachable_sanction!(config, device, reference_time)
-    return [] unless config.app_unreachable_sanction_object.active?
-    return [] if config.app_unreachable_sanction_applied_at.present? &&
-      device.last_seen_at.present? &&
-      config.app_unreachable_sanction_applied_at >= device.last_seen_at
+  def handle_app_unreachable!(config, device, reference_time)
+    config.app_unreachable_since ||= reference_time
+    config.save! if config.changed?
 
-    sanctions = apply_sanction!(
+    duration = reference_time - config.app_unreachable_since
+    return [] unless should_apply_scenario_sanctions?(
+      config.app_unreachable_sanction_object,
+      duration,
+      config.app_unreachable_delay_minutes,
+      config.app_unreachable_sanction_applied_at
+    )
+
+    sanctions = apply_scenario_sanctions!(
       config: config,
       sanction: config.app_unreachable_sanction_object,
-      kind: :app_unreachable,
       reference_time: reference_time,
-      details: { "last_seen_at" => device.last_seen_at&.iso8601 }
+      details: { "last_seen_at" => device.last_seen_at&.iso8601 },
+      kinds: {
+        chaster_add_time: :app_unreachable_add_time,
+        chaster_freeze: :app_unreachable_freeze,
+        pishock: :app_unreachable_pishock
+      },
+      track_freeze: true
     )
     config.update!(app_unreachable_sanction_applied_at: reference_time)
     sanctions
   end
 
-  def apply_sanction!(config:, sanction:, kind:, reference_time:, details: {})
-    return [] unless sanction.active?
+  def should_apply_mismatch_sanctions?(config, mismatch_duration)
+    should_apply_scenario_sanctions?(
+      config.mismatch_sanction_object,
+      mismatch_duration,
+      config.mismatch_delay_minutes,
+      config.add_time_sanction_applied_at
+    )
+  end
 
-    event = build_event(kind: kind, sanction: sanction, details: details)
+  def should_apply_scenario_sanctions?(sanction, duration, delay_minutes, applied_at)
+    return false unless sanction.any_active?
+    return false if applied_at.present?
+
+    duration >= delay_minutes.minutes
+  end
+
+  def apply_scenario_sanctions!(config:, sanction:, reference_time:, details:, kinds:, track_freeze:)
+    sanctions = []
+
+    if sanction.chaster_add_time_active?
+      sanctions.concat(apply_single_sanction!(
+        config: config,
+        action: "chaster_add_time",
+        kind: kinds[:chaster_add_time],
+        reference_time: reference_time,
+        details: details,
+        chaster_seconds: sanction.chaster_seconds
+      ))
+    end
+
+    if sanction.chaster_freeze_active? && (!track_freeze || !config.frozen_by_enforcement?)
+      if freeze_supported_for_user?
+        sanctions.concat(apply_single_sanction!(
+          config: config,
+          action: "chaster_freeze",
+          kind: kinds[:chaster_freeze],
+          reference_time: reference_time,
+          details: details
+        ))
+        config.update!(frozen_by_enforcement: true) if track_freeze
+      end
+    end
+
+    if sanction.pishock_active?
+      sanctions.concat(apply_single_sanction!(
+        config: config,
+        action: "pishock",
+        kind: kinds[:pishock],
+        reference_time: reference_time,
+        details: details,
+        pishock_intensity: sanction.pishock_intensity,
+        pishock_duration: sanction.pishock_duration
+      ))
+    end
+
+    sanctions
+  end
+
+  def freeze_supported_for_user?
+    lock = @chaster_service.current_lock
+    return false unless lock
+
+    lock[:can_freeze] != false
+  end
+
+  def apply_single_sanction!(config:, action:, kind:, reference_time:, details:, chaster_seconds: nil, pishock_intensity: nil, pishock_duration: nil)
+    payload_details = details.dup
+    payload = {
+      action: action,
+      source: "wallpaper",
+      summary: "Wallpaper enforcement: #{kind.to_s.tr('_', ' ')}",
+      metadata: payload_details
+    }
+    payload[:seconds] = chaster_seconds if action == "chaster_add_time"
+    payload[:pishock_intensity] = pishock_intensity if action == "pishock"
+    payload[:pishock_duration] = pishock_duration if action == "pishock"
+
+    event = BetaEvents::DomainEvent.new(
+      beta: @user,
+      source: :wallpaper,
+      kind: kind,
+      payload: payload
+    )
     result = execute_event(event)
     [
       {
         "kind" => kind.to_s,
-        "action" => sanction.action,
+        "action" => action,
         "result" => result,
         "applied_at" => reference_time.iso8601,
-        **sanction_metadata(sanction)
+        **sanction_metadata_for(action, chaster_seconds, pishock_intensity, pishock_duration)
       }
     ]
   end
 
-  def sanction_metadata(sanction)
-    case sanction.action
+  def sanction_metadata_for(action, chaster_seconds, pishock_intensity, pishock_duration)
+    case action
     when "chaster_add_time"
-      { "chaster_seconds" => sanction.chaster_seconds }
+      { "chaster_seconds" => chaster_seconds }
     when "pishock"
       {
-        "pishock_intensity" => sanction.pishock_intensity,
-        "pishock_duration" => sanction.pishock_duration
+        "pishock_intensity" => pishock_intensity,
+        "pishock_duration" => pishock_duration
       }
     else
       {}
@@ -239,30 +318,6 @@ class WallpaperEnforcementEvaluator
         "applied_at" => Time.current.iso8601
       }
     ]
-  end
-
-  def build_event(kind:, sanction:, details: {})
-    payload = {
-      action: sanction.action,
-      source: "wallpaper",
-      summary: "Wallpaper enforcement: #{kind.to_s.tr('_', ' ')}",
-      metadata: details
-    }
-
-    case sanction.action
-    when "chaster_add_time"
-      payload[:seconds] = sanction.chaster_seconds
-    when "pishock"
-      payload[:pishock_intensity] = sanction.pishock_intensity
-      payload[:pishock_duration] = sanction.pishock_duration
-    end
-
-    BetaEvents::DomainEvent.new(
-      beta: @user,
-      source: :wallpaper,
-      kind: kind,
-      payload: payload
-    )
   end
 
   def execute_event(event)

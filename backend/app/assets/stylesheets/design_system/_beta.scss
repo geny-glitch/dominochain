@@ -1062,3 +1062,52 @@
   display: inline-block;
   margin-bottom: $ds-space-lg;
 }
+
+.ds-wallpaper-scenario-sanctions {
+  display: flex;
+  flex-direction: column;
+  gap: $ds-space-md;
+  margin-bottom: $ds-space-lg;
+}
+
+.ds-wallpaper-sanction-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $ds-space-sm $ds-space-md;
+
+  &--split {
+    align-items: flex-start;
+  }
+
+  &--disabled {
+    opacity: 0.45;
+
+    .ds-wallpaper-sanction-toggle,
+    .ds-wallpaper-sanction-input {
+      pointer-events: none;
+    }
+  }
+}
+
+.ds-wallpaper-sanction-toggle {
+  margin-bottom: 0;
+  flex: 1 1 14rem;
+}
+
+.ds-wallpaper-sanction-input {
+  flex: 0 1 8rem;
+  max-width: 10rem;
+}
+
+.ds-wallpaper-sanction-pishock-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $ds-space-sm;
+  flex: 1 1 12rem;
+}
+
+.ds-wallpaper-sanction-hint {
+  flex: 1 1 100%;
+  margin: 0;
+}

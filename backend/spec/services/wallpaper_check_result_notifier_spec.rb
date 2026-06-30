@@ -9,10 +9,12 @@ RSpec.describe WallpaperCheckResultNotifier do
     create(
       :wallpaper_enforcement_config,
       user: user,
-      mismatch_add_time_delay_minutes: 30,
-      mismatch_add_time_sanction: {
-        "action" => "chaster_add_time",
+      mismatch_delay_minutes: 30,
+      mismatch_sanction: {
+        "chaster_add_time_enabled" => true,
         "chaster_seconds" => 600,
+        "chaster_freeze_enabled" => false,
+        "pishock_enabled" => false,
         "pishock_intensity" => 50,
         "pishock_duration" => 1
       }

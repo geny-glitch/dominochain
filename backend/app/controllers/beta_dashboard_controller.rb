@@ -56,6 +56,8 @@ class BetaDashboardController < ApplicationController
     @status_filter = params[:status].presence
     @wallpaper_applications = wallpaper_history_scope.limit(24)
     @compliance_checks = compliance_checks_scope.limit(24)
+    @chaster_lock = fetch_chaster_lock
+    @chaster_lock_can_freeze = @chaster_lock.nil? || @chaster_lock[:can_freeze] != false
   end
 
   def update_wallpaper_enforcement
@@ -359,11 +361,11 @@ class BetaDashboardController < ApplicationController
     {
       check_interval_minutes: params[:check_interval_minutes],
       dismiss_apps_before_capture: params[:dismiss_apps_before_capture],
-      mismatch_add_time_delay_minutes: params[:mismatch_add_time_delay_minutes],
-      mismatch_freeze_delay_minutes: params[:mismatch_freeze_delay_minutes],
+      mismatch_delay_minutes: params[:mismatch_delay_minutes],
+      permissions_lost_delay_minutes: params[:permissions_lost_delay_minutes],
+      app_unreachable_delay_minutes: params[:app_unreachable_delay_minutes],
       app_unreachable_threshold_minutes: params[:app_unreachable_threshold_minutes],
-      mismatch_add_time_sanction: parse_sanction_params(:mismatch_add_time_sanction),
-      mismatch_freeze_sanction: parse_sanction_params(:mismatch_freeze_sanction),
+      mismatch_sanction: parse_sanction_params(:mismatch_sanction),
       permissions_lost_sanction: parse_sanction_params(:permissions_lost_sanction),
       app_unreachable_sanction: parse_sanction_params(:app_unreachable_sanction)
     }.compact
@@ -373,9 +375,14 @@ class BetaDashboardController < ApplicationController
     raw = params[key]
     return nil unless raw.is_a?(ActionController::Parameters) || raw.is_a?(Hash)
 
+    bool = ActiveModel::Type::Boolean.new
+    chaster_add_time_enabled = bool.cast(raw[:chaster_add_time_enabled])
+    chaster_seconds = raw[:chaster_seconds].presence&.to_i
     {
-      "action" => raw[:action].presence || "none",
-      "chaster_seconds" => raw[:chaster_seconds].to_i,
+      "chaster_add_time_enabled" => chaster_add_time_enabled,
+      "chaster_seconds" => chaster_add_time_enabled ? chaster_seconds : nil,
+      "chaster_freeze_enabled" => bool.cast(raw[:chaster_freeze_enabled]),
+      "pishock_enabled" => bool.cast(raw[:pishock_enabled]),
       "pishock_intensity" => raw[:pishock_intensity].to_i,
       "pishock_duration" => raw[:pishock_duration].to_i
     }

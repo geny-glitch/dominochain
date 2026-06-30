@@ -1,0 +1,80 @@
+<%# locals: field_prefix, sanction, delay_field, delay_value, show_delay: true, chaster_lock_can_freeze: true %>
+<% sanction_obj = WallpaperSanction.from_hash(sanction) %>
+<% row_id = field_prefix.tr("[", "_").tr("]", "") %>
+
+<% if show_delay %>
+  <div class="ds-form-group">
+    <%= label_tag delay_field, t("beta.wallpaper_source.delay_minutes"), class: "ds-form-label" %>
+    <%= number_field_tag delay_field, delay_value, min: 0, class: "ds-input" %>
+  </div>
+<% end %>
+
+<div class="ds-wallpaper-scenario-sanctions" data-wallpaper-scenario="<%= row_id %>">
+  <div class="ds-wallpaper-sanction-row">
+    <label class="ds-form-label ds-beta-catalog-toggle ds-wallpaper-sanction-toggle" for="<%= row_id %>_chaster_add_time_enabled">
+      <%= hidden_field_tag "#{field_prefix}[chaster_add_time_enabled]", "0" %>
+      <%= check_box_tag "#{field_prefix}[chaster_add_time_enabled]", "1", sanction_obj.chaster_add_time_enabled,
+            id: "#{row_id}_chaster_add_time_enabled",
+            class: "ds-beta-catalog-toggle-input ds-wallpaper-sanction-toggle-input",
+            data: { wallpaper_sanction_toggle: "chaster_add_time" } %>
+      <span class="ds-beta-catalog-toggle-switch" aria-hidden="true"></span>
+      <span><%= t("beta.wallpaper_source.sanction.chaster_seconds") %></span>
+    </label>
+    <%= number_field_tag "#{field_prefix}[chaster_seconds]",
+          sanction_obj.chaster_seconds,
+          min: 1,
+          max: 86_400,
+          placeholder: t("beta.wallpaper_source.sanction.chaster_seconds_placeholder"),
+          class: "ds-input ds-wallpaper-sanction-input",
+          disabled: !sanction_obj.chaster_add_time_enabled,
+          data: { wallpaper_sanction_input: "chaster_add_time" } %>
+  </div>
+
+  <div class="ds-wallpaper-sanction-row<%= chaster_lock_can_freeze ? "" : " ds-wallpaper-sanction-row--disabled" %>">
+    <label class="ds-form-label ds-beta-catalog-toggle ds-wallpaper-sanction-toggle" for="<%= row_id %>_chaster_freeze_enabled">
+      <%= hidden_field_tag "#{field_prefix}[chaster_freeze_enabled]", "0" %>
+      <%= check_box_tag "#{field_prefix}[chaster_freeze_enabled]", "1", sanction_obj.chaster_freeze_enabled && chaster_lock_can_freeze,
+            id: "#{row_id}_chaster_freeze_enabled",
+            class: "ds-beta-catalog-toggle-input ds-wallpaper-sanction-toggle-input",
+            disabled: !chaster_lock_can_freeze,
+            data: { wallpaper_sanction_toggle: "chaster_freeze" } %>
+      <span class="ds-beta-catalog-toggle-switch" aria-hidden="true"></span>
+      <span><%= t("beta.wallpaper_source.sanction.freeze_lock") %></span>
+    </label>
+    <% unless chaster_lock_can_freeze %>
+      <p class="ds-beta-control-hint ds-wallpaper-sanction-hint"><%= t("beta.wallpaper_source.sanction.freeze_unavailable") %></p>
+    <% else %>
+      <p class="ds-beta-control-hint ds-wallpaper-sanction-hint"><%= t("beta.wallpaper_source.sanction.freeze_unfreeze_hint") %></p>
+    <% end %>
+  </div>
+
+  <div class="ds-wallpaper-sanction-row ds-wallpaper-sanction-row--split">
+    <label class="ds-form-label ds-beta-catalog-toggle ds-wallpaper-sanction-toggle" for="<%= row_id %>_pishock_enabled">
+      <%= hidden_field_tag "#{field_prefix}[pishock_enabled]", "0" %>
+      <%= check_box_tag "#{field_prefix}[pishock_enabled]", "1", sanction_obj.pishock_enabled,
+            id: "#{row_id}_pishock_enabled",
+            class: "ds-beta-catalog-toggle-input ds-wallpaper-sanction-toggle-input",
+            data: { wallpaper_sanction_toggle: "pishock" } %>
+      <span class="ds-beta-catalog-toggle-switch" aria-hidden="true"></span>
+      <span><%= t("beta.wallpaper_source.sanction.pishock_label") %></span>
+    </label>
+    <div class="ds-wallpaper-sanction-pishock-fields">
+      <%= number_field_tag "#{field_prefix}[pishock_intensity]",
+            sanction_obj.pishock_intensity,
+            min: 1,
+            max: 100,
+            class: "ds-input ds-wallpaper-sanction-input",
+            disabled: !sanction_obj.pishock_enabled,
+            data: { wallpaper_sanction_input: "pishock_intensity" },
+            aria: { label: t("beta.wallpaper_source.sanction.pishock_intensity") } %>
+      <%= number_field_tag "#{field_prefix}[pishock_duration]",
+            sanction_obj.pishock_duration,
+            min: 1,
+            max: 15,
+            class: "ds-input ds-wallpaper-sanction-input",
+            disabled: !sanction_obj.pishock_enabled,
+            data: { wallpaper_sanction_input: "pishock_duration" },
+            aria: { label: t("beta.wallpaper_source.sanction.pishock_duration") } %>
+    </div>
+  </div>
+</div>

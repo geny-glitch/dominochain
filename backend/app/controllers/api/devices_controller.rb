@@ -241,7 +241,11 @@ module Api
       return unless config
 
       if permissions_ok
-        config.update!(last_permissions_ok_at: Time.current, permissions_lost_sanction_applied_at: nil)
+        config.update!(
+          last_permissions_ok_at: Time.current,
+          permissions_lost_sanction_applied_at: nil,
+          permissions_lost_since: nil
+        )
       end
     end
   end

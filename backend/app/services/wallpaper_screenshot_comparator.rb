@@ -11,30 +11,24 @@ class WallpaperScreenshotComparator
   TOP_MARGIN_RATIO = 0.08
   BOTTOM_MARGIN_RATIO = 0.05
 
-  def initialize(wallpaper:, device:, timer: nil, sample: nil, screenshot: nil)
-    @sample = sample || screenshot
-    @wallpaper_sample = sample.present?
+  def initialize(wallpaper:, device:, timer: nil, screenshot:)
+    @screenshot = screenshot
     @wallpaper = wallpaper
     @device = device
     @timer = timer
   end
 
   def compare
-    captured_image = measure(:load_sample) { load_attachment(@sample.image) }
+    captured_image = measure(:load_screenshot) { load_attachment(@screenshot.image) }
     reference_image = measure(:load_wallpaper) { load_wallpaper_reference }
 
-    if @wallpaper_sample
-      metrics = measure(:compare_full) { metrics_for(captured_image, reference_image) }
-      classify(**metrics.slice(:ssim, :dhash_distance, :mad))
-    else
-      full_metrics = measure(:compare_full) { metrics_for(captured_image, reference_image) }
-      edge_metrics = measure(:compare_edges) do
-        metrics_for(captured_image, reference_image, edges_only: true)
-      end
-
-      best_metrics = [full_metrics, edge_metrics].max_by { |metrics| metrics[:score] }
-      classify(**best_metrics.slice(:ssim, :dhash_distance, :mad))
+    full_metrics = measure(:compare_full) { metrics_for(captured_image, reference_image) }
+    edge_metrics = measure(:compare_edges) do
+      metrics_for(captured_image, reference_image, edges_only: true)
     end
+
+    best_metrics = [full_metrics, edge_metrics].max_by { |metrics| metrics[:score] }
+    classify(**best_metrics.slice(:ssim, :dhash_distance, :mad))
   end
 
   def metrics_for(captured_image, reference_image, edges_only: false)
@@ -90,7 +84,7 @@ class WallpaperScreenshotComparator
   end
 
   def normalize(image, edges_only: false)
-    cropped = @wallpaper_sample ? image : crop_margins(image)
+    cropped = crop_margins(image)
     cropped = crop_edges(cropped) if edges_only
     fitted = fit_to_device_aspect(cropped)
     blurred = fitted.gaussblur(1.5)

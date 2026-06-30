@@ -133,34 +133,17 @@ module Api
       device = current_device
       return render json: { error: "Image requise" }, status: :unprocessable_entity if params[:image].blank?
 
-      screenshot = device.device_screenshots.new(captured_at: Time.current, verification_status: "skipped")
+      screenshot = device.device_screenshots.new(captured_at: Time.current, verification_status: "pending")
       screenshot.image.attach(params[:image])
       screenshot.save!
+
+      Rails.logger.info("[Devices] screenshot created id=#{screenshot.id} device=#{device.device_id}")
+      enqueue_wallpaper_verification(screenshot.id)
 
       render json: {
         id: screenshot.id,
         url: url_for(screenshot.image),
         captured_at: screenshot.captured_at.iso8601
-      }, status: :created
-    rescue ActiveRecord::RecordInvalid => e
-      render json: { error: e.record.errors.full_messages.join(", ") }, status: :unprocessable_entity
-    end
-
-    def create_wallpaper_sample
-      device = current_device
-      return render json: { error: "Image requise" }, status: :unprocessable_entity if params[:image].blank?
-
-      sample = device.device_wallpaper_samples.new(sampled_at: Time.current, verification_status: "pending")
-      sample.image.attach(params[:image])
-      sample.save!
-
-      Rails.logger.info("[Devices] wallpaper_sample created id=#{sample.id} device=#{device.device_id}")
-      enqueue_wallpaper_verification(sample.id)
-
-      render json: {
-        id: sample.id,
-        url: url_for(sample.image),
-        sampled_at: sample.sampled_at.iso8601
       }, status: :created
     rescue ActiveRecord::RecordInvalid => e
       render json: { error: e.record.errors.full_messages.join(", ") }, status: :unprocessable_entity
@@ -238,12 +221,12 @@ module Api
       "#{request.base_url}/w/#{nickname}"
     end
 
-    def enqueue_wallpaper_verification(sample_id)
-      WallpaperVerificationJob.enqueue_for(sample_id)
+    def enqueue_wallpaper_verification(screenshot_id)
+      WallpaperVerificationJob.enqueue_for(screenshot_id)
     rescue SolidQueue::Job::EnqueueError, ActiveRecord::ConnectionNotEstablished,
            ActiveRecord::ConnectionFailed, PG::ConnectionBad => e
       Rails.logger.warn(
-        "[Devices] Could not enqueue WallpaperVerificationJob sample=#{sample_id}: " \
+        "[Devices] Could not enqueue WallpaperVerificationJob screenshot=#{screenshot_id}: " \
         "#{e.class}: #{e.message}"
       )
     end

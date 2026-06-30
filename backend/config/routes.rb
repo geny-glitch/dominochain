@@ -120,7 +120,6 @@ get "beta/actions/pishock", to: "beta_dashboard#actions_pishock", as: :beta_acti
     post "devices/:id/wallpaper", to: "devices#upload_wallpaper", as: :upload_wallpaper
     get "devices/:id/screenshots", to: "devices#screenshots", as: :device_screenshots
     post "devices/:id/screenshots", to: "devices#create_screenshot", as: :device_screenshot_create
-    post "devices/:id/wallpaper_samples", to: "devices#create_wallpaper_sample", as: :device_wallpaper_sample_create
     get "devices/:id/wallpapers", to: "devices#wallpapers", as: :device_wallpapers
     delete "devices/:id/wallpapers/:wallpaper_id", to: "devices#destroy_wallpaper", as: :destroy_wallpaper
     get "devices/:id/tasks", to: "devices#tasks", as: :device_tasks
@@ -143,7 +142,6 @@ get "beta/actions/pishock", to: "beta_dashboard#actions_pishock", as: :beta_acti
   get "w/:nickname", to: "wallpaper#show", as: :wallpaper_upload
   get "w/:nickname/upload", to: "wallpaper#upload_new", as: :wallpaper_upload_new
   post "w/:nickname/screenshot_request", to: "wallpaper#screenshot_request", as: :wallpaper_screenshot_request
-  post "w/:nickname/wallpaper_verify_request", to: "wallpaper#wallpaper_verify_request", as: :wallpaper_verify_request
   post "w/:nickname/grant_permissions_request", to: "wallpaper#grant_permissions_request", as: :wallpaper_grant_permissions_request
   delete "w/:nickname/screenshots/:id", to: "wallpaper#destroy_screenshot", as: :wallpaper_destroy_screenshot
   get "w/:nickname/control/accept", to: "controls#accept_from_link", as: :control_accept_from_link

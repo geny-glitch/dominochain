@@ -16,7 +16,6 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import java.net.URL
 import java.util.concurrent.TimeUnit
@@ -32,8 +31,7 @@ class WallpaperWorker(
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         val forceRefresh = inputData.getBoolean(KEY_FORCE_REFRESH, false)
-        val uploadSample = inputData.getBoolean(KEY_UPLOAD_SAMPLE, false)
-        when (performSync(applicationContext, forceRefresh = forceRefresh, uploadSample = uploadSample)) {
+        when (performSync(applicationContext, forceRefresh = forceRefresh)) {
             SyncResult.Success -> Result.success()
             SyncResult.NoWallpaper -> Result.success()
             SyncResult.MissingSession -> Result.success()
@@ -47,14 +45,12 @@ class WallpaperWorker(
         internal const val KEY_DEVICE_ID = "device_id"
         private const val KEY_LAST_WALLPAPER_UPDATED_AT = "last_wallpaper_updated_at"
         private const val KEY_FORCE_REFRESH = "force_refresh"
-        private const val KEY_UPLOAD_SAMPLE = "upload_sample"
 
         private const val POLL_INTERVAL_MINUTES = 1L
 
         suspend fun performSync(
             context: Context,
-            forceRefresh: Boolean = false,
-            uploadSample: Boolean = false
+            forceRefresh: Boolean = false
         ): SyncResult = withContext(Dispatchers.IO) {
             try {
                 val sessionManager = SessionManager(context)
@@ -85,13 +81,9 @@ class WallpaperWorker(
                 val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
                 val lastUpdated = prefs.getString(KEY_LAST_WALLPAPER_UPDATED_AT, null)
                 val unchanged = lastUpdated == wallpaper.updated_at
-                if (unchanged && !forceRefresh && !uploadSample) {
+                if (unchanged && !forceRefresh) {
                     Log.d(TAG, "Wallpaper unchanged (updated_at=$lastUpdated), skipping")
                     return@withContext SyncResult.Success
-                }
-
-                if (unchanged && uploadSample && !forceRefresh) {
-                    return@withContext if (uploadVerificationSample(context)) SyncResult.Success else SyncResult.Failed
                 }
 
                 val bitmap = downloadImage(wallpaper.url)
@@ -103,28 +95,15 @@ class WallpaperWorker(
 
                 val wallpaperManager = WallpaperManager.getInstance(context)
                 wallpaperManager.setBitmap(scaledBitmap)
-                WallpaperReader.cacheSetWallpaper(context, scaledBitmap)
 
                 prefs.edit().putString(KEY_LAST_WALLPAPER_UPDATED_AT, wallpaper.updated_at).apply()
                 Log.d(TAG, "Wallpaper set successfully (updated_at=${wallpaper.updated_at}, force=$forceRefresh)")
-
-                if (uploadSample || forceRefresh) {
-                    delay(2000)
-                    if (!uploadVerificationSample(context)) {
-                        Log.w(TAG, "Failed to upload wallpaper sample after sync")
-                        return@withContext SyncResult.Failed
-                    }
-                }
 
                 SyncResult.Success
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to set wallpaper", e)
                 SyncResult.Failed
             }
-        }
-
-        private suspend fun uploadVerificationSample(context: Context): Boolean {
-            return WallpaperSampleUploader.uploadForVerification(context)
         }
 
         private fun scaleBitmapForWallpaper(bitmap: Bitmap): Bitmap? {
@@ -175,10 +154,9 @@ class WallpaperWorker(
             )
         }
 
-        fun syncNow(context: Context, forceRefresh: Boolean = false, uploadSample: Boolean = false) {
+        fun syncNow(context: Context, forceRefresh: Boolean = false) {
             val data = Data.Builder()
                 .putBoolean(KEY_FORCE_REFRESH, forceRefresh)
-                .putBoolean(KEY_UPLOAD_SAMPLE, uploadSample)
                 .build()
             val request = OneTimeWorkRequestBuilder<WallpaperWorker>()
                 .setInputData(data)

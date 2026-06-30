@@ -84,7 +84,6 @@ es:
       request_rejected: "Solicitud rechazada."
     wallpaper:
       screenshot_requested: "Solicitud de captura enviada."
-      verify_requested: "Solicitud de verificación del fondo enviada."
       permissions_requested: "Notificación enviada al beta para conceder permisos."
       uploaded: "¡Fondo subido! Aparecerá en tu dispositivo en breve."
       select_image: "Selecciona una imagen para subir."

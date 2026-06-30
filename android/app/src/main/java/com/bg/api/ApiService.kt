@@ -193,13 +193,6 @@ interface ApiService {
     ): Response<ScreenshotResponse>
 
     @Multipart
-    @POST("api/devices/{deviceId}/wallpaper_samples")
-    suspend fun uploadWallpaperSample(
-        @Path("deviceId") deviceId: String,
-        @Part image: MultipartBody.Part
-    ): Response<WallpaperSampleResponse>
-
-    @Multipart
     @POST("api/devices/{deviceId}/tasks/{taskId}/proof")
     suspend fun submitProof(
         @Path("deviceId") deviceId: String,
@@ -243,12 +236,6 @@ data class ScreenshotResponse(
     val id: Long,
     val url: String,
     val captured_at: String
-)
-
-data class WallpaperSampleResponse(
-    val id: Long,
-    val url: String,
-    val sampled_at: String
 )
 
 data class ChasterLockResponse(

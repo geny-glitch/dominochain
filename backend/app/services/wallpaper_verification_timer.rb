@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 class WallpaperVerificationTimer
-  def initialize(sample_id)
-    @sample_id = sample_id
+  def initialize(screenshot_id)
+    @screenshot_id = screenshot_id
     @steps = {}
     @started_at = monotonic_ms
   end
@@ -34,7 +34,7 @@ class WallpaperVerificationTimer
     parts << "steps=#{@steps.to_json}"
     attrs.each { |key, value| parts << "#{key}=#{value}" }
 
-    Rails.logger.info("[WallpaperVerification] sample=#{@sample_id} #{parts.join(' ')}")
+    Rails.logger.info("[WallpaperVerification] screenshot=#{@screenshot_id} #{parts.join(' ')}")
   end
 
   def monotonic_ms

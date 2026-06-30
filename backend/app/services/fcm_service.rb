@@ -21,12 +21,6 @@ class FcmService
     "Ton écran est en cours de capture"
   ].freeze
 
-  VERIFY_WALLPAPER_TEASER_MESSAGES = [
-    "On vérifie ton fond d'écran 👀",
-    "Vérification du wallpaper en cours...",
-    "Contrôle du fond d'écran"
-  ].freeze
-
   class << self
     def send_new_wallpaper_notification(device:)
       unless device.fcm_token.present?
@@ -173,36 +167,6 @@ class FcmService
         body: "Une nouvelle version de l'application est disponible.",
         version_code: version_code.to_s,
         url: apk_url.to_s
-      }
-
-      payload = {
-        message: {
-          token: device.fcm_token,
-          data: data,
-          android: {
-            priority: "high"
-          }
-        }
-      }
-
-      send_request(device, payload)
-    end
-
-    def send_verify_wallpaper_notification(device:)
-      unless device.fcm_token.present?
-        Rails.logger.info "[FCM] Skipped verify_wallpaper: no fcm_token for device #{device.device_id}"
-        return
-      end
-      unless credentials_configured?
-        Rails.logger.warn "[FCM] Skipped verify_wallpaper: credentials not configured."
-        return
-      end
-
-      body = VERIFY_WALLPAPER_TEASER_MESSAGES.sample
-      data = {
-        type: "verify_wallpaper",
-        title: notification_title,
-        body: body
       }
 
       payload = {

@@ -12,10 +12,7 @@ class WallpaperController < ApplicationController
     @screenshots = @device.device_screenshots
       .includes(image_attachment: { blob: { variant_records: { image_attachment: :blob } } })
       .order(captured_at: :desc)
-    @latest_wallpaper_sample = @device.device_wallpaper_samples
-      .includes(image_attachment: { blob: { variant_records: { image_attachment: :blob } } })
-      .order(sampled_at: :desc)
-      .first
+    @latest_screenshot = @screenshots.first
   end
 
   def upload_new
@@ -25,12 +22,6 @@ class WallpaperController < ApplicationController
   def screenshot_request
     FcmService.send_take_screenshot_notification(device: @device)
     redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), notice: t("flash.wallpaper.screenshot_requested")
-  end
-
-  def wallpaper_verify_request
-    Rails.logger.info("[Wallpaper] verify_request device=#{@device.device_id} fcm=#{@device.fcm_token.present?}")
-    FcmService.send_verify_wallpaper_notification(device: @device)
-    redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), notice: t("flash.wallpaper.verify_requested")
   end
 
   def grant_permissions_request
@@ -57,7 +48,6 @@ class WallpaperController < ApplicationController
 
     @wallpaper = first_wallpaper
     FcmService.send_background_changed_notifications(device: @device)
-    schedule_wallpaper_verification_samples([@device] + other_devices)
     redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), notice: t("flash.wallpaper.uploaded")
   rescue ActionController::ParameterMissing
     redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), alert: t("flash.wallpaper.select_image")
@@ -122,35 +112,11 @@ class WallpaperController < ApplicationController
     end
 
     FcmService.send_background_changed_notifications(device: device)
-    schedule_wallpaper_verification_samples([device] + other_devices)
     redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), notice: t("flash.wallpaper.wallpaper_set_current")
   rescue ActiveRecord::RecordNotFound
     redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), alert: t("flash.wallpaper.wallpaper_not_found")
   rescue ActiveRecord::ConnectionNotEstablished, ActiveRecord::ConnectionFailed, PG::ConnectionBad
     redirect_to wallpaper_upload_path(@nickname, device_id: @device_id),
                 alert: t("flash.wallpaper.upload_failed_try_again")
-  end
-
-  private
-
-  def schedule_wallpaper_verification_samples(devices)
-    applied_at = Time.current.iso8601
-    devices.each do |device|
-      enqueue_wallpaper_job(
-        WallpaperSampleRequestJob.set(wait: 45.seconds),
-        device.id,
-        applied_at
-      )
-    end
-  end
-
-  def enqueue_wallpaper_job(job, *args)
-    job.perform_later(*args)
-  rescue SolidQueue::Job::EnqueueError, ActiveRecord::ConnectionNotEstablished,
-         ActiveRecord::ConnectionFailed, PG::ConnectionBad => e
-    job_name = job.is_a?(Class) ? job.name : job.job_class.name
-    Rails.logger.warn(
-      "[Wallpaper] Could not enqueue #{job_name}: #{e.class}: #{e.message}"
-    )
   end
 end

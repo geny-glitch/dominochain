@@ -84,7 +84,6 @@ en:
       request_rejected: "Request rejected."
     wallpaper:
       screenshot_requested: "Screenshot request sent."
-      verify_requested: "Wallpaper verification request sent."
       permissions_requested: "Notification sent to the beta to grant permissions."
       uploaded: "Wallpaper uploaded! It will appear on your device shortly."
       select_image: "Please select an image to upload."

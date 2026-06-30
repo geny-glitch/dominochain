@@ -156,21 +156,6 @@ class DeviceRepository {
         }
     }
 
-    suspend fun uploadWallpaperSample(deviceId: String, imageFile: File): Result<Unit> {
-        return try {
-            val part = MultipartBody.Part.createFormData("image", imageFile.name, imageFile.asRequestBody("image/jpeg".toMediaType()))
-            val response = api.uploadWallpaperSample(deviceId, part)
-            if (response.isSuccessful) {
-                Result.success(Unit)
-            } else {
-                val errorBody = response.errorBody()?.string()?.take(200)
-                Result.failure(Exception("Wallpaper sample upload failed: ${response.code()} $errorBody"))
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
     suspend fun submitProof(deviceId: String, taskId: Long, text: String?, mediaFile: File?): Result<ProofResponse> {
         return try {
             val textBody = (text ?: "").toRequestBody("text/plain".toMediaType())

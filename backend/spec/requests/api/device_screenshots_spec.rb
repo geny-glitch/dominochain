@@ -2,7 +2,7 @@
 
 require "rails_helper"
 
-RSpec.describe "Wallpaper samples API", type: :request do
+RSpec.describe "Device screenshots API", type: :request do
   include ActiveJob::TestHelper
 
   let(:beta) { create(:user, :beta) }
@@ -14,14 +14,14 @@ RSpec.describe "Wallpaper samples API", type: :request do
     }
   end
 
-  it "creates a wallpaper sample and enqueues verification" do
+  it "creates a screenshot and enqueues wallpaper verification" do
     image = fixture_file_upload(
       Rails.root.join("spec/fixtures/files/wallpaper_reference.png"),
       "image/png"
     )
 
     expect {
-      post "/api/devices/#{device.device_id}/wallpaper_samples",
+      post "/api/devices/#{device.device_id}/screenshots",
         params: { image: image },
         headers: auth_headers
     }.to have_enqueued_job(WallpaperVerificationJob)
@@ -29,15 +29,15 @@ RSpec.describe "Wallpaper samples API", type: :request do
     expect(response).to have_http_status(:created)
     body = JSON.parse(response.body)
     expect(body["id"]).to be_present
-    expect(body["sampled_at"]).to be_present
+    expect(body["captured_at"]).to be_present
 
-    sample = device.device_wallpaper_samples.find(body["id"])
-    expect(sample.image).to be_attached
-    expect(sample.verification_status).to eq("pending")
+    screenshot = device.device_screenshots.find(body["id"])
+    expect(screenshot.image).to be_attached
+    expect(screenshot.verification_status).to eq("pending")
   end
 
   it "returns 422 when image is missing" do
-    post "/api/devices/#{device.device_id}/wallpaper_samples", headers: auth_headers
+    post "/api/devices/#{device.device_id}/screenshots", headers: auth_headers
 
     expect(response).to have_http_status(:unprocessable_entity)
   end

@@ -45,6 +45,7 @@ class StravaGoal < ApplicationRecord
   validate :time_zone_known
 
   scope :enabled, -> { where(enabled: true) }
+  scope :due_for_check, ->(_reference_time = Time.current) { enabled }
   scope :recent, -> { order(created_at: :desc) }
 
   def activity_types=(value)

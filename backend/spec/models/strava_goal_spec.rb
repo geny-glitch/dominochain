@@ -47,4 +47,20 @@ RSpec.describe StravaGoal do
     expect(goal.primary_strava_sport_type).to be_nil
     expect(goal.supplemental_activity_types_for_form).to eq(%w[LegacyAlias])
   end
+
+  describe ".due_for_check" do
+    it "returns only enabled goals" do
+      enabled_goal = create(:strava_goal, enabled: true)
+      disabled_goal = create(:strava_goal, enabled: false)
+
+      expect(described_class.due_for_check).to include(enabled_goal)
+      expect(described_class.due_for_check).not_to include(disabled_goal)
+    end
+
+    it "accepts a reference time without changing the scope" do
+      goal = create(:strava_goal)
+
+      expect(described_class.due_for_check(1.hour.from_now)).to include(goal)
+    end
+  end
 end

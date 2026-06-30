@@ -5,6 +5,9 @@ require "rails_helper"
 RSpec.describe WallpaperScreenshotComparator do
   include ActiveJob::TestHelper
 
+  REGRESSION_ROOT = Rails.root.join("spec/fixtures/files/wallpaper_pairs")
+  REGRESSION_STATUSES = %w[verified mismatch].freeze
+
   let(:device) { create(:device, screen_width: 540, screen_height: 960) }
   let(:wallpaper) { create(:wallpaper, device: device) }
   let(:screenshot) { create(:device_screenshot, device: device) }
@@ -34,6 +37,40 @@ RSpec.describe WallpaperScreenshotComparator do
     perform_enqueued_jobs
   end
 
+  def compare_from_manifest(manifest_path)
+    manifest_path = Pathname.new(manifest_path)
+    manifest = JSON.parse(manifest_path.read)
+    files = manifest.fetch("files")
+    fixture_prefix = manifest_path.dirname.relative_path_from(Rails.root.join("spec/fixtures/files")).to_s
+    pair_device = create(
+      :device,
+      screen_width: manifest.fetch("device_screen_width"),
+      screen_height: manifest.fetch("device_screen_height")
+    )
+    pair_wallpaper = create(:wallpaper, device: pair_device)
+    pair_screenshot = create(:device_screenshot, device: pair_device)
+
+    WallpaperVerificationTestImages.attach_fixture(
+      pair_wallpaper,
+      attachment_name: :image,
+      filename: "#{fixture_prefix}/#{files.fetch('reference')}"
+    )
+    WallpaperVerificationTestImages.attach_fixture(
+      pair_screenshot,
+      attachment_name: :image,
+      filename: "#{fixture_prefix}/#{files.fetch('screenshot')}"
+    )
+    perform_enqueued_jobs
+
+    result = described_class.new(
+      screenshot: pair_screenshot,
+      wallpaper: pair_wallpaper,
+      device: pair_device
+    ).compare
+
+    [result, manifest]
+  end
+
   it "marks identical images as verified" do
     attach_matching_screenshot
 
@@ -41,6 +78,7 @@ RSpec.describe WallpaperScreenshotComparator do
 
     expect(result.status).to eq("verified")
     expect(result.score).to be >= 0.9
+    expect(result.cells_compared).to be_positive
   end
 
   it "marks clearly different images as mismatch" do
@@ -99,56 +137,19 @@ RSpec.describe WallpaperScreenshotComparator do
     expect(result.score).to be <= 0.56
   end
 
-  def compare_wallpaper_pair(pair_name)
-    manifest = JSON.parse(Rails.root.join("spec/fixtures/files/wallpaper_pairs/#{pair_name}/manifest.json").read)
-    files = manifest.fetch("files")
-    pair_device = create(
-      :device,
-      screen_width: manifest.fetch("device_screen_width"),
-      screen_height: manifest.fetch("device_screen_height")
-    )
-    pair_wallpaper = create(:wallpaper, device: pair_device)
-    pair_screenshot = create(:device_screenshot, device: pair_device)
+  REGRESSION_STATUSES.each do |expected_status|
+    Dir.glob(REGRESSION_ROOT.join(expected_status, "*/manifest.json").to_s).sort.each do |manifest_path|
+      pair_label = File.basename(File.dirname(manifest_path))
 
-    WallpaperVerificationTestImages.attach_fixture(
-      pair_wallpaper,
-      attachment_name: :image,
-      filename: "wallpaper_pairs/#{pair_name}/#{files.fetch('reference')}"
-    )
-    WallpaperVerificationTestImages.attach_fixture(
-      pair_screenshot,
-      attachment_name: :image,
-      filename: "wallpaper_pairs/#{pair_name}/#{files.fetch('screenshot')}"
-    )
-    perform_enqueued_jobs
+      it "classifies regression fixture #{expected_status}/#{pair_label} as #{expected_status}" do
+        result, manifest = compare_from_manifest(manifest_path)
 
-    result = described_class.new(
-      screenshot: pair_screenshot,
-      wallpaper: pair_wallpaper,
-      device: pair_device
-    ).compare
-
-    [result, manifest]
-  end
-
-  it "verifies the staging nominal wallpaper pair" do
-    result, _manifest = compare_wallpaper_pair("nominal")
-
-    expect(result.status).to eq("verified")
-    expect(result.score).to be >= 0.48
-  end
-
-  it "verifies the staging nominal2 wallpaper pair" do
-    result, manifest = compare_wallpaper_pair("nominal2")
-
-    expect(result.status).to eq(manifest.fetch("staging_verification_status"))
-    expect(result.score).to be >= 0.48
-  end
-
-  it "marks the staging mismatch wallpaper pair as mismatch" do
-    result, _manifest = compare_wallpaper_pair("mismatch")
-
-    expect(result.status).to eq("mismatch")
+        expect(result.status).to eq(manifest.fetch("expected_verification_status", expected_status))
+        if expected_status == "verified"
+          expect(result.score).to be >= 0.48
+        end
+      end
+    end
   end
 
   it "requires processed boss_preview variants" do

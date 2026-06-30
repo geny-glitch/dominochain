@@ -168,3 +168,110 @@
   font-size: $ds-small-size;
   padding: $ds-space-lg;
 }
+
+.ds-review__filters {
+  display: flex;
+  gap: $ds-space-sm;
+  margin-bottom: $ds-space-lg;
+}
+
+.ds-wallpaper-pairs__grid {
+  grid-template-columns: 1fr;
+
+  @media (min-width: 700px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.ds-wallpaper-pair-card {
+  aspect-ratio: auto;
+  background: $ds-surface;
+  border: 1px solid $ds-border;
+  border-radius: $ds-radius-md;
+  padding: $ds-space-md;
+  display: flex;
+  flex-direction: column;
+  gap: $ds-space-sm;
+
+  .ds-review-card__actions {
+    position: static;
+    opacity: 1;
+    background: transparent;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: $ds-space-sm;
+  }
+
+  .ds-review-card__btn {
+    width: auto;
+    height: auto;
+    border-radius: $ds-radius-sm;
+    padding: $ds-space-xs $ds-space-md;
+    font-size: $ds-small-size;
+    font-weight: 500;
+  }
+
+  .ds-review-card__name {
+    position: static;
+    background: none;
+    padding: 0;
+    font-size: $ds-small-size;
+  }
+}
+
+.ds-wallpaper-pair-card__images {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $ds-space-sm;
+}
+
+.ds-wallpaper-pair-card__image-block {
+  display: flex;
+  flex-direction: column;
+  gap: $ds-space-xs;
+}
+
+.ds-wallpaper-pair-card__label {
+  font-size: $ds-tiny-size;
+  color: $ds-text-muted;
+}
+
+.ds-wallpaper-pair-card__img {
+  width: 100%;
+  aspect-ratio: 9 / 16;
+  object-fit: cover;
+  border-radius: $ds-radius-sm;
+  background: $ds-bg;
+}
+
+.ds-wallpaper-pair-card__meta,
+.ds-wallpaper-pair-card__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $ds-space-xs;
+  align-items: center;
+}
+
+.ds-wallpaper-pair-card__detail {
+  font-size: $ds-tiny-size;
+  color: $ds-text-muted;
+}
+
+.ds-wallpaper-pairs__pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $ds-space-md;
+  margin-top: $ds-space-xl;
+  flex-wrap: wrap;
+}
+
+.ds-wallpaper-pairs__pagination-label {
+  font-size: $ds-small-size;
+  color: $ds-text-muted;
+}
+
+.ds-wallpaper-pairs__pagination-actions {
+  display: flex;
+  gap: $ds-space-sm;
+}

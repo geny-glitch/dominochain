@@ -1,0 +1,49 @@
+<% content_for :title, t("admin_wallpaper_pairs.page_title") %>
+
+<div class="ds-review">
+  <div class="ds-review__bg" aria-hidden="true"></div>
+
+  <div class="ds-review__content">
+    <header class="ds-review__header">
+      <%= link_to t("admin_wallpaper_pairs.back_admin"), admin_path, class: "ds-btn ds-btn--ghost ds-btn--sm" %>
+      <h1 class="ds-review__title"><%= t("admin_wallpaper_pairs.title") %></h1>
+    </header>
+
+    <nav class="ds-review__filters" aria-label="<%= t("admin_wallpaper_pairs.title") %>">
+      <%= link_to t("admin_wallpaper_pairs.filter_unreviewed"),
+        admin_wallpaper_pairs_path(filter: "unreviewed"),
+        class: "ds-btn ds-btn--sm #{@filter == 'unreviewed' ? 'ds-btn--primary' : 'ds-btn--ghost'}" %>
+      <%= link_to t("admin_wallpaper_pairs.filter_all"),
+        admin_wallpaper_pairs_path(filter: "all"),
+        class: "ds-btn ds-btn--sm #{@filter == 'all' ? 'ds-btn--primary' : 'ds-btn--ghost'}" %>
+    </nav>
+
+    <% if @pairs.any? %>
+      <div class="ds-review__grid ds-wallpaper-pairs__grid">
+        <%= render partial: "admin/wallpaper_pair", collection: @pairs, as: :screenshot %>
+      </div>
+
+      <% if @total_pages > 1 %>
+        <nav class="ds-wallpaper-pairs__pagination" aria-label="<%= t("admin_wallpaper_pairs.pagination", page: @page, total: @total_pages) %>">
+          <span class="ds-wallpaper-pairs__pagination-label">
+            <%= t("admin_wallpaper_pairs.pagination", page: @page, total: @total_pages) %>
+          </span>
+          <div class="ds-wallpaper-pairs__pagination-actions">
+            <% if @page > 1 %>
+              <%= link_to t("admin_wallpaper_pairs.prev_page"),
+                admin_wallpaper_pairs_path(filter: @filter, page: @page - 1),
+                class: "ds-btn ds-btn--ghost ds-btn--sm" %>
+            <% end %>
+            <% if @page < @total_pages %>
+              <%= link_to t("admin_wallpaper_pairs.next_page"),
+                admin_wallpaper_pairs_path(filter: @filter, page: @page + 1),
+                class: "ds-btn ds-btn--ghost ds-btn--sm" %>
+            <% end %>
+          </div>
+        </nav>
+      <% end %>
+    <% else %>
+      <p class="ds-review__empty"><%= t("admin_wallpaper_pairs.empty") %></p>
+    <% end %>
+  </div>
+</div>

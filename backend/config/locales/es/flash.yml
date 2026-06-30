@@ -10,6 +10,8 @@ es:
       settings_saved: "Lista guardada. Imágenes recuperadas."
       feature_flags_cache_invalidated: "Cache de feature flags invalidada."
       feature_flags_cache_invalidation_failed: "No se pudo invalidar la cache de feature flags."
+      wallpaper_pair_reviewed: "Par etiquetado como %{status}."
+      wallpaper_pair_invalid_status: "Estado de revisión no válido."
     chaster:
       oauth_invalid_state: "Conexión Chaster cancelada (estado no válido)."
       oauth_error: "Chaster: %{message}"

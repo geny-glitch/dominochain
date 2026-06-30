@@ -1,0 +1,141 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Download admin-labeled wallpaper pairs from staging into regression fixtures.
+
+Usage:
+  bin/fetch-wallpaper-regression-dataset [options]
+
+Options:
+  --app APP             Fly app name (default: bg-backend-staging)
+  --dry-run             Print export JSON only; do not download files
+  --no-sync             Keep local fixture folders not present in the export
+  --exclude-ignored     Omit ignored pairs from the export
+  -h, --help            Show this help
+
+Output layout:
+  spec/fixtures/files/wallpaper_pairs/{verified|mismatch|ignored}/screenshot_{id}/
+
+Requires: fly CLI (logged in), curl, jq, base64
+EOF
+}
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+EXPORT_RB="$ROOT/script/export_staging_wallpaper_pair.rb"
+FIXTURES_ROOT="$ROOT/spec/fixtures/files/wallpaper_pairs"
+
+APP="bg-backend-staging"
+DRY_RUN=0
+SYNC=1
+EXCLUDE_IGNORED=0
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --app) APP="$2"; shift 2 ;;
+    --dry-run) DRY_RUN=1; shift ;;
+    --no-sync) SYNC=0; shift ;;
+    --exclude-ignored) EXCLUDE_IGNORED=1; shift ;;
+    -h|--help) usage; exit 0 ;;
+    *) echo "Unknown option: $1" >&2; usage >&2; exit 1 ;;
+  esac
+done
+
+for cmd in fly curl jq base64; do
+  if ! command -v "$cmd" >/dev/null 2>&1; then
+    echo "Missing required command: $cmd" >&2
+    exit 1
+  fi
+done
+
+if [[ ! -f "$EXPORT_RB" ]]; then
+  echo "Missing export script: $EXPORT_RB" >&2
+  exit 1
+fi
+
+PAYLOAD_B64="$(base64 < "$EXPORT_RB" | tr -d '\n')"
+ENV_PREFIX="FLY_APP=${APP} EXPORT_LABELED=1"
+[[ "$EXCLUDE_IGNORED" -eq 1 ]] && ENV_PREFIX="${ENV_PREFIX} EXCLUDE_IGNORED=1"
+
+JSON="$(fly ssh console -a "$APP" -C "sh -c 'echo ${PAYLOAD_B64} | base64 -d > /tmp/wp_export.rb && ${ENV_PREFIX} bin/rails runner /tmp/wp_export.rb'" 2>&1 | awk '/^\{/{found=1} found')"
+
+if [[ -z "$JSON" ]]; then
+  echo "No JSON received from staging export" >&2
+  exit 1
+fi
+
+if jq -e '.error' >/dev/null <<<"$JSON"; then
+  jq -r '.error' <<<"$JSON" >&2
+  exit 1
+fi
+
+if [[ "$DRY_RUN" -eq 1 ]]; then
+  echo "$JSON"
+  exit 0
+fi
+
+PAIR_COUNT="$(jq '.pairs | length' <<<"$JSON")"
+if [[ "$PAIR_COUNT" -eq 0 ]]; then
+  echo "No labeled pairs exported from staging." >&2
+  exit 0
+fi
+
+declare -a EXPORTED_DIRS=()
+
+while IFS= read -r pair_json; do
+  screenshot_id="$(jq -r '.device_screenshot_id' <<<"$pair_json")"
+  status="$(jq -r '.expected_verification_status' <<<"$pair_json")"
+  out_dir="$FIXTURES_ROOT/${status}/screenshot_${screenshot_id}"
+  mkdir -p "$out_dir"
+  EXPORTED_DIRS+=("$out_dir")
+
+  ref_ct="$(jq -r '.wallpaper.content_type // empty' <<<"$pair_json")"
+  ss_ct="$(jq -r '.screenshot.content_type // empty' <<<"$pair_json")"
+  reference_ext=".png"
+  screenshot_ext=".png"
+  [[ "$ref_ct" == "image/jpeg" ]] && reference_ext=".jpg"
+  [[ "$ss_ct" == "image/jpeg" ]] && screenshot_ext=".jpg"
+
+  reference_file="reference${reference_ext}"
+  screenshot_file="screenshot${screenshot_ext}"
+
+  curl -fsSL "$(jq -r '.wallpaper.download_url' <<<"$pair_json")" -o "$out_dir/$reference_file"
+  curl -fsSL "$(jq -r '.screenshot.download_url' <<<"$pair_json")" -o "$out_dir/$screenshot_file"
+
+  jq \
+    --arg reference "$reference_file" \
+    --arg screenshot "$screenshot_file" \
+    'del(.wallpaper.download_url, .screenshot.download_url) |
+     .files = {reference: $reference, screenshot: $screenshot}' \
+    <<<"$pair_json" > "$out_dir/manifest.json"
+
+  echo "Saved $status/screenshot_${screenshot_id}"
+done < <(jq -c '.pairs[]' <<<"$JSON")
+
+if [[ "$SYNC" -eq 1 ]]; then
+  for status in verified mismatch ignored; do
+    status_dir="$FIXTURES_ROOT/$status"
+    [[ -d "$status_dir" ]] || continue
+    while IFS= read -r existing_dir; do
+      keep=0
+      for exported in "${EXPORTED_DIRS[@]}"; do
+        if [[ "$existing_dir" == "$exported" ]]; then
+          keep=1
+          break
+        fi
+      done
+      if [[ "$keep" -eq 0 ]]; then
+        rm -rf "$existing_dir"
+        echo "Removed stale fixture $existing_dir"
+      fi
+    done < <(find "$status_dir" -mindepth 1 -maxdepth 1 -type d 2>/dev/null || true)
+  done
+fi
+
+echo ""
+echo "Regression dataset summary:"
+for status in verified mismatch ignored; do
+  count="$(find "$FIXTURES_ROOT/$status" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l | tr -d ' ')"
+  echo "  $status: $count"
+done

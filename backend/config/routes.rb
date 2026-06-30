@@ -94,6 +94,8 @@ get "beta/actions/pishock", to: "beta_dashboard#actions_pishock", as: :beta_acti
   get "admin/review/images", to: "admin#review_images", as: :admin_review_images
   post "admin/review/images/:id/like", to: "admin#review_like", as: :admin_review_like
   post "admin/review/images/:id/dislike", to: "admin#review_dislike", as: :admin_review_dislike
+  get "admin/wallpaper_pairs", to: "admin#wallpaper_pairs", as: :admin_wallpaper_pairs
+  post "admin/wallpaper_pairs/:id/review", to: "admin#wallpaper_pair_review", as: :admin_wallpaper_pair_review
 
   get  "android/version", to: "android_version#show"
   get  "android/app.apk", to: "android_version#apk"

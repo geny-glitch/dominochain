@@ -341,6 +341,11 @@ RSpec.describe "Routes", type: :request do
         expect(response).to have_http_status(:ok)
       end
 
+      it "GET /admin/wallpaper_pairs returns 200" do
+        get admin_wallpaper_pairs_path, headers: modern_headers
+        expect(response).to have_http_status(:ok)
+      end
+
       it "GET /admin/jobs returns 200" do
         get "/admin/jobs", headers: modern_headers
         expect(response).to have_http_status(:ok)

@@ -6,6 +6,8 @@
 #   SCREENSHOT_ID     — optional; defaults to latest screenshot for the user
 #   LIST              — set to "1" to list recent screenshots instead of exporting
 #   LIST_LIMIT        — optional, default 10
+#   EXPORT_LABELED    — set to "1" to export all admin-labeled pairs for regression fixtures
+#   EXCLUDE_IGNORED   — set to "1" to omit ignored pairs from the export
 
 require "json"
 
@@ -38,6 +40,46 @@ def screenshot_row(screenshot)
   }
 end
 
+def pair_payload(screenshot, wallpaper, review: nil)
+  device = screenshot.device
+  user = device&.user
+
+  payload = {
+    source: ENV.fetch("FLY_APP", "bg-backend-staging"),
+    user_nickname: user&.nickname,
+    device_id: device.id,
+    device_screen_width: device.screen_width,
+    device_screen_height: device.screen_height,
+    device_screenshot_id: screenshot.id,
+    wallpaper_id: wallpaper.id,
+    captured_at: screenshot.captured_at&.iso8601,
+    staging_verification_status: screenshot.verification_status,
+    staging_similarity_score: screenshot.similarity_score,
+    screenshot: {
+      blob_key: screenshot.image.blob.key,
+      byte_size: screenshot.image.byte_size,
+      content_type: screenshot.image.content_type,
+      filename: screenshot.image.filename.to_s,
+      download_url: presigned_url_for(screenshot.image.blob)
+    },
+    wallpaper: {
+      blob_key: wallpaper.image.blob.key,
+      byte_size: wallpaper.image.byte_size,
+      content_type: wallpaper.image.content_type,
+      filename: wallpaper.image.filename.to_s,
+      download_url: presigned_url_for(wallpaper.image.blob)
+    }
+  }
+
+  if review
+    payload[:expected_verification_status] = review.expected_status
+    payload[:reviewed_at] = review.reviewed_at&.iso8601
+    payload[:reviewed_by_nickname] = review.reviewed_by&.nickname
+  end
+
+  payload
+end
+
 if ENV["LIST"] == "1"
   nickname = ENV.fetch("NICKNAME", "").strip
   abort_json("NICKNAME is required for LIST") if nickname.blank?
@@ -56,6 +98,33 @@ if ENV["LIST"] == "1"
     .map { |screenshot| screenshot_row(screenshot) }
 
   puts JSON.pretty_generate({ app: ENV.fetch("FLY_APP", "bg-backend-staging"), screenshots: rows })
+  exit 0
+end
+
+unless TigrisObjectStorage.configured?
+  abort_json("Tigris is not configured on this app")
+end
+
+if ENV["EXPORT_LABELED"] == "1"
+  scope = WallpaperPairReview
+    .includes(:reviewed_by, device_screenshot: { image_attachment: :blob }, wallpaper: { image_attachment: :blob })
+    .order(reviewed_at: :desc)
+
+  scope = scope.for_regression if ENV["EXCLUDE_IGNORED"] == "1"
+
+  pairs = scope.filter_map do |review|
+    screenshot = review.device_screenshot
+    wallpaper = review.wallpaper
+    next unless screenshot&.image&.attached? && wallpaper&.image&.attached?
+
+    pair_payload(screenshot, wallpaper, review: review)
+  end
+
+  puts JSON.pretty_generate({
+    source: ENV.fetch("FLY_APP", "bg-backend-staging"),
+    exported_at: Time.current.iso8601,
+    pairs: pairs
+  })
   exit 0
 end
 
@@ -80,41 +149,9 @@ screenshot =
 device = screenshot.device
 abort_json("Screenshot has no device", device_screenshot_id: screenshot.id) unless device
 
-user = device.user
 wallpaper = screenshot.wallpaper_id ? Wallpaper.find_by(id: screenshot.wallpaper_id) : device.current_wallpaper
 abort_json("No wallpaper for screenshot", device_screenshot_id: screenshot.id) unless wallpaper
 abort_json("Screenshot image missing", device_screenshot_id: screenshot.id) unless screenshot.image.attached?
 abort_json("Wallpaper image missing", wallpaper_id: wallpaper.id) unless wallpaper.image.attached?
 
-unless TigrisObjectStorage.configured?
-  abort_json("Tigris is not configured on this app")
-end
-
-payload = {
-  source: ENV.fetch("FLY_APP", "bg-backend-staging"),
-  user_nickname: user&.nickname,
-  device_id: device.id,
-  device_screen_width: device.screen_width,
-  device_screen_height: device.screen_height,
-  device_screenshot_id: screenshot.id,
-  wallpaper_id: wallpaper.id,
-  captured_at: screenshot.captured_at&.iso8601,
-  staging_verification_status: screenshot.verification_status,
-  staging_similarity_score: screenshot.similarity_score,
-  screenshot: {
-    blob_key: screenshot.image.blob.key,
-    byte_size: screenshot.image.byte_size,
-    content_type: screenshot.image.content_type,
-    filename: screenshot.image.filename.to_s,
-    download_url: presigned_url_for(screenshot.image.blob)
-  },
-  wallpaper: {
-    blob_key: wallpaper.image.blob.key,
-    byte_size: wallpaper.image.byte_size,
-    content_type: wallpaper.image.content_type,
-    filename: wallpaper.image.filename.to_s,
-    download_url: presigned_url_for(wallpaper.image.blob)
-  }
-}
-
-puts JSON.pretty_generate(payload)
+puts JSON.pretty_generate(pair_payload(screenshot, wallpaper))

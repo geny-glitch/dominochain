@@ -3,13 +3,23 @@
 require "vips"
 
 class WallpaperScreenshotComparator
-  ComparisonResult = Struct.new(:score, :status, :ssim, :dhash_distance, :mad, keyword_init: true)
+  ComparisonResult = Struct.new(
+    :score, :status, :ssim, :dhash_distance, :mad,
+    :cells_compared, :cells_skipped,
+    keyword_init: true
+  )
 
   COMPARE_SIZE = 64
   # Cap longest side during comparison so Vips stays within the worker VM RAM budget.
   WORKING_MAX_SIDE = 960
   TOP_MARGIN_RATIO = 0.08
   BOTTOM_MARGIN_RATIO = 0.05
+  GRID_COLS = 4
+  GRID_ROWS = 6
+  EDGE_DENSITY_THRESHOLD = 28.0
+  CLOCK_ZONE_ROW_RATIO = 0.22
+  CLOCK_ZONE_COL_START_RATIO = 0.25
+  CLOCK_ZONE_COL_END_RATIO = 0.75
 
   def initialize(wallpaper:, device:, timer: nil, screenshot:)
     @screenshot = screenshot
@@ -22,18 +32,13 @@ class WallpaperScreenshotComparator
     captured_image = measure(:load_screenshot) { load_attachment(@screenshot.image) }
     reference_image = measure(:load_wallpaper) { load_wallpaper_reference }
 
-    full_metrics = measure(:compare_full) { metrics_for(captured_image, reference_image) }
-    edge_metrics = measure(:compare_edges) do
-      metrics_for(captured_image, reference_image, edges_only: true)
-    end
-
-    best_metrics = [full_metrics, edge_metrics].max_by { |metrics| metrics[:score] }
-    classify(**best_metrics.slice(:ssim, :dhash_distance, :mad))
+    grid_metrics = measure(:compare_grid) { grid_metrics_for(captured_image, reference_image) }
+    classify(**grid_metrics)
   end
 
   def metrics_for(captured_image, reference_image, edges_only: false)
-    captured_norm = normalize(captured_image, edges_only: edges_only)
-    reference_norm = normalize(reference_image, edges_only: edges_only)
+    captured_norm = normalize_legacy(captured_image, edges_only: edges_only)
+    reference_norm = normalize_legacy(reference_image, edges_only: edges_only)
 
     ssim = compute_ssim(captured_norm, reference_norm)
     dhash_distance = hamming_distance(
@@ -83,28 +88,151 @@ class WallpaperScreenshotComparator
     image.resize(scale, vscale: scale)
   end
 
-  def normalize(image, edges_only: false)
+  def grid_metrics_for(captured_image, reference_image)
+    captured_prep = preprocess_for_grid(captured_image)
+    reference_prep = preprocess_for_grid(reference_image)
+
+    width = captured_prep.width
+    height = captured_prep.height
+    cell_w = width / GRID_COLS
+    cell_h = height / GRID_ROWS
+
+    score_pairs = []
+    ssim_pairs = []
+    dhash_pairs = []
+    mad_pairs = []
+    cells_compared = 0
+    cells_skipped = 0
+
+    GRID_ROWS.times do |row|
+      GRID_COLS.times do |col|
+        if fixed_ui_mask?(row, col)
+          cells_skipped += 1
+          next
+        end
+
+        x = col * cell_w
+        y = row * cell_h
+        captured_cell = captured_prep.crop(x, y, cell_w, cell_h)
+        reference_cell = reference_prep.crop(x, y, cell_w, cell_h)
+
+        if ui_cell?(captured_cell)
+          cells_skipped += 1
+          next
+        end
+
+        captured_norm = normalize_cell(captured_cell)
+        reference_norm = normalize_cell(reference_cell)
+
+        ssim = compute_ssim(captured_norm, reference_norm)
+        dhash_distance = hamming_distance(
+          compute_dhash(captured_norm),
+          compute_dhash(reference_norm)
+        )
+        mad = mean_absolute_difference(captured_norm, reference_norm)
+        score = composite_score(ssim, dhash_distance, mad)
+        weight = cell_w * cell_h
+
+        score_pairs << [score, weight]
+        ssim_pairs << [ssim, weight]
+        dhash_pairs << [dhash_distance, weight]
+        mad_pairs << [mad, weight]
+        cells_compared += 1
+      end
+    end
+
+    if cells_compared.zero?
+      fallback = metrics_for(captured_image, reference_image)
+      return fallback.merge(cells_compared: 0, cells_skipped: cells_skipped)
+    end
+
+    {
+      score: weighted_median(score_pairs).round(3),
+      ssim: weighted_mean(ssim_pairs),
+      dhash_distance: weighted_mean(dhash_pairs).round,
+      mad: weighted_mean(mad_pairs),
+      cells_compared: cells_compared,
+      cells_skipped: cells_skipped
+    }
+  end
+
+  def preprocess_for_grid(image)
+    aligned = center_crop_to_device_aspect(crop_margins(image))
+    working = downscale_if_large(aligned)
+    materialize_image(working.gaussblur(1.5).colourspace("b-w"))
+  end
+
+  def center_crop_to_device_aspect(image)
+    target_width = (@device.screen_width.presence || image.width).to_f
+    target_height = (@device.screen_height.presence || image.height).to_f
+    return image if target_width <= 0 || target_height <= 0
+
+    target_aspect = target_width / target_height
+    image_aspect = image.width.to_f / image.height
+
+    if image_aspect > target_aspect
+      new_width = (image.height * target_aspect).round
+      new_width = [new_width, 1].max
+      left = [(image.width - new_width) / 2, 0].max
+      image.crop(left, 0, new_width, image.height)
+    elsif image_aspect < target_aspect
+      new_height = (image.width / target_aspect).round
+      new_height = [new_height, 1].max
+      top = [(image.height - new_height) / 2, 0].max
+      image.crop(0, top, image.width, new_height)
+    else
+      image
+    end
+  end
+
+  def normalize_cell(cell)
+    scale = COMPARE_SIZE.to_f / [cell.width, cell.height].max
+    materialize_image(cell.resize(scale, vscale: scale))
+  end
+
+  def fixed_ui_mask?(row, col)
+    clock_rows = 0..[(GRID_ROWS * CLOCK_ZONE_ROW_RATIO).floor - 1, 0].max
+    col_start = (GRID_COLS * CLOCK_ZONE_COL_START_RATIO).floor
+    col_end = [(GRID_COLS * CLOCK_ZONE_COL_END_RATIO).ceil - 1, GRID_COLS - 1].min
+    clock_cols = col_start..col_end
+
+    clock_rows.cover?(row) && clock_cols.cover?(col)
+  end
+
+  def ui_cell?(cell)
+    cell.deviate > EDGE_DENSITY_THRESHOLD
+  end
+
+  def weighted_median(pairs)
+    sorted = pairs.sort_by { |value, _weight| value }
+    total_weight = pairs.sum { |_value, weight| weight }
+    half = total_weight / 2.0
+    cumulative = 0.0
+
+    sorted.each do |value, weight|
+      cumulative += weight
+      return value if cumulative >= half
+    end
+
+    sorted.last.first
+  end
+
+  def weighted_mean(pairs)
+    total_weight = pairs.sum { |_value, weight| weight }
+    return 0.0 if total_weight.zero?
+
+    pairs.sum { |value, weight| value * weight } / total_weight
+  end
+
+  # Legacy path kept for unit tests and grid fallback.
+  def normalize_legacy(image, edges_only: false)
     cropped = crop_margins(image)
     cropped = crop_edges(cropped) if edges_only
-    fitted = fit_to_device_aspect(cropped)
+    fitted = center_crop_to_device_aspect(cropped)
     blurred = fitted.gaussblur(1.5)
     grey = blurred.colourspace("b-w")
     scale = COMPARE_SIZE.to_f / [grey.width, grey.height].max
     materialize_image(grey.resize(scale, vscale: scale))
-  end
-
-  def fit_to_device_aspect(image)
-    target_width = (@device.screen_width.presence || image.width).to_i
-    target_height = (@device.screen_height.presence || image.height).to_i
-    scale_w = target_width.to_f / image.width
-    scale_h = target_height.to_f / image.height
-    # Preview blobs are already small; upscaling to full device resolution is slow and pointless.
-    scale = [scale_w, scale_h].min
-    scale = 1.0 if scale > 1.0
-
-    return image if scale == 1.0
-
-    downscale_if_large(image.resize(scale, vscale: scale))
   end
 
   def crop_edges(image)
@@ -188,7 +316,7 @@ class WallpaperScreenshotComparator
     ((ssim + dhash_similarity + mad_similarity) / 3.0).round(3)
   end
 
-  def classify(ssim:, dhash_distance:, mad:)
+  def classify(ssim:, dhash_distance:, mad:, score: nil, cells_compared: nil, cells_skipped: nil)
     ssim_threshold = ENV.fetch("WALLPAPER_SSIM_THRESHOLD", "0.75").to_f
     dhash_threshold = ENV.fetch("WALLPAPER_DHASH_THRESHOLD", "15").to_i
     score_threshold = ENV.fetch("WALLPAPER_SCORE_THRESHOLD", "0.65").to_f
@@ -201,7 +329,7 @@ class WallpaperScreenshotComparator
     mad_match_threshold = ENV.fetch("WALLPAPER_MAD_MATCH_THRESHOLD", "35").to_f
     mad_mismatch_threshold = ENV.fetch("WALLPAPER_MAD_MISMATCH_THRESHOLD", "45").to_f
 
-    score = composite_score(ssim, dhash_distance, mad)
+    score = score || composite_score(ssim, dhash_distance, mad)
     clearly_mismatch = mismatch?(
       score:, ssim:, dhash_distance:, mad:,
       overlay_score_threshold:, overlay_ssim_min:, mismatch_ssim:, mismatch_dhash:, mad_mismatch_threshold:
@@ -210,9 +338,6 @@ class WallpaperScreenshotComparator
     score_match = score >= score_threshold &&
                   dhash_distance <= score_dhash_max &&
                   mad <= score_mad_max
-    # Nominal lock-screen captures (status bar, icons, widgets) land in the overlay score
-    # band. The composite score already folds in SSIM, dHash and MAD — extra per-metric
-    # caps here caused false rejections when UI chrome pushed dHash/MAD up slightly.
     overlay_match = score >= overlay_score_threshold && !clearly_mismatch
 
     status = if ssim >= ssim_threshold || dhash_match || score_match || overlay_match ||
@@ -229,14 +354,14 @@ class WallpaperScreenshotComparator
       status: status,
       ssim: ssim.round(4),
       dhash_distance: dhash_distance,
-      mad: mad.round(2)
+      mad: mad.round(2),
+      cells_compared: cells_compared,
+      cells_skipped: cells_skipped
     )
   end
 
   def mismatch?(score:, ssim:, dhash_distance:, mad:, overlay_score_threshold:, overlay_ssim_min:, mismatch_ssim:, mismatch_dhash:, mad_mismatch_threshold:)
     if score >= overlay_score_threshold
-      # Composite score can stay high when dHash stays low on unrelated images; require
-      # minimal structural similarity before trusting the overlay band over extreme MAD.
       return true if ssim < overlay_ssim_min
 
       return false

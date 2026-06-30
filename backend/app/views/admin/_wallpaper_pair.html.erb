@@ -1,0 +1,60 @@
+<% review = screenshot.wallpaper_pair_review %>
+<% wallpaper = screenshot.wallpaper %>
+<% user = screenshot.device&.user %>
+<div class="ds-review-card ds-wallpaper-pair-card" data-id="<%= screenshot.id %>">
+  <div class="ds-wallpaper-pair-card__images">
+    <div class="ds-wallpaper-pair-card__image-block">
+      <span class="ds-wallpaper-pair-card__label"><%= t("admin_wallpaper_pairs.screenshot_label") %></span>
+      <% if screenshot.image.attached? %>
+        <%= image_tag screenshot.preview_image, alt: t("admin_wallpaper_pairs.screenshot_label"), loading: "lazy", class: "ds-wallpaper-pair-card__img" %>
+      <% end %>
+    </div>
+    <div class="ds-wallpaper-pair-card__image-block">
+      <span class="ds-wallpaper-pair-card__label"><%= t("admin_wallpaper_pairs.reference_label") %></span>
+      <% if wallpaper&.image&.attached? %>
+        <%= image_tag wallpaper.preview_image, alt: t("admin_wallpaper_pairs.reference_label"), loading: "lazy", class: "ds-wallpaper-pair-card__img" %>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="ds-wallpaper-pair-card__meta">
+    <span class="ds-review-card__name">
+      <%= t("admin_wallpaper_pairs.screenshot_id", id: screenshot.id) %>
+      <% if user&.nickname.present? %> · <%= user.nickname %><% end %>
+    </span>
+    <span class="ds-wallpaper-pair-card__detail">
+      <%= t("admin_wallpaper_pairs.captured_at", datetime: l(screenshot.captured_at, format: :short)) %>
+    </span>
+  </div>
+
+  <div class="ds-wallpaper-pair-card__badges">
+    <span class="ds-badge ds-badge--neutral">
+      <%= t("admin_wallpaper_pairs.auto_status", status: screenshot.verification_status) %>
+    </span>
+    <% if screenshot.similarity_score.present? %>
+      <span class="ds-badge ds-badge--neutral">
+        <%= t("admin_wallpaper_pairs.auto_score", percent: (screenshot.similarity_score * 100).round) %>
+      </span>
+    <% end %>
+    <% if review %>
+      <span class="ds-badge ds-badge--success">
+        <%= t("admin_wallpaper_pairs.review_badge", status: t("admin_wallpaper_pairs.status.#{review.expected_status}")) %>
+      </span>
+    <% end %>
+  </div>
+
+  <div class="ds-review-card__actions ds-wallpaper-pair-card__actions">
+    <%= button_to t("admin_wallpaper_pairs.pass"),
+      admin_wallpaper_pair_review_path(screenshot, expected_status: "verified", filter: @filter, page: @page),
+      method: :post,
+      class: "ds-review-card__btn ds-review-card__btn--like" %>
+    <%= button_to t("admin_wallpaper_pairs.fail"),
+      admin_wallpaper_pair_review_path(screenshot, expected_status: "mismatch", filter: @filter, page: @page),
+      method: :post,
+      class: "ds-review-card__btn ds-review-card__btn--dislike" %>
+    <%= button_to t("admin_wallpaper_pairs.ignore"),
+      admin_wallpaper_pair_review_path(screenshot, expected_status: "ignored", filter: @filter, page: @page),
+      method: :post,
+      class: "ds-review-card__btn ds-btn ds-btn--ghost ds-btn--sm" %>
+  </div>
+</div>

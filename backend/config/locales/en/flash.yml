@@ -10,6 +10,8 @@ en:
       settings_saved: "Settings saved. Images fetched."
       feature_flags_cache_invalidated: "Feature flags cache invalidated."
       feature_flags_cache_invalidation_failed: "Failed to invalidate feature flags cache."
+      wallpaper_pair_reviewed: "Pair labeled as %{status}."
+      wallpaper_pair_invalid_status: "Invalid review status."
     chaster:
       oauth_invalid_state: "Chaster connection cancelled (invalid state)."
       oauth_error: "Chaster: %{message}"

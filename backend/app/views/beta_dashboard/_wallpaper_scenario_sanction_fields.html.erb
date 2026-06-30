@@ -1,4 +1,4 @@
-<%# locals: field_prefix, sanction, delay_field, delay_value, show_delay: true, chaster_lock_can_freeze: true %>
+<%# locals: (field_prefix:, sanction:, delay_field:, delay_value:, show_delay: true, chaster_lock_can_freeze: true) %>
 <% sanction_obj = WallpaperSanction.from_hash(sanction) %>
 <% row_id = field_prefix.tr("[", "_").tr("]", "") %>
 

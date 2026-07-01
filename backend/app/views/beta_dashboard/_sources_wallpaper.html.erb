@@ -118,24 +118,21 @@
             field_prefix: "mismatch_sanction",
             sanction: @config.mismatch_sanction,
             delay_field: :mismatch_delay_minutes,
-            delay_value: @config.mismatch_delay_minutes,
-            chaster_lock_can_freeze: @chaster_lock_can_freeze %>
+            delay_value: @config.mismatch_delay_minutes %>
 
       <h3 class="ds-section-subtitle"><%= t("beta.wallpaper_source.permissions_lost_title") %></h3>
       <%= render "wallpaper_scenario_sanction_fields",
             field_prefix: "permissions_lost_sanction",
             sanction: @config.permissions_lost_sanction,
             delay_field: :permissions_lost_delay_minutes,
-            delay_value: @config.permissions_lost_delay_minutes,
-            chaster_lock_can_freeze: @chaster_lock_can_freeze %>
+            delay_value: @config.permissions_lost_delay_minutes %>
 
       <h3 class="ds-section-subtitle"><%= t("beta.wallpaper_source.app_unreachable_title") %></h3>
       <%= render "wallpaper_scenario_sanction_fields",
             field_prefix: "app_unreachable_sanction",
             sanction: @config.app_unreachable_sanction,
             delay_field: :app_unreachable_delay_minutes,
-            delay_value: @config.app_unreachable_delay_minutes,
-            chaster_lock_can_freeze: @chaster_lock_can_freeze %>
+            delay_value: @config.app_unreachable_delay_minutes %>
 
       <%= submit_tag t("beta.wallpaper_source.save"), class: "ds-btn ds-btn--primary" %>
     <% end %>

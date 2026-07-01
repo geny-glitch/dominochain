@@ -43,44 +43,18 @@ RSpec.describe ChasterService do
   end
 
   describe ".freeze_supported?" do
-    it "returns true when the lock has an end date" do
+    it "returns false while freeze UI is disabled" do
       expect(described_class.freeze_supported?(
         "limitLockTime" => true,
         "endDate" => 1.hour.from_now.iso8601,
-        "role" => "wearer"
-      )).to eq(true)
-    end
-
-    it "returns true when limitLockTime is false but an end date is present" do
-      expect(described_class.freeze_supported?(
-        "limitLockTime" => false,
-        "endDate" => 1.hour.from_now.iso8601,
-        "role" => "wearer"
-      )).to eq(true)
-    end
-
-    it "returns true when the lock has a keyholder and an end date" do
-      expect(described_class.freeze_supported?(
-        "limitLockTime" => true,
-        "endDate" => 1.hour.from_now.iso8601,
-        "role" => "keyholder",
-        "keyholder" => { "_id" => "kh-1" }
-      )).to eq(true)
-    end
-
-    it "returns false when the lock has no end date" do
-      expect(described_class.freeze_supported?(
-        "limitLockTime" => false,
-        "endDate" => nil,
-        "role" => "wearer"
+        "role" => "keyholder"
       )).to eq(false)
     end
+  end
 
-    it "returns false for visitor locks" do
-      expect(described_class.freeze_supported?(
-        "endDate" => 1.hour.from_now.iso8601,
-        "role" => "visitor"
-      )).to eq(false)
+  describe ".freeze_ui_enabled?" do
+    it "is disabled for now" do
+      expect(described_class.freeze_ui_enabled?).to eq(false)
     end
   end
 
@@ -114,19 +88,7 @@ RSpec.describe ChasterService do
       response
     end
 
-    it "uses the extensions session action API for wearer locks" do
-      service.freeze_lock(lock_id)
-
-      expect(requests.length).to eq(1)
-      expect(requests.first.path).to eq("/api/extensions/sessions/#{lock_id}/action")
-      expect(JSON.parse(requests.first.body)).to eq("action" => { "name" => "freeze" })
-    end
-
-    it "uses the locks freeze endpoint for keyholder locks" do
-      user.chaster_locks.find_by!(chaster_lock_id: lock_id).update!(
-        raw_data: { "role" => "keyholder", "endDate" => 1.hour.from_now.iso8601 }
-      )
-
+    it "uses the locks freeze endpoint" do
       service.freeze_lock(lock_id)
 
       expect(requests.length).to eq(1)
@@ -165,12 +127,12 @@ RSpec.describe ChasterService do
       response
     end
 
-    it "uses the extensions session action API for wearer locks" do
+    it "uses the locks freeze endpoint with isFrozen false" do
       service.unfreeze_lock(lock_id)
 
       expect(requests.length).to eq(1)
-      expect(requests.first.path).to eq("/api/extensions/sessions/#{lock_id}/action")
-      expect(JSON.parse(requests.first.body)).to eq("action" => { "name" => "unfreeze" })
+      expect(requests.first.path).to eq("/locks/#{lock_id}/freeze")
+      expect(JSON.parse(requests.first.body)).to eq("isFrozen" => false)
     end
   end
 end

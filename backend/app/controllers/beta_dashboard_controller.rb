@@ -57,7 +57,6 @@ class BetaDashboardController < ApplicationController
     @wallpaper_applications = wallpaper_history_scope.limit(24)
     @compliance_checks = compliance_checks_scope.limit(24)
     @chaster_lock = fetch_chaster_lock
-    @chaster_lock_can_freeze = @chaster_lock.nil? || @chaster_lock[:can_freeze] != false
   end
 
   def update_wallpaper_enforcement
@@ -396,7 +395,7 @@ class BetaDashboardController < ApplicationController
     {
       "chaster_add_time_enabled" => chaster_add_time_enabled,
       "chaster_seconds" => chaster_add_time_enabled ? chaster_seconds : nil,
-      "chaster_freeze_enabled" => CheckboxParamNormalizer.to_bool(raw[:chaster_freeze_enabled]),
+      "chaster_freeze_enabled" => ChasterService.freeze_ui_enabled? && CheckboxParamNormalizer.to_bool(raw[:chaster_freeze_enabled]),
       "pishock_enabled" => CheckboxParamNormalizer.to_bool(raw[:pishock_enabled]),
       "pishock_intensity" => raw[:pishock_intensity].to_i,
       "pishock_duration" => raw[:pishock_duration].to_i

@@ -214,7 +214,7 @@ class WallpaperEnforcementEvaluator
       ))
     end
 
-    if sanction.chaster_freeze_active? && (!track_freeze || !config.frozen_by_enforcement?)
+    if sanction.chaster_freeze_active? && ChasterService.freeze_ui_enabled? && (!track_freeze || !config.frozen_by_enforcement?)
       if freeze_supported_for_user?
         sanctions.concat(apply_single_sanction!(
           config: config,

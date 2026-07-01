@@ -1,4 +1,4 @@
-<%# locals: (field_prefix:, sanction:, delay_field:, delay_value:, show_delay: true, chaster_lock_can_freeze: true) %>
+<%# locals: (field_prefix:, sanction:, delay_field:, delay_value:, show_delay: true) %>
 <% sanction_obj = WallpaperSanction.from_hash(sanction) %>
 <% row_id = field_prefix.tr("[", "_").tr("]", "") %>
 
@@ -30,23 +30,22 @@
           data: { wallpaper_sanction_input: "chaster_add_time" } %>
   </div>
 
-  <div class="ds-wallpaper-sanction-row<%= chaster_lock_can_freeze ? "" : " ds-wallpaper-sanction-row--disabled" %>">
+  <% if ChasterService.freeze_ui_enabled? %>
+  <div class="ds-wallpaper-sanction-row">
     <label class="ds-form-label ds-beta-catalog-toggle ds-wallpaper-sanction-toggle" for="<%= row_id %>_chaster_freeze_enabled">
       <%= hidden_field_tag "#{field_prefix}[chaster_freeze_enabled]", "0" %>
-      <%= check_box_tag "#{field_prefix}[chaster_freeze_enabled]", "1", sanction_obj.chaster_freeze_enabled && chaster_lock_can_freeze,
+      <%= check_box_tag "#{field_prefix}[chaster_freeze_enabled]", "1", sanction_obj.chaster_freeze_enabled,
             id: "#{row_id}_chaster_freeze_enabled",
             class: "ds-beta-catalog-toggle-input ds-wallpaper-sanction-toggle-input",
-            disabled: !chaster_lock_can_freeze,
             data: { wallpaper_sanction_toggle: "chaster_freeze" } %>
       <span class="ds-beta-catalog-toggle-switch" aria-hidden="true"></span>
       <span><%= t("beta.wallpaper_source.sanction.freeze_lock") %></span>
     </label>
-    <% unless chaster_lock_can_freeze %>
-      <p class="ds-beta-control-hint ds-wallpaper-sanction-hint"><%= t("beta.wallpaper_source.sanction.freeze_unavailable") %></p>
-    <% else %>
-      <p class="ds-beta-control-hint ds-wallpaper-sanction-hint"><%= t("beta.wallpaper_source.sanction.freeze_unfreeze_hint") %></p>
-    <% end %>
+    <p class="ds-beta-control-hint ds-wallpaper-sanction-hint"><%= t("beta.wallpaper_source.sanction.freeze_unfreeze_hint") %></p>
   </div>
+  <% else %>
+    <%= hidden_field_tag "#{field_prefix}[chaster_freeze_enabled]", "0" %>
+  <% end %>
 
   <div class="ds-wallpaper-sanction-row ds-wallpaper-sanction-row--split">
     <label class="ds-form-label ds-beta-catalog-toggle ds-wallpaper-sanction-toggle" for="<%= row_id %>_pishock_enabled">

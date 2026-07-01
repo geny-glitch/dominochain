@@ -5,7 +5,8 @@ class ChasterService
   TOKEN_URL = "https://sso.chaster.app/auth/realms/app/protocol/openid-connect/token"
   API_BASE = "https://api.chaster.app"
 
-  SCOPES = %w[profile locks developer].freeze
+  SCOPES = %w[profile locks].freeze
+  FREEZE_UI_ENABLED = false
 
   class Error < StandardError; end
   class TokenExpired < Error; end
@@ -163,6 +164,10 @@ class ChasterService
     client_id.present? && client_secret.present?
   end
 
+  def self.freeze_ui_enabled?
+    FREEZE_UI_ENABLED
+  end
+
   def add_time_to_lock(lock_id, seconds, source: "api", summary: nil, metadata: {})
     ensure_chaster_action_enabled!
     ensure_valid_token!
@@ -210,43 +215,22 @@ class ChasterService
   end
 
   def self.freeze_supported?(lock_data)
+    return false unless freeze_ui_enabled?
+
     hash = lock_data.is_a?(Hash) ? lock_data.stringify_keys : {}
     return false if hash["endDate"].blank?
 
-    role = hash["role"].presence || "wearer"
-    role.in?(%w[wearer keyholder])
+    hash["role"] == "keyholder"
   end
 
   private
 
   def set_lock_frozen_state(lock_id, frozen:)
-    if lock_role_for(lock_id) == "keyholder"
-      post_set_freeze(lock_id, is_frozen: frozen)
-    else
-      post_session_lock_action(lock_id, frozen ? "freeze" : "unfreeze")
-    end
-  end
-
-  def lock_role_for(lock_id)
-    lock = @user.chaster_locks.find_by(chaster_lock_id: lock_id)
-    lock&.raw_data&.dig("role").presence || "wearer"
+    post_set_freeze(lock_id, is_frozen: frozen)
   end
 
   def post_set_freeze(lock_id, is_frozen:)
     res = post_json("/locks/#{lock_id}/freeze", body: { isFrozen: is_frozen })
-    raise Error, "Chaster: #{res.body}" unless res.is_a?(Net::HTTPSuccess)
-  end
-
-  def post_session_lock_action(lock_id, action_name)
-    res = post_json(
-      "/api/extensions/sessions/#{lock_id}/action",
-      body: { action: { name: action_name } }
-    )
-
-    if res.code == "403" && res.body.include?("Missing scope")
-      raise Error, "Chaster: reconnect Chaster to grant developer scope for freeze"
-    end
-
     raise Error, "Chaster: #{res.body}" unless res.is_a?(Net::HTTPSuccess)
   end
 

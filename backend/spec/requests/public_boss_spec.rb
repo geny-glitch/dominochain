@@ -47,6 +47,11 @@ RSpec.describe "Public boss page (watch/:nickname)", type: :request do
       expect(beta.reload.public_boss_enabled).to be true
     end
 
+    it "enables public boss mode when HTML sends hidden 0 and checkbox 1" do
+      patch beta_public_boss_path, params: { public_boss_enabled: [ "0", "1" ] }
+      expect(beta.reload.public_boss_enabled).to be true
+    end
+
     it "disables public boss mode" do
       beta.update!(public_boss_enabled: true)
       patch beta_public_boss_path, params: { public_boss_enabled: "0" }

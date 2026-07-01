@@ -202,7 +202,7 @@ class BetaDashboardController < ApplicationController
   end
 
   def update_public_boss
-    enabled = params[:public_boss_enabled] == "1"
+    enabled = checkbox_param_on?(:public_boss_enabled)
     current_user.update!(public_boss_enabled: enabled)
     if enabled
       redirect_to beta_sources_wallpaper_path,
@@ -308,6 +308,12 @@ class BetaDashboardController < ApplicationController
   end
 
   private
+
+  def checkbox_param_on?(key)
+    value = params[key]
+    value = value.last if value.is_a?(Array)
+    value == "1"
+  end
 
   def require_beta_role!
     return if current_user.beta?

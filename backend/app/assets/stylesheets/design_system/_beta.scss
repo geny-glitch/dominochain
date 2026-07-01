@@ -725,7 +725,7 @@
 
 .ds-beta-home-events-item {
   display: grid;
-  grid-template-columns: minmax(8rem, 1fr) auto auto;
+  grid-template-columns: minmax(6rem, 0.9fr) minmax(8rem, 1.4fr) auto auto;
   gap: $ds-space-md;
   align-items: baseline;
   padding: $ds-space-sm 0;
@@ -740,6 +740,11 @@
 .ds-beta-home-events-source {
   color: $ds-text;
   font-weight: 600;
+}
+
+.ds-beta-home-events-summary {
+  color: $ds-text-muted;
+  font-size: $ds-font-size-sm;
 }
 
 .ds-beta-home-events-value {

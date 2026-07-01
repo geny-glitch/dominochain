@@ -17,12 +17,20 @@ module BetaEvents
           raise ActionExecutionStopped.new(:no_chaster_lock)
         end
 
+        enrichment = ChasterTimeEventDescription.enrich_add_time(
+          event_source: context.event.source,
+          event_kind: context.event.kind,
+          payload: context.event.payload,
+          summary: ev[:summary],
+          metadata: ev[:metadata] || {}
+        )
+
         service.add_time_to_lock(
           lock[:id],
           seconds,
           source: ev[:source].presence || default_source(context),
-          summary: ev[:summary],
-          metadata: ev[:metadata] || {}
+          summary: enrichment[:summary],
+          metadata: enrichment[:metadata]
         )
         context.chaster_lock_snapshot = lock
       rescue ChasterService::Unauthorized

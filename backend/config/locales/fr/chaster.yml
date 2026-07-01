@@ -1,0 +1,33 @@
+fr:
+  chaster:
+    time_events:
+      sources:
+        api: "App/API"
+        puryfi: "PuryFi"
+        cigarettes: "Cigarettes"
+        showcase_backdoor: "Backdoor"
+        showcase_game: "Vitrine"
+        showcase_game_snake: "Snake"
+        showcase_game_dino: "Dino Run"
+        showcase_game_tetris: "Tétris"
+        showcase_game_quiz: "Quiz"
+        strava_goal: "Strava"
+        wallpaper: "Vérif. fond d'écran"
+      games:
+        snake: "Snake"
+        dino: "Dino Run"
+        tetris: "Tétris"
+        quiz: "Quiz"
+      summaries:
+        default: "Modification du timer"
+        api: "Ajout manuel depuis l'app"
+        cigarette: "Cigarette déclarée"
+        showcase_game: "%{game}"
+        showcase_game_tetris: "%{game} — %{lines} lignes"
+        showcase_backdoor: "Backdoor par %{player_name} : « %{message} »"
+        strava_goal: "Objectif Strava manqué : %{goal_title}"
+        wallpaper:
+          default: "Sanction fond d'écran"
+          mismatch_add_time: "Mauvais fond d'écran"
+          permissions_lost_add_time: "Permissions manquantes pour les vérifs"
+          app_unreachable_add_time: "App injoignable pour les vérifs"

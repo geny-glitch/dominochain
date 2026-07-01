@@ -45,8 +45,8 @@ RSpec.describe WallpaperEnforcementEvaluator do
         "lock-1",
         600,
         source: "wallpaper",
-        summary: kind_of(String),
-        metadata: kind_of(Hash)
+        summary: I18n.t("chaster.time_events.summaries.wallpaper.mismatch_add_time"),
+        metadata: hash_including("enforcement_kind" => "mismatch_add_time")
       )
 
       expect do
@@ -67,13 +67,42 @@ RSpec.describe WallpaperEnforcementEvaluator do
         "lock-1",
         600,
         source: "wallpaper",
-        summary: kind_of(String),
-        metadata: kind_of(Hash)
+        summary: I18n.t("chaster.time_events.summaries.wallpaper.mismatch_add_time"),
+        metadata: hash_including("enforcement_kind" => "mismatch_add_time")
       )
 
       evaluator.evaluate_verification!(screenshot: screenshot)
 
       expect(config.reload.add_time_sanction_applied_at).to be > 1.hour.ago
+    end
+
+    context "when persisting Chaster history" do
+      before do
+        allow(ChasterService).to receive(:new).with(user).and_call_original
+      end
+
+      it "records a chaster_time_event when add-time sanction is applied" do
+        user.update!(chaster_access_token: "token")
+        config.update!(mismatch_since: 31.minutes.ago)
+        screenshot = create(:device_screenshot, device: device, verification_status: "mismatch", similarity_score: 0.2)
+
+        allow_any_instance_of(ChasterService).to receive(:current_lock).and_return({ id: "lock-1", can_freeze: true })
+
+        success_response = instance_double(Net::HTTPSuccess)
+        allow(success_response).to receive(:is_a?).with(Net::HTTPSuccess).and_return(true)
+        allow(success_response).to receive(:code).and_return("200")
+        allow(Net::HTTP).to receive(:start).and_return(success_response)
+
+        expect {
+          evaluator.evaluate_verification!(screenshot: screenshot)
+        }.to change { user.chaster_time_events.count }.by(1)
+
+        event = user.chaster_time_events.last
+        expect(event.source).to eq("wallpaper")
+        expect(event.seconds).to eq(600)
+        expect(event.metadata["enforcement_kind"]).to eq("mismatch_add_time")
+        expect(event.summary).to eq(I18n.t("chaster.time_events.summaries.wallpaper.mismatch_add_time"))
+      end
     end
 
     it "resets mismatch state and unfreezes when verified" do

@@ -26,7 +26,12 @@ class StravaGoalEvaluator
         beta: @user,
         source: :strava_goal,
         kind: :failed_penalty,
-        payload: { seconds: goal.chaster_penalty_seconds }
+        payload: {
+          seconds: goal.chaster_penalty_seconds,
+          goal_id: goal.id,
+          goal_title: goal.name,
+          due_at: due_at.iso8601
+        }
       )
       begin
         execution_status = BetaEvents::ActionExecutor.new(beta: @user, event: event).call

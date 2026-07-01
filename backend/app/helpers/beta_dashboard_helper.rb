@@ -42,9 +42,12 @@ module BetaDashboardHelper
     link_to text, path, class: classes.join(" ")
   end
 
-  def beta_event_source_label(source)
-    key = "beta.events.sources.#{source}"
-    I18n.exists?(key) ? t(key) : source.to_s.humanize
+  def beta_event_source_label(source, metadata = {})
+    ChasterTimeEventDescription.source_label(source, metadata)
+  end
+
+  def beta_event_summary(event)
+    ChasterTimeEventDescription.for_event(event)[:summary]
   end
 
   def beta_signed_duration(seconds)

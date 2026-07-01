@@ -11,6 +11,15 @@ RSpec.describe StravaGoalEvaluator do
   let(:evaluator) { described_class.new(user, strava_service: strava_service, chaster_service: chaster_service) }
   let(:due_at) { Time.zone.parse("2026-05-05 22:00:00") }
 
+  before do
+    stub_beta_catalog_feature_flags("beta_source_strava" => true, "beta_action_chaster" => true)
+    user.update!(
+      beta_ui_prefs: user.beta_ui_prefs.deep_merge(
+        "catalog_visibility" => { "sources" => { "strava" => true }, "actions" => { "chaster" => true } }
+      )
+    )
+  end
+
   describe "#evaluate_goal!" do
     it "passes when enough Strava activities match all configured criteria" do
       goal = create(
@@ -64,8 +73,8 @@ RSpec.describe StravaGoalEvaluator do
         "lock-strava",
         90.minutes.to_i,
         source: "strava_goal",
-        summary: "Objectif Strava manqué: Cardio rolling",
-        metadata: { goal_id: goal.id, due_at: a_string_starting_with(due_at.iso8601.first(19)) }
+        summary: I18n.t("chaster.time_events.summaries.strava_goal", goal_title: goal.name),
+        metadata: hash_including("goal_id" => goal.id, "goal_title" => goal.name)
       )
       expect(second.id).to eq(first.id)
       expect(goal.strava_goal_checks.count).to eq(1)

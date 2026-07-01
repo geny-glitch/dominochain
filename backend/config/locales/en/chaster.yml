@@ -1,0 +1,33 @@
+en:
+  chaster:
+    time_events:
+      sources:
+        api: "App/API"
+        puryfi: "PuryFi"
+        cigarettes: "Cigarettes"
+        showcase_backdoor: "Backdoor"
+        showcase_game: "Showcase"
+        showcase_game_snake: "Snake"
+        showcase_game_dino: "Dino Run"
+        showcase_game_tetris: "Tetris"
+        showcase_game_quiz: "Quiz"
+        strava_goal: "Strava"
+        wallpaper: "Wallpaper check"
+      games:
+        snake: "Snake"
+        dino: "Dino Run"
+        tetris: "Tetris"
+        quiz: "Quiz"
+      summaries:
+        default: "Timer updated"
+        api: "Manual add from the app"
+        cigarette: "Cigarette logged"
+        showcase_game: "%{game}"
+        showcase_game_tetris: "%{game} — %{lines} lines"
+        showcase_backdoor: "Backdoor by %{player_name}: \"%{message}\""
+        strava_goal: "Missed Strava goal: %{goal_title}"
+        wallpaper:
+          default: "Wallpaper enforcement"
+          mismatch_add_time: "Wrong wallpaper"
+          permissions_lost_add_time: "Missing permissions for wallpaper checks"
+          app_unreachable_add_time: "App unreachable for wallpaper checks"

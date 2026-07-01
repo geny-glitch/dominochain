@@ -7,6 +7,15 @@ RSpec.describe "Showcase backdoor (legacy spec path)", type: :request do
 
   let(:beta) { create(:user, :beta, nickname: "doorbeta") }
 
+  before do
+    beta.update!(
+      showcase_backdoor_enabled: true,
+      beta_ui_prefs: beta.beta_ui_prefs.deep_merge(
+        "catalog_visibility" => { "sources" => { "showcase" => true }, "actions" => { "chaster" => true } }
+      )
+    )
+  end
+
   describe "GET /showcase/:nickname/backdoor" do
     it "returns 200 when backdoor is enabled" do
       get showcase_backdoor_path(beta.nickname)
@@ -14,7 +23,7 @@ RSpec.describe "Showcase backdoor (legacy spec path)", type: :request do
     end
 
     it "returns 404 when backdoor is disabled" do
-      beta.update!(showcase_backdoor_enabled: false)
+      beta.update!(showcase_snake_enabled: true, showcase_backdoor_enabled: false)
       get showcase_backdoor_path(beta.nickname)
       expect(response).to have_http_status(:not_found)
     end
@@ -30,8 +39,8 @@ RSpec.describe "Showcase backdoor (legacy spec path)", type: :request do
         "lock123",
         3_660,
         source: "showcase_backdoor",
-        summary: "Backdoor par Visitor",
-        metadata: { player_name: "Visitor", message: "Hello beta" }
+        summary: a_string_including("Visitor"),
+        metadata: hash_including("player_name" => "Visitor", "message" => "Hello beta")
       )
     end
 
@@ -61,7 +70,7 @@ RSpec.describe "Showcase backdoor (legacy spec path)", type: :request do
     end
 
     it "returns 404 when backdoor is disabled" do
-      beta.update!(showcase_backdoor_enabled: false)
+      beta.update!(showcase_snake_enabled: true, showcase_backdoor_enabled: false)
       post showcase_backdoor_add_time_path(beta.nickname),
         params: { days: 0, hours: 0, minutes: 5, player_name: "A", message: "B" },
         as: :json

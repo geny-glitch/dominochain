@@ -251,10 +251,10 @@ class WallpaperEnforcementEvaluator
 
   def apply_single_sanction!(config:, action:, kind:, reference_time:, details:, chaster_seconds: nil, pishock_intensity: nil, pishock_duration: nil)
     payload_details = details.dup
+    payload_details["enforcement_kind"] = kind.to_s
     payload = {
       action: action,
       source: "wallpaper",
-      summary: "Wallpaper enforcement: #{kind.to_s.tr('_', ' ')}",
       metadata: payload_details
     }
     payload[:seconds] = chaster_seconds if action == "chaster_add_time"

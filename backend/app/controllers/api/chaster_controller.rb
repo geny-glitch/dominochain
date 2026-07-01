@@ -131,26 +131,16 @@ module Api
     end
 
     def time_event_to_json(event)
+      description = ChasterTimeEventDescription.for_event(event)
       {
         id: event.id,
         lock_id: event.chaster_lock_id,
         seconds: event.seconds,
         source: event.source,
-        source_label: source_label(event.source),
-        summary: event.summary,
+        source_label: description[:source_label],
+        summary: description[:summary],
         occurred_at: event.occurred_at&.iso8601
       }
-    end
-
-    def source_label(source)
-      {
-        "api" => "App/API",
-        "puryfi" => "PuryFi",
-        "cigarettes" => "Cigarettes",
-        "showcase_backdoor" => "Backdoor",
-        "showcase_game" => "Vitrine",
-        "strava_goal" => "Strava"
-      }.fetch(source, source.to_s.humanize)
     end
 
     def lock_to_json(lock)

@@ -131,7 +131,8 @@
       <ul class="ds-beta-home-events">
         <% @recent_time_events.each do |event| %>
           <li class="ds-beta-home-events-item">
-            <span class="ds-beta-home-events-source"><%= beta_event_source_label(event.source) %></span>
+            <span class="ds-beta-home-events-source"><%= beta_event_source_label(event.source, event.metadata) %></span>
+            <span class="ds-beta-home-events-summary"><%= beta_event_summary(event) %></span>
             <span class="ds-beta-home-events-value"><%= beta_signed_duration(event.seconds) %></span>
             <span class="ds-beta-home-events-time"><%= l(event.occurred_at, format: :short) %></span>
           </li>

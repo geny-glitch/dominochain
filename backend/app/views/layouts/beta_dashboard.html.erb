@@ -3,6 +3,7 @@
   <head>
     <title><%= content_for(:title) || t("layouts.beta_dashboard.default_title") %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
+    <%= render "shared/robots_meta" %>
     <meta name="theme-color" content="#0a0a0b">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>

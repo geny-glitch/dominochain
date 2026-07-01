@@ -1,4 +1,6 @@
 Rails.application.routes.draw do
+  get "robots.txt", to: "robots#show"
+
   patch "locale", to: "locales#update", as: :user_locale
 
   devise_for :users, path: "", path_names: {

@@ -3,6 +3,7 @@ class ApplicationController < ActionController::Base
   allow_browser versions: :modern
 
   include SetLocale
+  include SearchEngineIndexingSupport
 
   before_action :configure_permitted_parameters, if: :devise_controller?
 

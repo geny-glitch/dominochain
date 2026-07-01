@@ -22,4 +22,4 @@ production:
 
   wallpaper_scheduled_checks:
     class: WallpaperScheduledCheckJob
-    schedule: "*/5 * * * *"
+    schedule: "* * * * *"

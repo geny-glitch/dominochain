@@ -211,13 +211,7 @@ class ChasterService
 
   def self.freeze_supported?(lock_data)
     hash = lock_data.is_a?(Hash) ? lock_data.stringify_keys : {}
-    return false if hash["limitLockTime"] == false
-    return false if hash["endDate"].blank?
-
-    keyholder = hash["keyholder"]
-    return false if keyholder.present?
-
-    true
+    hash["endDate"].present?
   end
 
   private

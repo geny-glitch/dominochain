@@ -242,7 +242,7 @@ es:
         chaster_seconds_placeholder: "Segundos"
         freeze_lock: "Congelar candado"
         freeze_unfreeze_hint: "El candado se descongela cuando se restablece el cumplimiento del wallpaper (verificación OK o cambio de wallpaper)."
-        freeze_unavailable: "Tu candado Chaster actual no admite congelación (self-lock cronometrado requerido, sin keyholder)."
+        freeze_unavailable: "Tu candado Chaster actual no admite congelación (se requiere una fecha de fin)."
         pishock_label: "PiShock"
         pishock_intensity: "Intensidad PiShock"
         pishock_duration: "Duración PiShock (s)"

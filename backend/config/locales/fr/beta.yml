@@ -242,7 +242,7 @@ fr:
         chaster_seconds_placeholder: "Secondes"
         freeze_lock: "Geler le lock"
         freeze_unfreeze_hint: "Le lock est dégelé lorsque la conformité du wallpaper est rétablie (vérification OK ou changement de wallpaper)."
-        freeze_unavailable: "Ton lock Chaster actuel ne supporte pas le gel (self-lock chronométré requis, sans keyholder)."
+        freeze_unavailable: "Ton lock Chaster actuel ne supporte pas le gel (une date de fin est requise)."
         pishock_label: "PiShock"
         pishock_intensity: "Intensité PiShock"
         pishock_duration: "Durée PiShock (s)"

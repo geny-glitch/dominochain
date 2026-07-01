@@ -242,7 +242,7 @@ en:
         chaster_seconds_placeholder: "Seconds"
         freeze_lock: "Freeze lock"
         freeze_unfreeze_hint: "The lock is unfrozen when wallpaper compliance is restored (verified check or wallpaper change)."
-        freeze_unavailable: "Your current Chaster lock does not support freezing (timed self-lock required, no keyholder)."
+        freeze_unavailable: "Your current Chaster lock does not support freezing (an end date is required)."
         pishock_label: "PiShock"
         pishock_intensity: "PiShock intensity"
         pishock_duration: "PiShock duration (s)"

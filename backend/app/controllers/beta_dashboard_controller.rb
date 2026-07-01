@@ -63,7 +63,7 @@ class BetaDashboardController < ApplicationController
   def update_wallpaper_enforcement
     config = current_user.ensure_wallpaper_enforcement_config!
     config.assign_attributes(enforcement_config_params)
-    config.enabled = ActiveModel::Type::Boolean.new.cast(params[:enabled]) if params.key?(:enabled)
+    config.enabled = checkbox_param_bool(:enabled) if params.key?(:enabled)
     config.save!
 
     redirect_to beta_sources_wallpaper_path, notice: t("flash.beta.wallpaper.config_saved")
@@ -129,7 +129,7 @@ class BetaDashboardController < ApplicationController
     end
 
     label = catalog.item_label(kind: params[:kind], item_id: params[:item_id]) || t("flash.beta.catalog_element")
-    enabled = ActiveModel::Type::Boolean.new.cast(params[:enabled])
+    enabled = checkbox_param_bool(:enabled)
     message = if enabled
       t("flash.beta.catalog_activated", label:)
     else
@@ -202,7 +202,7 @@ class BetaDashboardController < ApplicationController
   end
 
   def update_public_boss
-    enabled = checkbox_param_on?(:public_boss_enabled)
+    enabled = checkbox_param_bool(:public_boss_enabled)
     current_user.update!(public_boss_enabled: enabled)
     if enabled
       redirect_to beta_sources_wallpaper_path,
@@ -309,12 +309,6 @@ class BetaDashboardController < ApplicationController
 
   private
 
-  def checkbox_param_on?(key)
-    value = params[key]
-    value = value.last if value.is_a?(Array)
-    value == "1"
-  end
-
   def require_beta_role!
     return if current_user.beta?
 
@@ -377,9 +371,8 @@ class BetaDashboardController < ApplicationController
   end
 
   def enforcement_config_params
-    {
+    attrs = {
       check_interval_minutes: params[:check_interval_minutes],
-      dismiss_apps_before_capture: params[:dismiss_apps_before_capture],
       mismatch_delay_minutes: params[:mismatch_delay_minutes],
       permissions_lost_delay_minutes: params[:permissions_lost_delay_minutes],
       app_unreachable_delay_minutes: params[:app_unreachable_delay_minutes],
@@ -387,21 +380,24 @@ class BetaDashboardController < ApplicationController
       mismatch_sanction: parse_sanction_params(:mismatch_sanction),
       permissions_lost_sanction: parse_sanction_params(:permissions_lost_sanction),
       app_unreachable_sanction: parse_sanction_params(:app_unreachable_sanction)
-    }.compact
+    }
+    if params.key?(:dismiss_apps_before_capture)
+      attrs[:dismiss_apps_before_capture] = checkbox_param_bool(:dismiss_apps_before_capture)
+    end
+    attrs.compact
   end
 
   def parse_sanction_params(key)
     raw = params[key]
     return nil unless raw.is_a?(ActionController::Parameters) || raw.is_a?(Hash)
 
-    bool = ActiveModel::Type::Boolean.new
-    chaster_add_time_enabled = bool.cast(raw[:chaster_add_time_enabled])
+    chaster_add_time_enabled = CheckboxParamNormalizer.to_bool(raw[:chaster_add_time_enabled])
     chaster_seconds = raw[:chaster_seconds].presence&.to_i
     {
       "chaster_add_time_enabled" => chaster_add_time_enabled,
       "chaster_seconds" => chaster_add_time_enabled ? chaster_seconds : nil,
-      "chaster_freeze_enabled" => bool.cast(raw[:chaster_freeze_enabled]),
-      "pishock_enabled" => bool.cast(raw[:pishock_enabled]),
+      "chaster_freeze_enabled" => CheckboxParamNormalizer.to_bool(raw[:chaster_freeze_enabled]),
+      "pishock_enabled" => CheckboxParamNormalizer.to_bool(raw[:pishock_enabled]),
       "pishock_intensity" => raw[:pishock_intensity].to_i,
       "pishock_duration" => raw[:pishock_duration].to_i
     }

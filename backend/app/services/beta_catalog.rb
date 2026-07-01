@@ -154,7 +154,7 @@ class BetaCatalog
     prefs = (@user.beta_ui_prefs || {}).deep_dup
     prefs[PREF_ROOT] ||= {}
     prefs[PREF_ROOT][key] ||= {}
-    prefs[PREF_ROOT][key][item_id.to_s] = ActiveModel::Type::Boolean.new.cast(enabled)
+    prefs[PREF_ROOT][key][item_id.to_s] = CheckboxParamNormalizer.to_bool(enabled)
     @user.update!(beta_ui_prefs: prefs)
     true
   end

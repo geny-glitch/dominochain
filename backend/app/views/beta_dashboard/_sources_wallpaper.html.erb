@@ -55,7 +55,7 @@
   <h2 class="ds-section-title"><%= t("beta.wallpaper_source.public_boss_title") %></h2>
   <div class="ds-beta-control-card">
     <p class="ds-beta-control-hint"><%= t("beta.wallpaper_source.public_boss_hint") %></p>
-    <%= form_with url: beta_public_boss_path, method: :patch, local: true, class: "ds-form ds-beta-catalog-toggle-form" do %>
+    <%= form_with url: beta_public_boss_path, method: :patch, local: true, class: "ds-form ds-beta-public-boss-form", data: { turbo: false } do %>
       <%= hidden_field_tag :public_boss_enabled, "0" %>
       <div class="ds-form-group">
         <label class="ds-form-label ds-beta-catalog-toggle" for="public_boss_enabled">
@@ -83,7 +83,7 @@
       <%= t("beta.wallpaper_source.actions_hint_html", chaster: link_to(t("beta.catalog.actions.chaster.label"), beta_actions_chaster_path, class: "ds-inline-link"), pishock: link_to(t("beta.catalog.actions.pishock.label"), beta_actions_pishock_path, class: "ds-inline-link")).html_safe %>
     </p>
 
-    <%= form_with url: beta_wallpaper_enforcement_path, method: :patch, local: true, class: "ds-form" do %>
+    <%= form_with url: beta_wallpaper_enforcement_path, method: :patch, local: true, class: "ds-form", data: { turbo: false } do %>
       <div class="ds-form-group">
         <label class="ds-form-label ds-beta-catalog-toggle" for="wallpaper_enforcement_enabled">
           <%= hidden_field_tag :enabled, "0" %>

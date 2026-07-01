@@ -19,6 +19,10 @@ class ApplicationController < ActionController::Base
   end
   helper_method :bg_env_staging?
 
+  def checkbox_param_bool(key)
+    CheckboxParamNormalizer.to_bool(params[key])
+  end
+
   def configure_permitted_parameters
     devise_parameter_sanitizer.permit(:sign_up, keys: [:email, :role])
     devise_parameter_sanitizer.permit(:account_update, keys: [:email, :nickname])

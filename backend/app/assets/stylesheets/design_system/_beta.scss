@@ -581,6 +581,7 @@
 }
 
 .ds-beta-catalog-toggle {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: $ds-space-xs;
@@ -590,9 +591,15 @@
 
 .ds-beta-catalog-toggle-input {
   position: absolute;
+  left: 0;
+  top: 50%;
+  z-index: 1;
+  width: 2.25rem;
+  height: 1.35rem;
+  margin: 0;
+  transform: translateY(-50%);
   opacity: 0;
-  width: 0;
-  height: 0;
+  cursor: pointer;
 }
 
 .ds-beta-catalog-toggle-switch {

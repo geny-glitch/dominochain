@@ -282,9 +282,9 @@ async function runPuryFiConnection(
 
   await connection.sendMessage("setPluginManifest", {
     manifest: {
-      name: "BG PuryFi WebSocket",
+      name: "Domino Chain PuryFi WebSocket",
       version: "1.0.0",
-      description: "Ajoute du temps Chaster selon les détections PuryFi",
+      description: "Adds Chaster time based on PuryFi detections",
       author: null,
       website: null,
     },
@@ -338,7 +338,7 @@ async function runPuryFiConnection(
     }
   });
 
-  console.log("BG PuryFi WebSocket prêt — en écoute des scans média.");
+  console.log("Domino Chain PuryFi WebSocket ready — listening for media scans.");
 }
 
 function main() {
@@ -347,7 +347,7 @@ function main() {
     const u = new URL(req.url || "/", `http://${req.headers.host || "127.0.0.1"}`);
     if (req.method === "GET" && u.pathname === "/") {
       res.writeHead(200, { "Content-Type": "text/plain; charset=utf-8" });
-      res.end("BG PuryFi WS OK\n");
+      res.end("Domino Chain PuryFi WS OK\n");
       return;
     }
     res.writeHead(404);

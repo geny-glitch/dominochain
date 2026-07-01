@@ -7,7 +7,7 @@ export async function bgLogin(
   email: string,
   password: string,
   deviceId: string,
-  name = "BG PuryFi",
+  name = "Domino Chain PuryFi",
 ): Promise<{ token: string; device_id: string }> {
   const url = `${normalizeBase(baseUrl)}/api/auth/login`;
   const res = await fetch(url, {

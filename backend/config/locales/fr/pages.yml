@@ -8,7 +8,7 @@ fr:
     dashboard: "Dashboard"
     sign_out: "Déconnexion"
     sign_in: "Connexion"
-    sign_up_beta: "Inscription Beta"
+    sign_up_beta: "Inscription"
     sign_up_boss: "Inscription Boss"
     download_android: "Télécharger l'app Android"
   dashboard:
@@ -63,7 +63,7 @@ fr:
         body: "Le mot de passe de %{email} a été modifié. Si ce n'était pas toi, lance immédiatement une réinitialisation."
     links:
       log_in: "Connexion"
-      sign_up_beta: "Inscription Beta"
+      sign_up_beta: "Inscription"
       sign_up_boss: "Inscription Boss"
       forgot_password: "Mot de passe oublié ?"
       resend_confirmation: "Renvoyer les instructions de confirmation ?"
@@ -76,8 +76,8 @@ fr:
       remember_me: "Se souvenir de moi"
       submit: "Se connecter"
     registrations:
-      new_title: "Inscription Beta"
-      new_eyebrow: "Créer un compte (Beta)"
+      new_title: "Inscription"
+      new_eyebrow: "Créer un compte"
       edit_title: "Modifier le compte"
       nickname: "Pseudo"
       email: "E-mail"

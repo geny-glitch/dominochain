@@ -8,7 +8,7 @@ en:
     dashboard: "Dashboard"
     sign_out: "Sign out"
     sign_in: "Sign in"
-    sign_up_beta: "Beta sign up"
+    sign_up_beta: "Sign up"
     sign_up_boss: "Boss sign up"
     download_android: "Download the Android app"
   dashboard:
@@ -27,7 +27,7 @@ en:
   devise:
     links:
       log_in: "Log in"
-      sign_up_beta: "Beta sign up"
+      sign_up_beta: "Sign up"
       sign_up_boss: "Boss sign up"
       forgot_password: "Forgot your password?"
       resend_confirmation: "Didn't receive confirmation instructions?"
@@ -40,8 +40,8 @@ en:
       remember_me: "Remember me"
       submit: "Log in"
     registrations:
-      new_title: "Beta sign up"
-      new_eyebrow: "Create account (Beta)"
+      new_title: "Sign up"
+      new_eyebrow: "Create account"
       edit_title: "Edit account"
       nickname: "Nickname"
       email: "Email"

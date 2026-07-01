@@ -137,6 +137,14 @@ RSpec.describe WallpaperScreenshotComparator do
     expect(result.score).to be <= 0.56
   end
 
+  it "marks ambiguous comparisons below the verified bar as mismatch" do
+    result = described_class.new(screenshot: screenshot, wallpaper: wallpaper, device: device)
+      .send(:classify, ssim: 0.05, dhash_distance: 30, mad: 44)
+
+    expect(result.status).to eq("mismatch")
+    expect(result.score).to be < 0.48
+  end
+
   REGRESSION_STATUSES.each do |expected_status|
     Dir.glob(REGRESSION_ROOT.join(expected_status, "*/manifest.json").to_s).sort.each do |manifest_path|
       pair_label = File.basename(File.dirname(manifest_path))

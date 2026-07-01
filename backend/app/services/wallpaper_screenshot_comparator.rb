@@ -354,10 +354,8 @@ class WallpaperScreenshotComparator
     status = if ssim >= ssim_threshold || dhash_match || score_match || overlay_match ||
                   mad <= (mad_match_threshold / 2.0)
       "verified"
-    elsif clearly_mismatch
-      "mismatch"
     else
-      "inconclusive"
+      "mismatch"
     end
 
     ComparisonResult.new(

@@ -30,11 +30,6 @@ module SetLocale
       return sl
     end
 
-    if (bl = locale_from_accept_language)
-      session[:locale] = bl.to_s
-      return bl
-    end
-
     I18n.default_locale
   end
 
@@ -43,20 +38,5 @@ module SetLocale
 
     sym = value.to_s.downcase.tr("_", "-").split("-").first.to_sym
     SUPPORTED_LOCALES.include?(sym) ? sym : nil
-  end
-
-  def locale_from_accept_language
-    header = request.env["HTTP_ACCEPT_LANGUAGE"]
-    return nil if header.blank?
-
-    header.split(",").each do |part|
-      tag = part.split(";").first&.strip&.downcase
-      next if tag.blank?
-
-      lang = tag.split("-").first
-      loc = normalize_locale(lang)
-      return loc if loc
-    end
-    nil
   end
 end

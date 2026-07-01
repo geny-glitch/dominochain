@@ -8,7 +8,7 @@ es:
     dashboard: "Panel"
     sign_out: "Cerrar sesión"
     sign_in: "Iniciar sesión"
-    sign_up_beta: "Alta beta"
+    sign_up_beta: "Registrarse"
     sign_up_boss: "Alta boss"
     download_android: "Descargar la app Android"
   dashboard:
@@ -63,7 +63,7 @@ es:
         body: "La contraseña de %{email} fue cambiada. Si no fuiste tú, inicia un restablecimiento inmediatamente."
     links:
       log_in: "Iniciar sesión"
-      sign_up_beta: "Alta beta"
+      sign_up_beta: "Registrarse"
       sign_up_boss: "Alta boss"
       forgot_password: "¿Olvidaste la contraseña?"
       resend_confirmation: "¿No recibiste las instrucciones de confirmación?"
@@ -76,8 +76,8 @@ es:
       remember_me: "Recordarme"
       submit: "Entrar"
     registrations:
-      new_title: "Alta beta"
-      new_eyebrow: "Crear cuenta (beta)"
+      new_title: "Registrarse"
+      new_eyebrow: "Crear cuenta"
       edit_title: "Editar cuenta"
       nickname: "Apodo"
       email: "Correo"

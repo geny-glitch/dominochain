@@ -1,18 +1,6 @@
 <% content_for :title, t("home.title") %>
 
 <div class="ds-home">
-  <div class="ds-home__collage" id="influencer-collage" aria-hidden="true">
-    <% if @tiles.any? %>
-      <% @tiles.each_with_index do |tile, i| %>
-        <div class="ds-home__collage-tile" data-index="<%= i %>" data-name="<%= tile[:name] %>" style="--i: <%= i %>">
-          <img src="<%= tile[:url] %>" alt="" loading="lazy" />
-        </div>
-      <% end %>
-    <% else %>
-      <p class="ds-home__empty"><%= t("home.empty_collage", code: t("home.code_rails")) %></p>
-    <% end %>
-  </div>
-
   <div class="ds-home__content">
     <div class="ds-home__logo">
       <%= image_tag "domino-chain-logo.png", alt: "Domino Chain", width: 120, height: 120 %>
@@ -31,48 +19,7 @@
       <% else %>
         <%= link_to t("home.sign_in"), new_user_session_path, class: "ds-btn ds-btn--primary ds-btn--sm" %>
         <%= link_to t("home.sign_up_beta"), new_user_registration_path, class: "ds-btn ds-btn--secondary ds-btn--sm" %>
-        <%= link_to t("home.sign_up_boss"), new_boss_registration_path, class: "ds-btn ds-btn--secondary ds-btn--sm" %>
       <% end %>
     </nav>
-    <div>
-      <%= link_to t("home.download_android"), "/android/app.apk", class: "ds-btn ds-btn--secondary ds-btn--sm" %>
-    </div>
   </div>
 </div>
-
-<script>
-(function() {
-  const allUrls = <%= raw @all_urls.to_json %>;
-  const collage = document.getElementById('influencer-collage');
-  if (!collage || allUrls.length === 0) return;
-
-  const tiles = collage.querySelectorAll('.ds-home__collage-tile');
-  const total = tiles.length;
-
-  function getRandomUrl() {
-    return allUrls[Math.floor(Math.random() * allUrls.length)];
-  }
-
-  function getRandomTile() {
-    return tiles[Math.floor(Math.random() * total)];
-  }
-
-  function refreshTile(tile) {
-    const img = tile.querySelector('img');
-    if (!img) return;
-    const newUrl = getRandomUrl();
-    tile.classList.add('ds-home__collage-tile--refreshing');
-    img.onload = function() {
-      setTimeout(function() {
-        tile.classList.remove('ds-home__collage-tile--refreshing');
-      }, 500);
-    };
-    img.src = newUrl;
-  }
-
-  setInterval(function() {
-    const tile = getRandomTile();
-    refreshTile(tile);
-  }, 1000);
-})();
-</script>

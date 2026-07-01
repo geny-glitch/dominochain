@@ -80,7 +80,6 @@ class WallpaperCheckResultNotifier
 
     sanction = config.mismatch_sanction_object
     return false unless sanction.chaster_add_time_active?
-    return false if config.add_time_sanction_applied_at.present?
     return false if config.mismatch_since.blank?
 
     remaining_grace_seconds.positive?

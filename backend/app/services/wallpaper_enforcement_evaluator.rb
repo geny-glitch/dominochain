@@ -187,12 +187,10 @@ class WallpaperEnforcementEvaluator
   end
 
   def should_apply_mismatch_sanctions?(config, mismatch_duration)
-    should_apply_scenario_sanctions?(
-      config.mismatch_sanction_object,
-      mismatch_duration,
-      config.mismatch_delay_minutes,
-      config.add_time_sanction_applied_at
-    )
+    sanction = config.mismatch_sanction_object
+    return false unless sanction.any_active?
+
+    mismatch_duration >= config.mismatch_delay_minutes.minutes
   end
 
   def should_apply_scenario_sanctions?(sanction, duration, delay_minutes, applied_at)

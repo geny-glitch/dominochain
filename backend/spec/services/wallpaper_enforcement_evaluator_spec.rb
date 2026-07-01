@@ -37,7 +37,7 @@ RSpec.describe WallpaperEnforcementEvaluator do
   end
 
   describe "#evaluate_verification!" do
-    it "applies add-time sanction once after mismatch delay elapsed" do
+    it "applies add-time sanction after mismatch delay elapsed" do
       config.update!(mismatch_since: 31.minutes.ago)
       screenshot = create(:device_screenshot, device: device, verification_status: "mismatch", similarity_score: 0.2)
 
@@ -57,6 +57,23 @@ RSpec.describe WallpaperEnforcementEvaluator do
       expect(FcmService).to have_received(:send_wallpaper_check_result_notification).with(
         hash_including(device: device, check: an_instance_of(WallpaperComplianceCheck))
       )
+    end
+
+    it "applies add-time sanction on every mismatch check after delay elapsed" do
+      config.update!(mismatch_since: 2.hours.ago, add_time_sanction_applied_at: 1.hour.ago)
+      screenshot = create(:device_screenshot, device: device, verification_status: "mismatch", similarity_score: 0.2)
+
+      expect(chaster_service).to receive(:add_time_to_lock).with(
+        "lock-1",
+        600,
+        source: "wallpaper",
+        summary: kind_of(String),
+        metadata: kind_of(Hash)
+      )
+
+      evaluator.evaluate_verification!(screenshot: screenshot)
+
+      expect(config.reload.add_time_sanction_applied_at).to be > 1.hour.ago
     end
 
     it "resets mismatch state and unfreezes when verified" do

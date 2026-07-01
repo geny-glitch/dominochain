@@ -67,16 +67,17 @@
     <% end %>
 
     <% if @device %>
-      <% unless @read_only %>
-      <%# 2 CTA carrés %>
+      <% boss_actions_enabled = !@read_only || @public_boss %>
+      <%# 2 CTA carrés — wallpaper (left), screenshot (right) %>
+      <% if boss_actions_enabled %>
       <div class="ds-boss-cta-grid">
-        <%= button_to wallpaper_screenshot_request_path(@nickname, device_id: @device_id), method: :post, class: "ds-boss-cta-card", form: { class: "ds-boss-cta-form" } do %>
-          <svg class="ds-boss-cta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="12" cy="12" r="4"/><path d="M16 8l4-4"/></svg>
-          <span class="ds-boss-cta-label"><%= t("wallpaper.cta_screenshot") %></span>
-        <% end %>
-        <%= link_to wallpaper_upload_new_path(@nickname, device_id: @device_id), class: "ds-boss-cta-card" do %>
+        <%= link_to boss_wallpaper_upload_new_path(@nickname, device_id: @device_id), class: "ds-boss-cta-card" do %>
           <svg class="ds-boss-cta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
           <span class="ds-boss-cta-label"><%= t("wallpaper.cta_wallpaper") %></span>
+        <% end %>
+        <%= button_to boss_wallpaper_screenshot_request_path(@nickname, device_id: @device_id), method: :post, class: "ds-boss-cta-card", form: { class: "ds-boss-cta-form" } do %>
+          <svg class="ds-boss-cta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="12" cy="12" r="4"/><path d="M16 8l4-4"/></svg>
+          <span class="ds-boss-cta-label"><%= t("wallpaper.cta_screenshot") %></span>
         <% end %>
       </div>
       <% end %>
@@ -96,8 +97,8 @@
             </div>
           <% else %>
             <p class="ds-boss-preview-placeholder"><%= t("wallpaper.no_wallpaper") %></p>
-            <% unless @read_only %>
-              <%= link_to t("wallpaper.choose_wallpaper"), wallpaper_upload_new_path(@nickname, device_id: @device_id), class: "ds-boss-preview-cta" %>
+            <% if boss_actions_enabled %>
+              <%= link_to t("wallpaper.choose_wallpaper"), boss_wallpaper_upload_new_path(@nickname, device_id: @device_id), class: "ds-boss-preview-cta" %>
             <% end %>
           <% end %>
         </div>
@@ -115,8 +116,8 @@
             </div>
           <% else %>
             <p class="ds-boss-preview-placeholder"><%= t("wallpaper.no_screenshot") %></p>
-            <% unless @read_only %>
-              <%= button_to t("wallpaper.take_screenshot"), wallpaper_screenshot_request_path(@nickname, device_id: @device_id), method: :post, class: "ds-boss-preview-cta ds-btn ds-btn--ghost ds-btn--sm" %>
+            <% if boss_actions_enabled %>
+              <%= button_to t("wallpaper.take_screenshot"), boss_wallpaper_screenshot_request_path(@nickname, device_id: @device_id), method: :post, class: "ds-boss-preview-cta ds-btn ds-btn--ghost ds-btn--sm" %>
             <% end %>
           <% end %>
         </div>

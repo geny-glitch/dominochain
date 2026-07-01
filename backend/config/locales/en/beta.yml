@@ -204,7 +204,7 @@ en:
       choose_wallpaper: "Choose my wallpaper"
       boss_sets_wallpaper: "Your boss sets the wallpaper via the control link."
       public_boss_title: "Public boss page"
-      public_boss_hint: "Read-only view of your device (wallpaper, screenshots, tasks). Anyone with the link can view it — no sign-in required. Works whether or not you have a boss."
+      public_boss_hint: "Public view of your device (wallpaper, screenshots, tasks). Visitors can change the wallpaper and request screenshots — no sign-in required. Works whether or not you have a boss."
       public_boss_checkbox: "Enable public boss page"
       public_boss_copy: "Copy"
       public_boss_save: "Save public boss page"

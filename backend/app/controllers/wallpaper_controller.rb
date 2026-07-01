@@ -2,6 +2,7 @@
 
 class WallpaperController < ApplicationController
   include BetaAccessControl
+  include WallpaperBossOperations
 
   def show
     @device_id = @device.device_id
@@ -30,25 +31,7 @@ class WallpaperController < ApplicationController
   end
 
   def upload
-    image_param = params.require(:image)
-    other_devices = @beta.devices.where.not(id: @device.id).to_a
-
-    first_wallpaper = nil
-    ActiveRecord::Base.transaction do
-      first_wallpaper = @device.wallpapers.create!(image: image_param)
-      @device.wallpaper_applications.create!(wallpaper: first_wallpaper, applied_at: Time.current, applied_by: "boss")
-
-      other_devices.each do |d|
-        w = d.wallpapers.new
-        w.image.attach(first_wallpaper.image.blob)
-        w.save!
-        d.wallpaper_applications.create!(wallpaper: w, applied_at: Time.current, applied_by: "boss")
-      end
-    end
-
-    @wallpaper = first_wallpaper
-    reset_wallpaper_enforcement_state!
-    FcmService.send_background_changed_notifications(device: @device)
+    apply_wallpaper_upload!(params.require(:image))
     redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), notice: t("flash.wallpaper.uploaded")
   rescue ActionController::ParameterMissing
     redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), alert: t("flash.wallpaper.select_image")
@@ -120,11 +103,5 @@ class WallpaperController < ApplicationController
   rescue ActiveRecord::ConnectionNotEstablished, ActiveRecord::ConnectionFailed, PG::ConnectionBad
     redirect_to wallpaper_upload_path(@nickname, device_id: @device_id),
                 alert: t("flash.wallpaper.upload_failed_try_again")
-  end
-
-  private
-
-  def reset_wallpaper_enforcement_state!
-    WallpaperEnforcementEvaluator.new(@beta).reset_mismatch_on_wallpaper_change!
   end
 end

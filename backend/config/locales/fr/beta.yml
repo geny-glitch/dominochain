@@ -204,7 +204,7 @@ fr:
       choose_wallpaper: "Choisir mon fond d'écran"
       boss_sets_wallpaper: "Ton boss définit le fond d'écran via le lien de contrôle."
       public_boss_title: "Page boss publique"
-      public_boss_hint: "Vue en lecture seule de ton appareil (fond d'écran, captures, tâches). Toute personne avec le lien peut consulter — sans connexion. Fonctionne avec ou sans boss."
+      public_boss_hint: "Vue publique de ton appareil (fond d'écran, captures, tâches). Les visiteurs peuvent changer le fond d'écran et demander une capture — sans connexion. Fonctionne avec ou sans boss."
       public_boss_checkbox: "Activer la page boss publique"
       public_boss_copy: "Copier"
       public_boss_save: "Enregistrer la page boss publique"

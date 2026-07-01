@@ -4,8 +4,8 @@
     const screenW = <%= device&.screen_width || 0 %>;
     const screenH = <%= device&.screen_height || 0 %>;
     const aspectRatio = (screenW > 0 && screenH > 0) ? screenW / screenH : 9 / 16;
-    const uploadUrl = '<%= wallpaper_upload_submit_path(nickname, device_id: device_id) %>';
-    const betaPageUrl = '<%= wallpaper_upload_path(nickname, device_id: device_id) %>';
+    const uploadUrl = '<%= boss_wallpaper_upload_submit_path(nickname, device_id: device_id) %>';
+    const betaPageUrl = '<%= boss_wallpaper_dashboard_path(nickname, device_id: device_id) %>';
 
     const input         = document.getElementById('image-input');
     const form          = document.getElementById('upload-form');

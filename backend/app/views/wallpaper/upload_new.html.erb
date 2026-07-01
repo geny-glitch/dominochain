@@ -8,7 +8,7 @@
 
 <div class="ds-page ds-upload-page">
   <div class="ds-container ds-upload-container">
-    <%= link_to t("wallpaper.upload.back_to_beta"), wallpaper_upload_path(@nickname, device_id: @device_id), class: "ds-back-link ds-upload-back" %>
+    <%= link_to t("wallpaper.upload.back_to_beta"), boss_wallpaper_dashboard_path(@nickname, device_id: @device_id), class: "ds-back-link ds-upload-back" %>
 
     <header class="ds-upload-header">
       <h1 class="ds-title"><%= t("wallpaper.upload.page_title") %></h1>
@@ -19,7 +19,7 @@
       </div>
     </header>
 
-    <%= form_with url: wallpaper_upload_submit_path(@nickname, device_id: @device_id), method: :post, local: true, multipart: true, id: "upload-form", class: "ds-form" do |f| %>
+    <%= form_with url: boss_wallpaper_upload_submit_path(@nickname, device_id: @device_id), method: :post, local: true, multipart: true, id: "upload-form", class: "ds-form" do |f| %>
       <%= f.file_field :image, accept: "image/*", id: "image-input", style: "display: none" %>
     <% end %>
 

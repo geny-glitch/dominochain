@@ -1,4 +1,5 @@
 module ApplicationHelper
+  include WallpaperPathHelper
   def format_chaster_remaining(seconds)
     return t("time.finished") if seconds.nil? || seconds <= 0
 

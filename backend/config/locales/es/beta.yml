@@ -204,7 +204,7 @@ es:
       choose_wallpaper: "Elegir mi fondo"
       boss_sets_wallpaper: "Tu boss define el fondo mediante el enlace de control."
       public_boss_title: "Página boss pública"
-      public_boss_hint: "Vista de solo lectura de tu dispositivo (fondo, capturas, tareas). Cualquiera con el enlace puede verla — sin iniciar sesión. Funciona con o sin boss."
+      public_boss_hint: "Vista pública de tu dispositivo (fondo, capturas, tareas). Los visitantes pueden cambiar el fondo y pedir una captura — sin iniciar sesión. Funciona con o sin boss."
       public_boss_checkbox: "Activar la página boss pública"
       public_boss_copy: "Copiar"
       public_boss_save: "Guardar página boss pública"

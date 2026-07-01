@@ -5,7 +5,7 @@ class ChasterService
   TOKEN_URL = "https://sso.chaster.app/auth/realms/app/protocol/openid-connect/token"
   API_BASE = "https://api.chaster.app"
 
-  SCOPES = %w[profile locks].freeze
+  SCOPES = %w[profile locks developer].freeze
 
   class Error < StandardError; end
   class TokenExpired < Error; end
@@ -194,7 +194,7 @@ class ChasterService
     ensure_valid_token!
     raise Unauthorized, "Chaster non connecté" unless @user.chaster_access_token.present?
 
-    post_lock_action(lock_id, "freeze")
+    set_lock_frozen_state(lock_id, frozen: true)
     record_freeze_event(lock_id, frozen: true, source: source, summary: summary, metadata: metadata)
     @user.chaster_locks.where(chaster_lock_id: lock_id).update_all(updated_at: 2.hours.ago, is_frozen: true)
   end
@@ -204,33 +204,67 @@ class ChasterService
     ensure_valid_token!
     raise Unauthorized, "Chaster non connecté" unless @user.chaster_access_token.present?
 
-    post_lock_action(lock_id, "unfreeze")
+    set_lock_frozen_state(lock_id, frozen: false)
     record_freeze_event(lock_id, frozen: false, source: source, summary: summary, metadata: metadata)
     @user.chaster_locks.where(chaster_lock_id: lock_id).update_all(updated_at: 2.hours.ago, is_frozen: false)
   end
 
   def self.freeze_supported?(lock_data)
     hash = lock_data.is_a?(Hash) ? lock_data.stringify_keys : {}
-    hash["endDate"].present?
+    return false if hash["endDate"].blank?
+
+    role = hash["role"].presence || "wearer"
+    role.in?(%w[wearer keyholder])
   end
 
   private
 
-  def post_lock_action(lock_id, action)
-    uri = URI("#{API_BASE}/locks/#{lock_id}/#{action}")
-    req = Net::HTTP::Post.new(uri)
-    req["Authorization"] = "Bearer #{@user.chaster_access_token}"
-    req["Content-Type"] = "application/json"
-    req.body = {}.to_json
+  def set_lock_frozen_state(lock_id, frozen:)
+    if lock_role_for(lock_id) == "keyholder"
+      post_set_freeze(lock_id, is_frozen: frozen)
+    else
+      post_session_lock_action(lock_id, frozen ? "freeze" : "unfreeze")
+    end
+  end
 
-    res = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) { |http| http.request(req) }
+  def lock_role_for(lock_id)
+    lock = @user.chaster_locks.find_by(chaster_lock_id: lock_id)
+    lock&.raw_data&.dig("role").presence || "wearer"
+  end
 
-    if res.code == "401"
-      refresh_tokens!
-      return post_lock_action(lock_id, action)
+  def post_set_freeze(lock_id, is_frozen:)
+    res = post_json("/locks/#{lock_id}/freeze", body: { isFrozen: is_frozen })
+    raise Error, "Chaster: #{res.body}" unless res.is_a?(Net::HTTPSuccess)
+  end
+
+  def post_session_lock_action(lock_id, action_name)
+    res = post_json(
+      "/api/extensions/sessions/#{lock_id}/action",
+      body: { action: { name: action_name } }
+    )
+
+    if res.code == "403" && res.body.include?("Missing scope")
+      raise Error, "Chaster: reconnect Chaster to grant developer scope for freeze"
     end
 
     raise Error, "Chaster: #{res.body}" unless res.is_a?(Net::HTTPSuccess)
+  end
+
+  def post_json(path, body:, retry_on_unauthorized: true)
+    uri = URI("#{API_BASE}#{path}")
+    req = Net::HTTP::Post.new(uri)
+    req["Authorization"] = "Bearer #{@user.chaster_access_token}"
+    req["Content-Type"] = "application/json"
+    req.body = body.to_json
+
+    res = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) { |http| http.request(req) }
+
+    if res.code == "401" && retry_on_unauthorized
+      refresh_tokens!
+      return post_json(path, body: body, retry_on_unauthorized: false)
+    end
+
+    res
   end
 
   def record_freeze_event(lock_id, frozen:, source:, summary:, metadata:)

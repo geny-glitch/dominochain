@@ -55,15 +55,13 @@
   <h2 class="ds-section-title"><%= t("beta.wallpaper_source.public_boss_title") %></h2>
   <div class="ds-beta-control-card">
     <p class="ds-beta-control-hint"><%= t("beta.wallpaper_source.public_boss_hint") %></p>
-    <%= form_with url: beta_public_boss_path, method: :patch, local: true, class: "ds-form ds-beta-public-boss-form", data: { turbo: false } do %>
+    <%= form_with url: beta_public_boss_path, method: :patch, local: true, class: "ds-beta-catalog-toggle-form", data: { turbo: false } do %>
       <%= hidden_field_tag :public_boss_enabled, "0" %>
-      <div class="ds-form-group">
-        <label class="ds-form-label ds-beta-catalog-toggle" for="public_boss_enabled">
-          <%= check_box_tag :public_boss_enabled, "1", current_user.public_boss_enabled?, id: "public_boss_enabled", class: "ds-beta-catalog-toggle-input", onchange: "this.form.requestSubmit();" %>
-          <span class="ds-beta-catalog-toggle-switch" aria-hidden="true"></span>
-          <span><%= t("beta.wallpaper_source.public_boss_checkbox") %></span>
-        </label>
-      </div>
+      <label class="ds-beta-catalog-toggle">
+        <%= check_box_tag :public_boss_enabled, "1", current_user.public_boss_enabled?, id: "public_boss_enabled", class: "ds-beta-catalog-toggle-input", data: { auto_submit: true }, "aria-label": t("beta.wallpaper_source.public_boss_checkbox") %>
+        <span class="ds-beta-catalog-toggle-switch" aria-hidden="true"></span>
+        <span><%= t("beta.wallpaper_source.public_boss_checkbox") %></span>
+      </label>
       <% if current_user.public_boss_enabled? %>
         <div class="ds-showcase-link" style="margin-top: 0.75rem;">
           <%= link_to public_boss_url(current_user.nickname), public_boss_path(current_user.nickname), id: "public-boss-url", target: "_blank", rel: "noopener", class: "ds-showcase-link-url" %>

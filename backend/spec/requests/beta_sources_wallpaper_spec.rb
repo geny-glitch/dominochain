@@ -24,6 +24,7 @@ RSpec.describe "Beta sources wallpaper page", type: :request do
       expect(response).to have_http_status(:ok)
       expect(response.body).to include('id="catalog_source_wallpaper_page"')
       expect(response.body).to include('id="public_boss_enabled"')
+      expect(response.body).to include('data-auto-submit="true"')
       expect(response.body).to include('id="wallpaper_enforcement_enabled"')
       expect(response.body).to include('id="wallpaper_dismiss_apps_before_capture"')
       expect(response.body).to include("requestSubmit()")

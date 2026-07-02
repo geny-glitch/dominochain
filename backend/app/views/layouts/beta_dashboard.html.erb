@@ -103,6 +103,18 @@
         copied: t("js.copied"), done: t("js.done"), finished: t("js.finished"),
         cdDay: t("js.countdown_day"), cdHour: t("js.countdown_hour"), cdMin: t("js.countdown_min"), cdSec: t("js.countdown_sec")
       }.to_json) %>;
+      document.querySelectorAll('.ds-beta-catalog-toggle-input[data-auto-submit]').forEach(function(input) {
+        input.addEventListener('change', function() {
+          var form = input.form;
+          if (!form) return;
+          if (typeof form.requestSubmit === 'function') {
+            form.requestSubmit();
+          } else {
+            form.submit();
+          }
+        });
+      });
+
       document.querySelectorAll('[data-copy-target]').forEach(function(btn) {
         btn.addEventListener('click', function() {
           var id = btn.dataset.copyTarget;

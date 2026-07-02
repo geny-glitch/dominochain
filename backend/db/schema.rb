@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_07_01_120001) do
+ActiveRecord::Schema[7.2].define(version: 2026_07_02_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -48,6 +48,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_01_120001) do
     t.datetime "updated_at", null: false
     t.integer "android_version_code"
     t.string "android_apk_url"
+    t.string "wallpaper_verification_algorithm", default: "local_match", null: false
   end
 
   create_table "chaster_locks", force: :cascade do |t|
@@ -483,6 +484,21 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_01_120001) do
     t.index ["uuid"], name: "index_users_on_uuid", unique: true
   end
 
+  create_table "wallpaper_algorithm_comparisons", force: :cascade do |t|
+    t.bigint "device_screenshot_id", null: false
+    t.string "algorithm", null: false
+    t.string "status", null: false
+    t.float "score"
+    t.integer "strong_match_count"
+    t.float "strong_match_ratio"
+    t.float "peak_score"
+    t.datetime "compared_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["device_screenshot_id", "algorithm"], name: "index_wallpaper_algo_comparisons_on_screenshot_and_algorithm", unique: true
+    t.index ["device_screenshot_id"], name: "index_wallpaper_algorithm_comparisons_on_device_screenshot_id"
+  end
+
   create_table "wallpaper_applications", force: :cascade do |t|
     t.bigint "device_id", null: false
     t.bigint "wallpaper_id", null: false
@@ -591,6 +607,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_01_120001) do
   add_foreign_key "strava_goal_checks", "users"
   add_foreign_key "strava_goals", "users"
   add_foreign_key "tasks", "users"
+  add_foreign_key "wallpaper_algorithm_comparisons", "device_screenshots"
   add_foreign_key "wallpaper_applications", "devices"
   add_foreign_key "wallpaper_applications", "wallpapers"
   add_foreign_key "wallpaper_compliance_checks", "device_screenshots"

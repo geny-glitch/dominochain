@@ -12,6 +12,11 @@ en:
       feature_flags_cache_invalidation_failed: "Failed to invalidate feature flags cache."
       wallpaper_pair_reviewed: "Pair labeled as %{status}."
       wallpaper_pair_invalid_status: "Invalid review status."
+      wallpaper_algorithm_ran: "Algorithm run completed: %{algorithm}."
+      wallpaper_algorithm_invalid: "Unknown comparison algorithm."
+      wallpaper_algorithm_preview_not_ready: "Image previews are not ready yet. Try again in a few seconds."
+      wallpaper_algorithm_timeout: "Comparison timed out."
+      wallpaper_algorithm_failed: "Comparison failed."
     chaster:
       oauth_invalid_state: "Chaster connection cancelled (invalid state)."
       oauth_error: "Chaster: %{message}"

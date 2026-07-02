@@ -175,85 +175,149 @@
   margin-bottom: $ds-space-lg;
 }
 
-.ds-wallpaper-pairs__grid {
-  grid-template-columns: 1fr;
-
-  @media (min-width: 700px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
+.ds-wallpaper-pairs-page__header {
+  flex-direction: column;
+  align-items: flex-start;
 }
 
-.ds-wallpaper-pair-card {
-  aspect-ratio: auto;
-  background: $ds-surface;
+.ds-wallpaper-pairs-table-wrap {
+  overflow-x: auto;
   border: 1px solid $ds-border;
   border-radius: $ds-radius-md;
-  padding: $ds-space-md;
-  display: flex;
-  flex-direction: column;
-  gap: $ds-space-sm;
-
-  .ds-review-card__actions {
-    position: static;
-    opacity: 1;
-    background: transparent;
-    justify-content: flex-start;
-    flex-wrap: wrap;
-    gap: $ds-space-sm;
-  }
-
-  .ds-review-card__btn {
-    width: auto;
-    height: auto;
-    border-radius: $ds-radius-sm;
-    padding: $ds-space-xs $ds-space-md;
-    font-size: $ds-small-size;
-    font-weight: 500;
-  }
-
-  .ds-review-card__name {
-    position: static;
-    background: none;
-    padding: 0;
-    font-size: $ds-small-size;
-  }
+  background: $ds-surface;
 }
 
-.ds-wallpaper-pair-card__images {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: $ds-space-sm;
-}
-
-.ds-wallpaper-pair-card__image-block {
-  display: flex;
-  flex-direction: column;
-  gap: $ds-space-xs;
-}
-
-.ds-wallpaper-pair-card__label {
-  font-size: $ds-tiny-size;
-  color: $ds-text-muted;
-}
-
-.ds-wallpaper-pair-card__img {
+.ds-wallpaper-pairs-table {
   width: 100%;
-  aspect-ratio: 9 / 16;
+  min-width: 960px;
+  border-collapse: collapse;
+  font-size: $ds-small-size;
+
+  th,
+  td {
+    padding: $ds-space-sm $ds-space-md;
+    border-bottom: 1px solid $ds-border;
+    vertical-align: top;
+    text-align: left;
+  }
+
+  thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: $ds-bg;
+    font-size: $ds-tiny-size;
+    font-weight: 600;
+    color: $ds-text-muted;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  tbody tr:hover {
+    background: rgba($ds-teal, 0.04);
+  }
+}
+
+.ds-wallpaper-pairs-table__thumb-cell {
+  width: 88px;
+}
+
+.ds-wallpaper-pairs-table__thumb-link {
+  display: block;
+  line-height: 0;
+}
+
+.ds-wallpaper-pairs-table__thumb {
+  display: block;
+  width: 72px;
+  height: 128px;
   object-fit: cover;
   border-radius: $ds-radius-sm;
   background: $ds-bg;
+  border: 1px solid $ds-border;
 }
 
-.ds-wallpaper-pair-card__meta,
-.ds-wallpaper-pair-card__badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: $ds-space-xs;
-  align-items: center;
+.ds-wallpaper-pairs-table__pair-cell {
+  min-width: 160px;
 }
 
-.ds-wallpaper-pair-card__detail {
+.ds-wallpaper-pairs-table__pair-id {
+  font-weight: 500;
+  margin-bottom: $ds-space-xs;
+}
+
+.ds-wallpaper-pairs-table__muted {
   font-size: $ds-tiny-size;
+  color: $ds-text-muted;
+  line-height: 1.4;
+}
+
+.ds-wallpaper-pairs-table__review-badge {
+  margin-top: $ds-space-xs;
+}
+
+.ds-wallpaper-pairs-table__status-cell {
+  min-width: 110px;
+}
+
+.ds-wallpaper-pairs-table__algo-cell {
+  min-width: 150px;
+}
+
+.ds-wallpaper-pairs-table__algo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: $ds-space-xs;
+}
+
+.ds-wallpaper-pairs-table__run-btn {
+  margin-top: $ds-space-xs;
+}
+
+.ds-wallpaper-pairs-table__review-cell {
+  min-width: 120px;
+}
+
+.ds-wallpaper-pairs-table__review-actions {
+  display: flex;
+  flex-direction: column;
+  gap: $ds-space-xs;
+}
+
+.ds-wallpaper-pairs-table__review-btn {
+  width: 100%;
+  justify-content: center;
+}
+
+.ds-wallpaper-pairs-table__review-btn--pass {
+  background: rgba($ds-success, 0.15);
+  color: $ds-success;
+  border: 1px solid rgba($ds-success, 0.35);
+
+  &:hover {
+    background: rgba($ds-success, 0.25);
+  }
+}
+
+.ds-wallpaper-pairs-table__review-btn--fail {
+  background: rgba($ds-magenta, 0.12);
+  color: #f472b6;
+  border: 1px solid rgba($ds-magenta, 0.35);
+
+  &:hover {
+    background: rgba($ds-magenta, 0.2);
+  }
+}
+
+.ds-review__subtitle {
+  margin: $ds-space-xs 0 0;
+  font-size: $ds-small-size;
   color: $ds-text-muted;
 }
 

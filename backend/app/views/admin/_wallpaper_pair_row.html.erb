@@ -1,0 +1,84 @@
+<% review = screenshot.wallpaper_pair_review %>
+<% wallpaper = screenshot.wallpaper %>
+<% user = screenshot.device&.user %>
+<% pair_filter = local_assigns[:filter] || @filter %>
+<% pair_page = local_assigns[:page] || @page %>
+<% comparisons = local_assigns[:comparisons_by_screenshot_and_algorithm] || @comparisons_by_screenshot_and_algorithm || {} %>
+
+<tr class="ds-wallpaper-pairs-table__row" data-screenshot-id="<%= screenshot.id %>">
+  <td class="ds-wallpaper-pairs-table__thumb-cell">
+    <% if screenshot.image.attached? %>
+      <%= link_to url_for(screenshot.preview_image), target: "_blank", rel: "noopener", class: "ds-wallpaper-pairs-table__thumb-link" do %>
+        <%= image_tag screenshot.preview_image, alt: t("admin_wallpaper_pairs.screenshot_label"), loading: "lazy", class: "ds-wallpaper-pairs-table__thumb" %>
+      <% end %>
+    <% end %>
+  </td>
+
+  <td class="ds-wallpaper-pairs-table__thumb-cell">
+    <% if wallpaper&.image&.attached? %>
+      <%= link_to url_for(wallpaper.preview_image), target: "_blank", rel: "noopener", class: "ds-wallpaper-pairs-table__thumb-link" do %>
+        <%= image_tag wallpaper.preview_image, alt: t("admin_wallpaper_pairs.reference_label"), loading: "lazy", class: "ds-wallpaper-pairs-table__thumb" %>
+      <% end %>
+    <% end %>
+  </td>
+
+  <td class="ds-wallpaper-pairs-table__pair-cell">
+    <div class="ds-wallpaper-pairs-table__pair-id">
+      <%= t("admin_wallpaper_pairs.screenshot_id", id: screenshot.id) %>
+      <% if user&.nickname.present? %>
+        <span class="ds-wallpaper-pairs-table__muted">· <%= user.nickname %></span>
+      <% end %>
+    </div>
+    <div class="ds-wallpaper-pairs-table__muted">
+      <%= t("admin_wallpaper_pairs.captured_at", datetime: l(screenshot.captured_at, format: :short)) %>
+    </div>
+    <% if review %>
+      <span class="ds-badge ds-badge--success ds-wallpaper-pairs-table__review-badge">
+        <%= t("admin_wallpaper_pairs.review_badge", status: t("admin_wallpaper_pairs.status.#{review.expected_status}")) %>
+      </span>
+    <% end %>
+  </td>
+
+  <td class="ds-wallpaper-pairs-table__status-cell">
+    <span class="ds-badge ds-badge--neutral">
+      <%= screenshot.verification_status %>
+    </span>
+    <% if screenshot.similarity_score.present? %>
+      <div class="ds-wallpaper-pairs-table__muted">
+        <%= t("admin_wallpaper_pairs.production_score", percent: (screenshot.similarity_score * 100).round) %>
+      </div>
+    <% end %>
+  </td>
+
+  <% AppSetting::WALLPAPER_VERIFICATION_ALGORITHMS.each_key do |algorithm_key| %>
+    <% comparison = comparisons[[screenshot.id, algorithm_key]] %>
+    <td class="ds-wallpaper-pairs-table__algo-cell">
+      <%= render "admin/wallpaper_pair_algorithm_cell",
+        screenshot: screenshot,
+        algorithm_key: algorithm_key,
+        comparison: comparison,
+        filter: pair_filter,
+        page: pair_page %>
+    </td>
+  <% end %>
+
+  <td class="ds-wallpaper-pairs-table__review-cell">
+    <div class="ds-wallpaper-pairs-table__review-actions">
+      <%= button_to t("admin_wallpaper_pairs.pass"),
+        admin_wallpaper_pair_review_path(screenshot, expected_status: "verified", filter: pair_filter, page: pair_page),
+        method: :post,
+        class: "ds-btn ds-btn--sm ds-wallpaper-pairs-table__review-btn ds-wallpaper-pairs-table__review-btn--pass",
+        form: { data: { turbo: false } } %>
+      <%= button_to t("admin_wallpaper_pairs.fail"),
+        admin_wallpaper_pair_review_path(screenshot, expected_status: "mismatch", filter: pair_filter, page: pair_page),
+        method: :post,
+        class: "ds-btn ds-btn--sm ds-wallpaper-pairs-table__review-btn ds-wallpaper-pairs-table__review-btn--fail",
+        form: { data: { turbo: false } } %>
+      <%= button_to t("admin_wallpaper_pairs.ignore"),
+        admin_wallpaper_pair_review_path(screenshot, expected_status: "ignored", filter: pair_filter, page: pair_page),
+        method: :post,
+        class: "ds-btn ds-btn--ghost ds-btn--sm ds-wallpaper-pairs-table__review-btn",
+        form: { data: { turbo: false } } %>
+    </div>
+  </td>
+</tr>

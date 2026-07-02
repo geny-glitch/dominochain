@@ -1,0 +1,26 @@
+<div class="ds-wallpaper-pairs-table__algo">
+  <% if comparison %>
+    <span class="ds-badge <%= comparison.status == "verified" ? "ds-badge--success" : "ds-badge--pending" %>">
+      <%= t("admin_wallpaper_pairs.algorithm_status", status: comparison.status, percent: (comparison.score * 100).round) %>
+    </span>
+    <% if algorithm_key == "local_match" && comparison.strong_match_count.present? %>
+      <div class="ds-wallpaper-pairs-table__muted">
+        <%= t("admin_wallpaper_pairs.local_match_detail",
+          strong: comparison.strong_match_count,
+          peak: ((comparison.peak_score || 0) * 100).round) %>
+      </div>
+    <% end %>
+    <div class="ds-wallpaper-pairs-table__muted">
+      <%= t("admin_wallpaper_pairs.compared_at", datetime: l(comparison.compared_at, format: :short)) %>
+    </div>
+  <% else %>
+    <div class="ds-wallpaper-pairs-table__muted"><%= t("admin_wallpaper_pairs.algorithm_not_run") %></div>
+  <% end %>
+
+  <%= button_to(comparison ? t("admin_wallpaper_pairs.rerun_algorithm") : t("admin_wallpaper_pairs.run_algorithm"),
+    admin_wallpaper_pair_run_algorithm_path(screenshot),
+    method: :post,
+    params: { algorithm: algorithm_key, filter: filter, page: page },
+    class: "ds-btn ds-btn--primary ds-btn--sm ds-wallpaper-pairs-table__run-btn",
+    form: { data: { turbo: false } }) %>
+</div>

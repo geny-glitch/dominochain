@@ -1,0 +1,161 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Download admin/local_match disagreement pairs from staging into wallpaper_pairs/.
+
+Usage:
+  bin/fetch-wallpaper-disagreements [options]
+
+Options:
+  --app APP             Fly app name (default: bg-backend-staging)
+  --dry-run             Print export JSON only; do not download files
+  --overwrite           Replace existing local pair folders
+  -h, --help            Show this help
+
+Output layout (gitignored):
+  wallpaper_pairs/{verified|mismatch}/screenshot_{id}/
+
+Requires: fly CLI (logged in), curl, jq, base64
+EOF
+}
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+EXPORT_RB="$ROOT/script/export_staging_wallpaper_pair.rb"
+DOWNLOAD_RB="$ROOT/script/download_staging_blob.rb"
+OUTPUT_ROOT="$ROOT/wallpaper_pairs"
+
+APP="bg-backend-staging"
+DRY_RUN=0
+OVERWRITE=0
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --app) APP="$2"; shift 2 ;;
+    --dry-run) DRY_RUN=1; shift ;;
+    --overwrite) OVERWRITE=1; shift ;;
+    -h|--help) usage; exit 0 ;;
+    *) echo "Unknown option: $1" >&2; usage >&2; exit 1 ;;
+  esac
+done
+
+for cmd in fly curl jq base64; do
+  if ! command -v "$cmd" >/dev/null 2>&1; then
+    echo "Missing required command: $cmd" >&2
+    exit 1
+  fi
+done
+
+if [[ ! -f "$EXPORT_RB" ]]; then
+  echo "Missing export script: $EXPORT_RB" >&2
+  exit 1
+fi
+
+if [[ ! -f "$DOWNLOAD_RB" ]]; then
+  echo "Missing download script: $DOWNLOAD_RB" >&2
+  exit 1
+fi
+
+DOWNLOAD_RB_B64="$(base64 < "$DOWNLOAD_RB" | tr -d '\n')"
+
+download_blob_via_fly() {
+  local blob_key="$1"
+  local output_path="$2"
+  local raw encoded
+
+  raw="$(fly ssh console -a "$APP" </dev/null -C "sh -c 'echo ${DOWNLOAD_RB_B64} | base64 -d > /tmp/wp_dl.rb && bin/rails runner /tmp/wp_dl.rb ${blob_key}'" 2>&1)" || {
+    echo "fly ssh failed for blob ${blob_key}" >&2
+    return 1
+  }
+
+  encoded="$(printf '%s\n' "$raw" | awk '/B64_START/{flag=1;next} /B64_END/{flag=0} flag && /^[A-Za-z0-9+\/=]+$/{printf "%s", $0}')"
+
+  if [[ -z "$encoded" ]]; then
+    echo "Failed to download blob ${blob_key}" >&2
+    return 1
+  fi
+
+  printf '%s' "$encoded" | base64 -d > "$output_path"
+}
+
+PAYLOAD_B64="$(base64 < "$EXPORT_RB" | tr -d '\n')"
+ENV_PREFIX="FLY_APP=${APP} EXPORT_DISAGREEMENTS=1"
+
+JSON="$(fly ssh console -a "$APP" </dev/null -C "sh -c 'echo ${PAYLOAD_B64} | base64 -d > /tmp/wp_export.rb && ${ENV_PREFIX} bin/rails runner /tmp/wp_export.rb'" 2>&1 | awk '/^\{/{found=1} found')"
+
+if [[ -z "$JSON" ]]; then
+  echo "No JSON received from staging export" >&2
+  exit 1
+fi
+
+if jq -e '.error' >/dev/null <<<"$JSON"; then
+  jq -r '.error' <<<"$JSON" >&2
+  exit 1
+fi
+
+if [[ "$DRY_RUN" -eq 1 ]]; then
+  echo "$JSON"
+  exit 0
+fi
+
+PAIR_COUNT="$(jq '.pairs | length' <<<"$JSON")"
+if [[ "$PAIR_COUNT" -eq 0 ]]; then
+  echo "No disagreement pairs exported from staging." >&2
+  exit 0
+fi
+
+EXPORTED=0
+PAIRS_FILE="$(mktemp)"
+trap 'rm -f "$PAIRS_FILE"' EXIT
+jq -c '.pairs[]' <<<"$JSON" > "$PAIRS_FILE"
+
+while IFS= read -r pair_json; do
+  screenshot_id="$(jq -r '.device_screenshot_id' <<<"$pair_json")"
+  expected_status="$(jq -r '.expected_verification_status' <<<"$pair_json")"
+  out_dir="$OUTPUT_ROOT/${expected_status}/screenshot_${screenshot_id}"
+
+  if [[ -d "$out_dir" && "$OVERWRITE" -eq 0 ]]; then
+    echo "Skip existing ${expected_status}/screenshot_${screenshot_id}"
+    continue
+  fi
+
+  mkdir -p "$out_dir"
+
+  ref_ct="$(jq -r '.wallpaper.content_type // empty' <<<"$pair_json")"
+  ss_ct="$(jq -r '.screenshot.content_type // empty' <<<"$pair_json")"
+  reference_ext=".png"
+  screenshot_ext=".png"
+  [[ "$ref_ct" == "image/jpeg" ]] && reference_ext=".jpg"
+  [[ "$ss_ct" == "image/jpeg" ]] && screenshot_ext=".jpg"
+
+  reference_file="reference${reference_ext}"
+  screenshot_file="screenshot${screenshot_ext}"
+
+  if ! download_blob_via_fly "$(jq -r '.wallpaper.blob_key' <<<"$pair_json")" "$out_dir/$reference_file"; then
+    rm -rf "$out_dir"
+    continue
+  fi
+  if ! download_blob_via_fly "$(jq -r '.screenshot.blob_key' <<<"$pair_json")" "$out_dir/$screenshot_file"; then
+    rm -rf "$out_dir"
+    continue
+  fi
+
+  jq \
+    --arg reference "$reference_file" \
+    --arg screenshot "$screenshot_file" \
+    'del(.wallpaper.download_url, .screenshot.download_url) |
+     .files = {reference: $reference, screenshot: $screenshot}' \
+    <<<"$pair_json" > "$out_dir/manifest.json"
+
+  EXPORTED=$((EXPORTED + 1))
+  echo "Saved ${expected_status}/screenshot_${screenshot_id}"
+done < "$PAIRS_FILE"
+
+echo ""
+echo "Disagreement export summary:"
+for status in verified mismatch; do
+  count="$(find "$OUTPUT_ROOT/$status" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l | tr -d ' ')"
+  echo "  $status: $count"
+done
+echo "  newly exported this run: $EXPORTED"

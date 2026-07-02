@@ -17,6 +17,9 @@ fr:
       wallpaper_algorithm_preview_not_ready: "Les previews ne sont pas prêtes. Réessayez dans quelques secondes."
       wallpaper_algorithm_timeout: "Comparaison expirée."
       wallpaper_algorithm_failed: "Échec de la comparaison."
+      wallpaper_disagreements_exported:
+        one: "1 désaccord exporté vers wallpaper_pairs/."
+        other: "%{count} désaccords exportés vers wallpaper_pairs/."
     chaster:
       oauth_invalid_state: "Connexion Chaster annulée (état invalide)."
       oauth_error: "Chaster : %{message}"

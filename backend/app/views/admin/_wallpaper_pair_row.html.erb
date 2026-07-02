@@ -4,8 +4,10 @@
 <% pair_filter = local_assigns[:filter] || @filter %>
 <% pair_page = local_assigns[:page] || @page %>
 <% comparisons = local_assigns[:comparisons_by_screenshot_and_algorithm] || @comparisons_by_screenshot_and_algorithm || {} %>
+<% local_match = comparisons[[screenshot.id, "local_match"]] %>
+<% disagrees_with_local_match = review.present? && local_match.present? && review.expected_status != local_match.status && review.expected_status != "ignored" %>
 
-<tr class="ds-wallpaper-pairs-table__row" data-screenshot-id="<%= screenshot.id %>">
+<tr class="ds-wallpaper-pairs-table__row<%= " ds-wallpaper-pairs-table__row--disagreement" if disagrees_with_local_match %>" data-screenshot-id="<%= screenshot.id %>">
   <td class="ds-wallpaper-pairs-table__thumb-cell">
     <% if screenshot.image.attached? %>
       <%= link_to url_for(screenshot.preview_image), target: "_blank", rel: "noopener", class: "ds-wallpaper-pairs-table__thumb-link" do %>
@@ -36,6 +38,13 @@
       <span class="ds-badge ds-badge--success ds-wallpaper-pairs-table__review-badge">
         <%= t("admin_wallpaper_pairs.review_badge", status: t("admin_wallpaper_pairs.status.#{review.expected_status}")) %>
       </span>
+      <% if disagrees_with_local_match %>
+        <span class="ds-badge ds-badge--pending ds-wallpaper-pairs-table__disagreement-badge">
+          <%= t("admin_wallpaper_pairs.local_match_disagreement",
+            admin_status: t("admin_wallpaper_pairs.status.#{review.expected_status}"),
+            model_status: t("admin_wallpaper_pairs.status.#{local_match.status}")) %>
+        </span>
+      <% end %>
     <% end %>
   </td>
 

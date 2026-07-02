@@ -34,4 +34,16 @@ class DeviceScreenshot < ApplicationRecord
   scope :unreviewed, lambda {
     left_outer_joins(:wallpaper_pair_review).where(wallpaper_pair_reviews: { id: nil })
   }
+
+  scope :disagreeing_with_local_match, lambda {
+    labelable
+      .joins(:wallpaper_pair_review)
+      .joins(<<~SQL.squish)
+        INNER JOIN wallpaper_algorithm_comparisons
+          ON wallpaper_algorithm_comparisons.device_screenshot_id = device_screenshots.id
+         AND wallpaper_algorithm_comparisons.algorithm = 'local_match'
+      SQL
+      .where.not(wallpaper_pair_reviews: { expected_status: "ignored" })
+      .where("wallpaper_pair_reviews.expected_status != wallpaper_algorithm_comparisons.status")
+  }
 end

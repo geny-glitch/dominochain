@@ -120,6 +120,12 @@ class AdminController < ApplicationController
       alert: t("flash.admin.wallpaper_algorithm_failed")
   end
 
+  def wallpaper_pairs_export_disagreements
+    exported = WallpaperPairsDatasetExporter.new.export_disagreements!
+    redirect_to admin_wallpaper_pairs_path(filter: "disagreements"),
+      notice: t("flash.admin.wallpaper_disagreements_exported", count: exported.size)
+  end
+
   def wallpaper_pair_review
     screenshot = DeviceScreenshot.labelable.find(params[:id])
     expected_status = params[:expected_status].to_s
@@ -160,7 +166,8 @@ class AdminController < ApplicationController
       )
       .order(captured_at: :desc)
 
-    scope = scope.unreviewed if params[:filter] != "all"
+    scope = scope.unreviewed if @filter == "unreviewed"
+    scope = scope.disagreeing_with_local_match if @filter == "disagreements"
     scope
   end
 

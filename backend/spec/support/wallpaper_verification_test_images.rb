@@ -57,10 +57,20 @@ module WallpaperVerificationTestImages
   end
 
   def attach_fixture(record, attachment_name:, filename:)
-    path = Rails.root.join("spec/fixtures/files", filename)
+    path = Pathname.new(filename)
+    path = Rails.root.join("spec/fixtures/files", filename) unless path.file?
     record.public_send(attachment_name).attach(
       io: File.open(path, "rb"),
-      filename: File.basename(filename),
+      filename: File.basename(path),
+      content_type: Marcel::MimeType.for(path)
+    )
+  end
+
+  def attach_from_path(record, attachment_name:, path:)
+    path = Pathname.new(path)
+    record.public_send(attachment_name).attach(
+      io: File.open(path, "rb"),
+      filename: path.basename.to_s,
       content_type: Marcel::MimeType.for(path)
     )
   end

@@ -15,6 +15,7 @@ backend/tmp/*
 backend/storage/*
 !backend/storage/.keep
 backend/config/master.key
+backend/wallpaper_pairs/
 
 # puryfi-ws (Node)
 puryfi-ws/node_modules/

@@ -55,6 +55,49 @@ RSpec.describe "Admin wallpaper pairs", type: :request do
         expect(response.body).to include('name="algorithm"')
       end
 
+      it "filters disagreements when requested" do
+        reviewed_screenshot = create(:device_screenshot, device: device, wallpaper: wallpaper)
+        attach_labelable_pair(reviewed_screenshot)
+        WallpaperPairReview.create!(
+          device_screenshot: reviewed_screenshot,
+          wallpaper: wallpaper,
+          reviewed_by: admin,
+          reviewed_at: Time.current,
+          expected_status: "verified"
+        )
+        WallpaperAlgorithmComparison.create!(
+          device_screenshot: reviewed_screenshot,
+          algorithm: "local_match",
+          status: "mismatch",
+          score: 0.2,
+          compared_at: Time.current
+        )
+
+        agreeing_screenshot = create(:device_screenshot, device: device, wallpaper: wallpaper)
+        attach_labelable_pair(agreeing_screenshot)
+        WallpaperPairReview.create!(
+          device_screenshot: agreeing_screenshot,
+          wallpaper: wallpaper,
+          reviewed_by: admin,
+          reviewed_at: Time.current,
+          expected_status: "verified"
+        )
+        WallpaperAlgorithmComparison.create!(
+          device_screenshot: agreeing_screenshot,
+          algorithm: "local_match",
+          status: "verified",
+          score: 0.9,
+          compared_at: Time.current
+        )
+
+        get admin_wallpaper_pairs_path(filter: "disagreements"), headers: modern_headers
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include("Screenshot ##{reviewed_screenshot.id}")
+        expect(response.body).not_to include("Screenshot ##{agreeing_screenshot.id}")
+        expect(response.body).to include("ds-wallpaper-pairs-table__row--disagreement")
+      end
+
       it "filters to all pairs when requested" do
         screenshot = create(:device_screenshot, device: device, wallpaper: wallpaper)
         attach_labelable_pair(screenshot)
@@ -170,6 +213,46 @@ RSpec.describe "Admin wallpaper pairs", type: :request do
 
       expect(response).to redirect_to(admin_wallpaper_pairs_path)
       expect(WallpaperAlgorithmComparison.count).to eq(0)
+    end
+  end
+
+  describe "POST /admin/wallpaper_pairs/export_disagreements" do
+    let(:screenshot) { create(:device_screenshot, device: device, wallpaper: wallpaper) }
+    let(:export_root) { Rails.root.join("tmp/wallpaper_pairs_request_spec") }
+
+    before do
+      attach_labelable_pair(screenshot)
+      sign_in admin
+      allow(WallpaperPairsDatasetExporter).to receive(:new).and_return(
+        WallpaperPairsDatasetExporter.new(root: export_root)
+      )
+      FileUtils.rm_rf(export_root)
+    end
+
+    after do
+      FileUtils.rm_rf(export_root)
+    end
+
+    it "exports disagreements to wallpaper_pairs/" do
+      WallpaperPairReview.create!(
+        device_screenshot: screenshot,
+        wallpaper: wallpaper,
+        reviewed_by: admin,
+        reviewed_at: Time.current,
+        expected_status: "mismatch"
+      )
+      WallpaperAlgorithmComparison.create!(
+        device_screenshot: screenshot,
+        algorithm: "local_match",
+        status: "verified",
+        score: 0.91,
+        compared_at: Time.current
+      )
+
+      post admin_wallpaper_pairs_export_disagreements_path, headers: modern_headers
+
+      expect(response).to redirect_to(admin_wallpaper_pairs_path(filter: "disagreements"))
+      expect(File).to exist(export_root.join("mismatch", "screenshot_#{screenshot.id}", "manifest.json"))
     end
   end
 end

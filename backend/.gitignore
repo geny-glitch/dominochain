@@ -32,7 +32,8 @@
 
 /public/assets
 
-# Ignore master key for decrypting credentials and more.
-/config/master.key
+# Local admin-labeled pairs exported for regression tuning (not committed).
+/wallpaper_pairs/
+
 /config/service-account.json
 .env

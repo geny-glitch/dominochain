@@ -40,7 +40,7 @@ def screenshot_row(screenshot)
   }
 end
 
-def pair_payload(screenshot, wallpaper, review: nil)
+def pair_payload(screenshot, wallpaper, review: nil, comparison: nil)
   device = screenshot.device
   user = device&.user
 
@@ -77,6 +77,19 @@ def pair_payload(screenshot, wallpaper, review: nil)
     payload[:reviewed_by_nickname] = review.reviewed_by&.nickname
   end
 
+  if comparison
+    payload[:local_match_status] = comparison.status
+    payload[:local_match_score] = comparison.score
+    payload[:local_match_strong_match_count] = comparison.strong_match_count
+    payload[:local_match_peak_score] = comparison.peak_score
+    if review
+      payload[:disagreement] = {
+        admin_status: review.expected_status,
+        local_match_status: comparison.status
+      }
+    end
+  end
+
   payload
 end
 
@@ -103,6 +116,40 @@ end
 
 unless TigrisObjectStorage.configured?
   abort_json("Tigris is not configured on this app")
+end
+
+if ENV["EXPORT_DISAGREEMENTS"] == "1"
+  scope = WallpaperPairReview
+    .disagreeing_with_local_match
+    .includes(
+      :reviewed_by,
+      device_screenshot: [
+        { image_attachment: :blob },
+        :wallpaper_algorithm_comparisons
+      ],
+      wallpaper: { image_attachment: :blob }
+    )
+    .order(reviewed_at: :desc)
+
+  pairs = scope.filter_map do |review|
+    screenshot = review.device_screenshot
+    wallpaper = review.wallpaper
+    next unless screenshot&.image&.attached? && wallpaper&.image&.attached?
+
+    comparison = screenshot.wallpaper_algorithm_comparisons.find { |row| row.algorithm == "local_match" }
+    next unless comparison
+
+    pair_payload(screenshot, wallpaper, review: review, comparison: comparison)
+  end
+
+  puts JSON.pretty_generate({
+    source: ENV.fetch("FLY_APP", "bg-backend-staging"),
+    exported_at: Time.current.iso8601,
+    export_kind: "disagreements",
+    algorithm: "local_match",
+    pairs: pairs
+  })
+  exit 0
 end
 
 if ENV["EXPORT_LABELED"] == "1"

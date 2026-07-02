@@ -656,6 +656,71 @@
   outline-offset: 2px;
 }
 
+.ds-beta-catalog-toggle--lg {
+  gap: $ds-space-md;
+  cursor: pointer;
+
+  .ds-beta-catalog-toggle-input {
+    width: 3.25rem;
+    height: 1.85rem;
+  }
+
+  .ds-beta-catalog-toggle-switch {
+    width: 3.25rem;
+    height: 1.85rem;
+
+    &::after {
+      top: 0.18rem;
+      left: 0.18rem;
+      width: 1.45rem;
+      height: 1.45rem;
+    }
+  }
+
+  .ds-beta-catalog-toggle-input:checked + .ds-beta-catalog-toggle-switch::after {
+    transform: translateX(1.35rem);
+  }
+}
+
+.ds-wallpaper-enforcement-master {
+  margin-bottom: $ds-space-lg;
+}
+
+.ds-wallpaper-enforcement-master-label {
+  font-size: $ds-title-size * 0.65;
+  font-weight: 500;
+  color: $ds-text;
+  cursor: pointer;
+}
+
+.ds-wallpaper-enforcement-save-bar {
+  position: fixed;
+  left: 50%;
+  bottom: $ds-space-lg;
+  z-index: 30;
+  display: flex;
+  justify-content: center;
+  padding: $ds-space-sm;
+  transform: translateX(-50%);
+  pointer-events: none;
+
+  &[hidden] {
+    display: none;
+  }
+}
+
+.ds-wallpaper-enforcement-save-btn {
+  pointer-events: auto;
+  min-width: 10rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba($ds-magenta, 0.35);
+}
+
+@media (min-width: 52.01rem) {
+  .ds-wallpaper-enforcement-save-bar {
+    left: calc(50% + 8rem);
+  }
+}
+
 .ds-beta-home-hero {
   padding: $ds-space-xl;
   background: linear-gradient(135deg, rgba($ds-teal, 0.12), rgba($ds-teal, 0.03));
@@ -1135,16 +1200,29 @@
 }
 
 .ds-radio-option__label {
-  flex: 1 1 auto;
   color: $ds-text;
   font-size: $ds-body-size;
   line-height: 1.4;
   cursor: pointer;
 }
 
+.ds-radio-option__content {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.ds-radio-option__hint {
+  color: $ds-text-muted;
+  font-size: $ds-small-size;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
 .ds-wallpaper-sanction-row {
   display: grid;
-  align-items: center;
+  align-items: end;
   gap: $ds-space-sm $ds-space-md;
 
   &--fields-0 {
@@ -1211,6 +1289,20 @@
   &:disabled {
     opacity: 0.55;
   }
+}
+
+.ds-wallpaper-sanction-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.ds-wallpaper-sanction-field-label {
+  color: $ds-text-muted;
+  font-size: $ds-small-size;
+  font-weight: 500;
+  line-height: 1.3;
 }
 
 .ds-wallpaper-sanction-hint {

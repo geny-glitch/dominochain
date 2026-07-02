@@ -61,12 +61,24 @@ class BetaDashboardController < ApplicationController
 
   def update_wallpaper_enforcement
     config = current_user.ensure_wallpaper_enforcement_config!
+
+    if request.format.json?
+      config.update!(enabled: checkbox_param_bool(:enabled))
+      render json: { enabled: config.enabled }
+      return
+    end
+
     config.assign_attributes(enforcement_config_params)
     config.enabled = checkbox_param_bool(:enabled) if params.key?(:enabled)
     config.save!
 
     redirect_to beta_sources_wallpaper_path, notice: t("flash.beta.wallpaper.config_saved")
   rescue ActiveRecord::RecordInvalid => e
+    if request.format.json?
+      render json: { error: e.record.errors.full_messages.join(", ") }, status: :unprocessable_entity
+      return
+    end
+
     redirect_to beta_sources_wallpaper_path, alert: e.record.errors.full_messages.join(", ")
   end
 

@@ -21,9 +21,109 @@
         field.hidden = targetMode !== mode;
       }
     });
+  }
 
-    form.querySelectorAll("[data-mismatch-mode-hint]").forEach(function (hint) {
-      hint.hidden = hint.getAttribute("data-mismatch-mode-hint") !== mode;
+  function syncEnforcementOptions(card, enabled) {
+    if (!card) return;
+
+    card.querySelectorAll("[data-wallpaper-enforcement-options]").forEach(function (options) {
+      options.hidden = !enabled;
+    });
+
+    card.querySelectorAll("[data-wallpaper-enforcement-save-bar]").forEach(function (saveBar) {
+      if (!enabled) {
+        saveBar.hidden = true;
+        saveBar.setAttribute("aria-hidden", "true");
+      }
+    });
+  }
+
+  function setSaveBarVisible(saveBar, visible) {
+    if (!saveBar) return;
+    saveBar.hidden = !visible;
+    saveBar.setAttribute("aria-hidden", visible ? "false" : "true");
+  }
+
+  function initDirtySaveBar(form) {
+    var saveBar = form.querySelector("[data-wallpaper-enforcement-save-bar]");
+    if (!saveBar) return;
+
+    var dirty = false;
+
+    function markDirty() {
+      if (dirty) return;
+      dirty = true;
+      setSaveBarVisible(saveBar, true);
+    }
+
+    function resetDirty() {
+      dirty = false;
+      setSaveBarVisible(saveBar, false);
+    }
+
+    form.addEventListener("input", markDirty);
+    form.addEventListener("change", markDirty);
+    form.addEventListener("submit", resetDirty);
+  }
+
+  function csrfToken() {
+    var meta = document.querySelector('meta[name="csrf-token"]');
+    return meta ? meta.content : "";
+  }
+
+  function persistEnforcementEnabled(toggleForm, checkbox) {
+    var card = toggleForm.closest(".ds-beta-control-card");
+    var previousChecked = !checkbox.checked;
+    var body = new URLSearchParams();
+    body.set("enabled", checkbox.checked ? "1" : "0");
+
+    checkbox.disabled = true;
+
+    fetch(toggleForm.action, {
+      method: "PATCH",
+      credentials: "same-origin",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        Accept: "application/json",
+        "X-CSRF-Token": csrfToken()
+      },
+      body: body.toString()
+    })
+      .then(function (response) {
+        if (!response.ok) {
+          return response.json().then(function (payload) {
+            throw new Error(payload.error || "save failed");
+          });
+        }
+        return response.json();
+      })
+      .then(function (payload) {
+        checkbox.checked = payload.enabled;
+        syncEnforcementOptions(card, payload.enabled);
+      })
+      .catch(function () {
+        checkbox.checked = previousChecked;
+        syncEnforcementOptions(card, checkbox.checked);
+      })
+      .finally(function () {
+        checkbox.disabled = false;
+      });
+  }
+
+  function initWallpaperEnforcementToggleForm(toggleForm) {
+    if (toggleForm.getAttribute("data-wallpaper-enforcement-toggle-ready") === "true") return;
+    toggleForm.setAttribute("data-wallpaper-enforcement-toggle-ready", "true");
+
+    var checkbox = toggleForm.querySelector("[data-wallpaper-enforcement-master]");
+    if (!checkbox) return;
+
+    var card = toggleForm.closest(".ds-beta-control-card");
+    syncEnforcementOptions(card, checkbox.checked);
+
+    toggleForm.addEventListener("change", function (event) {
+      if (!event.target.matches("[data-wallpaper-enforcement-master]")) return;
+      syncEnforcementOptions(card, event.target.checked);
+      persistEnforcementEnabled(toggleForm, event.target);
     });
   }
 
@@ -56,9 +156,12 @@
       if (!toggle || !form.contains(toggle)) return;
       syncSanctionRow(toggle.closest("[data-sanction-row]"));
     });
+
+    initDirtySaveBar(form);
   }
 
   function boot() {
+    document.querySelectorAll("[data-wallpaper-enforcement-toggle-form]").forEach(initWallpaperEnforcementToggleForm);
     document.querySelectorAll("[data-wallpaper-enforcement-form]").forEach(initWallpaperEnforcementForm);
   }
 

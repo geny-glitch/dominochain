@@ -21,6 +21,7 @@ fr:
       summaries:
         default: "Modification du timer"
         api: "Ajout manuel depuis l'app"
+        puryfi: "Détection PuryFi"
         cigarette: "Cigarette déclarée"
         showcase_game: "%{game}"
         showcase_game_tetris: "%{game} — %{lines} lignes"

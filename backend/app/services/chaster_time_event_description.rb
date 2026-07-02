@@ -68,6 +68,8 @@ class ChasterTimeEventDescription
       )
     when :cigarette
       I18n.t("chaster.time_events.summaries.cigarette")
+    when :puryfi
+      I18n.t("chaster.time_events.summaries.puryfi")
     when :api, :api_chaster
       I18n.t("chaster.time_events.summaries.api")
     else

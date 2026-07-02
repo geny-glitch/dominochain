@@ -12,15 +12,22 @@
   </label>
 
   <% fields.each do |field| %>
-    <%= number_field_tag "#{field_prefix}[#{field[:name]}]",
-          field[:value],
-          min: field[:min],
-          max: field[:max],
-          placeholder: field[:placeholder],
-          class: "ds-wallpaper-sanction-input",
-          disabled: !toggle_enabled,
-          data: { sanction_field: toggle_key },
-          aria: field[:aria].present? ? { label: field[:aria] } : {} %>
+    <% field_id = "#{row_id}_#{field[:name]}" %>
+    <div class="ds-wallpaper-sanction-field">
+      <% if field[:label].present? %>
+        <%= label_tag field_id, field[:label], class: "ds-wallpaper-sanction-field-label" %>
+      <% end %>
+      <%= number_field_tag "#{field_prefix}[#{field[:name]}]",
+            field[:value],
+            min: field[:min],
+            max: field[:max],
+            placeholder: field[:placeholder],
+            id: field_id,
+            class: "ds-wallpaper-sanction-input",
+            disabled: !toggle_enabled,
+            data: { sanction_field: toggle_key },
+            aria: field[:aria].present? ? { label: field[:aria] } : {} %>
+    </div>
   <% end %>
 
   <% if hint.present? %>

@@ -26,11 +26,13 @@ RSpec.describe "Beta sources wallpaper page", type: :request do
       expect(response.body).to include('id="public_boss_enabled"')
       expect(response.body).to include('data-auto-submit="true"')
       expect(response.body).to include('id="wallpaper_enforcement_enabled"')
+      expect(response.body).to include('data-wallpaper-enforcement-toggle-form="true"')
       expect(response.body).to include('data-wallpaper-enforcement-form="true"')
+      expect(response.body).not_to include('actions_hint_html')
       expect(response.body).to include('class="ds-radio-group"')
       expect(response.body).to include('name="mismatch_sanction_mode"')
       expect(response.body).to include('type="radio"')
-      expect(response.body).to include('data-sanction-row')
+      expect(response.body).to include('data-wallpaper-enforcement-save-bar')
       expect(response.body).to include("requestSubmit()")
       expect(response.body).to include(beta_public_boss_path)
       expect(response.body).to include(beta_catalog_visibility_path)
@@ -82,7 +84,6 @@ RSpec.describe "Beta sources wallpaper page", type: :request do
   describe "wallpaper enforcement form" do
     def enforcement_params(overrides = {})
       {
-        enabled: [ "0", "1" ],
         dismiss_apps_before_capture: [ "0", "1" ],
         check_interval_minutes: config.check_interval_minutes,
         mismatch_delay_minutes: config.mismatch_delay_minutes,
@@ -104,13 +105,34 @@ RSpec.describe "Beta sources wallpaper page", type: :request do
       }.deep_merge(overrides)
     end
 
-    it "persists enabled and dismiss-apps toggles from checkbox submissions" do
+    it "persists dismiss-apps toggle from checkbox submissions" do
       patch beta_wallpaper_enforcement_path, params: enforcement_params
 
       expect(response).to redirect_to(beta_sources_wallpaper_path)
       config.reload
-      expect(config.enabled).to be true
       expect(config.dismiss_apps_before_capture).to be true
+    end
+
+    it "persists enabled toggle asynchronously via JSON" do
+      patch beta_wallpaper_enforcement_path,
+        params: { enabled: "1" },
+        headers: { "Accept" => "application/json" }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body).to eq({ "enabled" => true })
+      expect(config.reload.enabled).to be true
+    end
+
+    it "disables enforcement asynchronously via JSON" do
+      config.update!(enabled: true)
+
+      patch beta_wallpaper_enforcement_path,
+        params: { enabled: "0" },
+        headers: { "Accept" => "application/json" }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body).to eq({ "enabled" => false })
+      expect(config.reload.enabled).to be false
     end
 
     it "persists sanction toggles from nested checkbox submissions" do

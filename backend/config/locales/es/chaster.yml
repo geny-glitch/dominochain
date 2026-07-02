@@ -21,6 +21,7 @@ es:
       summaries:
         default: "Modificación del temporizador"
         api: "Añadido manual desde la app"
+        puryfi: "Detección PuryFi"
         cigarette: "Cigarrillo registrado"
         showcase_game: "%{game}"
         showcase_game_tetris: "%{game} — %{lines} líneas"

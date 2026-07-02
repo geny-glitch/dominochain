@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class BossRegistrationsController < Devise::RegistrationsController
+  include SignupConsents
+
   before_action :configure_sign_up_params, only: [:create]
 
   def new
@@ -10,6 +12,14 @@ class BossRegistrationsController < Devise::RegistrationsController
 
   def create
     build_resource(sign_up_params.merge(role: :boss))
+
+    unless signup_consents_accepted?
+      apply_signup_consent_errors(resource)
+      clean_up_passwords resource
+      set_minimum_password_length
+      respond_with resource, status: :unprocessable_entity
+      return
+    end
 
     resource.save
     yield resource if block_given?

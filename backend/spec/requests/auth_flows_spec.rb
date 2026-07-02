@@ -124,6 +124,9 @@ RSpec.describe "Auth flows", type: :request do
       expect(response.body).to include('name="user[email]"')
       expect(response.body).to include('name="user[password]"')
       expect(response.body).to include('name="user[password_confirmation]"')
+      expect(response.body).to include('name="signup_consents[age_confirmed]"')
+      expect(response.body).to include('name="signup_consents[terms_accepted]"')
+      expect(response.body).not_to include('name="signup_consents[risk_acknowledged]"')
       expect(response.body).to include("ds-auth-form")
     end
 
@@ -134,7 +137,8 @@ RSpec.describe "Auth flows", type: :request do
             email: "new-beta-flow@dominochain.app",
             password: "password123",
             password_confirmation: "password123"
-          }
+          },
+          signup_consents: { age_confirmed: "1", terms_accepted: "1" }
         }
       }.to change(User, :count).by(1)
 
@@ -152,7 +156,8 @@ RSpec.describe "Auth flows", type: :request do
           password: "password123",
           password_confirmation: "password123",
           role: "boss"
-        }
+        },
+        signup_consents: { age_confirmed: "1", terms_accepted: "1" }
       }
 
       expect(response).to redirect_to(beta_dashboard_path)
@@ -173,6 +178,21 @@ RSpec.describe "Auth flows", type: :request do
       expect(response).to have_http_status(:unprocessable_content)
       expect(response.body).to include(%(action="#{user_registration_path}"))
       expect(response.body).to include("ds-auth-form")
+    end
+
+    it "re-renders sign up view when consents are missing" do
+      expect {
+        post user_registration_path, params: {
+          user: {
+            email: "no-consent-beta@dominochain.app",
+            password: "password123",
+            password_confirmation: "password123"
+          }
+        }
+      }.not_to change(User, :count)
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.body).to include(I18n.t("devise.registrations.consent_age_required"))
     end
   end
 end

@@ -1,0 +1,11 @@
+<div class="ds-form-group ds-signup-consents">
+  <label class="ds-checkbox-label">
+    <input type="checkbox" name="signup_consents[age_confirmed]" value="1" required <%= "checked" if signup_consent_checked?(:age_confirmed) %>>
+    <span><%= t("devise.registrations.consent_age") %></span>
+  </label>
+
+  <label class="ds-checkbox-label">
+    <input type="checkbox" name="signup_consents[terms_accepted]" value="1" required <%= "checked" if signup_consent_checked?(:terms_accepted) %>>
+    <span><%= t("devise.registrations.consent_terms_html", terms_link: link_to(t("devise.registrations.consent_terms_link"), terms_path, target: "_blank", rel: "noopener noreferrer")).html_safe %></span>
+  </label>
+</div>

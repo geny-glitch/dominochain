@@ -24,6 +24,11 @@ RSpec.describe "Routes", type: :request do
       expect(response).to have_http_status(:ok)
     end
 
+    it "GET /terms returns 200" do
+      get terms_path
+      expect(response).to have_http_status(:ok)
+    end
+
     it "GET /up returns 200" do
       get rails_health_check_path
       expect(response).to have_http_status(:ok)
@@ -42,7 +47,8 @@ RSpec.describe "Routes", type: :request do
 
     it "POST /signup creates user and redirects" do
       post user_registration_path, params: {
-        user: { email: "newuser@dominochain.app", password: "password123", password_confirmation: "password123" }
+        user: { email: "newuser@dominochain.app", password: "password123", password_confirmation: "password123" },
+        signup_consents: { age_confirmed: "1", terms_accepted: "1" }
       }
       expect(response).to have_http_status(:redirect)
       expect(User.find_by!(email: "newuser@dominochain.app").nickname).to eq("newuser")
@@ -50,7 +56,8 @@ RSpec.describe "Routes", type: :request do
 
     it "POST /signup/boss creates boss and redirects" do
       post boss_registration_path, params: {
-        user: { email: "newboss@dominochain.app", password: "password123", password_confirmation: "password123" }
+        user: { email: "newboss@dominochain.app", password: "password123", password_confirmation: "password123" },
+        signup_consents: { age_confirmed: "1", terms_accepted: "1" }
       }
       expect(response).to have_http_status(:redirect)
       expect(User.find_by!(email: "newboss@dominochain.app").nickname).to eq("newboss")

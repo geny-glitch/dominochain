@@ -11,6 +11,10 @@
 .ds-container {
   max-width: 420px;
   margin: 0 auto;
+
+  &--wide {
+    max-width: 720px;
+  }
 }
 
 .ds-header {
@@ -856,6 +860,16 @@
 
     input[type="radio"] {
       accent-color: $ds-magenta;
+      cursor: pointer;
+
+      &:focus-visible {
+        outline: 2px solid rgba($ds-blue, 0.6);
+        outline-offset: 2px;
+      }
+
+      &:disabled {
+        cursor: not-allowed;
+      }
     }
   }
 }
@@ -866,7 +880,7 @@
 
 .ds-checkbox-label {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: $ds-space-sm;
   font-size: $ds-body-size;
   color: $ds-text-muted;
@@ -874,6 +888,54 @@
 
   input[type="checkbox"] {
     accent-color: $ds-magenta;
+    margin-top: 0.2rem;
+    flex-shrink: 0;
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid rgba($ds-blue, 0.6);
+      outline-offset: 2px;
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+    }
+  }
+
+  a {
+    color: $ds-magenta;
+    text-decoration: underline;
+  }
+}
+
+.ds-signup-consents {
+  display: flex;
+  flex-direction: column;
+  gap: $ds-space-md;
+}
+
+.ds-legal {
+  color: $ds-text-muted;
+  font-size: $ds-body-size;
+  line-height: 1.6;
+
+  &-lead {
+    margin-bottom: $ds-space-xl;
+    color: $ds-text;
+  }
+
+  &-section {
+    margin-bottom: $ds-space-xl;
+
+    h2 {
+      margin: 0 0 $ds-space-sm;
+      font-size: 1.05rem;
+      color: $ds-text;
+    }
+
+    p {
+      margin: 0;
+    }
   }
 }
 

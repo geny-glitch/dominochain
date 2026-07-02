@@ -91,6 +91,8 @@ get "beta/actions/pishock", to: "beta_dashboard#actions_pishock", as: :beta_acti
 
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
+  get "terms", to: "terms#show", as: :terms
+
   root "home#index"
 
   mount MissionControl::Jobs::Engine, at: "/admin/jobs"

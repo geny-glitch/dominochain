@@ -1,0 +1,28 @@
+<% content_for :title, t("terms.title") %>
+
+<div class="ds-page">
+  <div class="ds-container ds-container--wide">
+    <header class="ds-header">
+      <%= image_tag "domino-chain-logo.png", alt: t("layouts.application.logo_alt"), class: "ds-header-logo", width: 48, height: 48 %>
+      <div class="ds-header-text">
+        <h1 class="ds-title wordmark"><%= t("terms.title") %></h1>
+        <p class="ds-subtitle eyebrow"><%= t("terms.updated") %></p>
+      </div>
+    </header>
+
+    <article class="ds-legal">
+      <p class="ds-legal-lead"><%= t("terms.lead") %></p>
+
+      <% t("terms.sections").each do |section| %>
+        <section class="ds-legal-section">
+          <h2><%= section[:heading] %></h2>
+          <p><%= section[:body] %></p>
+        </section>
+      <% end %>
+    </article>
+
+    <footer class="ds-page-footer">
+      <%= link_to t("terms.home"), root_path, class: "ds-btn ds-btn--ghost ds-btn--sm" %>
+    </footer>
+  </div>
+</div>

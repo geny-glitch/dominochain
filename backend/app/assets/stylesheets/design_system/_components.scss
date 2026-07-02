@@ -114,17 +114,52 @@
   font-family: inherit;
   font-size: $ds-body-size;
   padding: $ds-space-sm $ds-space-md;
+  cursor: text;
 
-  &:focus {
+  &:focus,
+  &:focus-visible {
     outline: 2px solid rgba($ds-blue, 0.6);
     outline-offset: 2px;
     border-color: $ds-blue;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
   }
 }
 
 .ds-textarea {
   min-height: 6rem;
   resize: vertical;
+}
+
+// Form control accessibility: labels, cursors, focus, disabled states
+label.ds-checkbox-label,
+.ds-radio-label {
+  cursor: pointer;
+
+  &:has(input:disabled) {
+    cursor: not-allowed;
+  }
+}
+
+button,
+[type="button"],
+[type="submit"],
+[type="reset"],
+.ds-btn {
+  &:disabled {
+    cursor: not-allowed;
+  }
+}
+
+select.ds-input {
+  cursor: pointer;
+
+  &:disabled {
+    cursor: not-allowed;
+  }
 }
 
 .ds-badge,

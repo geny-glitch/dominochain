@@ -27,6 +27,8 @@
         <%= f.password_field :password_confirmation, autocomplete: "new-password", class: "ds-input" %>
       </div>
 
+      <%= render "devise/registrations/signup_consents" %>
+
       <div class="ds-form-actions">
         <%= f.submit t("devise.registrations.submit_create"), class: "ds-btn ds-btn--primary" %>
       </div>

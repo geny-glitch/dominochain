@@ -1,0 +1,43 @@
+---
+description: Form controls must stay accessible with correct cursors, labels, and focus
+alwaysApply: true
+---
+
+# Form Control Accessibility
+
+When adding or editing forms, inputs, toggles, and other interactive controls, follow these rules on every change.
+
+## HTML semantics
+
+- Pair every checkbox and radio with a `<label>` (wrapping label or matching `for` / `id`).
+- Use the correct `type`, `name`, `id`, and `autocomplete` attributes.
+- Mark server-enforced required fields with the `required` attribute when applicable.
+- Associate helper text and validation errors with inputs via `aria-describedby` when the relationship is not obvious from layout alone.
+- Keep disabled controls disabled in markup (`disabled` / `aria-disabled`) and style them consistently.
+
+## Pointer cursors
+
+Use the cursor that matches the control role:
+
+- `pointer`: buttons, submit/reset actions, checkboxes, radios, toggles, selects, and their labels.
+- `text`: text fields, textareas, email/password/url/search/tel inputs.
+- `not-allowed`: disabled interactive controls (input and label).
+
+Apply these through DS classes (`.ds-btn`, `.ds-checkbox-label`, `.ds-input`, `.ds-radio-label`) instead of one-off styles in views.
+
+## Focus
+
+- Never remove focus outlines without a visible replacement.
+- DS controls use `:focus-visible` with the blue token outline.
+- Click/tap targets should remain large enough to use comfortably on mobile.
+
+## DS patterns
+
+- Reuse `.ds-checkbox-label` for checkbox groups; do not ship unlabeled checkbox inputs.
+- Reuse `.ds-form-label` + `.ds-input` / `.ds-textarea` for text fields.
+- External links inside form labels that leave the current flow must open in a new tab with `rel="noopener noreferrer"`.
+
+## Styles location
+
+- Shared form accessibility styles live in `backend/app/assets/stylesheets/design_system/_components.scss` and checkbox/radio patterns in `_wallpaper.scss`.
+- When introducing a new reusable control pattern, add its accessibility styles to the design system rather than inline styles in ERB.

@@ -218,6 +218,16 @@ es:
       run_test_check_hint: "Solo staging. Omite el intervalo configurado y ejecuta el mismo flujo que el job programado para tu cuenta."
       unreachable_threshold: "Umbral app inalcanzable (minutos)"
       mismatch_title: "Incumplimiento"
+      mismatch_sanction_mode: "Modo de aplicación de sanciones"
+      mismatch_sanction_modes:
+        strict: "Estricto"
+        double_check: "Doble comprobación"
+        consecutive_failures: "Fallos consecutivos"
+      mismatch_sanction_mode_hints:
+        strict: "Aplica sanciones tras el retraso configurado en cada comprobación con incumplimiento."
+        double_check: "Ante un incumplimiento, solicita hasta 3 capturas nuevas (10 s de intervalo) antes de aplicar sanciones."
+        consecutive_failures: "Aplica sanciones solo tras el número configurado de incumplimientos consecutivos. Los segundos Chaster añadidos se multiplican por ese número."
+      mismatch_consecutive_threshold: "Fallos consecutivos antes de sanción"
       permissions_lost_title: "Permisos faltantes"
       app_unreachable_title: "App inalcanzable / desinstalada"
       delay_minutes: "Retraso antes de sanción (minutos)"

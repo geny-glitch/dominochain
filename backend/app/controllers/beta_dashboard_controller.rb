@@ -373,6 +373,8 @@ class BetaDashboardController < ApplicationController
     attrs = {
       check_interval_minutes: params[:check_interval_minutes],
       mismatch_delay_minutes: params[:mismatch_delay_minutes],
+      mismatch_sanction_mode: params[:mismatch_sanction_mode],
+      mismatch_consecutive_threshold: params[:mismatch_consecutive_threshold],
       permissions_lost_delay_minutes: params[:permissions_lost_delay_minutes],
       app_unreachable_delay_minutes: params[:app_unreachable_delay_minutes],
       app_unreachable_threshold_minutes: params[:app_unreachable_threshold_minutes],

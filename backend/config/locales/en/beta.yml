@@ -218,6 +218,16 @@ en:
       run_test_check_hint: "Staging only. Bypasses the check interval and runs the same flow as the scheduled job for your account."
       unreachable_threshold: "App unreachable threshold (minutes)"
       mismatch_title: "Mismatch"
+      mismatch_sanction_mode: "Sanction application mode"
+      mismatch_sanction_modes:
+        strict: "Strict"
+        double_check: "Double check"
+        consecutive_failures: "Consecutive failures"
+      mismatch_sanction_mode_hints:
+        strict: "Applies sanctions after the configured delay on each mismatch check."
+        double_check: "On mismatch, requests up to 3 new screenshots (10 s apart) before applying sanctions."
+        consecutive_failures: "Applies sanctions only after the configured number of consecutive mismatches. Chaster add-time is multiplied by that count."
+      mismatch_consecutive_threshold: "Consecutive failures before sanction"
       permissions_lost_title: "Missing permissions"
       app_unreachable_title: "App unreachable / uninstalled"
       delay_minutes: "Delay before sanction (minutes)"

@@ -1,0 +1,71 @@
+<script>
+(function () {
+  function syncSanctionRow(row) {
+    if (!row) return;
+
+    row.querySelectorAll("[data-sanction-toggle]").forEach(function (toggle) {
+      var key = toggle.getAttribute("data-sanction-toggle");
+      var enabled = toggle.checked;
+      row.querySelectorAll('[data-sanction-field="' + key + '"]').forEach(function (input) {
+        input.disabled = !enabled;
+      });
+    });
+  }
+
+  function updateMismatchMode(form, mode) {
+    form.querySelectorAll("[data-mismatch-mode-field]").forEach(function (field) {
+      var targetMode = field.getAttribute("data-mismatch-mode-field");
+      if (targetMode === "delay") {
+        field.hidden = mode === "consecutive_failures";
+      } else {
+        field.hidden = targetMode !== mode;
+      }
+    });
+
+    form.querySelectorAll("[data-mismatch-mode-hint]").forEach(function (hint) {
+      hint.hidden = hint.getAttribute("data-mismatch-mode-hint") !== mode;
+    });
+  }
+
+  function initWallpaperEnforcementForm(form) {
+    if (form.getAttribute("data-wallpaper-enforcement-ready") === "true") return;
+    form.setAttribute("data-wallpaper-enforcement-ready", "true");
+
+    form.querySelectorAll("[data-sanction-row]").forEach(syncSanctionRow);
+
+    var selectedMode = form.querySelector('input[name="mismatch_sanction_mode"]:checked');
+    if (selectedMode) {
+      updateMismatchMode(form, selectedMode.value);
+    }
+
+    form.addEventListener("change", function (event) {
+      var target = event.target;
+
+      if (target.matches("[data-sanction-toggle]")) {
+        syncSanctionRow(target.closest("[data-sanction-row]"));
+        return;
+      }
+
+      if (target.matches('input[name="mismatch_sanction_mode"]')) {
+        updateMismatchMode(form, target.value);
+      }
+    });
+
+    form.addEventListener("input", function (event) {
+      var toggle = event.target.closest("[data-sanction-toggle]");
+      if (!toggle || !form.contains(toggle)) return;
+      syncSanctionRow(toggle.closest("[data-sanction-row]"));
+    });
+  }
+
+  function boot() {
+    document.querySelectorAll("[data-wallpaper-enforcement-form]").forEach(initWallpaperEnforcementForm);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot);
+  } else {
+    boot();
+  }
+})();
+</script>

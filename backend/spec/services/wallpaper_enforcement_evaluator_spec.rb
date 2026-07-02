@@ -122,6 +122,100 @@ RSpec.describe WallpaperEnforcementEvaluator do
       expect(config.mismatch_since).to be_nil
       expect(config.frozen_by_enforcement).to eq(false)
     end
+
+    context "with double_check sanction mode" do
+      before do
+        config.update!(mismatch_sanction_mode: WallpaperEnforcementConfig::SANCTION_MODE_DOUBLE_CHECK)
+      end
+
+      it "schedules rechecks instead of applying sanctions while rechecks remain" do
+        config.update!(mismatch_since: 31.minutes.ago)
+        screenshot = create(:device_screenshot, device: device, verification_status: "mismatch", similarity_score: 0.2)
+
+        expect(chaster_service).not_to receive(:add_time_to_lock)
+        expect {
+          evaluator.evaluate_verification!(screenshot: screenshot)
+        }.to have_enqueued_job(WallpaperMismatchRecheckJob).with(device.id)
+
+        expect(config.reload.mismatch_recheck_count).to eq(1)
+      end
+
+      it "applies strict sanctions after rechecks are exhausted" do
+        config.update!(
+          mismatch_since: 31.minutes.ago,
+          mismatch_recheck_count: WallpaperEnforcementConfig::MAX_DOUBLE_CHECK_RECHECKS
+        )
+        screenshot = create(:device_screenshot, device: device, verification_status: "mismatch", similarity_score: 0.2)
+
+        expect(chaster_service).to receive(:add_time_to_lock).with(
+          "lock-1",
+          600,
+          source: "wallpaper",
+          summary: I18n.t("chaster.time_events.summaries.wallpaper.mismatch_add_time"),
+          metadata: hash_including("enforcement_kind" => "mismatch_add_time")
+        )
+
+        expect {
+          evaluator.evaluate_verification!(screenshot: screenshot)
+        }.not_to have_enqueued_job(WallpaperMismatchRecheckJob)
+
+        expect(config.reload.add_time_sanction_applied_at).to be_present
+      end
+
+      it "resets recheck count when verified" do
+        config.update!(mismatch_recheck_count: 2)
+        screenshot = create(:device_screenshot, device: device, verification_status: "verified", similarity_score: 0.95)
+
+        evaluator.evaluate_verification!(screenshot: screenshot)
+
+        expect(config.reload.mismatch_recheck_count).to eq(0)
+      end
+    end
+
+    context "with consecutive_failures sanction mode" do
+      before do
+        config.update!(
+          mismatch_sanction_mode: WallpaperEnforcementConfig::SANCTION_MODE_CONSECUTIVE_FAILURES,
+          mismatch_consecutive_threshold: 3
+        )
+      end
+
+      it "does not apply sanctions before the consecutive threshold is reached" do
+        screenshot = create(:device_screenshot, device: device, verification_status: "mismatch", similarity_score: 0.2)
+
+        expect(chaster_service).not_to receive(:add_time_to_lock)
+
+        2.times { evaluator.evaluate_verification!(screenshot: screenshot) }
+
+        expect(config.reload.mismatch_consecutive_count).to eq(2)
+      end
+
+      it "applies multiplied add-time sanction when the threshold is reached" do
+        config.update!(mismatch_consecutive_count: 2)
+        screenshot = create(:device_screenshot, device: device, verification_status: "mismatch", similarity_score: 0.2)
+
+        expect(chaster_service).to receive(:add_time_to_lock).with(
+          "lock-1",
+          1800,
+          source: "wallpaper",
+          summary: I18n.t("chaster.time_events.summaries.wallpaper.mismatch_add_time"),
+          metadata: hash_including("enforcement_kind" => "mismatch_add_time")
+        )
+
+        evaluator.evaluate_verification!(screenshot: screenshot)
+
+        expect(config.reload.mismatch_consecutive_count).to eq(0)
+      end
+
+      it "resets consecutive count when verified" do
+        config.update!(mismatch_consecutive_count: 2)
+        screenshot = create(:device_screenshot, device: device, verification_status: "verified", similarity_score: 0.95)
+
+        evaluator.evaluate_verification!(screenshot: screenshot)
+
+        expect(config.reload.mismatch_consecutive_count).to eq(0)
+      end
+    end
   end
 
   describe "#evaluate_scheduled_check!" do

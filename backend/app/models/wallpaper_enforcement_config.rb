@@ -7,6 +7,18 @@ class WallpaperEnforcementConfig < ApplicationRecord
   MAX_DELAY_MINUTES = 7 * 24 * 60
   MIN_UNREACHABLE_MINUTES = 30
   MAX_UNREACHABLE_MINUTES = 7 * 24 * 60
+  MIN_CONSECUTIVE_THRESHOLD = 2
+  MAX_CONSECUTIVE_THRESHOLD = 10
+  MAX_DOUBLE_CHECK_RECHECKS = 3
+
+  SANCTION_MODE_STRICT = "strict"
+  SANCTION_MODE_DOUBLE_CHECK = "double_check"
+  SANCTION_MODE_CONSECUTIVE_FAILURES = "consecutive_failures"
+  SANCTION_MODES = [
+    SANCTION_MODE_STRICT,
+    SANCTION_MODE_DOUBLE_CHECK,
+    SANCTION_MODE_CONSECUTIVE_FAILURES
+  ].freeze
 
   belongs_to :user
 
@@ -16,6 +28,13 @@ class WallpaperEnforcementConfig < ApplicationRecord
     numericality: { only_integer: true, greater_than_or_equal_to: MIN_DELAY_MINUTES, less_than_or_equal_to: MAX_DELAY_MINUTES }
   validates :app_unreachable_threshold_minutes,
     numericality: { only_integer: true, greater_than_or_equal_to: MIN_UNREACHABLE_MINUTES, less_than_or_equal_to: MAX_UNREACHABLE_MINUTES }
+  validates :mismatch_sanction_mode, inclusion: { in: SANCTION_MODES }
+  validates :mismatch_consecutive_threshold,
+    numericality: {
+      only_integer: true,
+      greater_than_or_equal_to: MIN_CONSECUTIVE_THRESHOLD,
+      less_than_or_equal_to: MAX_CONSECUTIVE_THRESHOLD
+    }
   validate :sanctions_are_valid
 
   scope :due_for_check, lambda { |reference_time = Time.current|
@@ -48,8 +67,22 @@ class WallpaperEnforcementConfig < ApplicationRecord
   def reset_mismatch_state!
     update!(
       mismatch_since: nil,
-      add_time_sanction_applied_at: nil
+      add_time_sanction_applied_at: nil,
+      mismatch_recheck_count: 0,
+      mismatch_consecutive_count: 0
     )
+  end
+
+  def strict_sanction_mode?
+    mismatch_sanction_mode == SANCTION_MODE_STRICT
+  end
+
+  def double_check_sanction_mode?
+    mismatch_sanction_mode == SANCTION_MODE_DOUBLE_CHECK
+  end
+
+  def consecutive_failures_sanction_mode?
+    mismatch_sanction_mode == SANCTION_MODE_CONSECUTIVE_FAILURES
   end
 
   def reset_permissions_lost_state!

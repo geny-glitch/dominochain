@@ -26,7 +26,11 @@ RSpec.describe "Beta sources wallpaper page", type: :request do
       expect(response.body).to include('id="public_boss_enabled"')
       expect(response.body).to include('data-auto-submit="true"')
       expect(response.body).to include('id="wallpaper_enforcement_enabled"')
-      expect(response.body).to include('id="wallpaper_dismiss_apps_before_capture"')
+      expect(response.body).to include('data-wallpaper-enforcement-form="true"')
+      expect(response.body).to include('class="ds-radio-group"')
+      expect(response.body).to include('name="mismatch_sanction_mode"')
+      expect(response.body).to include('type="radio"')
+      expect(response.body).to include('data-sanction-row')
       expect(response.body).to include("requestSubmit()")
       expect(response.body).to include(beta_public_boss_path)
       expect(response.body).to include(beta_catalog_visibility_path)
@@ -82,6 +86,8 @@ RSpec.describe "Beta sources wallpaper page", type: :request do
         dismiss_apps_before_capture: [ "0", "1" ],
         check_interval_minutes: config.check_interval_minutes,
         mismatch_delay_minutes: config.mismatch_delay_minutes,
+        mismatch_sanction_mode: config.mismatch_sanction_mode,
+        mismatch_consecutive_threshold: config.mismatch_consecutive_threshold,
         permissions_lost_delay_minutes: config.permissions_lost_delay_minutes,
         app_unreachable_delay_minutes: config.app_unreachable_delay_minutes,
         app_unreachable_threshold_minutes: config.app_unreachable_threshold_minutes,
@@ -113,6 +119,14 @@ RSpec.describe "Beta sources wallpaper page", type: :request do
       sanction = config.reload.mismatch_sanction_object
       expect(sanction.chaster_add_time_enabled).to be true
       expect(sanction.chaster_seconds).to eq(3600)
+    end
+
+    it "persists mismatch sanction mode from radio group submission" do
+      patch beta_wallpaper_enforcement_path, params: enforcement_params(
+        mismatch_sanction_mode: WallpaperEnforcementConfig::SANCTION_MODE_DOUBLE_CHECK
+      )
+
+      expect(config.reload.mismatch_sanction_mode).to eq(WallpaperEnforcementConfig::SANCTION_MODE_DOUBLE_CHECK)
     end
   end
 end

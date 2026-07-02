@@ -218,6 +218,16 @@ fr:
       run_test_check_hint: "Staging uniquement. Ignore l'intervalle configuré et exécute le même flux que le job planifié pour ton compte."
       unreachable_threshold: "Seuil app injoignable (minutes)"
       mismatch_title: "Non-conformité"
+      mismatch_sanction_mode: "Mode d'application des sanctions"
+      mismatch_sanction_modes:
+        strict: "Strict"
+        double_check: "Double vérification"
+        consecutive_failures: "Échecs consécutifs"
+      mismatch_sanction_mode_hints:
+        strict: "Applique les sanctions après le délai configuré à chaque vérification en échec."
+        double_check: "En cas d'échec, demande jusqu'à 3 nouvelles captures (10 s d'intervalle) avant d'appliquer les sanctions."
+        consecutive_failures: "Applique les sanctions seulement après le nombre configuré d'échecs consécutifs. Les secondes Chaster ajoutées sont multipliées par ce nombre."
+      mismatch_consecutive_threshold: "Échecs consécutifs avant sanction"
       permissions_lost_title: "Autorisations manquantes"
       app_unreachable_title: "App injoignable / désinstallée"
       delay_minutes: "Délai avant sanction (minutes)"

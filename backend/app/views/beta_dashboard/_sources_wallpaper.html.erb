@@ -81,7 +81,7 @@
       <%= t("beta.wallpaper_source.actions_hint_html", chaster: link_to(t("beta.catalog.actions.chaster.label"), beta_actions_chaster_path, class: "ds-inline-link"), pishock: link_to(t("beta.catalog.actions.pishock.label"), beta_actions_pishock_path, class: "ds-inline-link")).html_safe %>
     </p>
 
-    <%= form_with url: beta_wallpaper_enforcement_path, method: :patch, local: true, class: "ds-form", data: { turbo: false } do %>
+    <%= form_with url: beta_wallpaper_enforcement_path, method: :patch, local: true, class: "ds-form", data: { turbo: false, wallpaper_enforcement_form: true } do %>
       <div class="ds-form-group">
         <label class="ds-form-label ds-beta-catalog-toggle" for="wallpaper_enforcement_enabled">
           <%= hidden_field_tag :enabled, "0" %>
@@ -112,11 +112,36 @@
       </div>
 
       <h3 class="ds-section-subtitle"><%= t("beta.wallpaper_source.mismatch_title") %></h3>
+
+      <div class="ds-form-group">
+        <%= render "radio_group",
+              name: :mismatch_sanction_mode,
+              legend: t("beta.wallpaper_source.mismatch_sanction_mode"),
+              selected: @config.mismatch_sanction_mode,
+              options: WallpaperEnforcementConfig::SANCTION_MODES.index_with { |mode|
+                t("beta.wallpaper_source.mismatch_sanction_modes.#{mode}")
+              },
+              group_data: { mismatch_mode_control: true } %>
+        <p class="ds-beta-control-hint" data-mismatch-mode-hint="strict" hidden><%= t("beta.wallpaper_source.mismatch_sanction_mode_hints.strict") %></p>
+        <p class="ds-beta-control-hint" data-mismatch-mode-hint="double_check" hidden><%= t("beta.wallpaper_source.mismatch_sanction_mode_hints.double_check") %></p>
+        <p class="ds-beta-control-hint" data-mismatch-mode-hint="consecutive_failures" hidden><%= t("beta.wallpaper_source.mismatch_sanction_mode_hints.consecutive_failures") %></p>
+      </div>
+
+      <div class="ds-form-group" data-mismatch-mode-field="consecutive_failures" hidden>
+        <%= label_tag :mismatch_consecutive_threshold, t("beta.wallpaper_source.mismatch_consecutive_threshold"), class: "ds-form-label" %>
+        <%= number_field_tag :mismatch_consecutive_threshold,
+              @config.mismatch_consecutive_threshold,
+              min: WallpaperEnforcementConfig::MIN_CONSECUTIVE_THRESHOLD,
+              max: WallpaperEnforcementConfig::MAX_CONSECUTIVE_THRESHOLD,
+              class: "ds-input" %>
+      </div>
+
       <%= render "wallpaper_scenario_sanction_fields",
             field_prefix: "mismatch_sanction",
             sanction: @config.mismatch_sanction,
             delay_field: :mismatch_delay_minutes,
-            delay_value: @config.mismatch_delay_minutes %>
+            delay_value: @config.mismatch_delay_minutes,
+            delay_container_data: { mismatch_mode_field: "delay" } %>
 
       <h3 class="ds-section-subtitle"><%= t("beta.wallpaper_source.permissions_lost_title") %></h3>
       <%= render "wallpaper_scenario_sanction_fields",
@@ -135,27 +160,7 @@
       <%= submit_tag t("beta.wallpaper_source.save"), class: "ds-btn ds-btn--primary" %>
     <% end %>
 
-    <script>
-      (function () {
-        document.querySelectorAll("[data-wallpaper-scenario]").forEach(function (scenario) {
-          scenario.querySelectorAll(".ds-wallpaper-sanction-toggle-input").forEach(function (toggle) {
-            toggle.addEventListener("change", function () {
-              var key = toggle.dataset.wallpaperSanctionToggle;
-              var enabled = toggle.checked;
-              scenario.querySelectorAll("[data-wallpaper-sanction-input]").forEach(function (input) {
-                if (key === "pishock") {
-                  if (input.dataset.wallpaperSanctionInput === "pishock_intensity" || input.dataset.wallpaperSanctionInput === "pishock_duration") {
-                    input.disabled = !enabled;
-                  }
-                } else if (input.dataset.wallpaperSanctionInput === key) {
-                  input.disabled = !enabled;
-                }
-              });
-            });
-          });
-        });
-      })();
-    </script>
+    <%= render "wallpaper_enforcement_form_script" %>
 
     <% if bg_env_staging? %>
       <div class="ds-beta-control-actions ds-beta-control-actions--spaced">

@@ -16,10 +16,29 @@
       <%= link_to t("admin_wallpaper_pairs.filter_unreviewed"),
         admin_wallpaper_pairs_path(filter: "unreviewed"),
         class: "ds-btn ds-btn--sm #{@filter == 'unreviewed' ? 'ds-btn--primary' : 'ds-btn--ghost'}" %>
+      <%= link_to t("admin_wallpaper_pairs.filter_disagreements"),
+        admin_wallpaper_pairs_path(filter: "disagreements"),
+        class: "ds-btn ds-btn--sm #{@filter == 'disagreements' ? 'ds-btn--primary' : 'ds-btn--ghost'}" %>
       <%= link_to t("admin_wallpaper_pairs.filter_all"),
         admin_wallpaper_pairs_path(filter: "all"),
         class: "ds-btn ds-btn--sm #{@filter == 'all' ? 'ds-btn--primary' : 'ds-btn--ghost'}" %>
     </nav>
+
+    <% if @filter == "disagreements" %>
+      <div class="ds-wallpaper-pairs-export">
+        <p class="ds-wallpaper-pairs-export__text">
+          <%= t("admin_wallpaper_pairs.disagreements_help", count: @total_count) %>
+        </p>
+        <div class="ds-wallpaper-pairs-export__actions">
+          <%= button_to t("admin_wallpaper_pairs.export_disagreements"),
+            admin_wallpaper_pairs_export_disagreements_path(filter: @filter, page: @page),
+            method: :post,
+            class: "ds-btn ds-btn--primary ds-btn--sm",
+            form: { data: { turbo: false } } %>
+          <code class="ds-wallpaper-pairs-export__command">bin/fetch-wallpaper-disagreements</code>
+        </div>
+      </div>
+    <% end %>
 
     <% if @pairs.any? %>
       <div class="ds-wallpaper-pairs-table-wrap">

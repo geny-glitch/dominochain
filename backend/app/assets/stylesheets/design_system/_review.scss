@@ -315,6 +315,46 @@
   }
 }
 
+.ds-wallpaper-pairs-table__row--disagreement {
+  background: rgba($ds-magenta, 0.04);
+}
+
+.ds-wallpaper-pairs-table__disagreement-badge {
+  margin-top: $ds-space-xs;
+}
+
+.ds-wallpaper-pairs-export {
+  display: flex;
+  flex-direction: column;
+  gap: $ds-space-sm;
+  margin-bottom: $ds-space-lg;
+  padding: $ds-space-md;
+  border: 1px solid $ds-border;
+  border-radius: $ds-radius-md;
+  background: rgba($ds-surface, 0.5);
+}
+
+.ds-wallpaper-pairs-export__text {
+  margin: 0;
+  font-size: $ds-small-size;
+  color: $ds-text-muted;
+}
+
+.ds-wallpaper-pairs-export__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $ds-space-sm;
+}
+
+.ds-wallpaper-pairs-export__command {
+  font-size: $ds-tiny-size;
+  padding: $ds-space-xs $ds-space-sm;
+  border-radius: $ds-radius-sm;
+  background: rgba($ds-border, 0.35);
+  color: $ds-text-muted;
+}
+
 .ds-review__subtitle {
   margin: $ds-space-xs 0 0;
   font-size: $ds-small-size;

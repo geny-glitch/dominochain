@@ -105,6 +105,7 @@ get "beta/actions/pishock", to: "beta_dashboard#actions_pishock", as: :beta_acti
   post "admin/review/images/:id/like", to: "admin#review_like", as: :admin_review_like
   post "admin/review/images/:id/dislike", to: "admin#review_dislike", as: :admin_review_dislike
   get "admin/wallpaper_pairs", to: "admin#wallpaper_pairs", as: :admin_wallpaper_pairs
+  post "admin/wallpaper_pairs/export_disagreements", to: "admin#wallpaper_pairs_export_disagreements", as: :admin_wallpaper_pairs_export_disagreements
   post "admin/wallpaper_pairs/:id/review", to: "admin#wallpaper_pair_review", as: :admin_wallpaper_pair_review
   post "admin/wallpaper_pairs/:id/run_algorithm", to: "admin#wallpaper_pair_run_algorithm", as: :admin_wallpaper_pair_run_algorithm
 

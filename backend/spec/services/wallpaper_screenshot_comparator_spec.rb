@@ -8,6 +8,10 @@ RSpec.describe WallpaperScreenshotComparator do
   REGRESSION_ROOT = Rails.root.join("spec/fixtures/files/wallpaper_pairs")
   REGRESSION_STATUSES = %w[verified mismatch].freeze
 
+  def regression_manifest_paths
+    WallpaperPairsRegressionPaths.manifest_paths(statuses: REGRESSION_STATUSES)
+  end
+
   let(:device) { create(:device, screen_width: 540, screen_height: 960) }
   let(:wallpaper) { create(:wallpaper, device: device) }
   let(:screenshot) { create(:device_screenshot, device: device) }
@@ -41,7 +45,7 @@ RSpec.describe WallpaperScreenshotComparator do
     manifest_path = Pathname.new(manifest_path)
     manifest = JSON.parse(manifest_path.read)
     files = manifest.fetch("files")
-    fixture_prefix = manifest_path.dirname.relative_path_from(Rails.root.join("spec/fixtures/files")).to_s
+    fixture_dir = manifest_path.dirname
     pair_device = create(
       :device,
       screen_width: manifest.fetch("device_screen_width"),
@@ -50,15 +54,15 @@ RSpec.describe WallpaperScreenshotComparator do
     pair_wallpaper = create(:wallpaper, device: pair_device)
     pair_screenshot = create(:device_screenshot, device: pair_device)
 
-    WallpaperVerificationTestImages.attach_fixture(
+    WallpaperVerificationTestImages.attach_from_path(
       pair_wallpaper,
       attachment_name: :image,
-      filename: "#{fixture_prefix}/#{files.fetch('reference')}"
+      path: fixture_dir.join(files.fetch("reference"))
     )
-    WallpaperVerificationTestImages.attach_fixture(
+    WallpaperVerificationTestImages.attach_from_path(
       pair_screenshot,
       attachment_name: :image,
-      filename: "#{fixture_prefix}/#{files.fetch('screenshot')}"
+      path: fixture_dir.join(files.fetch("screenshot"))
     )
     perform_enqueued_jobs
 
@@ -147,7 +151,9 @@ RSpec.describe WallpaperScreenshotComparator do
   end
 
   REGRESSION_STATUSES.each do |expected_status|
-    Dir.glob(REGRESSION_ROOT.join(expected_status, "*/manifest.json").to_s).sort.each do |manifest_path|
+    regression_manifest_paths
+      .select { |manifest_path| manifest_path.include?("/#{expected_status}/") }
+      .each do |manifest_path|
       pair_label = File.basename(File.dirname(manifest_path))
 
       it "classifies regression fixture #{expected_status}/#{pair_label} as #{expected_status} (grid_fuzzy)" do
@@ -162,15 +168,14 @@ RSpec.describe WallpaperScreenshotComparator do
   end
 
   describe "labeled regression fixtures (local_match)" do
-    regression_fixtures = REGRESSION_STATUSES.flat_map do |expected_status|
-      Dir.glob(REGRESSION_ROOT.join(expected_status, "*/manifest.json").to_s).sort.map do |manifest_path|
-        [expected_status, File.basename(File.dirname(manifest_path)), manifest_path]
-      end
+    regression_fixtures = regression_manifest_paths.map do |manifest_path|
+      expected_status = REGRESSION_STATUSES.find { |status| manifest_path.include?("/#{status}/") }
+      [expected_status, File.basename(File.dirname(manifest_path)), manifest_path]
     end
 
     if regression_fixtures.empty?
       it "runs when fixtures are present (fetch with bin/fetch-wallpaper-regression-dataset)" do
-        skip "No labeled regression fixtures under #{REGRESSION_ROOT.relative_path_from(Rails.root)}"
+        skip "No labeled regression fixtures under spec/fixtures/files/wallpaper_pairs or wallpaper_pairs/"
       end
     else
       if ENV["DUMP_WALLPAPER_REGRESSION"] == "1"

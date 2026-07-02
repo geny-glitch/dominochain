@@ -43,6 +43,7 @@ class ChasterController < ApplicationController
     )
 
     PostHog.capture(distinct_id: current_user.posthog_distinct_id, event: 'chaster_connected')
+    PosthogProductAnalytics.configured_action(current_user, name: "chaster")
     redirect_to beta_actions_chaster_path, notice: t("flash.chaster.connected")
   rescue ChasterService::Error => e
     redirect_to beta_actions_chaster_path, alert: t("flash.chaster.error", message: e.message)

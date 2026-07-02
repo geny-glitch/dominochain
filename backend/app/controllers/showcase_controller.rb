@@ -118,11 +118,6 @@ class ShowcaseController < ApplicationController
     )
 
     if result.ok
-      PostHog.capture(
-        distinct_id: @beta.posthog_distinct_id,
-        event: 'showcase_game_completed',
-        properties: { game_kind: game_kind, seconds_added: seconds, beta_nickname: @beta.nickname }
-      )
       return render(json: result.json_body, status: :ok) if result.format_json
       return redirect_to(showcase_path(@beta.nickname), notice: t("flash.showcase.thanks"))
     end

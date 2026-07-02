@@ -62,6 +62,7 @@ class StravaController < ApplicationController
       event: 'strava_goal_created',
       properties: { goal_name: goal.name, window_days: goal.window_days }
     )
+    PosthogProductAnalytics.configured_source(current_user, name: "strava")
     redirect_to beta_sources_strava_path, notice: t("flash.strava.goal_created", name: goal.name)
   rescue ActiveRecord::RecordInvalid => e
     redirect_to beta_sources_strava_path, alert: e.record.errors.full_messages.join(", ")
@@ -69,6 +70,7 @@ class StravaController < ApplicationController
 
   def update_goal
     @goal.update!(goal_params)
+    PosthogProductAnalytics.configured_source(current_user, name: "strava")
     redirect_to beta_sources_strava_path, notice: t("flash.strava.goal_updated", name: @goal.name)
   rescue ActiveRecord::RecordInvalid => e
     redirect_to beta_sources_strava_path, alert: e.record.errors.full_messages.join(", ")

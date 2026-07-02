@@ -64,6 +64,7 @@ class BetaDashboardController < ApplicationController
 
     if request.format.json?
       config.update!(enabled: checkbox_param_bool(:enabled))
+      PosthogProductAnalytics.configured_source(current_user, name: "wallpaper")
       render json: { enabled: config.enabled }
       return
     end
@@ -71,6 +72,7 @@ class BetaDashboardController < ApplicationController
     config.assign_attributes(enforcement_config_params)
     config.enabled = checkbox_param_bool(:enabled) if params.key?(:enabled)
     config.save!
+    PosthogProductAnalytics.configured_source(current_user, name: "wallpaper")
 
     redirect_to beta_sources_wallpaper_path, notice: t("flash.beta.wallpaper.config_saved")
   rescue ActiveRecord::RecordInvalid => e
@@ -141,6 +143,15 @@ class BetaDashboardController < ApplicationController
 
     label = catalog.item_label(kind: params[:kind], item_id: params[:item_id]) || t("flash.beta.catalog_element")
     enabled = checkbox_param_bool(:enabled)
+    if enabled
+      item_id = params[:item_id].to_s
+      case params[:kind].to_s
+      when "source"
+        PosthogProductAnalytics.activated_source(current_user, name: item_id)
+      when "action"
+        PosthogProductAnalytics.activated_action(current_user, name: item_id)
+      end
+    end
     message = if enabled
       t("flash.beta.catalog_activated", label:)
     else
@@ -186,6 +197,7 @@ class BetaDashboardController < ApplicationController
     attrs[:showcase_tetris_enabled] = params[:showcase_tetris_enabled] == "1" if params.key?(:showcase_tetris_enabled)
 
     current_user.update!(attrs)
+    PosthogProductAnalytics.configured_source(current_user, name: "showcase")
     redirect_to beta_sources_showcase_path,
       notice: t(
         "flash.beta.game_times_saved",
@@ -202,6 +214,7 @@ class BetaDashboardController < ApplicationController
     p = params.permit(:showcase_backdoor_enabled)
     enabled = p[:showcase_backdoor_enabled] == "1"
     current_user.update!(showcase_backdoor_enabled: enabled)
+    PosthogProductAnalytics.configured_source(current_user, name: "showcase")
     if enabled
       redirect_to beta_sources_showcase_path,
         notice: t("flash.beta.backdoor_enabled", url: "#{request.base_url}#{showcase_backdoor_path(current_user.nickname)}")
@@ -215,6 +228,7 @@ class BetaDashboardController < ApplicationController
   def update_public_boss
     enabled = checkbox_param_bool(:public_boss_enabled)
     current_user.update!(public_boss_enabled: enabled)
+    PosthogProductAnalytics.configured_source(current_user, name: "wallpaper")
     if enabled
       redirect_to beta_sources_wallpaper_path,
         notice: t("flash.beta.public_boss_enabled", url: "#{request.base_url}#{public_boss_path(current_user.nickname)}")
@@ -236,6 +250,7 @@ class BetaDashboardController < ApplicationController
       attrs[:pishock_intensity_factor] = p[:pishock_intensity_factor].to_f.clamp(0.01, 100)
     end
     current_user.update!(attrs) if attrs.any?
+    PosthogProductAnalytics.configured_action(current_user, name: "pishock") if attrs.any?
     redirect_to beta_actions_pishock_path, notice: t("flash.beta.pishock_saved")
   rescue ActiveRecord::RecordInvalid => e
     redirect_to beta_actions_pishock_path, alert: e.record.errors.full_messages.join(", ")
@@ -283,6 +298,7 @@ class BetaDashboardController < ApplicationController
       attrs[:puryfi_seconds_per_label] = merged
     end
     current_user.update!(attrs)
+    PosthogProductAnalytics.configured_source(current_user, name: "puryfi")
     redirect_to beta_sources_puryfi_path, notice: t("flash.beta.puryfi_saved")
   rescue ActiveRecord::RecordInvalid => e
     redirect_to beta_sources_puryfi_path, alert: e.record.errors.full_messages.join(", ")

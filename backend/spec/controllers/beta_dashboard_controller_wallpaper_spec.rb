@@ -35,15 +35,6 @@ RSpec.describe BetaDashboardController, type: :controller do
     end
   end
 
-  describe "PATCH #update_public_boss" do
-    it "enables public boss mode from a checkbox click submission" do
-      patch :update_public_boss, params: { public_boss_enabled: [ "0", "1" ] }
-
-      expect(response).to redirect_to(beta_sources_wallpaper_path)
-      expect(beta.reload.public_boss_enabled).to be true
-    end
-  end
-
   describe "PATCH #update_catalog_visibility" do
     it "enables wallpaper source from a checkbox click submission" do
       patch :update_catalog_visibility, params: {
@@ -55,6 +46,23 @@ RSpec.describe BetaDashboardController, type: :controller do
 
       expect(response).to redirect_to(beta_sources_wallpaper_path)
       expect(beta.reload.beta_ui_prefs.dig("catalog_visibility", "sources", "wallpaper")).to be true
+      expect(PostHog).to have_received(:capture).with(
+        distinct_id: beta.posthog_distinct_id,
+        event: "activated_source",
+        properties: { name: "wallpaper" }
+      )
+    end
+  end
+
+  describe "PATCH #update_public_boss" do
+    it "tracks wallpaper source configuration" do
+      patch :update_public_boss, params: { public_boss_enabled: [ "0", "1" ] }
+
+      expect(PostHog).to have_received(:capture).with(
+        distinct_id: beta.posthog_distinct_id,
+        event: "configured_source",
+        properties: { name: "wallpaper" }
+      )
     end
   end
 end

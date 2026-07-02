@@ -28,6 +28,21 @@ RSpec.describe ChasterService do
       end.to raise_error(ChasterService::Error, "Chaster action disabled")
     end
 
+    it "tracks time_added in PostHog after a successful Chaster update" do
+      user.update!(beta_ui_prefs: { "catalog_visibility" => { "actions" => { "chaster" => true } } })
+      response = instance_double(Net::HTTPResponse, code: "200", body: "{}")
+      allow(response).to receive(:is_a?).with(Net::HTTPSuccess).and_return(true)
+      allow(Net::HTTP).to receive(:start).and_yield(instance_double(Net::HTTP, request: response))
+
+      service.add_time_to_lock("lock-1", 90, source: "puryfi", summary: "PuryFi")
+
+      expect(PostHog).to have_received(:capture).with(
+        distinct_id: user.posthog_distinct_id,
+        event: "time_added",
+        properties: { seconds: 90, reason: "puryfi", source: "puryfi" }
+      )
+    end
+
     context "when chaster feature flag is disabled" do
       let(:feature_flag_overrides) { { "beta_action_chaster" => false } }
 

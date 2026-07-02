@@ -271,13 +271,20 @@ class ChasterService
   end
 
   def record_time_event(lock_id, seconds, source:, summary:, metadata:)
+    normalized_metadata = metadata.presence || {}
     @user.chaster_time_events.create!(
       chaster_lock_id: lock_id,
       seconds: seconds,
       source: source,
       summary: summary,
-      metadata: metadata.presence || {},
+      metadata: normalized_metadata,
       occurred_at: Time.current
+    )
+    PosthogProductAnalytics.time_added(
+      @user,
+      seconds: seconds,
+      reason: PosthogProductAnalytics.time_added_reason(source: source, metadata: normalized_metadata),
+      source: source
     )
   rescue ActiveRecord::ActiveRecordError => e
     Rails.logger.warn("Chaster time event not recorded for user=#{@user.id} lock=#{lock_id}: #{e.class}: #{e.message}")

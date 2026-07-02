@@ -6,6 +6,7 @@ class WallpaperScreenshotComparator
   ComparisonResult = Struct.new(
     :score, :status, :ssim, :dhash_distance, :mad,
     :cells_compared, :cells_skipped,
+    :algorithm, :strong_match_count, :strong_match_ratio, :peak_score,
     keyword_init: true
   )
 
@@ -16,24 +17,32 @@ class WallpaperScreenshotComparator
   BOTTOM_MARGIN_RATIO = 0.05
   GRID_COLS = 4
   GRID_ROWS = 6
+  LOCAL_MATCH_COLS = 8
+  LOCAL_MATCH_ROWS = 12
+  LOCAL_MATCH_NEIGHBOR_OFFSET = 1
   EDGE_DENSITY_THRESHOLD = 28.0
   CLOCK_ZONE_ROW_RATIO = 0.22
   CLOCK_ZONE_COL_START_RATIO = 0.25
   CLOCK_ZONE_COL_END_RATIO = 0.75
 
-  def initialize(wallpaper:, device:, timer: nil, screenshot:)
+  def initialize(wallpaper:, device:, timer: nil, screenshot:, algorithm: nil)
     @screenshot = screenshot
     @wallpaper = wallpaper
     @device = device
     @timer = timer
+    @algorithm = algorithm || AppSetting.wallpaper_verification_algorithm
   end
 
   def compare
     captured_image = measure(:load_screenshot) { load_attachment(@screenshot.image) }
     reference_image = measure(:load_wallpaper) { load_wallpaper_reference }
 
-    grid_metrics = measure(:compare_grid) { grid_metrics_for(captured_image, reference_image) }
-    classify(**grid_metrics)
+    case @algorithm
+    when "local_match"
+      measure(:compare_local_match) { compare_local_match(captured_image, reference_image) }
+    else
+      measure(:compare_grid) { compare_grid_fuzzy(captured_image, reference_image) }
+    end
   end
 
   def metrics_for(captured_image, reference_image, edges_only: false)
@@ -88,6 +97,16 @@ class WallpaperScreenshotComparator
     image.resize(scale, vscale: scale)
   end
 
+  def compare_grid_fuzzy(captured_image, reference_image)
+    grid_metrics = grid_metrics_for(captured_image, reference_image)
+    classify_grid_fuzzy(**grid_metrics)
+  end
+
+  def compare_local_match(captured_image, reference_image)
+    local_metrics = local_match_metrics_for(captured_image, reference_image)
+    classify_local_match(**local_metrics)
+  end
+
   def grid_metrics_for(captured_image, reference_image)
     captured_prep = preprocess_for_grid(captured_image)
     reference_prep = resize_to_match(preprocess_for_grid(reference_image), captured_prep)
@@ -106,7 +125,7 @@ class WallpaperScreenshotComparator
 
     GRID_ROWS.times do |row|
       GRID_COLS.times do |col|
-        if fixed_ui_mask?(row, col)
+        if fixed_ui_mask?(row, col, cols: GRID_COLS, rows: GRID_ROWS)
           cells_skipped += 1
           next
         end
@@ -121,22 +140,13 @@ class WallpaperScreenshotComparator
           next
         end
 
-        captured_norm = normalize_cell(captured_cell)
-        reference_norm = normalize_cell(reference_cell)
-
-        ssim = compute_ssim(captured_norm, reference_norm)
-        dhash_distance = hamming_distance(
-          compute_dhash(captured_norm),
-          compute_dhash(reference_norm)
-        )
-        mad = mean_absolute_difference(captured_norm, reference_norm)
-        score = composite_score(ssim, dhash_distance, mad)
+        cell_metrics = cell_metrics_for(captured_cell, reference_cell)
         weight = cell_w * cell_h
 
-        score_pairs << [score, weight]
-        ssim_pairs << [ssim, weight]
-        dhash_pairs << [dhash_distance, weight]
-        mad_pairs << [mad, weight]
+        score_pairs << [cell_metrics[:score], weight]
+        ssim_pairs << [cell_metrics[:ssim], weight]
+        dhash_pairs << [cell_metrics[:dhash_distance], weight]
+        mad_pairs << [cell_metrics[:mad], weight]
         cells_compared += 1
       end
     end
@@ -154,6 +164,147 @@ class WallpaperScreenshotComparator
       cells_compared: cells_compared,
       cells_skipped: cells_skipped
     }
+  end
+
+  def local_match_metrics_for(captured_image, reference_image)
+    captured_prep = preprocess_for_grid(captured_image)
+    reference_prep = resize_to_match(preprocess_for_grid(reference_image), captured_prep)
+
+    width = captured_prep.width
+    height = captured_prep.height
+    cell_w = width / LOCAL_MATCH_COLS
+    cell_h = height / LOCAL_MATCH_ROWS
+
+    cell_scores = []
+    strong_match_count = 0
+    cells_compared = 0
+    cells_skipped = 0
+
+    LOCAL_MATCH_ROWS.times do |row|
+      LOCAL_MATCH_COLS.times do |col|
+        if fixed_ui_mask?(row, col, cols: LOCAL_MATCH_COLS, rows: LOCAL_MATCH_ROWS)
+          cells_skipped += 1
+          next
+        end
+
+        x = col * cell_w
+        y = row * cell_h
+        captured_cell = captured_prep.crop(x, y, cell_w, cell_h)
+
+        if ui_cell?(captured_cell)
+          cells_skipped += 1
+          next
+        end
+
+        cell_metrics = best_neighbor_cell_metrics(
+          captured_cell,
+          reference_prep,
+          row,
+          col,
+          cell_w,
+          cell_h
+        )
+        cells_compared += 1
+        cell_scores << cell_metrics[:score]
+        strong_match_count += 1 if strong_match_cell?(**cell_metrics)
+      end
+    end
+
+    if cells_compared.zero?
+      fallback = metrics_for(captured_image, reference_image)
+      return fallback.merge(
+        cells_compared: 0,
+        cells_skipped: cells_skipped,
+        strong_match_count: 0,
+        strong_match_ratio: 0.0,
+        peak_score: fallback[:score],
+        p90_score: fallback[:score]
+      )
+    end
+
+    sorted_scores = cell_scores.sort
+    p90_index = [((cells_compared - 1) * 0.9).round, cells_compared - 1].max
+    peak_score = sorted_scores.last
+    p90_score = sorted_scores[p90_index]
+    strong_match_ratio = strong_match_count.to_f / cells_compared
+
+    {
+      score: local_match_display_score(
+        peak_score: peak_score,
+        p90_score: p90_score,
+        strong_match_ratio: strong_match_ratio
+      ),
+      ssim: p90_score,
+      dhash_distance: ((1.0 - p90_score) * 64).round,
+      mad: ((1.0 - p90_score) * 255).round(2),
+      cells_compared: cells_compared,
+      cells_skipped: cells_skipped,
+      strong_match_count: strong_match_count,
+      strong_match_ratio: strong_match_ratio.round(4),
+      peak_score: peak_score.round(4),
+      p90_score: p90_score.round(4)
+    }
+  end
+
+  def best_neighbor_cell_metrics(captured_cell, reference_prep, row, col, cell_w, cell_h)
+    best = { score: -1.0, ssim: 0.0, dhash_distance: 64, mad: 255.0 }
+
+    (-LOCAL_MATCH_NEIGHBOR_OFFSET..LOCAL_MATCH_NEIGHBOR_OFFSET).each do |drow|
+      (-LOCAL_MATCH_NEIGHBOR_OFFSET..LOCAL_MATCH_NEIGHBOR_OFFSET).each do |dcol|
+        ref_row = row + drow
+        ref_col = col + dcol
+        next if ref_row.negative? || ref_col.negative?
+        next if ref_row >= LOCAL_MATCH_ROWS || ref_col >= LOCAL_MATCH_COLS
+
+        x = ref_col * cell_w
+        y = ref_row * cell_h
+        reference_cell = reference_prep.crop(x, y, cell_w, cell_h)
+        cell_metrics = cell_metrics_for(captured_cell, reference_cell)
+        best = cell_metrics if cell_metrics[:score] > best[:score]
+      end
+    end
+
+    best
+  end
+
+  def cell_metrics_for(captured_cell, reference_cell)
+    captured_norm = normalize_cell(captured_cell)
+    reference_norm = normalize_cell(reference_cell)
+
+    ssim = compute_ssim(captured_norm, reference_norm)
+    dhash_distance = hamming_distance(
+      compute_dhash(captured_norm),
+      compute_dhash(reference_norm)
+    )
+    mad = mean_absolute_difference(captured_norm, reference_norm)
+    score = composite_score(ssim, dhash_distance, mad)
+
+    { ssim: ssim, dhash_distance: dhash_distance, mad: mad, score: score }
+  end
+
+  def strong_match_cell?(ssim:, dhash_distance:, mad:, score:)
+    strong_ssim = ENV.fetch("WALLPAPER_LOCAL_STRONG_SSIM", "0.82").to_f
+    strong_dhash = ENV.fetch("WALLPAPER_LOCAL_STRONG_DHASH", "10").to_i
+    strong_mad = ENV.fetch("WALLPAPER_LOCAL_STRONG_MAD", "22").to_f
+    moderate_ssim = ENV.fetch("WALLPAPER_LOCAL_MODERATE_SSIM", "0.72").to_f
+    moderate_dhash = ENV.fetch("WALLPAPER_LOCAL_MODERATE_DHASH", "14").to_i
+    moderate_mad = ENV.fetch("WALLPAPER_LOCAL_MODERATE_MAD", "28").to_f
+    strong_score = ENV.fetch("WALLPAPER_LOCAL_STRONG_SCORE", "0.78").to_f
+
+    return true if ssim >= strong_ssim
+    return true if dhash_distance <= strong_dhash && mad <= strong_mad
+    return true if ssim >= moderate_ssim && dhash_distance <= moderate_dhash && mad <= moderate_mad
+
+    score >= strong_score
+  end
+
+  def local_match_display_score(peak_score:, p90_score:, strong_match_ratio:)
+    ratio_boost = [strong_match_ratio * 4.0, 1.0].min
+    [
+      peak_score,
+      p90_score * 0.95,
+      ratio_boost
+    ].max.round(3)
   end
 
   def preprocess_for_grid(image)
@@ -201,10 +352,10 @@ class WallpaperScreenshotComparator
     )
   end
 
-  def fixed_ui_mask?(row, col)
-    clock_rows = 0..[(GRID_ROWS * CLOCK_ZONE_ROW_RATIO).floor - 1, 0].max
-    col_start = (GRID_COLS * CLOCK_ZONE_COL_START_RATIO).floor
-    col_end = [(GRID_COLS * CLOCK_ZONE_COL_END_RATIO).ceil - 1, GRID_COLS - 1].min
+  def fixed_ui_mask?(row, col, cols:, rows:)
+    clock_rows = 0..[(rows * CLOCK_ZONE_ROW_RATIO).floor - 1, 0].max
+    col_start = (cols * CLOCK_ZONE_COL_START_RATIO).floor
+    col_end = [(cols * CLOCK_ZONE_COL_END_RATIO).ceil - 1, cols - 1].min
     clock_cols = col_start..col_end
 
     clock_rows.cover?(row) && clock_cols.cover?(col)
@@ -327,7 +478,7 @@ class WallpaperScreenshotComparator
     ((ssim + dhash_similarity + mad_similarity) / 3.0).round(3)
   end
 
-  def classify(ssim:, dhash_distance:, mad:, score: nil, cells_compared: nil, cells_skipped: nil)
+  def classify_grid_fuzzy(ssim:, dhash_distance:, mad:, score: nil, cells_compared: nil, cells_skipped: nil)
     ssim_threshold = ENV.fetch("WALLPAPER_SSIM_THRESHOLD", "0.75").to_f
     dhash_threshold = ENV.fetch("WALLPAPER_DHASH_THRESHOLD", "15").to_i
     score_threshold = ENV.fetch("WALLPAPER_SCORE_THRESHOLD", "0.65").to_f
@@ -358,14 +509,108 @@ class WallpaperScreenshotComparator
       "mismatch"
     end
 
+    build_result(
+      algorithm: "grid_fuzzy",
+      score: score,
+      status: status,
+      ssim: ssim,
+      dhash_distance: dhash_distance,
+      mad: mad,
+      cells_compared: cells_compared,
+      cells_skipped: cells_skipped
+    )
+  end
+
+  def classify_local_match(
+    ssim:, dhash_distance:, mad:, score:, cells_compared:, cells_skipped:,
+    strong_match_count:, strong_match_ratio:, peak_score:, p90_score:
+  )
+    min_strong_cells = ENV.fetch("WALLPAPER_LOCAL_MIN_STRONG_CELLS", "2").to_i
+    min_strong_ratio = ENV.fetch("WALLPAPER_LOCAL_MIN_STRONG_RATIO", "0.06").to_f
+    peak_threshold = ENV.fetch("WALLPAPER_LOCAL_PEAK_SCORE", "0.85").to_f
+    p90_threshold = ENV.fetch("WALLPAPER_LOCAL_P90_SCORE", "0.72").to_f
+    p90_peak_min = ENV.fetch("WALLPAPER_LOCAL_P90_PEAK_MIN", "0.78").to_f
+    sparse_patch_peak_cap = ENV.fetch("WALLPAPER_LOCAL_SPARSE_PATCH_PEAK_CAP", "0.80").to_f
+    mismatch_p90 = ENV.fetch("WALLPAPER_LOCAL_MISMATCH_P90", "0.50").to_f
+    mismatch_peak = ENV.fetch("WALLPAPER_LOCAL_MISMATCH_PEAK", "0.60").to_f
+
+    sparse_patch_match = strong_match_count >= 2 &&
+                         strong_match_ratio < min_strong_ratio &&
+                         peak_score < sparse_patch_peak_cap
+
+    patch_verified = (strong_match_count >= min_strong_cells && strong_match_ratio >= min_strong_ratio) ||
+                     peak_score >= peak_threshold ||
+                     (p90_score >= p90_threshold &&
+                      strong_match_count >= 1 &&
+                      peak_score >= p90_peak_min &&
+                      !sparse_patch_match)
+    peak_band_verified = local_match_peak_band_verified?(
+      strong_match_count: strong_match_count,
+      peak_score: peak_score,
+      cells_compared: cells_compared
+    )
+
+    verified = patch_verified || peak_band_verified
+
+    clearly_mismatch = strong_match_count.zero? &&
+                       p90_score < mismatch_p90 &&
+                       peak_score < mismatch_peak
+
+    status = if verified && !clearly_mismatch
+      "verified"
+    else
+      "mismatch"
+    end
+
+    build_result(
+      algorithm: "local_match",
+      score: score,
+      status: status,
+      ssim: ssim,
+      dhash_distance: dhash_distance,
+      mad: mad,
+      cells_compared: cells_compared,
+      cells_skipped: cells_skipped,
+      strong_match_count: strong_match_count,
+      strong_match_ratio: strong_match_ratio,
+      peak_score: peak_score
+    )
+  end
+
+  def local_match_peak_band_verified?(strong_match_count:, peak_score:, cells_compared:)
+    return false unless strong_match_count.zero?
+
+    sparse_peak_min = ENV.fetch("WALLPAPER_LOCAL_SPARSE_PEAK_MIN", "0.70").to_f
+    sparse_cells_max = ENV.fetch("WALLPAPER_LOCAL_SPARSE_CELLS_MAX", "12").to_i
+    medium_peak_min = ENV.fetch("WALLPAPER_LOCAL_MEDIUM_PEAK_MIN", "0.72").to_f
+    medium_cells_max = ENV.fetch("WALLPAPER_LOCAL_MEDIUM_CELLS_MAX", "16").to_i
+    wide_peak_min = ENV.fetch("WALLPAPER_LOCAL_WIDE_PEAK_MIN", "0.66").to_f
+    wide_cells_min = ENV.fetch("WALLPAPER_LOCAL_WIDE_CELLS_MIN", "20").to_i
+    wide_cells_max = ENV.fetch("WALLPAPER_LOCAL_WIDE_CELLS_MAX", "25").to_i
+
+    return true if peak_score >= sparse_peak_min && cells_compared <= sparse_cells_max
+    return true if peak_score >= medium_peak_min && cells_compared <= medium_cells_max
+    return true if peak_score >= wide_peak_min &&
+                   cells_compared >= wide_cells_min &&
+                   cells_compared <= wide_cells_max
+
+    false
+  end
+
+  def build_result(algorithm:, score:, status:, ssim:, dhash_distance:, mad:, cells_compared:, cells_skipped:,
+                   strong_match_count: nil, strong_match_ratio: nil, peak_score: nil)
     ComparisonResult.new(
       score: score,
       status: status,
-      ssim: ssim.round(4),
+      ssim: ssim.is_a?(Float) ? ssim.round(4) : ssim,
       dhash_distance: dhash_distance,
-      mad: mad.round(2),
+      mad: mad.is_a?(Float) ? mad.round(2) : mad,
       cells_compared: cells_compared,
-      cells_skipped: cells_skipped
+      cells_skipped: cells_skipped,
+      algorithm: algorithm,
+      strong_match_count: strong_match_count,
+      strong_match_ratio: strong_match_ratio,
+      peak_score: peak_score
     )
   end
 

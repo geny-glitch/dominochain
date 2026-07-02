@@ -50,6 +50,9 @@ RSpec.describe "Admin wallpaper pairs", type: :request do
 
         expect(response).to have_http_status(:ok)
         expect(response.body).to include("Screenshot ##{screenshot.id}")
+        expect(response.body).to include("ds-wallpaper-pairs-table")
+        expect(response.body).to include("Run")
+        expect(response.body).to include('name="algorithm"')
       end
 
       it "filters to all pairs when requested" do
@@ -122,6 +125,51 @@ RSpec.describe "Admin wallpaper pairs", type: :request do
 
       expect(response).to redirect_to(admin_wallpaper_pairs_path)
       expect(WallpaperPairReview.find_by(device_screenshot: screenshot)).to be_nil
+    end
+  end
+
+  describe "POST /admin/wallpaper_pairs/:id/run_algorithm" do
+    let(:screenshot) { create(:device_screenshot, device: device, wallpaper: wallpaper) }
+
+    before do
+      attach_labelable_pair(screenshot)
+      sign_in admin
+    end
+
+    it "runs the requested algorithm and stores the result" do
+      post admin_wallpaper_pair_run_algorithm_path(screenshot),
+        params: { algorithm: "local_match" },
+        headers: modern_headers
+
+      expect(response).to redirect_to(admin_wallpaper_pairs_path)
+      comparison = WallpaperAlgorithmComparison.find_by!(device_screenshot: screenshot, algorithm: "local_match")
+      expect(comparison.status).to eq("verified")
+      expect(comparison.score).to be >= 0.85
+    end
+
+    it "shows stored algorithm results on the pairs page" do
+      WallpaperAlgorithmComparison.create!(
+        device_screenshot: screenshot,
+        algorithm: "grid_fuzzy",
+        status: "verified",
+        score: 0.91,
+        compared_at: Time.current
+      )
+
+      get admin_wallpaper_pairs_path(filter: "all"), headers: modern_headers
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Grid fuzzy")
+      expect(response.body).to include("verified · 91%")
+    end
+
+    it "rejects unknown algorithms" do
+      post admin_wallpaper_pair_run_algorithm_path(screenshot),
+        params: { algorithm: "unknown" },
+        headers: modern_headers
+
+      expect(response).to redirect_to(admin_wallpaper_pairs_path)
+      expect(WallpaperAlgorithmComparison.count).to eq(0)
     end
   end
 end

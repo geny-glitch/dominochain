@@ -35,7 +35,10 @@ class AdminController < ApplicationController
   def update_settings
     @app_setting = AppSetting.instance
     @app_setting ||= AppSetting.create!(influencer_names: "")
-    if @app_setting.update(influencer_names: params[:influencer_names])
+    if @app_setting.update(
+      influencer_names: params[:influencer_names],
+      wallpaper_verification_algorithm: params[:wallpaper_verification_algorithm]
+    )
       WikimediaCommonsService.fetch_and_store_all
       redirect_to admin_settings_path, notice: t("flash.admin.settings_saved")
     else
@@ -84,6 +87,37 @@ class AdminController < ApplicationController
 
     offset = (@page - 1) * WALLPAPER_PAIRS_PER_PAGE
     @pairs = scope.offset(offset).limit(WALLPAPER_PAIRS_PER_PAGE)
+    @comparisons_by_screenshot_and_algorithm = wallpaper_algorithm_comparisons_for(@pairs)
+    @active_verification_algorithm = AppSetting.wallpaper_verification_algorithm
+  end
+
+  def wallpaper_pair_run_algorithm
+    screenshot = DeviceScreenshot.labelable.find(params[:id])
+    algorithm = params[:algorithm].to_s
+    unless AppSetting::WALLPAPER_VERIFICATION_ALGORITHMS.key?(algorithm)
+      redirect_to admin_wallpaper_pairs_path(filter: params[:filter], page: params[:page]),
+        alert: t("flash.admin.wallpaper_algorithm_invalid")
+      return
+    end
+
+    WallpaperAlgorithmComparisonRunner.new(screenshot: screenshot, algorithm: algorithm).run!
+
+    redirect_to admin_wallpaper_pairs_path(filter: params[:filter], page: params[:page]),
+      notice: t("flash.admin.wallpaper_algorithm_ran", algorithm: AppSetting::WALLPAPER_VERIFICATION_ALGORITHMS.fetch(algorithm))
+  rescue WallpaperAlgorithmComparisonRunner::PreviewNotReady
+    redirect_to admin_wallpaper_pairs_path(filter: params[:filter], page: params[:page]),
+      alert: t("flash.admin.wallpaper_algorithm_preview_not_ready")
+  rescue WallpaperAlgorithmComparisonRunner::CompareTimeout
+    redirect_to admin_wallpaper_pairs_path(filter: params[:filter], page: params[:page]),
+      alert: t("flash.admin.wallpaper_algorithm_timeout")
+  rescue ActiveRecord::StatementInvalid, ActiveRecord::RecordInvalid => e
+    Rails.logger.error("[Admin] wallpaper algorithm comparison failed screenshot=#{screenshot&.id}: #{e.class}: #{e.message}")
+    redirect_to admin_wallpaper_pairs_path(filter: params[:filter], page: params[:page]),
+      alert: t("flash.admin.wallpaper_algorithm_failed")
+  rescue StandardError => e
+    Rails.logger.error("[Admin] wallpaper algorithm comparison failed screenshot=#{screenshot&.id}: #{e.class}: #{e.message}")
+    redirect_to admin_wallpaper_pairs_path(filter: params[:filter], page: params[:page]),
+      alert: t("flash.admin.wallpaper_algorithm_failed")
   end
 
   def wallpaper_pair_review
@@ -120,6 +154,7 @@ class AdminController < ApplicationController
         :device,
         :wallpaper,
         :wallpaper_pair_review,
+        :wallpaper_algorithm_comparisons,
         image_attachment: :blob,
         wallpaper: { image_attachment: :blob }
       )
@@ -127,5 +162,14 @@ class AdminController < ApplicationController
 
     scope = scope.unreviewed if params[:filter] != "all"
     scope
+  end
+
+  def wallpaper_algorithm_comparisons_for(pairs)
+    screenshot_ids = pairs.map(&:id)
+    return {} if screenshot_ids.empty?
+
+    WallpaperAlgorithmComparison
+      .where(device_screenshot_id: screenshot_ids)
+      .index_by { |comparison| [comparison.device_screenshot_id, comparison.algorithm] }
   end
 end

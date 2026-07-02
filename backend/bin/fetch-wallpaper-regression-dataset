@@ -24,6 +24,7 @@ EOF
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 EXPORT_RB="$ROOT/script/export_staging_wallpaper_pair.rb"
+DOWNLOAD_RB="$ROOT/script/download_staging_blob.rb"
 FIXTURES_ROOT="$ROOT/spec/fixtures/files/wallpaper_pairs"
 
 APP="bg-backend-staging"
@@ -54,11 +55,38 @@ if [[ ! -f "$EXPORT_RB" ]]; then
   exit 1
 fi
 
+if [[ ! -f "$DOWNLOAD_RB" ]]; then
+  echo "Missing download script: $DOWNLOAD_RB" >&2
+  exit 1
+fi
+
+DOWNLOAD_RB_B64="$(base64 < "$DOWNLOAD_RB" | tr -d '\n')"
+
+download_blob_via_fly() {
+  local blob_key="$1"
+  local output_path="$2"
+  local raw encoded
+
+  raw="$(fly ssh console -a "$APP" </dev/null -C "sh -c 'echo ${DOWNLOAD_RB_B64} | base64 -d > /tmp/wp_dl.rb && bin/rails runner /tmp/wp_dl.rb ${blob_key}'" 2>&1)" || {
+    echo "fly ssh failed for blob ${blob_key}" >&2
+    return 1
+  }
+
+  encoded="$(printf '%s\n' "$raw" | awk '/B64_START/{flag=1;next} /B64_END/{flag=0} flag && /^[A-Za-z0-9+\/=]+$/{printf "%s", $0}')"
+
+  if [[ -z "$encoded" ]]; then
+    echo "Failed to download blob ${blob_key}" >&2
+    return 1
+  fi
+
+  printf '%s' "$encoded" | base64 -d > "$output_path"
+}
+
 PAYLOAD_B64="$(base64 < "$EXPORT_RB" | tr -d '\n')"
 ENV_PREFIX="FLY_APP=${APP} EXPORT_LABELED=1"
 [[ "$EXCLUDE_IGNORED" -eq 1 ]] && ENV_PREFIX="${ENV_PREFIX} EXCLUDE_IGNORED=1"
 
-JSON="$(fly ssh console -a "$APP" -C "sh -c 'echo ${PAYLOAD_B64} | base64 -d > /tmp/wp_export.rb && ${ENV_PREFIX} bin/rails runner /tmp/wp_export.rb'" 2>&1 | awk '/^\{/{found=1} found')"
+JSON="$(fly ssh console -a "$APP" </dev/null -C "sh -c 'echo ${PAYLOAD_B64} | base64 -d > /tmp/wp_export.rb && ${ENV_PREFIX} bin/rails runner /tmp/wp_export.rb'" 2>&1 | awk '/^\{/{found=1} found')"
 
 if [[ -z "$JSON" ]]; then
   echo "No JSON received from staging export" >&2
@@ -82,13 +110,15 @@ if [[ "$PAIR_COUNT" -eq 0 ]]; then
 fi
 
 declare -a EXPORTED_DIRS=()
+PAIRS_FILE="$(mktemp)"
+trap 'rm -f "$PAIRS_FILE"' EXIT
+jq -c '.pairs[]' <<<"$JSON" > "$PAIRS_FILE"
 
 while IFS= read -r pair_json; do
   screenshot_id="$(jq -r '.device_screenshot_id' <<<"$pair_json")"
-  status="$(jq -r '.expected_verification_status' <<<"$pair_json")"
-  out_dir="$FIXTURES_ROOT/${status}/screenshot_${screenshot_id}"
+  expected_status="$(jq -r '.expected_verification_status' <<<"$pair_json")"
+  out_dir="$FIXTURES_ROOT/${expected_status}/screenshot_${screenshot_id}"
   mkdir -p "$out_dir"
-  EXPORTED_DIRS+=("$out_dir")
 
   ref_ct="$(jq -r '.wallpaper.content_type // empty' <<<"$pair_json")"
   ss_ct="$(jq -r '.screenshot.content_type // empty' <<<"$pair_json")"
@@ -100,8 +130,14 @@ while IFS= read -r pair_json; do
   reference_file="reference${reference_ext}"
   screenshot_file="screenshot${screenshot_ext}"
 
-  curl -fsSL "$(jq -r '.wallpaper.download_url' <<<"$pair_json")" -o "$out_dir/$reference_file"
-  curl -fsSL "$(jq -r '.screenshot.download_url' <<<"$pair_json")" -o "$out_dir/$screenshot_file"
+  if ! download_blob_via_fly "$(jq -r '.wallpaper.blob_key' <<<"$pair_json")" "$out_dir/$reference_file"; then
+    rm -rf "$out_dir"
+    continue
+  fi
+  if ! download_blob_via_fly "$(jq -r '.screenshot.blob_key' <<<"$pair_json")" "$out_dir/$screenshot_file"; then
+    rm -rf "$out_dir"
+    continue
+  fi
 
   jq \
     --arg reference "$reference_file" \
@@ -110,8 +146,9 @@ while IFS= read -r pair_json; do
      .files = {reference: $reference, screenshot: $screenshot}' \
     <<<"$pair_json" > "$out_dir/manifest.json"
 
-  echo "Saved $status/screenshot_${screenshot_id}"
-done < <(jq -c '.pairs[]' <<<"$JSON")
+  EXPORTED_DIRS+=("$out_dir")
+  echo "Saved ${expected_status}/screenshot_${screenshot_id}"
+done < "$PAIRS_FILE"
 
 if [[ "$SYNC" -eq 1 ]]; then
   for status in verified mismatch ignored; do

@@ -60,7 +60,7 @@ module WallpaperVerificationTestImages
     path = Rails.root.join("spec/fixtures/files", filename)
     record.public_send(attachment_name).attach(
       io: File.open(path, "rb"),
-      filename: filename,
+      filename: File.basename(filename),
       content_type: Marcel::MimeType.for(path)
     )
   end

@@ -12,6 +12,11 @@ fr:
       feature_flags_cache_invalidation_failed: "Echec de l'invalidation du cache des feature flags."
       wallpaper_pair_reviewed: "Paire étiquetée : %{status}."
       wallpaper_pair_invalid_status: "Statut de revue invalide."
+      wallpaper_algorithm_ran: "Algorithme exécuté : %{algorithm}."
+      wallpaper_algorithm_invalid: "Algorithme de comparaison inconnu."
+      wallpaper_algorithm_preview_not_ready: "Les previews ne sont pas prêtes. Réessayez dans quelques secondes."
+      wallpaper_algorithm_timeout: "Comparaison expirée."
+      wallpaper_algorithm_failed: "Échec de la comparaison."
     chaster:
       oauth_invalid_state: "Connexion Chaster annulée (état invalide)."
       oauth_error: "Chaster : %{message}"

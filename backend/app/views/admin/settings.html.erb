@@ -22,6 +22,17 @@
         <%= text_area_tag :influencer_names, @app_setting&.influencer_names, rows: 25, class: "ds-form-textarea", placeholder: t("admin_settings.influencer_names_placeholder") %>
       </div>
 
+      <div class="ds-form-group">
+        <%= label_tag :wallpaper_verification_algorithm, t("admin_settings.wallpaper_algorithm_label"), class: "ds-form-label" %>
+        <%= select_tag :wallpaper_verification_algorithm,
+          options_for_select(
+            AppSetting::WALLPAPER_VERIFICATION_ALGORITHMS.map { |value, label| [label, value] },
+            @app_setting&.wallpaper_verification_algorithm || AppSetting::DEFAULT_WALLPAPER_VERIFICATION_ALGORITHM
+          ),
+          class: "ds-form-select" %>
+        <p class="ds-admin-hint"><%= t("admin_settings.wallpaper_algorithm_hint") %></p>
+      </div>
+
       <div class="ds-form-actions">
         <%= submit_tag t("admin_settings.save"), class: "ds-btn ds-btn--primary" %>
         <%= link_to t("admin_settings.back"), admin_path, class: "ds-btn ds-btn--secondary" %>

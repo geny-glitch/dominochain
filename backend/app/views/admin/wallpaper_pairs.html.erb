@@ -1,12 +1,15 @@
 <% content_for :title, t("admin_wallpaper_pairs.page_title") %>
 
-<div class="ds-review">
+<div class="ds-review ds-wallpaper-pairs-page">
   <div class="ds-review__bg" aria-hidden="true"></div>
 
   <div class="ds-review__content">
-    <header class="ds-review__header">
-      <%= link_to t("admin_wallpaper_pairs.back_admin"), admin_path, class: "ds-btn ds-btn--ghost ds-btn--sm" %>
-      <h1 class="ds-review__title"><%= t("admin_wallpaper_pairs.title") %></h1>
+    <header class="ds-review__header ds-wallpaper-pairs-page__header">
+      <div>
+        <%= link_to t("admin_wallpaper_pairs.back_admin"), admin_path, class: "ds-btn ds-btn--ghost ds-btn--sm" %>
+        <h1 class="ds-review__title"><%= t("admin_wallpaper_pairs.title") %></h1>
+        <p class="ds-review__subtitle"><%= t("admin_wallpaper_pairs.subtitle", algorithm: AppSetting::WALLPAPER_VERIFICATION_ALGORITHMS.fetch(@active_verification_algorithm)) %></p>
+      </div>
     </header>
 
     <nav class="ds-review__filters" aria-label="<%= t("admin_wallpaper_pairs.title") %>">
@@ -19,8 +22,31 @@
     </nav>
 
     <% if @pairs.any? %>
-      <div class="ds-review__grid ds-wallpaper-pairs__grid">
-        <%= render partial: "admin/wallpaper_pair", collection: @pairs, as: :screenshot %>
+      <div class="ds-wallpaper-pairs-table-wrap">
+        <table class="ds-wallpaper-pairs-table">
+          <thead>
+            <tr>
+              <th scope="col"><%= t("admin_wallpaper_pairs.screenshot_label") %></th>
+              <th scope="col"><%= t("admin_wallpaper_pairs.reference_label") %></th>
+              <th scope="col"><%= t("admin_wallpaper_pairs.column_pair") %></th>
+              <th scope="col"><%= t("admin_wallpaper_pairs.column_production") %></th>
+              <% AppSetting::WALLPAPER_VERIFICATION_ALGORITHMS.each_value do |algorithm_label| %>
+                <th scope="col"><%= algorithm_label %></th>
+              <% end %>
+              <th scope="col"><%= t("admin_wallpaper_pairs.column_review") %></th>
+            </tr>
+          </thead>
+          <tbody>
+            <%= render partial: "admin/wallpaper_pair_row",
+              collection: @pairs,
+              as: :screenshot,
+              locals: {
+                comparisons_by_screenshot_and_algorithm: @comparisons_by_screenshot_and_algorithm,
+                filter: @filter,
+                page: @page
+              } %>
+          </tbody>
+        </table>
       </div>
 
       <% if @total_pages > 1 %>

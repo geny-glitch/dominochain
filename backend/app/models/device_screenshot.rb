@@ -6,6 +6,7 @@ class DeviceScreenshot < ApplicationRecord
   belongs_to :device
   belongs_to :wallpaper, optional: true
   has_one :wallpaper_pair_review, dependent: :destroy
+  has_many :wallpaper_algorithm_comparisons, dependent: :destroy
 
   has_one_attached :image do |attachable|
     ImagePreviewVariant::AttachmentConfig.call(attachable)

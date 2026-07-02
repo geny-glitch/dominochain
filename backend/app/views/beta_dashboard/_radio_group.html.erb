@@ -1,0 +1,21 @@
+<%# locals: (name:, options:, selected:, legend: nil, group_data: {}, option_hints: {}) %>
+<fieldset class="ds-radio-group" <%= tag.attributes(group_data) if group_data.present? %>>
+  <% if legend.present? %>
+    <legend class="ds-radio-group__legend"><%= legend %></legend>
+  <% end %>
+  <% options.each do |value, label| %>
+    <% input_id = "#{name}_#{value}" %>
+    <% hint = option_hints[value] || option_hints[value.to_s] || option_hints[value.to_sym] %>
+    <label class="ds-radio-option" for="<%= input_id %>">
+      <%= radio_button_tag name, value, selected.to_s == value.to_s,
+            id: input_id,
+            class: "ds-radio-option__input" %>
+      <span class="ds-radio-option__content">
+        <span class="ds-radio-option__label"><%= label %></span>
+        <% if hint.present? %>
+          <span class="ds-radio-option__hint"><%= hint %></span>
+        <% end %>
+      </span>
+    </label>
+  <% end %>
+</fieldset>

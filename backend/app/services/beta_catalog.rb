@@ -65,7 +65,7 @@ class BetaCatalog
     "showcase_backdoor" => "showcase",
     "strava_goal" => "strava",
     "cigarette" => "cigarettes",
-    "api_chaster" => "puryfi",
+    "puryfi" => "puryfi",
     "wallpaper" => "wallpaper"
   }.freeze
 

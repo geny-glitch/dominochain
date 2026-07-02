@@ -7,6 +7,10 @@ FactoryBot.define do
     check_interval_minutes { 60 }
     dismiss_apps_before_capture { true }
     mismatch_delay_minutes { 30 }
+    mismatch_sanction_mode { WallpaperEnforcementConfig::SANCTION_MODE_STRICT }
+    mismatch_consecutive_threshold { 3 }
+    mismatch_recheck_count { 0 }
+    mismatch_consecutive_count { 0 }
     permissions_lost_delay_minutes { 0 }
     app_unreachable_delay_minutes { 0 }
     app_unreachable_threshold_minutes { 120 }

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_07_02_130000) do
+ActiveRecord::Schema[7.2].define(version: 2026_07_02_140000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -555,6 +555,10 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_02_130000) do
     t.integer "app_unreachable_delay_minutes", default: 0, null: false
     t.datetime "permissions_lost_since"
     t.datetime "app_unreachable_since"
+    t.string "mismatch_sanction_mode", default: "strict", null: false
+    t.integer "mismatch_consecutive_threshold", default: 3, null: false
+    t.integer "mismatch_recheck_count", default: 0, null: false
+    t.integer "mismatch_consecutive_count", default: 0, null: false
     t.index ["user_id"], name: "index_wallpaper_enforcement_configs_on_user_id", unique: true
   end
 

@@ -38,6 +38,61 @@ RSpec.describe "API chaster add_time", type: :request do
     expect(PostHog).not_to have_received(:capture)
   end
 
+  context "when authenticated with the PuryFi plugin token" do
+    let(:plugin_token) { "puryfi-test-token" }
+    let(:puryfi_headers) { { "Authorization" => "Bearer #{plugin_token}" } }
+    let(:service) { instance_double(ChasterService, current_lock: { id: "lock-puryfi" }) }
+
+    before do
+      beta.update!(
+        puryfi_plugin_token: plugin_token,
+        chaster_access_token: "chaster-token",
+        beta_ui_prefs: {
+          "catalog_visibility" => {
+            "sources" => { "puryfi" => true },
+            "actions" => { "chaster" => true }
+          }
+        }
+      )
+      allow(service).to receive(:add_time_to_lock)
+      allow(ChasterService).to receive(:new).with(beta).and_return(service)
+    end
+
+    it "records a chaster time event with source puryfi" do
+      post api_chaster_add_time_path, params: { seconds: 90 }, headers: puryfi_headers, as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(service).to have_received(:add_time_to_lock).with(
+        "lock-puryfi",
+        90,
+        source: "puryfi",
+        summary: I18n.t("chaster.time_events.summaries.puryfi"),
+        metadata: {}
+      )
+    end
+
+    context "when the puryfi source is disabled in catalog" do
+      before do
+        beta.update!(
+          beta_ui_prefs: {
+            "catalog_visibility" => {
+              "sources" => { "puryfi" => false },
+              "actions" => { "chaster" => true }
+            }
+          }
+        )
+      end
+
+      it "does not add Chaster time" do
+        post api_chaster_add_time_path, params: { seconds: 90 }, headers: puryfi_headers, as: :json
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(JSON.parse(response.body)).to include("error" => "Source ou action désactivée.")
+        expect(service).not_to have_received(:add_time_to_lock)
+      end
+    end
+  end
+
   context "when source feature flag is disabled" do
     let(:feature_flag_overrides) { { "beta_source_puryfi" => false } }
     let(:service) { instance_double(ChasterService, current_lock: { id: "lock-1" }) }

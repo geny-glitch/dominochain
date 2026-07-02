@@ -27,7 +27,7 @@ module BetaEvents
         ]
       when [ :strava_goal, :failed_penalty ]
         [ Actions::ChasterAddTimeFromEvent ]
-      when [ :api_chaster, :add_time ]
+      when [ :api_chaster, :add_time ], [ :puryfi, :add_time ]
         [ Actions::ChasterAddTimeFromEvent ]
       when [ :cigarette, :smoked_add_time ]
         [ Actions::ChasterAddTimeFromEvent ]

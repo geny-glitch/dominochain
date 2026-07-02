@@ -61,7 +61,7 @@ class WallpaperEnforcementEvaluator
     when "verified"
       sanctions.concat(handle_verified!(config, reference_time))
     when "mismatch"
-      sanctions.concat(handle_mismatch!(config, reference_time))
+      sanctions.concat(handle_mismatch!(config, device, reference_time))
     when "inconclusive", "skipped", "pending"
       status = verification_status == "pending" ? "pending_screenshot" : verification_status
     end
@@ -106,7 +106,58 @@ class WallpaperEnforcementEvaluator
     sanctions
   end
 
-  def handle_mismatch!(config, reference_time)
+  def handle_mismatch!(config, device, reference_time)
+    case config.mismatch_sanction_mode
+    when WallpaperEnforcementConfig::SANCTION_MODE_DOUBLE_CHECK
+      handle_mismatch_double_check!(config, device, reference_time)
+    when WallpaperEnforcementConfig::SANCTION_MODE_CONSECUTIVE_FAILURES
+      handle_mismatch_consecutive_failures!(config, reference_time)
+    else
+      handle_mismatch_strict!(config, reference_time)
+    end
+  end
+
+  def handle_mismatch_double_check!(config, device, reference_time)
+    if config.mismatch_recheck_count < WallpaperEnforcementConfig::MAX_DOUBLE_CHECK_RECHECKS
+      config.increment!(:mismatch_recheck_count)
+      WallpaperMismatchRecheckJob.set(wait: WallpaperMismatchRecheckJob::DOUBLE_CHECK_WAIT).perform_later(device.id)
+      return []
+    end
+
+    handle_mismatch_strict!(config, reference_time)
+  end
+
+  def handle_mismatch_consecutive_failures!(config, reference_time)
+    sanctions = []
+    config.mismatch_since ||= reference_time
+    config.mismatch_consecutive_count += 1
+    config.save! if config.changed?
+
+    threshold = config.mismatch_consecutive_threshold
+    return sanctions if config.mismatch_consecutive_count < threshold
+
+    chaster_multiplier = threshold
+    sanctions.concat(apply_scenario_sanctions!(
+      config: config,
+      sanction: config.mismatch_sanction_object,
+      reference_time: reference_time,
+      details: {},
+      kinds: {
+        chaster_add_time: :mismatch_add_time,
+        chaster_freeze: :mismatch_freeze,
+        pishock: :mismatch_pishock
+      },
+      track_freeze: true,
+      chaster_seconds_multiplier: chaster_multiplier
+    ))
+    config.update!(
+      add_time_sanction_applied_at: reference_time,
+      mismatch_consecutive_count: 0
+    )
+    sanctions
+  end
+
+  def handle_mismatch_strict!(config, reference_time)
     sanctions = []
     config.mismatch_since ||= reference_time
     config.save! if config.changed?
@@ -200,17 +251,18 @@ class WallpaperEnforcementEvaluator
     duration >= delay_minutes.minutes
   end
 
-  def apply_scenario_sanctions!(config:, sanction:, reference_time:, details:, kinds:, track_freeze:)
+  def apply_scenario_sanctions!(config:, sanction:, reference_time:, details:, kinds:, track_freeze:, chaster_seconds_multiplier: 1)
     sanctions = []
 
     if sanction.chaster_add_time_active?
+      chaster_seconds = sanction.chaster_seconds.to_i * chaster_seconds_multiplier
       sanctions.concat(apply_single_sanction!(
         config: config,
         action: "chaster_add_time",
         kind: kinds[:chaster_add_time],
         reference_time: reference_time,
         details: details,
-        chaster_seconds: sanction.chaster_seconds
+        chaster_seconds: chaster_seconds
       ))
     end
 

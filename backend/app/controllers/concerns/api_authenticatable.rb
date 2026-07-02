@@ -32,10 +32,15 @@ module ApiAuthenticatable
     if user
       @current_user = user
       @current_device = nil
+      @authenticated_via_puryfi_plugin_token = true
       return
     end
 
     head :unauthorized
+  end
+
+  def authenticated_via_puryfi_plugin_token?
+    @authenticated_via_puryfi_plugin_token == true
   end
 
   def current_device

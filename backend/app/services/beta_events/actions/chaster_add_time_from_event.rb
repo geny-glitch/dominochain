@@ -58,6 +58,7 @@ module BetaEvents
         when :showcase_game then "showcase_game"
         when :showcase_backdoor then "showcase_backdoor"
         when :wallpaper then "wallpaper"
+        when :puryfi then "puryfi"
         else "api"
         end
       end

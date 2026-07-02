@@ -21,6 +21,7 @@ en:
       summaries:
         default: "Timer updated"
         api: "Manual add from the app"
+        puryfi: "PuryFi detection"
         cigarette: "Cigarette logged"
         showcase_game: "%{game}"
         showcase_game_tetris: "%{game} — %{lines} lines"

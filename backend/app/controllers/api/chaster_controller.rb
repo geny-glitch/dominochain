@@ -79,9 +79,10 @@ module Api
 
     def add_time
       seconds = params[:seconds].to_i
+      event_source = authenticated_via_puryfi_plugin_token? ? :puryfi : :api_chaster
       event = BetaEvents::DomainEvent.new(
         beta: current_user,
-        source: :api_chaster,
+        source: event_source,
         kind: :add_time,
         payload: { seconds: seconds }
       )

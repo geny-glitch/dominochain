@@ -77,22 +77,20 @@
 <section class="ds-beta-section ds-beta-section--tight-top">
   <h2 class="ds-section-title"><%= t("beta.integration_sections.configuration") %></h2>
   <div class="ds-beta-control-card">
-    <p class="ds-beta-control-hint">
-      <%= t("beta.wallpaper_source.actions_hint_html", chaster: link_to(t("beta.catalog.actions.chaster.label"), beta_actions_chaster_path, class: "ds-inline-link"), pishock: link_to(t("beta.catalog.actions.pishock.label"), beta_actions_pishock_path, class: "ds-inline-link")).html_safe %>
-    </p>
-
-    <%= form_with url: beta_wallpaper_enforcement_path, method: :patch, local: true, class: "ds-form", data: { turbo: false } do %>
-      <div class="ds-form-group">
-        <label class="ds-form-label ds-beta-catalog-toggle" for="wallpaper_enforcement_enabled">
+    <%= form_with url: beta_wallpaper_enforcement_path, method: :patch, local: true, class: "ds-wallpaper-enforcement-toggle-form", data: { turbo: false, wallpaper_enforcement_toggle_form: true } do %>
+      <div class="ds-form-group ds-wallpaper-enforcement-master">
+        <label class="ds-beta-catalog-toggle ds-beta-catalog-toggle--lg" for="wallpaper_enforcement_enabled">
           <%= hidden_field_tag :enabled, "0" %>
-          <%= check_box_tag :enabled, "1", @config.enabled, id: "wallpaper_enforcement_enabled", class: "ds-beta-catalog-toggle-input" %>
+          <%= check_box_tag :enabled, "1", @config.enabled, id: "wallpaper_enforcement_enabled", class: "ds-beta-catalog-toggle-input", data: { wallpaper_enforcement_master: true } %>
           <span class="ds-beta-catalog-toggle-switch" aria-hidden="true"></span>
-          <span><%= t("beta.wallpaper_source.enabled") %></span>
+          <span class="ds-wallpaper-enforcement-master-label"><%= t("beta.wallpaper_source.enabled") %></span>
         </label>
-        <p class="ds-beta-control-hint"><%= t("beta.wallpaper_source.enabled_save_hint") %></p>
       </div>
+    <% end %>
 
-      <div class="ds-form-group">
+    <%= form_with url: beta_wallpaper_enforcement_path, method: :patch, local: true, class: "ds-form", data: { turbo: false, wallpaper_enforcement_form: true } do %>
+      <div data-wallpaper-enforcement-options<%= " hidden" unless @config.enabled %>>
+        <div class="ds-form-group">
         <%= label_tag :check_interval_minutes, t("beta.wallpaper_source.check_interval"), class: "ds-form-label" %>
         <%= number_field_tag :check_interval_minutes, @config.check_interval_minutes, min: WallpaperEnforcementConfig::MIN_INTERVAL_MINUTES, max: WallpaperEnforcementConfig::MAX_INTERVAL_MINUTES, class: "ds-input" %>
       </div>
@@ -106,17 +104,37 @@
         </label>
       </div>
 
+      <h3 class="ds-section-subtitle"><%= t("beta.wallpaper_source.mismatch_title") %></h3>
+
       <div class="ds-form-group">
-        <%= label_tag :app_unreachable_threshold_minutes, t("beta.wallpaper_source.unreachable_threshold"), class: "ds-form-label" %>
-        <%= number_field_tag :app_unreachable_threshold_minutes, @config.app_unreachable_threshold_minutes, min: WallpaperEnforcementConfig::MIN_UNREACHABLE_MINUTES, max: WallpaperEnforcementConfig::MAX_UNREACHABLE_MINUTES, class: "ds-input" %>
+        <%= render "radio_group",
+              name: :mismatch_sanction_mode,
+              legend: t("beta.wallpaper_source.mismatch_sanction_mode"),
+              selected: @config.mismatch_sanction_mode,
+              options: WallpaperEnforcementConfig::SANCTION_MODES.index_with { |mode|
+                t("beta.wallpaper_source.mismatch_sanction_modes.#{mode}")
+              },
+              option_hints: WallpaperEnforcementConfig::SANCTION_MODES.index_with { |mode|
+                t("beta.wallpaper_source.mismatch_sanction_mode_hints.#{mode}")
+              },
+              group_data: { mismatch_mode_control: true } %>
       </div>
 
-      <h3 class="ds-section-subtitle"><%= t("beta.wallpaper_source.mismatch_title") %></h3>
+      <div class="ds-form-group" data-mismatch-mode-field="consecutive_failures" hidden>
+        <%= label_tag :mismatch_consecutive_threshold, t("beta.wallpaper_source.mismatch_consecutive_threshold"), class: "ds-form-label" %>
+        <%= number_field_tag :mismatch_consecutive_threshold,
+              @config.mismatch_consecutive_threshold,
+              min: WallpaperEnforcementConfig::MIN_CONSECUTIVE_THRESHOLD,
+              max: WallpaperEnforcementConfig::MAX_CONSECUTIVE_THRESHOLD,
+              class: "ds-input" %>
+      </div>
+
       <%= render "wallpaper_scenario_sanction_fields",
             field_prefix: "mismatch_sanction",
             sanction: @config.mismatch_sanction,
             delay_field: :mismatch_delay_minutes,
-            delay_value: @config.mismatch_delay_minutes %>
+            delay_value: @config.mismatch_delay_minutes,
+            delay_container_data: { mismatch_mode_field: "delay" } %>
 
       <h3 class="ds-section-subtitle"><%= t("beta.wallpaper_source.permissions_lost_title") %></h3>
       <%= render "wallpaper_scenario_sanction_fields",
@@ -126,39 +144,29 @@
             delay_value: @config.permissions_lost_delay_minutes %>
 
       <h3 class="ds-section-subtitle"><%= t("beta.wallpaper_source.app_unreachable_title") %></h3>
+
+      <div class="ds-form-group">
+        <%= label_tag :app_unreachable_threshold_minutes, t("beta.wallpaper_source.unreachable_threshold"), class: "ds-form-label" %>
+        <%= number_field_tag :app_unreachable_threshold_minutes, @config.app_unreachable_threshold_minutes, min: WallpaperEnforcementConfig::MIN_UNREACHABLE_MINUTES, max: WallpaperEnforcementConfig::MAX_UNREACHABLE_MINUTES, class: "ds-input" %>
+        <p class="ds-beta-control-hint"><%= t("beta.wallpaper_source.unreachable_threshold_hint") %></p>
+      </div>
+
       <%= render "wallpaper_scenario_sanction_fields",
             field_prefix: "app_unreachable_sanction",
             sanction: @config.app_unreachable_sanction,
             delay_field: :app_unreachable_delay_minutes,
             delay_value: @config.app_unreachable_delay_minutes %>
 
-      <%= submit_tag t("beta.wallpaper_source.save"), class: "ds-btn ds-btn--primary" %>
+      <div class="ds-wallpaper-enforcement-save-bar" data-wallpaper-enforcement-save-bar hidden>
+        <%= submit_tag t("beta.wallpaper_source.save"), class: "ds-btn ds-btn--primary ds-wallpaper-enforcement-save-btn" %>
+      </div>
+      </div>
     <% end %>
 
-    <script>
-      (function () {
-        document.querySelectorAll("[data-wallpaper-scenario]").forEach(function (scenario) {
-          scenario.querySelectorAll(".ds-wallpaper-sanction-toggle-input").forEach(function (toggle) {
-            toggle.addEventListener("change", function () {
-              var key = toggle.dataset.wallpaperSanctionToggle;
-              var enabled = toggle.checked;
-              scenario.querySelectorAll("[data-wallpaper-sanction-input]").forEach(function (input) {
-                if (key === "pishock") {
-                  if (input.dataset.wallpaperSanctionInput === "pishock_intensity" || input.dataset.wallpaperSanctionInput === "pishock_duration") {
-                    input.disabled = !enabled;
-                  }
-                } else if (input.dataset.wallpaperSanctionInput === key) {
-                  input.disabled = !enabled;
-                }
-              });
-            });
-          });
-        });
-      })();
-    </script>
+    <%= render "wallpaper_enforcement_form_script" %>
 
     <% if bg_env_staging? %>
-      <div class="ds-beta-control-actions ds-beta-control-actions--spaced">
+      <div class="ds-beta-control-actions ds-beta-control-actions--spaced" data-wallpaper-enforcement-options<%= " hidden" unless @config.enabled %>>
         <%= button_to t("beta.wallpaper_source.run_test_check"),
               beta_wallpaper_enforcement_test_path,
               method: :post,

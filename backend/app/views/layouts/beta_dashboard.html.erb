@@ -55,6 +55,11 @@
 
           <p class="ds-beta-nav-heading"><%= t("layouts.beta_dashboard.nav.personal") %></p>
           <%= beta_nav_link t("layouts.beta_dashboard.nav.account"), beta_account_path, active: %w[account task].include?(controller.action_name) %>
+
+          <% if discord_link_available? %>
+            <p class="ds-beta-nav-heading"><%= t("layouts.beta_dashboard.nav.community") %></p>
+            <%= render "shared/discord_link", variant: :sidebar %>
+          <% end %>
         </nav>
 
         <div class="ds-beta-sidebar-footer">
@@ -72,9 +77,12 @@
                 <span class="ds-beta-mobile-navbar-wordmark wordmark">DominoChain</span>
               </div>
             <% end %>
-            <button type="button" class="ds-beta-mobile-nav-toggle" data-beta-nav-open aria-label="<%= t("js.open_menu") %>">
-              ☰
-            </button>
+            <div class="ds-beta-mobile-navbar-actions">
+              <%= render "shared/discord_link", variant: :icon %>
+              <button type="button" class="ds-beta-mobile-nav-toggle" data-beta-nav-open aria-label="<%= t("js.open_menu") %>">
+                ☰
+              </button>
+            </div>
           </div>
         </div>
         <div class="ds-beta-main-inner">

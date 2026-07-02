@@ -33,7 +33,7 @@
 /public/assets
 
 # Local admin-labeled pairs exported for regression tuning (not committed).
-/wallpaper_pairs/
+/spec/fixtures/files/wallpaper_pairs/
 
 /config/service-account.json
 .env

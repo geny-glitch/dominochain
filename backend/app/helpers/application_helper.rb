@@ -1,5 +1,14 @@
 module ApplicationHelper
   include WallpaperPathHelper
+
+  def discord_invite_url
+    Rails.application.config.x.discord_invite_url.to_s.strip
+  end
+
+  def discord_link_available?
+    discord_invite_url.present?
+  end
+
   def format_chaster_remaining(seconds)
     return t("time.finished") if seconds.nil? || seconds <= 0
 

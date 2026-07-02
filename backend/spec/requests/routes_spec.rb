@@ -419,6 +419,21 @@ RSpec.describe "Routes", type: :request do
         expect(response).to have_http_status(:redirect)
         expect(Device.exists?(device.id)).to be false
       end
+
+      it "DELETE w/:nickname/screenshots/:id returns redirect" do
+        screenshot = create(:device_screenshot, device: device)
+        delete wallpaper_destroy_screenshot_path(beta.nickname, screenshot.id)
+        expect(response).to have_http_status(:redirect)
+        expect(DeviceScreenshot.exists?(screenshot.id)).to be false
+      end
+
+      it "DELETE w/:nickname/applications/:id returns redirect" do
+        wallpaper = create(:wallpaper, device: device)
+        application = device.wallpaper_applications.create!(wallpaper: wallpaper, applied_at: Time.current)
+        delete wallpaper_destroy_application_path(beta.nickname, application.id)
+        expect(response).to have_http_status(:redirect)
+        expect(WallpaperApplication.exists?(application.id)).to be false
+      end
     end
   end
 

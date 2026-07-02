@@ -178,6 +178,12 @@
 .ds-wallpaper-pairs-page__header {
   flex-direction: column;
   align-items: flex-start;
+
+  .ds-header-trailing {
+    align-self: flex-end;
+    margin-left: 0;
+    margin-top: $ds-space-sm;
+  }
 }
 
 .ds-wallpaper-pairs-table-wrap {

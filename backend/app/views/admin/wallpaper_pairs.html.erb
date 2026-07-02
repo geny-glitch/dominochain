@@ -10,6 +10,9 @@
         <h1 class="ds-review__title"><%= t("admin_wallpaper_pairs.title") %></h1>
         <p class="ds-review__subtitle"><%= t("admin_wallpaper_pairs.subtitle", algorithm: AppSetting::WALLPAPER_VERIFICATION_ALGORITHMS.fetch(@active_verification_algorithm)) %></p>
       </div>
+      <div class="ds-header-trailing">
+        <%= render "shared/discord_link", variant: :icon %>
+      </div>
     </header>
 
     <nav class="ds-review__filters" aria-label="<%= t("admin_wallpaper_pairs.title") %>">

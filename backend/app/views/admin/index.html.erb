@@ -9,6 +9,7 @@
         <p class="ds-subtitle"><%= t("admin.users_subtitle") %></p>
       </div>
       <div class="ds-header-actions">
+        <%= render "shared/discord_link", variant: :icon %>
         <%= link_to t("admin.review_link"), admin_review_path, class: "ds-btn ds-btn--ghost ds-btn--sm" %>
         <%= link_to t("admin.wallpaper_pairs_link"), admin_wallpaper_pairs_path, class: "ds-btn ds-btn--ghost ds-btn--sm" %>
         <%= link_to t("admin.settings_link"), admin_settings_path, class: "ds-btn ds-btn--ghost ds-btn--sm" %>

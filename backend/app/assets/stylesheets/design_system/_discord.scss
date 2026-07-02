@@ -1,0 +1,62 @@
+@import "variables";
+
+$ds-discord-brand: #5865f2;
+
+.ds-discord-icon {
+  display: block;
+  flex-shrink: 0;
+}
+
+.ds-discord-link {
+  color: $ds-discord-brand;
+  text-decoration: none;
+  transition: color $ds-transition, background $ds-transition, opacity $ds-transition;
+
+  &:hover {
+    color: lighten($ds-discord-brand, 8%);
+  }
+
+  &--icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: $ds-radius-md;
+
+    .ds-discord-icon {
+      width: 1.25rem;
+      height: 1.25rem;
+    }
+
+    &:hover {
+      background: rgba($ds-discord-brand, 0.12);
+    }
+  }
+
+  &--sidebar {
+    font-weight: 500;
+
+    .ds-discord-icon {
+      width: 1rem;
+      height: 1rem;
+    }
+
+    &:hover {
+      background: rgba($ds-discord-brand, 0.1);
+    }
+  }
+}
+
+.ds-header-trailing {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.ds-page-footer {
+  margin-top: $ds-space-2xl;
+  padding-top: $ds-space-lg;
+  border-top: 1px solid $ds-border;
+  display: flex;
+  justify-content: flex-end;
+}

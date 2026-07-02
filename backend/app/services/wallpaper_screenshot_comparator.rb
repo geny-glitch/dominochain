@@ -526,11 +526,11 @@ class WallpaperScreenshotComparator
     strong_match_count:, strong_match_ratio:, peak_score:, p90_score:
   )
     min_strong_cells = ENV.fetch("WALLPAPER_LOCAL_MIN_STRONG_CELLS", "2").to_i
-    min_strong_ratio = ENV.fetch("WALLPAPER_LOCAL_MIN_STRONG_RATIO", "0.06").to_f
+    min_strong_ratio = ENV.fetch("WALLPAPER_LOCAL_MIN_STRONG_RATIO", "0.04").to_f
     peak_threshold = ENV.fetch("WALLPAPER_LOCAL_PEAK_SCORE", "0.85").to_f
     p90_threshold = ENV.fetch("WALLPAPER_LOCAL_P90_SCORE", "0.72").to_f
     p90_peak_min = ENV.fetch("WALLPAPER_LOCAL_P90_PEAK_MIN", "0.78").to_f
-    sparse_patch_peak_cap = ENV.fetch("WALLPAPER_LOCAL_SPARSE_PATCH_PEAK_CAP", "0.80").to_f
+    sparse_patch_peak_cap = ENV.fetch("WALLPAPER_LOCAL_SPARSE_PATCH_PEAK_CAP", "0.795").to_f
     mismatch_p90 = ENV.fetch("WALLPAPER_LOCAL_MISMATCH_P90", "0.50").to_f
     mismatch_peak = ENV.fetch("WALLPAPER_LOCAL_MISMATCH_PEAK", "0.60").to_f
 

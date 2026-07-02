@@ -81,6 +81,35 @@ RSpec.describe "Public boss page (watch/:nickname)", type: :request do
     end
   end
 
+  describe "POST /watch/:nickname/wallpapers/:wallpaper_id/set_current" do
+    before do
+      beta.update!(public_boss_enabled: true)
+      allow(FcmService).to receive(:send_background_changed_notifications)
+    end
+
+    it "sets a previous wallpaper as current without authentication" do
+      current_wallpaper = create(:wallpaper, device: device)
+      device.wallpaper_applications.create!(wallpaper: current_wallpaper, applied_at: 1.hour.ago)
+      previous_wallpaper = create(:wallpaper, device: device)
+      device.wallpaper_applications.create!(wallpaper: previous_wallpaper, applied_at: 2.hours.ago)
+
+      post public_boss_set_current_path(beta.nickname, previous_wallpaper.id, device_id: device.device_id)
+
+      expect(response).to redirect_to(public_boss_path(beta.nickname, device_id: device.device_id))
+      expect(device.wallpaper_applications.recent.first.wallpaper).to eq(previous_wallpaper)
+      expect(FcmService).to have_received(:send_background_changed_notifications).with(device: device)
+    end
+
+    it "returns 404 when public boss mode is disabled" do
+      beta.update!(public_boss_enabled: false)
+      wallpaper = create(:wallpaper, device: device)
+
+      post public_boss_set_current_path(beta.nickname, wallpaper.id, device_id: device.device_id)
+
+      expect(response).to have_http_status(:not_found)
+    end
+  end
+
   describe "PATCH /beta/public_boss" do
     before { sign_in beta }
 

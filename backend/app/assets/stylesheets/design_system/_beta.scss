@@ -264,6 +264,13 @@
   line-height: 1.2;
 }
 
+.ds-beta-mobile-navbar-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: $ds-space-xs;
+  flex-shrink: 0;
+}
+
 .ds-beta-mobile-nav-toggle {
   display: inline-flex;
   align-items: center;
@@ -360,6 +367,17 @@
     background: rgba($ds-teal, 0.12);
     color: $ds-teal;
     font-weight: 600;
+  }
+
+  &.ds-discord-link--sidebar {
+    display: flex;
+    align-items: center;
+    gap: $ds-space-sm;
+    line-height: 1.2;
+
+    > span {
+      line-height: 1.2;
+    }
   }
 }
 

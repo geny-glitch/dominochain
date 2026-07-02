@@ -1,5 +1,9 @@
 es:
   layouts:
+    shared:
+      discord:
+        label: "Discord"
+        aria_label: "Unirse al servidor de Discord de Domino Chain"
     beta_dashboard:
       default_title: "Beta — Domino Chain"
       nav_beta: "Navegación beta"
@@ -11,6 +15,7 @@ es:
         actions: "Acciones"
         personal: "Personal"
         account: "Cuenta"
+        community: "Comunidad"
     application:
       default_title: "Domino Chain"
       logo_alt: "Domino Chain"

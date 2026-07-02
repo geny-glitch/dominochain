@@ -58,8 +58,6 @@ class WallpaperController < ApplicationController
   end
 
   def destroy_screenshot
-    return redirect_to(wallpaper_upload_path(@nickname, device_id: @device_id), alert: t("flash.wallpaper.admin_only")) unless current_user.admin?
-
     screenshot = @device.device_screenshots.find(params[:id])
     screenshot.destroy!
     redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), notice: t("flash.wallpaper.screenshot_deleted")
@@ -80,23 +78,7 @@ class WallpaperController < ApplicationController
   end
 
   def set_current
-    device = @device
-    wallpaper = device.wallpapers.find(params[:wallpaper_id])
-    other_devices = @beta.devices.where.not(id: device.id).to_a
-
-    ActiveRecord::Base.transaction do
-      device.wallpaper_applications.create!(wallpaper: wallpaper, applied_at: Time.current, applied_by: "boss")
-
-      other_devices.each do |d|
-        w = d.wallpapers.new
-        w.image.attach(wallpaper.image.blob)
-        w.save!
-        d.wallpaper_applications.create!(wallpaper: w, applied_at: Time.current, applied_by: "boss")
-      end
-    end
-
-    reset_wallpaper_enforcement_state!
-    FcmService.send_background_changed_notifications(device: device)
+    apply_wallpaper_as_current!(params[:wallpaper_id])
     redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), notice: t("flash.wallpaper.wallpaper_set_current")
   rescue ActiveRecord::RecordNotFound
     redirect_to wallpaper_upload_path(@nickname, device_id: @device_id), alert: t("flash.wallpaper.wallpaper_not_found")

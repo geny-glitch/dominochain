@@ -7,6 +7,9 @@
     <header class="ds-review__header">
       <%= link_to t("admin_review.back_admin"), admin_path, class: "ds-btn ds-btn--ghost ds-btn--sm" %>
       <h1 class="ds-review__title"><%= t("admin_review.title") %></h1>
+      <div class="ds-header-trailing">
+        <%= render "shared/discord_link", variant: :icon %>
+      </div>
     </header>
 
     <div id="review-grid" class="ds-review__grid">

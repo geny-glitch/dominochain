@@ -8,6 +8,9 @@
         <h1 class="ds-title"><%= t("admin_settings.heading") %></h1>
         <p class="ds-subtitle"><%= t("admin_settings.subtitle") %></p>
       </div>
+      <div class="ds-header-trailing">
+        <%= render "shared/discord_link", variant: :icon %>
+      </div>
     </header>
 
     <p class="ds-admin-hint"><%= t("admin_settings.hint") %></p>

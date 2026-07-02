@@ -1,0 +1,25 @@
+<%# locals: (variant: :icon) %>
+<% return unless discord_link_available? %>
+
+<% variant = local_assigns.fetch(:variant, :icon) %>
+<% label = t("layouts.shared.discord.label") %>
+<% aria_label = t("layouts.shared.discord.aria_label") %>
+
+<% if variant == :sidebar %>
+  <%= link_to discord_invite_url,
+    class: "ds-beta-nav-link ds-discord-link ds-discord-link--sidebar",
+    target: "_blank",
+    rel: "noopener noreferrer" do %>
+    <%= render "shared/discord_icon" %>
+    <span><%= label %></span>
+  <% end %>
+<% else %>
+  <%= link_to discord_invite_url,
+    class: "ds-discord-link ds-discord-link--icon",
+    target: "_blank",
+    rel: "noopener noreferrer",
+    title: label,
+    aria: { label: aria_label } do %>
+    <%= render "shared/discord_icon" %>
+  <% end %>
+<% end %>

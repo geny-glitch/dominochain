@@ -36,6 +36,10 @@
       <p><%= t("dashboard.empty") %></p>
     <% end %>
 
+    <footer class="ds-page-footer">
+      <%= render "shared/discord_link", variant: :icon %>
+    </footer>
+
     <p><%= button_to t("dashboard.sign_out"), destroy_user_session_path, method: :delete, class: "ds-btn ds-btn--ghost" %></p>
   </div>
 </div>

@@ -25,6 +25,12 @@ module WallpaperPathHelper
     public_boss_view? ? public_boss_upload_path(nickname, **opts) : wallpaper_upload_submit_path(nickname, **opts)
   end
 
+  def boss_wallpaper_set_current_path(nickname, wallpaper_id, device_id: nil)
+    opts = {}
+    opts[:device_id] = device_id if device_id.present?
+    public_boss_view? ? public_boss_set_current_path(nickname, wallpaper_id, **opts) : wallpaper_set_current_path(nickname, wallpaper_id, **opts)
+  end
+
   private
 
   def public_boss_view?

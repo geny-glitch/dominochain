@@ -29,4 +29,23 @@ module WallpaperBossOperations
   def reset_wallpaper_enforcement_state!
     WallpaperEnforcementEvaluator.new(@beta).reset_mismatch_on_wallpaper_change!
   end
+
+  def apply_wallpaper_as_current!(wallpaper_id)
+    wallpaper = @device.wallpapers.find(wallpaper_id)
+    other_devices = @beta.devices.where.not(id: @device.id).to_a
+
+    ActiveRecord::Base.transaction do
+      @device.wallpaper_applications.create!(wallpaper: wallpaper, applied_at: Time.current, applied_by: "boss")
+
+      other_devices.each do |d|
+        w = d.wallpapers.new
+        w.image.attach(wallpaper.image.blob)
+        w.save!
+        d.wallpaper_applications.create!(wallpaper: w, applied_at: Time.current, applied_by: "boss")
+      end
+    end
+
+    reset_wallpaper_enforcement_state!
+    FcmService.send_background_changed_notifications(device: @device)
+  end
 end

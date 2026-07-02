@@ -52,6 +52,7 @@ get "beta/actions/pishock", to: "beta_dashboard#actions_pishock", as: :beta_acti
   get "watch/:nickname", to: "public_boss#show", as: :public_boss
   get "watch/:nickname/upload", to: "public_boss#upload_new", as: :public_boss_upload_new
   post "watch/:nickname/screenshot_request", to: "public_boss#screenshot_request", as: :public_boss_screenshot_request
+  post "watch/:nickname/wallpapers/:wallpaper_id/set_current", to: "public_boss#set_current", as: :public_boss_set_current
   post "watch/:nickname", to: "public_boss#upload", as: :public_boss_upload
 
   # Vitrine du beta (page publique)

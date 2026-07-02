@@ -4,7 +4,7 @@ class PublicBossController < ApplicationController
   include WallpaperBossOperations
 
   before_action :load_public_boss_context
-  before_action :require_public_boss_device!, only: [ :upload_new, :screenshot_request, :upload ]
+  before_action :require_public_boss_device!, only: [ :upload_new, :screenshot_request, :upload, :set_current ]
 
   def show
     load_boss_dashboard_data if @device
@@ -27,6 +27,16 @@ class PublicBossController < ApplicationController
     redirect_to public_boss_upload_new_path(@nickname, device_id: @device_id), alert: t("flash.wallpaper.select_image")
   rescue ActiveRecord::ConnectionNotEstablished, ActiveRecord::ConnectionFailed, PG::ConnectionBad
     redirect_to public_boss_upload_new_path(@nickname, device_id: @device_id),
+                alert: t("flash.wallpaper.upload_failed_try_again")
+  end
+
+  def set_current
+    apply_wallpaper_as_current!(params[:wallpaper_id])
+    redirect_to public_boss_path(@nickname, device_id: @device_id), notice: t("flash.wallpaper.wallpaper_set_current")
+  rescue ActiveRecord::RecordNotFound
+    redirect_to public_boss_path(@nickname, device_id: @device_id), alert: t("flash.wallpaper.wallpaper_not_found")
+  rescue ActiveRecord::ConnectionNotEstablished, ActiveRecord::ConnectionFailed, PG::ConnectionBad
+    redirect_to public_boss_path(@nickname, device_id: @device_id),
                 alert: t("flash.wallpaper.upload_failed_try_again")
   end
 

@@ -19,6 +19,7 @@
     <%= yield :head %>
 
     <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    <%= render "shared/posthog" %>
   </head>
 
   <body class="ds-beta-app-shell">

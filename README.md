@@ -66,8 +66,8 @@ To find `sdk.dir`: **Android Studio → Settings → Appearance & Behavior → S
 
 1. Go to [Firebase Console](https://console.firebase.google.com/)
 2. Create a project (or use an existing one)
-3. **Add an Android app**: package name `com.bg`
-4. Download `google-services.json` and replace `android/app/google-services.json`
+3. **Add an Android app**: package name `app.dominochain.mobile`
+4. Download `google-services.json` into `android/app/src/prod/google-services.json`
 5. (Optional) For backend usage: Project Settings → Service accounts → Generate new private key → save the JSON
 
 ### 7. Test the flow
@@ -109,10 +109,10 @@ Then in `local.properties`:
 
 - Staging Fly backend file: `backend/fly.staging.toml` (app `bg-backend-staging`)
 - Staging backend pipeline: push to `staging` branch (workflow `fly-deploy.yml`)
-- Staging Android APK: `staging` flavor, package `com.bg.staging`, installable next to production
+- Staging Android APK: `staging` flavor, package `app.dominochain.mobile.staging`, installable next to production
 - Staging Android pipeline: push to `staging` branch (workflow `android-ota-release.yml`)
 - Required GitHub secret to notify staging backend: `DEPLOY_SECRET_STAGING`
-- Add a Firebase Android app `com.bg.staging` and place its `google-services.json` (or equivalent flavor config)
+- Add a Firebase Android app `app.dominochain.mobile.staging` and place its `google-services.json` in `android/app/src/staging/`
 - The site exposes an APK download link: `/android/app.apk` (so `https://beta.dominochain.app/android/app.apk` in staging)
 
 ### Home page (creator collage)

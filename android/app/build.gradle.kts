@@ -40,11 +40,11 @@ val sentryDsnProd = localProperties.getProperty("SENTRY_DSN_PROD", localProperti
 val sentryDsnStaging = localProperties.getProperty("SENTRY_DSN_STAGING", sentryDsnProd)
 
 android {
-    namespace = "com.bg"
+    namespace = "app.dominochain.mobile"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.bg"
+        applicationId = "app.dominochain.mobile"
         minSdk = 26
         targetSdk = 34
         versionCode = otaVersionCode

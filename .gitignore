@@ -1,5 +1,7 @@
 # Android
 android/local.properties
+android/app/src/prod/google-services.json
+android/app/src/staging/google-services.json
 android/.gradle/
 android/build/
 android/app/build/

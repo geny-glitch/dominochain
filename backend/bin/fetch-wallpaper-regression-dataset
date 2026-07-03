@@ -9,7 +9,7 @@ Usage:
   bin/fetch-wallpaper-regression-dataset [options]
 
 Options:
-  --app APP             Fly app name (default: bg-backend-staging)
+  --app APP             Fly app name (default: dc-backend-staging)
   --dry-run             Print export JSON only; do not download files
   --no-sync             Keep local fixture folders not present in the export
   --exclude-ignored     Omit ignored pairs from the export
@@ -27,7 +27,7 @@ EXPORT_RB="$ROOT/script/export_staging_wallpaper_pair.rb"
 DOWNLOAD_RB="$ROOT/script/download_staging_blob.rb"
 FIXTURES_ROOT="$ROOT/spec/fixtures/files/wallpaper_pairs"
 
-APP="bg-backend-staging"
+APP="dc-backend-staging"
 DRY_RUN=0
 SYNC=1
 EXCLUDE_IGNORED=0

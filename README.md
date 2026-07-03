@@ -107,7 +107,7 @@ Then in `local.properties`:
 
 ## Staging (Fly + Android)
 
-- Staging Fly backend file: `backend/fly.staging.toml` (app `bg-backend-staging`)
+- Staging Fly backend file: `backend/fly.staging.toml` (app `dc-backend-staging`)
 - Staging backend pipeline: push to `staging` branch (workflow `fly-deploy.yml`)
 - Staging Android APK: `staging` flavor, package `app.dominochain.mobile.staging`, installable next to production
 - Staging Android pipeline: push to `staging` branch (workflow `android-ota-release.yml`)

@@ -1,11 +1,11 @@
-# ws plugin — deploy from repo root:
-#   flyctl deploy -c fly.puryfi-ws.toml
+# PuryFi WebSocket bridge — deploy from this directory:
+#   fly deploy --remote-only
 #
-app = "bg-puryfi-ws"
+app = "dc-puryfi-ws"
 primary_region = "cdg"
 
 [build]
-  dockerfile = "Dockerfile.puryfi-ws"
+  dockerfile = "Dockerfile"
 
 [env]
   NODE_ENV = "production"

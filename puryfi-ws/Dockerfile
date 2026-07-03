@@ -1,18 +1,17 @@
-# Build from repository root: docker build -f Dockerfile.puryfi-ws .
 # syntax=docker/dockerfile:1
 FROM node:22-alpine AS builder
 WORKDIR /app
-COPY puryfi-ws/package.json puryfi-ws/package-lock.json ./
+COPY package.json package-lock.json ./
 RUN npm ci
-COPY puryfi-ws/tsconfig.json ./
-COPY puryfi-ws/src ./src
-COPY puryfi-ws/shared ./shared
+COPY tsconfig.json ./
+COPY src ./src
+COPY shared ./shared
 RUN npm run build
 
 FROM node:22-alpine
 WORKDIR /app
 ENV NODE_ENV=production
-COPY puryfi-ws/package.json puryfi-ws/package-lock.json ./
+COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 COPY --from=builder /app/dist ./dist
 ENV PORT=8080

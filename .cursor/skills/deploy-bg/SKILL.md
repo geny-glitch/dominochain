@@ -19,24 +19,24 @@ Staging:
 cd backend && fly deploy --config fly.staging.toml
 ```
 
-- Production app: `bg-backend` (`backend/fly.toml`)
-- Staging app: `bg-backend-staging` (`backend/fly.staging.toml`)
+- Production app: `dc-backend` (`backend/fly.toml`)
+- Staging app: `dc-backend-staging` (`backend/fly.staging.toml`)
 - Processes: `app` (Puma HTTP) + `worker` (`bin/jobs` / Solid Queue)
-- Files: Tigris object storage (`bg-shared` bucket, env prefix `production/` or `staging/`)
+- Files: Tigris object storage (`dc-shared` bucket, env prefix `production/` or `staging/`)
 
 ### Storage migration (local Fly volume → Tigris)
 
 One-time per environment if blobs still live on a mounted volume:
 
 ```bash
-fly ssh console -a bg-backend-staging -C "sh -c 'DRY_RUN=1 bin/rails storage:migrate_to_tigris'"
-fly ssh console -a bg-backend-staging -C "bin/rails storage:migrate_to_tigris"
+fly ssh console -a dc-backend-staging -C "sh -c 'DRY_RUN=1 bin/rails storage:migrate_to_tigris'"
+fly ssh console -a dc-backend-staging -C "bin/rails storage:migrate_to_tigris"
 ```
 
 If Fly warns about removing a volume mount, destroy the old app machine and redeploy with `-y`:
 
 ```bash
-fly machine destroy <app-machine-id> -a bg-backend-staging --force
+fly machine destroy <app-machine-id> -a dc-backend-staging --force
 fly deploy --config fly.staging.toml -y --now
 ```
 

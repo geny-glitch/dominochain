@@ -45,7 +45,7 @@ def pair_payload(screenshot, wallpaper, review: nil, comparison: nil)
   user = device&.user
 
   payload = {
-    source: ENV.fetch("FLY_APP", "bg-backend-staging"),
+    source: ENV.fetch("FLY_APP", "dc-backend-staging"),
     user_nickname: user&.nickname,
     device_id: device.id,
     device_screen_width: device.screen_width,
@@ -110,7 +110,7 @@ if ENV["LIST"] == "1"
     .limit(limit)
     .map { |screenshot| screenshot_row(screenshot) }
 
-  puts JSON.pretty_generate({ app: ENV.fetch("FLY_APP", "bg-backend-staging"), screenshots: rows })
+  puts JSON.pretty_generate({ app: ENV.fetch("FLY_APP", "dc-backend-staging"), screenshots: rows })
   exit 0
 end
 
@@ -143,7 +143,7 @@ if ENV["EXPORT_DISAGREEMENTS"] == "1"
   end
 
   puts JSON.pretty_generate({
-    source: ENV.fetch("FLY_APP", "bg-backend-staging"),
+    source: ENV.fetch("FLY_APP", "dc-backend-staging"),
     exported_at: Time.current.iso8601,
     export_kind: "disagreements",
     algorithm: "local_match",
@@ -168,7 +168,7 @@ if ENV["EXPORT_LABELED"] == "1"
   end
 
   puts JSON.pretty_generate({
-    source: ENV.fetch("FLY_APP", "bg-backend-staging"),
+    source: ENV.fetch("FLY_APP", "dc-backend-staging"),
     exported_at: Time.current.iso8601,
     pairs: pairs
   })

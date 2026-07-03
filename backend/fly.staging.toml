@@ -1,9 +1,9 @@
-# fly.toml app configuration file for bg-backend-staging
+# fly.toml app configuration file for dc-backend-staging
 #
 # Staging mirrors production settings as closely as possible while
 # using a dedicated Fly app and secrets.
 
-app = 'bg-backend-staging'
+app = 'dc-backend-staging'
 primary_region = 'cdg'
 console_command = '/rails/bin/rails console'
 

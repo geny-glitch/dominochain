@@ -14,7 +14,7 @@ Required:
 Options:
   --nickname NICK       Staging beta nickname (default: latest screenshot for this user)
   --screenshot-id ID    Specific device_screenshot id (overrides --nickname latest pick)
-  --app APP             Fly app name (default: bg-backend-staging)
+  --app APP             Fly app name (default: dc-backend-staging)
   --list                List recent screenshots for --nickname and exit
   --list-limit N        Rows for --list (default: 10)
   --dry-run             Print export JSON only; do not download files
@@ -33,7 +33,7 @@ EOF
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 EXPORT_RB="$ROOT/script/export_staging_wallpaper_pair.rb"
 
-APP="bg-backend-staging"
+APP="dc-backend-staging"
 NICKNAME=""
 SCREENSHOT_ID=""
 PAIR_NAME=""

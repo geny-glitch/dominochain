@@ -1,9 +1,9 @@
-# fly.toml app configuration file generated for bg-backend on 2026-03-02T17:04:53+01:00
+# fly.toml app configuration file for dc-backend
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'bg-backend'
+app = 'dc-backend'
 primary_region = 'cdg'
 console_command = '/rails/bin/rails console'
 

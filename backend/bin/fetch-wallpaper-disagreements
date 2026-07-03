@@ -9,7 +9,7 @@ Usage:
   bin/fetch-wallpaper-disagreements [options]
 
 Options:
-  --app APP             Fly app name (default: bg-backend-staging)
+  --app APP             Fly app name (default: dc-backend-staging)
   --dry-run             Print export JSON only; do not download files
   --overwrite           Replace existing local pair folders
   -h, --help            Show this help
@@ -26,7 +26,7 @@ EXPORT_RB="$ROOT/script/export_staging_wallpaper_pair.rb"
 DOWNLOAD_RB="$ROOT/script/download_staging_blob.rb"
 OUTPUT_ROOT="$ROOT/wallpaper_pairs"
 
-APP="bg-backend-staging"
+APP="dc-backend-staging"
 DRY_RUN=0
 OVERWRITE=0
 

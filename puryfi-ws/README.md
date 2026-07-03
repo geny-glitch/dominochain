@@ -29,18 +29,19 @@ In PuryFi, use the dashboard URL (same format, using `ws://` if needed): `ws://l
 
 ## Fly.io
 
-App: **`bg-puryfi-ws`** — HTTP origin: **https://puryfi.dominochain.app**; WebSocket on **`/ws/:token`**.
+App: **`dc-puryfi-ws`** — HTTP origin: **https://puryfi.dominochain.app**; WebSocket on **`/ws/:token`**.
 
 Required secret (without trailing slash):
 
 ```bash
-fly secrets set BG_BACKEND_URL="https://dominochain.app" -a bg-puryfi-ws
+fly secrets set BG_BACKEND_URL="https://dominochain.app" -a dc-puryfi-ws
 ```
 
-Deploy from the repository root:
+Deploy from this directory:
 
 ```bash
-fly deploy -c fly.puryfi-ws.toml --remote-only
+cd puryfi-ws
+fly deploy --remote-only
 ```
 
 (CI : voir `.github/workflows/puryfi-ws.yml`.)

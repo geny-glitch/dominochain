@@ -1,0 +1,139 @@
+<%# locals: form_url, page_title, back_path, back_label, aspect_ratio (nil = free), submit_mode ("wallpaper"|"leverage_upload"), upload_url, redirect_url, i18n (hash) %>
+<% aspect_ratio = local_assigns.fetch(:aspect_ratio, nil) %>
+<% submit_mode = local_assigns.fetch(:submit_mode, "wallpaper") %>
+<% i18n = local_assigns.fetch(:i18n, {}) %>
+
+<% content_for :head do %>
+  <link rel="stylesheet" href="https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto:wght@400;700&family=Open+Sans:wght@400;700&family=Playfair+Display:wght@400;700&family=Lato:wght@400;700&family=Montserrat:wght@400;700&family=Oswald:wght@400;700&family=Source+Sans+3:wght@400;700&family=Merriweather:wght@400;700&family=PT+Sans:wght@400;700&family=Raleway:wght@400;700&family=Ubuntu:wght@400;700&display=swap" rel="stylesheet">
+<% end %>
+
+<div class="ds-page ds-upload-page"
+     data-image-editor
+     data-submit-mode="<%= submit_mode %>"
+     data-upload-url="<%= upload_url %>"
+     data-redirect-url="<%= redirect_url %>"
+     data-aspect-ratio="<%= aspect_ratio.nil? ? "" : aspect_ratio %>"
+     data-label-submitting="<%= i18n[:submitting] %>"
+     data-label-submit="<%= i18n[:submit] %>"
+     data-label-error="<%= i18n[:error] %>"
+     data-hint-text="<%= i18n[:hint_text] %>"
+     data-hint-pixelate="<%= i18n[:hint_pixelate] %>">
+  <div class="ds-container ds-upload-container">
+    <%= link_to back_label, back_path, class: "ds-back-link ds-upload-back" %>
+
+    <header class="ds-upload-header">
+      <h1 class="ds-title"><%= page_title %></h1>
+      <div class="ds-upload-steps" id="step-indicator">
+        <span class="ds-upload-step ds-upload-step--active" data-step="1"><%= i18n[:step_choose] %></span>
+        <span class="ds-upload-step" data-step="2"><%= i18n[:step_crop] %></span>
+        <span class="ds-upload-step" data-step="3"><%= i18n[:step_edit] %></span>
+      </div>
+    </header>
+
+    <%= form_with url: form_url, method: :post, local: true, multipart: true, id: "upload-form", class: "ds-form" do |f| %>
+      <%= f.file_field :image, accept: "image/*", id: "image-input", style: "display: none" %>
+    <% end %>
+
+    <div id="step-choose" class="ds-upload-step-content">
+      <label for="image-input" class="ds-upload-choose-card">
+        <svg class="ds-upload-choose-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+        <span class="ds-upload-choose-label"><%= i18n[:choose_image] %></span>
+      </label>
+    </div>
+
+    <div id="step-crop" class="ds-upload-step-content" style="display: none;">
+      <p class="ds-editor-step-label"><%= i18n[:crop_help] %></p>
+      <div id="crop-wrapper" class="ds-editor-crop-wrapper">
+        <img id="crop-img" src="" alt="<%= i18n[:crop_alt] %>" />
+      </div>
+      <div class="ds-editor-actions">
+        <button type="button" id="change-image-btn" class="ds-btn ds-btn--secondary"><%= i18n[:change] %></button>
+        <button type="button" id="suivant-btn" class="ds-btn ds-btn--primary"><%= i18n[:next] %></button>
+      </div>
+    </div>
+
+    <div id="step-edit" class="ds-upload-step-content" style="display: none;">
+      <div class="ds-editor-toolbar">
+        <button type="button" id="tool-pixelate" class="ds-tool-btn ds-tool-btn--active" title="<%= i18n[:tool_pixelate_title] %>">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          <%= i18n[:tool_pixelate] %>
+        </button>
+        <button type="button" id="tool-text" class="ds-tool-btn" title="<%= i18n[:tool_text_title] %>">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>
+          <%= i18n[:tool_text] %>
+        </button>
+        <button type="button" id="tool-undo" class="ds-tool-btn" title="<%= i18n[:tool_undo_title] %>">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
+          <%= i18n[:tool_undo] %>
+        </button>
+      </div>
+      <div id="text-options" class="ds-editor-options-row">
+        <label class="ds-editor-option-label" title="<%= i18n[:font_title] %>">
+          <select id="text-font" class="ds-editor-font-select">
+            <option value="Inter, -apple-system, sans-serif">Inter</option>
+            <option value="Roboto, sans-serif">Roboto</option>
+            <option value="'Open Sans', sans-serif">Open Sans</option>
+            <option value="Lato, sans-serif">Lato</option>
+            <option value="Montserrat, sans-serif">Montserrat</option>
+            <option value="Oswald, sans-serif">Oswald</option>
+            <option value="'Source Sans 3', sans-serif">Source Sans 3</option>
+            <option value="Raleway, sans-serif">Raleway</option>
+            <option value="Ubuntu, sans-serif">Ubuntu</option>
+            <option value="'PT Sans', sans-serif">PT Sans</option>
+            <option value="'Playfair Display', Georgia, serif">Playfair Display</option>
+            <option value="Merriweather, Georgia, serif">Merriweather</option>
+            <option value="Georgia, serif">Georgia</option>
+            <option value="'Courier New', monospace">Courier New</option>
+          </select>
+        </label>
+        <label class="ds-editor-option-label" title="<%= i18n[:align_aria] %>">
+          <div class="ds-editor-align-btns" role="group" aria-label="<%= i18n[:align_aria] %>">
+            <button type="button" id="text-align-left" class="ds-editor-align-btn" title="<%= i18n[:align_left_title] %>" data-align="left">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="14" y2="12"/><line x1="4" y1="17" x2="18" y2="17"/></svg>
+            </button>
+            <button type="button" id="text-align-center" class="ds-editor-align-btn ds-editor-align-btn--active" title="<%= i18n[:align_center_title] %>" data-align="center">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="5" y1="17" x2="19" y2="17"/></svg>
+            </button>
+            <button type="button" id="text-align-right" class="ds-editor-align-btn" title="<%= i18n[:align_right_title] %>" data-align="right">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="10" y1="12" x2="20" y2="12"/><line x1="6" y1="17" x2="20" y2="17"/></svg>
+            </button>
+          </div>
+        </label>
+        <label class="ds-editor-option-label" title="<%= i18n[:color_title] %>">
+          <input type="color" id="text-color" value="#ffffff" class="ds-editor-color-input">
+        </label>
+        <label class="ds-editor-option-label">
+          <input type="range" id="text-size" min="16" max="200" value="100" step="4" class="ds-editor-range">
+          <span id="text-size-display" class="ds-editor-value">100px</span>
+        </label>
+      </div>
+      <div id="pixelate-options" class="ds-editor-options-row" style="display: none;">
+        <label class="ds-editor-option-label">
+          <%= i18n[:brush_size] %>
+          <input type="range" id="brush-size" min="20" max="600" value="320" step="5" class="ds-editor-range">
+        </label>
+        <label class="ds-editor-option-label">
+          <%= i18n[:pixel_size] %>
+          <input type="range" id="pixel-size" min="4" max="150" value="44" step="1" class="ds-editor-range">
+          <span id="pixel-size-display" class="ds-editor-value">44</span>
+        </label>
+      </div>
+      <p id="editor-hint" class="ds-editor-step-label"><%= i18n[:editor_hint] %></p>
+      <div class="ds-editor-canvas-wrapper" id="canvas-wrapper">
+        <div id="brush-cursor" class="ds-brush-cursor" aria-hidden="true"></div>
+        <canvas id="edit-canvas"></canvas>
+        <div id="floating-text-wrapper" class="ds-editor-floating-text-wrapper" style="display:none;">
+          <div id="floating-text-input" class="ds-editor-floating-text" contenteditable="true" spellcheck="false"></div>
+          <button type="button" id="text-delete-btn" class="ds-editor-text-delete-btn" title="<%= i18n[:text_delete] %>">×</button>
+        </div>
+      </div>
+      <div class="ds-editor-actions">
+        <button type="button" id="edit-back-btn" class="ds-btn ds-btn--secondary"><%= i18n[:edit_back] %></button>
+        <button type="button" id="edit-submit-btn" class="ds-btn ds-btn--primary"><%= i18n[:submit] %></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%= render "shared/image_editor_script" %>

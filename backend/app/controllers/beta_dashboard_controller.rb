@@ -8,7 +8,8 @@ class BetaDashboardController < ApplicationController
     "sources_cigarettes" => "cigarettes",
     "sources_strava" => "strava",
     "sources_showcase" => "showcase",
-    "sources_wallpaper" => "wallpaper"
+    "sources_wallpaper" => "wallpaper",
+    "sources_leverage_photo" => "leverage_photo"
   }.freeze
   CATALOG_ACTION_ACTIONS = {
     "actions_chaster" => "chaster",
@@ -27,6 +28,9 @@ class BetaDashboardController < ApplicationController
     @cigarettes_today = current_user.cigarette_entries.for_day(Date.current).sum(:count)
     @cigarettes_avg_30d = average_cigarettes_last_30_days
     @recent_time_events = current_user.chaster_time_events.recent.limit(6)
+    @leverage_photos = current_user.leverage_photos.not_deleted.newest_first
+    @leverage_photos.each { |photo| photo.mark_unlocked! if photo.unlock_due? }
+    @leverage_photo = featured_leverage_photo(@leverage_photos)
   end
 
   def sources_puryfi
@@ -57,6 +61,12 @@ class BetaDashboardController < ApplicationController
     @wallpaper_applications = wallpaper_history_scope.limit(24)
     @compliance_checks = compliance_checks_scope.limit(24)
     @chaster_lock = fetch_chaster_lock
+  end
+
+  def sources_leverage_photo
+    @photos = current_user.leverage_photos.not_deleted.newest_first
+    @photos.each { |photo| photo.mark_unlocked! if photo.unlock_due? }
+    @photo_count = @photos.size
   end
 
   def update_wallpaper_enforcement
@@ -450,5 +460,11 @@ class BetaDashboardController < ApplicationController
   def android_app_apk_url
     setting = AppSetting.instance
     setting.android_apk_url.presence || "#{request.base_url}/android/app.apk"
+  end
+
+  def featured_leverage_photo(photos)
+    photos.find(&:unlocked?) ||
+      photos.select(&:active?).min_by { |p| p.locked_until || Time.zone.at(0) } ||
+      photos.first
   end
 end

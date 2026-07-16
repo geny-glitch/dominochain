@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_07_02_140000) do
+ActiveRecord::Schema[7.2].define(version: 2026_07_16_200000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -184,6 +184,33 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_02_140000) do
     t.index ["hidden"], name: "index_influencer_images_on_hidden"
     t.index ["name"], name: "index_influencer_images_on_name"
     t.index ["url"], name: "index_influencer_images_on_url", unique: true
+  end
+
+  create_table "leverage_photo_extensions", force: :cascade do |t|
+    t.bigint "leverage_photo_id", null: false
+    t.integer "added_seconds", null: false
+    t.datetime "locked_until_before", null: false
+    t.datetime "locked_until_after", null: false
+    t.bigint "drand_round_added", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["leverage_photo_id"], name: "index_leverage_photo_extensions_on_leverage_photo_id"
+  end
+
+  create_table "leverage_photos", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "status", default: "draft", null: false
+    t.datetime "locked_until"
+    t.jsonb "drand_rounds", default: [], null: false
+    t.string "drand_chain_hash"
+    t.integer "tlock_layer_count", default: 0, null: false
+    t.integer "initial_duration_seconds"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "original_filename"
+    t.index ["locked_until"], name: "index_leverage_photos_on_locked_until"
+    t.index ["status"], name: "index_leverage_photos_on_status"
+    t.index ["user_id"], name: "index_leverage_photos_on_user_id"
   end
 
   create_table "proof_of_completions", force: :cascade do |t|
@@ -597,6 +624,8 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_02_140000) do
   add_foreign_key "device_screenshots", "wallpapers"
   add_foreign_key "devices", "users"
   add_foreign_key "game_sessions", "users"
+  add_foreign_key "leverage_photo_extensions", "leverage_photos"
+  add_foreign_key "leverage_photos", "users"
   add_foreign_key "proof_of_completions", "tasks"
   add_foreign_key "punishments", "tasks"
   add_foreign_key "showcase_add_time_events", "users"

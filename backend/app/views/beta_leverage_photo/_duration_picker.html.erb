@@ -1,0 +1,34 @@
+<%# locals: label, input_name, default_minutes, shortcuts ([[minutes, label], ...]) %>
+<div class="ds-beta-leverage-duration" style="margin:0.75rem 0;">
+  <label class="ds-form-label" for="<%= input_name %>">
+    <%= label %>
+    <span style="display:inline-flex;align-items:center;gap:0.35rem;margin-top:0.35rem;">
+      <input
+        type="number"
+        id="<%= input_name %>"
+        class="ds-input"
+        style="width:7rem;cursor:text;"
+        data-<%= input_name %>
+        min="1"
+        max="<%= LeveragePhoto::MAX_DURATION_SECONDS / 60 %>"
+        step="1"
+        value="<%= default_minutes %>"
+        inputmode="numeric"
+        required
+        aria-describedby="<%= input_name %>-unit"
+      >
+      <span id="<%= input_name %>-unit" class="ds-beta-home-muted"><%= t("leverage_photo.show.minutes_unit") %></span>
+    </span>
+  </label>
+  <div class="ds-beta-leverage-duration-shortcuts" role="group" aria-label="<%= t("leverage_photo.show.duration_shortcuts") %>" style="display:flex;flex-wrap:wrap;gap:0.35rem;margin-top:0.5rem;">
+    <% shortcuts.each do |minutes, shortcut_label| %>
+      <button
+        type="button"
+        class="ds-btn ds-btn--ghost ds-btn--sm"
+        data-duration-shortcut
+        data-target="<%= input_name %>"
+        data-minutes="<%= minutes %>"
+      ><%= shortcut_label %></button>
+    <% end %>
+  </div>
+</div>

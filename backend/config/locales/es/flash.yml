@@ -83,6 +83,13 @@ es:
         uploaded: "Fondo de pantalla actualizado."
         no_device: "Registra primero un dispositivo en la app Android."
         boss_controls_wallpaper: "Tu boss controla el fondo. No puedes cambiarlo aquí."
+      leverage_photo:
+        images_required: "Se requieren las imágenes original, censurada y teaser."
+        uploaded: "Foto de presión guardada. Puedes iniciar el temporizador más tarde."
+        timer_started: "Temporizador iniciado. El original queda bloqueado hasta el final de la cuenta atrás."
+        time_added: "Tiempo añadido."
+        deleted: "Foto de presión eliminada definitivamente."
+        not_found: "Foto de presión no encontrada."
     pishock_debug:
       fill_username_api: "Introduce el nombre de usuario y la clave API."
       step1_done: "Paso 1 completado."

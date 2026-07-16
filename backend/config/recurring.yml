@@ -23,3 +23,7 @@ production:
   wallpaper_scheduled_checks:
     class: WallpaperScheduledCheckJob
     schedule: "* * * * *"
+
+  leverage_photo_unlocks:
+    class: LeveragePhotoUnlockJob
+    schedule: "* * * * *"

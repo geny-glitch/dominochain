@@ -1,0 +1,33 @@
+---
+description: Keep end-user UI copy free of technical and security implementation details
+alwaysApply: true
+---
+
+# User-Facing UI Copy
+
+Product UI speaks to potential end users of the site, not to developers, admins, or security reviewers.
+
+## Do not surface in UI
+
+Never put these in user-facing strings (locales, flash, ERB labels, button status text, empty states, tooltips, emails to users):
+
+- Cryptography or lock internals (tlock, drand, age, rounds, layers, ciphertext, blobs, keys, decrypt/encrypt jargon)
+- Infrastructure or privilege details (admin access, database, S3, server, purge, plaintext)
+- Library/framework/ops wording (crypto library, fetch blob, nested re-tlock, API)
+- Threat-model reassurances aimed at engineers (e.g. "even with admin or database access")
+
+## Prefer product language
+
+Describe outcomes the user cares about:
+
+- Locked until the timer ends / countdown finishes
+- Original unavailable until unlock
+- Extending the timer
+- Permanent delete with no recovery
+- Generic progress: "Starting…", "Securing your photo…", "Unlocking…"
+
+## Where technical detail belongs
+
+Implementation and threat-model notes go in code comments, PR descriptions, specs, and developer chat — never in `config/locales` product copy or visible UI.
+
+When editing locales for features that use crypto or privileged storage, rewrite status/hint/lead strings so a non-technical user understands them without knowing how the system works.

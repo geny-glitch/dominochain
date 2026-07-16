@@ -1,130 +1,45 @@
 <% device_ratio = (@device&.screen_width.to_f / @device&.screen_height) if @device&.screen_width.to_i > 0 && @device&.screen_height.to_i > 0 %>
 <% device_ratio ||= 9.0 / 16 %>
 
-<% content_for :head do %>
-  <link rel="stylesheet" href="https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto:wght@400;700&family=Open+Sans:wght@400;700&family=Playfair+Display:wght@400;700&family=Lato:wght@400;700&family=Montserrat:wght@400;700&family=Oswald:wght@400;700&family=Source+Sans+3:wght@400;700&family=Merriweather:wght@400;700&family=PT+Sans:wght@400;700&family=Raleway:wght@400;700&family=Ubuntu:wght@400;700&display=swap" rel="stylesheet">
-<% end %>
-
-<div class="ds-page ds-upload-page">
-  <div class="ds-container ds-upload-container">
-    <%= link_to t("wallpaper.upload.back_to_beta"), boss_wallpaper_dashboard_path(@nickname, device_id: @device_id), class: "ds-back-link ds-upload-back" %>
-
-    <header class="ds-upload-header">
-      <h1 class="ds-title"><%= t("wallpaper.upload.page_title") %></h1>
-      <div class="ds-upload-steps" id="step-indicator">
-        <span class="ds-upload-step ds-upload-step--active" data-step="1"><%= t("wallpaper.upload.step_choose") %></span>
-        <span class="ds-upload-step" data-step="2"><%= t("wallpaper.upload.step_crop") %></span>
-        <span class="ds-upload-step" data-step="3"><%= t("wallpaper.upload.step_edit") %></span>
-      </div>
-    </header>
-
-    <%= form_with url: boss_wallpaper_upload_submit_path(@nickname, device_id: @device_id), method: :post, local: true, multipart: true, id: "upload-form", class: "ds-form" do |f| %>
-      <%= f.file_field :image, accept: "image/*", id: "image-input", style: "display: none" %>
-    <% end %>
-
-    <%# Étape 1 : Choisir une image %>
-    <div id="step-choose" class="ds-upload-step-content">
-      <label for="image-input" class="ds-upload-choose-card">
-        <svg class="ds-upload-choose-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-        <span class="ds-upload-choose-label"><%= t("wallpaper.upload.choose_image") %></span>
-      </label>
-    </div>
-
-    <%# Étape 2 : Recadrer %>
-    <div id="step-crop" class="ds-upload-step-content" style="display: none;">
-      <p class="ds-editor-step-label"><%= t("wallpaper.upload.crop_help") %></p>
-      <div id="crop-wrapper" class="ds-editor-crop-wrapper">
-        <img id="crop-img" src="" alt="<%= t("wallpaper.upload.crop_alt") %>" />
-      </div>
-      <div class="ds-editor-actions">
-        <button type="button" id="change-image-btn" class="ds-btn ds-btn--secondary"><%= t("wallpaper.upload.change") %></button>
-        <button type="button" id="suivant-btn" class="ds-btn ds-btn--primary"><%= t("wallpaper.upload.next") %></button>
-      </div>
-    </div>
-
-    <%# Étape 3 : Modifier %>
-    <div id="step-edit" class="ds-upload-step-content" style="display: none;">
-      <div class="ds-editor-toolbar">
-        <button type="button" id="tool-pixelate" class="ds-tool-btn ds-tool-btn--active" title="<%= t("wallpaper.upload.tool_pixelate_title") %>">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-          <%= t("wallpaper.upload.tool_pixelate") %>
-        </button>
-        <button type="button" id="tool-text" class="ds-tool-btn" title="<%= t("wallpaper.upload.tool_text_title") %>">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>
-          <%= t("wallpaper.upload.tool_text") %>
-        </button>
-        <button type="button" id="tool-undo" class="ds-tool-btn" title="<%= t("wallpaper.upload.tool_undo_title") %>">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
-          <%= t("wallpaper.upload.tool_undo") %>
-        </button>
-      </div>
-      <div id="text-options" class="ds-editor-options-row">
-        <label class="ds-editor-option-label" title="<%= t("wallpaper.upload.font_title") %>">
-          <select id="text-font" class="ds-editor-font-select">
-            <option value="Inter, -apple-system, sans-serif">Inter</option>
-            <option value="Roboto, sans-serif">Roboto</option>
-            <option value="'Open Sans', sans-serif">Open Sans</option>
-            <option value="Lato, sans-serif">Lato</option>
-            <option value="Montserrat, sans-serif">Montserrat</option>
-            <option value="Oswald, sans-serif">Oswald</option>
-            <option value="'Source Sans 3', sans-serif">Source Sans 3</option>
-            <option value="Raleway, sans-serif">Raleway</option>
-            <option value="Ubuntu, sans-serif">Ubuntu</option>
-            <option value="'PT Sans', sans-serif">PT Sans</option>
-            <option value="'Playfair Display', Georgia, serif">Playfair Display</option>
-            <option value="Merriweather, Georgia, serif">Merriweather</option>
-            <option value="Georgia, serif">Georgia</option>
-            <option value="'Courier New', monospace">Courier New</option>
-          </select>
-        </label>
-        <label class="ds-editor-option-label" title="Alignement">
-          <div class="ds-editor-align-btns" role="group" aria-label="<%= t("wallpaper.upload.align_aria") %>">
-            <button type="button" id="text-align-left" class="ds-editor-align-btn" title="<%= t("wallpaper.upload.align_left_title") %>" data-align="left">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="14" y2="12"/><line x1="4" y1="17" x2="18" y2="17"/></svg>
-            </button>
-            <button type="button" id="text-align-center" class="ds-editor-align-btn ds-editor-align-btn--active" title="<%= t("wallpaper.upload.align_center_title") %>" data-align="center">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="5" y1="17" x2="19" y2="17"/></svg>
-            </button>
-            <button type="button" id="text-align-right" class="ds-editor-align-btn" title="<%= t("wallpaper.upload.align_right_title") %>" data-align="right">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="10" y1="12" x2="20" y2="12"/><line x1="6" y1="17" x2="20" y2="17"/></svg>
-            </button>
-          </div>
-        </label>
-        <label class="ds-editor-option-label" title="<%= t("wallpaper.upload.color_title") %>">
-          <input type="color" id="text-color" value="#ffffff" class="ds-editor-color-input">
-        </label>
-        <label class="ds-editor-option-label">
-          <input type="range" id="text-size" min="16" max="200" value="100" step="4" class="ds-editor-range">
-          <span id="text-size-display" class="ds-editor-value">100px</span>
-        </label>
-      </div>
-      <div id="pixelate-options" class="ds-editor-options-row" style="display: none;">
-        <label class="ds-editor-option-label">
-          <%= t("wallpaper.upload.brush_size") %>
-          <input type="range" id="brush-size" min="20" max="600" value="320" step="5" class="ds-editor-range">
-        </label>
-        <label class="ds-editor-option-label">
-          <%= t("wallpaper.upload.pixel_size") %>
-          <input type="range" id="pixel-size" min="4" max="150" value="44" step="1" class="ds-editor-range">
-          <span id="pixel-size-display" class="ds-editor-value">44</span>
-        </label>
-      </div>
-      <p id="editor-hint" class="ds-editor-step-label"><%= t("wallpaper.upload.editor_hint") %></p>
-      <div class="ds-editor-canvas-wrapper" id="canvas-wrapper">
-        <div id="brush-cursor" class="ds-brush-cursor" aria-hidden="true"></div>
-        <canvas id="edit-canvas"></canvas>
-        <div id="floating-text-wrapper" class="ds-editor-floating-text-wrapper" style="display:none;">
-          <div id="floating-text-input" class="ds-editor-floating-text" contenteditable="true" spellcheck="false"></div>
-          <button type="button" id="text-delete-btn" class="ds-editor-text-delete-btn" title="<%= t("wallpaper.upload.text_delete") %>">×</button>
-        </div>
-      </div>
-      <div class="ds-editor-actions">
-        <button type="button" id="edit-back-btn" class="ds-btn ds-btn--secondary"><%= t("wallpaper.upload.edit_back") %></button>
-        <button type="button" id="edit-submit-btn" class="ds-btn ds-btn--primary"><%= t("wallpaper.upload.submit") %></button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<%= render "wallpaper/upload_script", device: @device, nickname: @nickname, device_id: @device_id %>
+<%= render "shared/image_editor",
+  form_url: boss_wallpaper_upload_submit_path(@nickname, device_id: @device_id),
+  upload_url: boss_wallpaper_upload_submit_path(@nickname, device_id: @device_id),
+  redirect_url: boss_wallpaper_dashboard_path(@nickname, device_id: @device_id),
+  back_path: boss_wallpaper_dashboard_path(@nickname, device_id: @device_id),
+  back_label: t("wallpaper.upload.back_to_beta"),
+  page_title: t("wallpaper.upload.page_title"),
+  aspect_ratio: device_ratio,
+  submit_mode: "wallpaper",
+  i18n: {
+    step_choose: t("wallpaper.upload.step_choose"),
+    step_crop: t("wallpaper.upload.step_crop"),
+    step_edit: t("wallpaper.upload.step_edit"),
+    choose_image: t("wallpaper.upload.choose_image"),
+    crop_help: t("wallpaper.upload.crop_help"),
+    crop_alt: t("wallpaper.upload.crop_alt"),
+    change: t("wallpaper.upload.change"),
+    next: t("wallpaper.upload.next"),
+    tool_pixelate: t("wallpaper.upload.tool_pixelate"),
+    tool_pixelate_title: t("wallpaper.upload.tool_pixelate_title"),
+    tool_text: t("wallpaper.upload.tool_text"),
+    tool_text_title: t("wallpaper.upload.tool_text_title"),
+    tool_undo: t("wallpaper.upload.tool_undo"),
+    tool_undo_title: t("wallpaper.upload.tool_undo_title"),
+    font_title: t("wallpaper.upload.font_title"),
+    align_aria: t("wallpaper.upload.align_aria"),
+    align_left_title: t("wallpaper.upload.align_left_title"),
+    align_center_title: t("wallpaper.upload.align_center_title"),
+    align_right_title: t("wallpaper.upload.align_right_title"),
+    color_title: t("wallpaper.upload.color_title"),
+    brush_size: t("wallpaper.upload.brush_size"),
+    pixel_size: t("wallpaper.upload.pixel_size"),
+    editor_hint: t("wallpaper.upload.editor_hint"),
+    text_delete: t("wallpaper.upload.text_delete"),
+    edit_back: t("wallpaper.upload.edit_back"),
+    submit: t("wallpaper.upload.submit"),
+    submitting: t("wallpaper.upload.submitting", default: "Sending..."),
+    error: t("wallpaper.upload.error", default: "Upload error."),
+    hint_text: t("wallpaper.upload.hint_text", default: t("wallpaper.upload.editor_hint")),
+    hint_pixelate: t("wallpaper.upload.hint_pixelate", default: t("wallpaper.upload.editor_hint"))
+  }
+%>

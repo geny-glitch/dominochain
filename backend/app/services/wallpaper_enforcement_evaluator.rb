@@ -291,29 +291,16 @@ class WallpaperEnforcementEvaluator
       ))
     end
 
-    if sanction.leverage_photo_start_active?
+    if sanction.leverage_photo_lock_active?
       sanctions.concat(apply_single_sanction!(
         config: config,
-        action: "leverage_photo_start",
-        kind: kinds[:leverage_photo_start] || :leverage_photo_start,
+        action: "leverage_photo_lock",
+        kind: kinds[:leverage_photo_lock] || :leverage_photo_lock,
         reference_time: reference_time,
         details: details,
-        leverage_seconds: sanction.leverage_photo_start_seconds,
-        leverage_target_mode: sanction.leverage_photo_start_target_mode,
-        leverage_photo_id: sanction.leverage_photo_start_photo_id
-      ))
-    end
-
-    if sanction.leverage_photo_add_time_active?
-      sanctions.concat(apply_single_sanction!(
-        config: config,
-        action: "leverage_photo_add_time",
-        kind: kinds[:leverage_photo_add_time] || :leverage_photo_add_time,
-        reference_time: reference_time,
-        details: details,
-        leverage_seconds: sanction.leverage_photo_add_time_seconds,
-        leverage_target_mode: sanction.leverage_photo_add_time_target_mode,
-        leverage_photo_id: sanction.leverage_photo_add_time_photo_id
+        leverage_seconds: sanction.leverage_photo_lock_seconds,
+        leverage_target_mode: sanction.leverage_photo_lock_target_mode,
+        leverage_photo_id: sanction.leverage_photo_lock_photo_id
       ))
     end
 
@@ -392,7 +379,7 @@ class WallpaperEnforcementEvaluator
         "pishock_intensity" => pishock_intensity,
         "pishock_duration" => pishock_duration
       }
-    when "leverage_photo_start", "leverage_photo_add_time", "leverage_photo_delete"
+    when "leverage_photo_lock", "leverage_photo_start", "leverage_photo_add_time", "leverage_photo_delete"
       meta = {
         "target_mode" => leverage_target_mode,
         "leverage_photo_id" => leverage_photo_id

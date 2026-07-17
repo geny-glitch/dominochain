@@ -2,23 +2,32 @@
 
 module BetaEvents
   module Actions
-    class LeveragePhotoStartFromEvent < Base
+    class LeveragePhotoLockFromEvent < Base
       def call(context)
         seconds = context.event[:seconds].to_i
         raise ActionExecutionStopped.new(:missing_seconds) unless seconds.positive?
 
         photo = LeveragePhotos::ResolveTarget.call(
           user: context.beta,
-          action: :start,
+          action: :lock,
           target_mode: context.event[:target_mode].presence || "random",
           photo_id: context.event[:photo_id]
         )
         raise ActionExecutionStopped.new(:no_eligible_photo) if photo.nil?
 
-        LeveragePhotos::StartTimerServer.new(photo: photo, duration_seconds: seconds).call!
+        if photo.can_add_time?
+          LeveragePhotos::AddTimeServer.new(photo: photo, added_seconds: seconds).call!
+        elsif photo.can_start_timer?
+          LeveragePhotos::StartTimerServer.new(photo: photo, duration_seconds: seconds).call!
+        else
+          raise ActionExecutionStopped.new(:no_eligible_photo)
+        end
+
         context.leverage_photo_id = photo.id
       rescue LeveragePhotos::StartTimerServer::Error => e
         raise ActionExecutionStopped.new(:leverage_start_failed, e.message.to_s.truncate(500))
+      rescue LeveragePhotos::AddTimeServer::Error => e
+        raise ActionExecutionStopped.new(:leverage_add_time_failed, e.message.to_s.truncate(500))
       end
     end
   end

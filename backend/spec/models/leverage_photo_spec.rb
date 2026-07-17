@@ -23,6 +23,20 @@ RSpec.describe LeveragePhoto, type: :model do
     expect(photo).to be_unlocked
   end
 
+  it "allows re-locking after unlock" do
+    photo = create(:leverage_photo, :unlocked, user: user)
+    expect(photo).to be_ready_to_relock
+    expect(photo).to be_can_start_timer
+    expect(photo).not_to be_eligible_for_start
+  end
+
+  it "allows draft without censored reminder" do
+    photo = create(:leverage_photo, :without_censor, user: user)
+    expect(photo).to be_needs_censor
+    expect(photo).to be_ready_to_lock
+    expect(photo).to be_can_censor
+  end
+
   it "permanently deletes attachments and marks deleted" do
     photo = create(:leverage_photo, :with_images, user: user, original_filename: "keep.jpg")
     photo.permanently_delete!

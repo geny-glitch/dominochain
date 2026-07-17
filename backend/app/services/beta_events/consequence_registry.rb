@@ -26,7 +26,7 @@ module BetaEvents
           Actions::RecordShowcaseLimiterFromEvent
         ]
       when [ :strava_goal, :failed_penalty ]
-        [ Actions::ChasterAddTimeFromEvent ]
+        strava_actions_for(event)
       when [ :api_chaster, :add_time ], [ :puryfi, :add_time ]
         [ Actions::ChasterAddTimeFromEvent ]
       when [ :cigarette, :smoked_add_time ]
@@ -35,14 +35,25 @@ module BetaEvents
         [ Actions::ChasterUnfreezeFromEvent ]
       else
         if event.source == :wallpaper
-          wallpaper_actions_for(event)
+          sanction_actions_for(event)
         else
           []
         end
       end
     end
 
+    def self.strava_actions_for(event)
+      action = event[:action].to_s
+      return [ Actions::ChasterAddTimeFromEvent ] if action.blank?
+
+      sanction_actions_for(event)
+    end
+
     def self.wallpaper_actions_for(event)
+      sanction_actions_for(event)
+    end
+
+    def self.sanction_actions_for(event)
       case event[:action].to_s
       when "chaster_add_time"
         [ Actions::ChasterAddTimeFromEvent ]
@@ -50,10 +61,8 @@ module BetaEvents
         [ Actions::ChasterFreezeFromEvent ]
       when "pishock"
         [ Actions::EnqueuePishockFromEvent ]
-      when "leverage_photo_start"
-        [ Actions::LeveragePhotoStartFromEvent ]
-      when "leverage_photo_add_time"
-        [ Actions::LeveragePhotoAddTimeFromEvent ]
+      when "leverage_photo_lock", "leverage_photo_start", "leverage_photo_add_time"
+        [ Actions::LeveragePhotoLockFromEvent ]
       when "leverage_photo_delete"
         [ Actions::LeveragePhotoDeleteFromEvent ]
       else

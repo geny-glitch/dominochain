@@ -47,6 +47,8 @@ class BetaDashboardController < ApplicationController
 
   def sources_strava
     @strava_goals = current_user.strava_goals.recent.includes(:strava_goal_checks)
+    @leverage_photos = current_user.leverage_photos.not_deleted.newest_first
+    @leverage_action_enabled = BetaCatalog.new(current_user).action_platform_enabled?("leverage_photo")
   end
 
   def sources_showcase
@@ -435,8 +437,7 @@ class BetaDashboardController < ApplicationController
 
     chaster_add_time_enabled = CheckboxParamNormalizer.to_bool(raw[:chaster_add_time_enabled])
     chaster_seconds = raw[:chaster_seconds].presence&.to_i
-    leverage_photo_start_enabled = CheckboxParamNormalizer.to_bool(raw[:leverage_photo_start_enabled])
-    leverage_photo_add_time_enabled = CheckboxParamNormalizer.to_bool(raw[:leverage_photo_add_time_enabled])
+    leverage_photo_lock_enabled = CheckboxParamNormalizer.to_bool(raw[:leverage_photo_lock_enabled])
     leverage_photo_delete_enabled = CheckboxParamNormalizer.to_bool(raw[:leverage_photo_delete_enabled])
 
     {
@@ -446,14 +447,10 @@ class BetaDashboardController < ApplicationController
       "pishock_enabled" => CheckboxParamNormalizer.to_bool(raw[:pishock_enabled]),
       "pishock_intensity" => raw[:pishock_intensity].to_i,
       "pishock_duration" => raw[:pishock_duration].to_i,
-      "leverage_photo_start_enabled" => leverage_photo_start_enabled,
-      "leverage_photo_start_seconds" => leverage_photo_start_enabled ? raw[:leverage_photo_start_seconds].presence&.to_i : nil,
-      "leverage_photo_start_target_mode" => raw[:leverage_photo_start_target_mode].presence || "random",
-      "leverage_photo_start_photo_id" => raw[:leverage_photo_start_photo_id].presence&.to_i,
-      "leverage_photo_add_time_enabled" => leverage_photo_add_time_enabled,
-      "leverage_photo_add_time_seconds" => leverage_photo_add_time_enabled ? raw[:leverage_photo_add_time_seconds].presence&.to_i : nil,
-      "leverage_photo_add_time_target_mode" => raw[:leverage_photo_add_time_target_mode].presence || "random",
-      "leverage_photo_add_time_photo_id" => raw[:leverage_photo_add_time_photo_id].presence&.to_i,
+      "leverage_photo_lock_enabled" => leverage_photo_lock_enabled,
+      "leverage_photo_lock_seconds" => leverage_photo_lock_enabled ? raw[:leverage_photo_lock_seconds].presence&.to_i : nil,
+      "leverage_photo_lock_target_mode" => raw[:leverage_photo_lock_target_mode].presence || "random",
+      "leverage_photo_lock_photo_id" => raw[:leverage_photo_lock_photo_id].presence&.to_i,
       "leverage_photo_delete_enabled" => leverage_photo_delete_enabled,
       "leverage_photo_delete_target_mode" => raw[:leverage_photo_delete_target_mode].presence || "random",
       "leverage_photo_delete_photo_id" => raw[:leverage_photo_delete_photo_id].presence&.to_i
@@ -487,7 +484,7 @@ class BetaDashboardController < ApplicationController
   end
 
   def recent_leverage_sanctions
-    current_user.wallpaper_compliance_checks.recent.limit(40).flat_map do |check|
+    wallpaper = current_user.wallpaper_compliance_checks.recent.limit(40).flat_map do |check|
       Array(check.sanctions_applied).filter_map do |sanction|
         next unless sanction.is_a?(Hash)
         action = sanction["action"].to_s
@@ -495,9 +492,27 @@ class BetaDashboardController < ApplicationController
 
         sanction.merge(
           "checked_at" => check.checked_at,
-          "check_status" => check.status
+          "check_status" => check.status,
+          "source" => "wallpaper"
         )
       end
-    end.first(12)
+    end
+
+    strava = current_user.strava_goal_checks.order(checked_at: :desc).limit(40).flat_map do |check|
+      details = check.details.is_a?(Hash) ? check.details : {}
+      Array(details["sanctions_applied"]).filter_map do |sanction|
+        next unless sanction.is_a?(Hash)
+        action = sanction["action"].to_s
+        next unless action.start_with?("leverage_photo")
+
+        sanction.merge(
+          "checked_at" => check.checked_at,
+          "check_status" => check.status,
+          "source" => "strava"
+        )
+      end
+    end
+
+    (wallpaper + strava).sort_by { |row| row["checked_at"] || Time.zone.at(0) }.reverse.first(12)
   end
 end

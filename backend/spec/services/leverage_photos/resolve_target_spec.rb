@@ -42,6 +42,41 @@ RSpec.describe LeveragePhotos::ResolveTarget do
     expect(photo).to eq(active)
   end
 
+  it "prefers active photos when randomly resolving lock" do
+    active = create(:leverage_photo, :active, user: user)
+    create(:leverage_photo, :with_images, user: user)
+
+    photo = described_class.call(
+      user: user,
+      action: :lock,
+      target_mode: "random"
+    )
+    expect(photo).to eq(active)
+  end
+
+  it "returns a draft when lock random pool has no active photo" do
+    draft = create(:leverage_photo, :with_images, user: user)
+
+    photo = described_class.call(
+      user: user,
+      action: :lock,
+      target_mode: "random"
+    )
+    expect(photo).to eq(draft)
+  end
+
+  it "accepts specific lock targets that can start or extend" do
+    draft = create(:leverage_photo, :with_images, user: user)
+    active = create(:leverage_photo, :active, user: user)
+
+    expect(
+      described_class.call(user: user, action: :lock, target_mode: "specific", photo_id: draft.id)
+    ).to eq(draft)
+    expect(
+      described_class.call(user: user, action: :lock, target_mode: "specific", photo_id: active.id)
+    ).to eq(active)
+  end
+
   it "returns nil when random pool is empty" do
     photo = described_class.call(
       user: user,

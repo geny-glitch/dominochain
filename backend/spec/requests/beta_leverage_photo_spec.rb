@@ -56,6 +56,49 @@ RSpec.describe BetaLeveragePhotoController, type: :request do
 
       expect(user.leverage_photos.not_deleted.count).to eq(2)
     end
+
+    it "creates a draft without censored image" do
+      post beta_leverage_photo_upload_submit_path, params: {
+        original_image: jpeg_upload("vacation"),
+        teaser_image: jpeg_upload("teaser"),
+        original_filename: "vacation.png"
+      }
+
+      photo = user.leverage_photos.not_deleted.last
+      expect(response).to redirect_to(beta_leverage_photo_path(photo))
+      expect(photo).to be_draft
+      expect(photo.original_image).to be_attached
+      expect(photo.teaser_image).to be_attached
+      expect(photo.censored_image).not_to be_attached
+      expect(photo).to be_needs_censor
+    end
+  end
+
+  describe "POST /beta/leverage_photos/:id/censor" do
+    it "attaches censored reminder on a draft" do
+      photo = create(:leverage_photo, :without_censor, user: user)
+
+      post beta_leverage_photo_censor_submit_path(photo), params: {
+        censored_image: jpeg_upload("censored")
+      }
+
+      expect(response).to redirect_to(beta_leverage_photo_path(photo))
+      photo.reload
+      expect(photo.censored_image).to be_attached
+      expect(photo.teaser_image).to be_attached
+      expect(photo).not_to be_needs_censor
+    end
+
+    it "forbids censor after timer start" do
+      photo = create(:leverage_photo, :active, user: user)
+
+      post beta_leverage_photo_censor_submit_path(photo), params: {
+        censored_image: jpeg_upload("censored")
+      }
+
+      expect(response).to redirect_to(beta_leverage_photo_path(photo))
+      expect(flash[:alert]).to be_present
+    end
   end
 
   describe "GET /beta/leverage_photos/:id/original" do
@@ -105,6 +148,52 @@ RSpec.describe BetaLeveragePhotoController, type: :request do
       expect(photo.tlock_blob).to be_attached
       expect(photo.drand_rounds).to eq([99_001])
       expect(photo.tlock_layer_count).to eq(1)
+    end
+
+    it "re-locks an unlocked photo with a fresh timer" do
+      photo = create(:leverage_photo, :unlocked, user: user)
+      photo.leverage_photo_extensions.create!(
+        added_seconds: 3600,
+        locked_until_before: 1.day.from_now,
+        locked_until_after: 1.day.from_now + 1.hour,
+        drand_round_added: 12_346
+      )
+      locked_until = 2.hours.from_now
+
+      post beta_leverage_photo_start_path(photo),
+        params: {
+          tlock_blob: tlock_upload("NEW-AGE"),
+          drand_round: 88_888,
+          duration_seconds: 2.hours.to_i,
+          locked_until: locked_until.iso8601,
+          drand_chain_hash: LeveragePhoto::DEFAULT_DRAND_CHAIN_HASH
+        },
+        headers: { "Accept" => "application/json" }
+
+      expect(response).to have_http_status(:ok)
+      photo.reload
+      expect(photo).to be_active
+      expect(photo.original_image).not_to be_attached
+      expect(photo.tlock_blob).to be_attached
+      expect(photo.tlock_blob.download).to eq("NEW-AGE")
+      expect(photo.drand_rounds).to eq([88_888])
+      expect(photo.tlock_layer_count).to eq(1)
+      expect(photo.leverage_photo_extensions.count).to eq(0)
+    end
+
+    it "forbids start when photo is active" do
+      photo = create(:leverage_photo, :active, user: user)
+
+      post beta_leverage_photo_start_path(photo),
+        params: {
+          tlock_blob: tlock_upload("AGE"),
+          drand_round: 99_001,
+          duration_seconds: 2.hours.to_i,
+          locked_until: 2.hours.from_now.iso8601
+        },
+        headers: { "Accept" => "application/json" }
+
+      expect(response).to have_http_status(:forbidden)
     end
   end
 

@@ -56,6 +56,8 @@ es:
       activity_types_extra: "Tipos adicionales (opcional, separados por comas — tipo o sport_type reconocido por Strava)"
       device_names: "Dispositivos conectados requeridos (opcional, coincidencia parcial)"
       chaster_penalty_minutes: "Tiempo añadido a Chaster si falla (minutos)"
+      leverage_sanctions_title: "Time vault si falla"
+      leverage_sanctions_hint: "Opcional. Se aplica si el objetivo falla, además de la penalización de Chaster."
       criteria_prefix: "Criterios:"
       criteria_none: "ninguno"
       last_check_prefix: "Última comprobación:"
@@ -100,6 +102,9 @@ es:
         criteria_required: "Añade al menos un criterio de Strava."
         must_be_list: "debe ser una lista"
         invalid_time_zone: "es inválida"
+        leverage_start_seconds: "se requiere una duración de bloqueo si el inicio está activado"
+        leverage_add_time_seconds: "se requiere una duración de ampliación si añadir tiempo está activado"
+        leverage_lock_seconds: "se requiere una duración si el bloqueo Time vault está activado"
     cigarettes_source:
       page_title: "Fuentes · Cigarettes — %{nickname}"
       heading: "Cigarettes"

@@ -7,9 +7,11 @@ class BetaLeveragePhotoController < ApplicationController
   before_action :require_beta_role!
   before_action :require_catalog_action!
   before_action :set_photo, only: %i[
-    show original start add_time tlock_blob decrypt_payload destroy
+    show original censor_new censor start add_time tlock_blob decrypt_payload destroy
   ]
-  before_action :ensure_draft_photo!, only: %i[original start]
+  before_action :ensure_lockable_for_start!, only: %i[start]
+  before_action :ensure_draft_photo!, only: %i[original]
+  before_action :ensure_can_censor!, only: %i[censor_new censor]
   before_action :ensure_active_or_unlocked!, only: %i[tlock_blob decrypt_payload]
   before_action :ensure_active!, only: %i[add_time]
 
@@ -26,26 +28,62 @@ class BetaLeveragePhotoController < ApplicationController
   end
 
   def upload
-    unless params[:original_image].present? && params[:censored_image].present? && params[:teaser_image].present?
-      redirect_to beta_leverage_photo_upload_path, alert: t("flash.beta.leverage_photo.images_required")
+    unless params[:original_image].present? && params[:teaser_image].present?
+      respond_to do |format|
+        format.json { render json: { error: t("flash.beta.leverage_photo.images_required") }, status: :unprocessable_entity }
+        format.html { redirect_to beta_leverage_photo_upload_path, alert: t("flash.beta.leverage_photo.images_required") }
+      end
       return
     end
 
-    filename = LeveragePhoto.normalized_original_filename(
-      params[:original_filename].presence || params[:original_image].original_filename
+    photo = create_draft_photo!(
+      original_image: params[:original_image],
+      teaser_image: params[:teaser_image],
+      censored_image: params[:censored_image],
+      original_filename: params[:original_filename]
     )
 
-    photo = current_user.leverage_photos.build(status: "draft", original_filename: filename)
-    photo.original_image.attach(params[:original_image])
-    photo.censored_image.attach(params[:censored_image])
-    photo.teaser_image.attach(params[:teaser_image])
-    photo.save!
-    photo.original_image.blob.update!(filename: filename) if photo.original_image.attached?
-    photo.assert_attachments!
-
-    redirect_to beta_leverage_photo_path(photo), notice: t("flash.beta.leverage_photo.uploaded")
+    respond_to do |format|
+      format.json do
+        render json: {
+          id: photo.id,
+          url: beta_leverage_photo_path(photo),
+          censored: photo.censored_image.attached?
+        }
+      end
+      format.html do
+        notice =
+          if photo.censored_image.attached?
+            t("flash.beta.leverage_photo.uploaded")
+          else
+            t("flash.beta.leverage_photo.uploaded_without_censor")
+          end
+        redirect_to beta_leverage_photo_path(photo), notice: notice
+      end
+    end
   rescue ActiveRecord::RecordInvalid => e
-    redirect_to beta_leverage_photo_upload_path, alert: e.record.errors.full_messages.to_sentence
+    respond_to do |format|
+      format.json { render json: { error: e.record.errors.full_messages.to_sentence }, status: :unprocessable_entity }
+      format.html { redirect_to beta_leverage_photo_upload_path, alert: e.record.errors.full_messages.to_sentence }
+    end
+  end
+
+  def censor_new
+  end
+
+  def censor
+    unless params[:censored_image].present?
+      redirect_to beta_leverage_photo_censor_path(@photo), alert: t("flash.beta.leverage_photo.censor_required")
+      return
+    end
+
+    @photo.censored_image.attach(params[:censored_image])
+    @photo.save!
+    @photo.assert_attachments!
+
+    redirect_to beta_leverage_photo_path(@photo), notice: t("flash.beta.leverage_photo.censored")
+  rescue ActiveRecord::RecordInvalid => e
+    redirect_to beta_leverage_photo_censor_path(@photo), alert: e.record.errors.full_messages.to_sentence
   end
 
   def original
@@ -152,6 +190,18 @@ class BetaLeveragePhotoController < ApplicationController
     head :forbidden
   end
 
+  def ensure_can_censor!
+    return if @photo.can_censor?
+
+    redirect_to beta_leverage_photo_path(@photo), alert: t("flash.beta.leverage_photo.censor_unavailable")
+  end
+
+  def ensure_lockable_for_start!
+    return if @photo.can_start_timer?
+
+    head :forbidden
+  end
+
   def ensure_active!
     maybe_unlock!(@photo)
     return if @photo.active?
@@ -170,6 +220,21 @@ class BetaLeveragePhotoController < ApplicationController
     return unless photo&.unlock_due?
 
     photo.mark_unlocked!
+  end
+
+  def create_draft_photo!(original_image:, teaser_image:, original_filename:, censored_image: nil)
+    filename = LeveragePhoto.normalized_original_filename(
+      original_filename.presence || original_image.original_filename
+    )
+
+    photo = current_user.leverage_photos.build(status: "draft", original_filename: filename)
+    photo.original_image.attach(original_image)
+    photo.teaser_image.attach(teaser_image)
+    photo.censored_image.attach(censored_image) if censored_image.present?
+    photo.save!
+    photo.original_image.blob.update!(filename: filename) if photo.original_image.attached?
+    photo.assert_attachments!
+    photo
   end
 
   def send_tlock_blob!

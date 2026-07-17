@@ -84,6 +84,13 @@
               <%= label_tag "strava_goal_#{goal.id}_chaster_penalty_minutes", t("beta.strava.chaster_penalty_minutes"), class: "ds-form-label" %>
               <%= number_field_tag :chaster_penalty_minutes, goal.chaster_penalty_seconds / 60, id: "strava_goal_#{goal.id}_chaster_penalty_minutes", min: 1, max: 525_600, class: "ds-input", required: true %>
             </div>
+            <% if @leverage_action_enabled %>
+              <%= render "strava_leverage_sanctions",
+                    field_prefix: "failure_sanction",
+                    row_id: "strava_goal_#{goal.id}",
+                    sanction: goal.failure_sanction_object,
+                    photos: @leverage_photos %>
+            <% end %>
             <p class="ds-beta-control-hint"><%= t("beta.strava.criteria_prefix") %> <%= goal.criteria_summary.presence || t("beta.strava.criteria_none") %></p>
             <%= submit_tag t("beta.strava.save_goal"), class: "ds-btn ds-btn--primary ds-btn--sm ds-strava-inline-action-lg" %>
           <% end %>
@@ -156,6 +163,13 @@
           <%= label_tag :chaster_penalty_minutes, t("beta.strava.chaster_penalty_minutes"), class: "ds-form-label" %>
           <%= number_field_tag :chaster_penalty_minutes, 60, min: 1, max: 525_600, class: "ds-input", required: true %>
         </div>
+        <% if @leverage_action_enabled %>
+          <%= render "strava_leverage_sanctions",
+                field_prefix: "failure_sanction",
+                row_id: "new_strava_goal",
+                sanction: WallpaperSanction.from_hash({}),
+                photos: @leverage_photos %>
+        <% end %>
         <p class="ds-beta-control-hint"><%= t("beta.strava.new_goal_criteria_hint") %></p>
         <%= submit_tag t("beta.strava.create_goal"), class: "ds-btn ds-btn--primary ds-btn--sm ds-strava-inline-action-lg" %>
       <% end %>

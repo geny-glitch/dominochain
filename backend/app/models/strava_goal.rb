@@ -43,6 +43,7 @@ class StravaGoal < ApplicationRecord
   validate :activity_types_are_strings
   validate :device_names_are_strings
   validate :time_zone_known
+  validate :failure_sanction_is_valid
 
   scope :enabled, -> { where(enabled: true) }
   scope :due_for_check, ->(_reference_time = Time.current) { enabled }
@@ -153,6 +154,23 @@ class StravaGoal < ApplicationRecord
     due_at - window_days.days
   end
 
+  def failure_sanction_object
+    WallpaperSanction.from_hash(failure_sanction)
+  end
+
+  def failure_sanction=(value)
+    sanction = WallpaperSanction.from_hash(value.is_a?(Hash) ? value : {})
+    super(sanction.to_h.slice(
+      "leverage_photo_lock_enabled",
+      "leverage_photo_lock_seconds",
+      "leverage_photo_lock_target_mode",
+      "leverage_photo_lock_photo_id",
+      "leverage_photo_delete_enabled",
+      "leverage_photo_delete_target_mode",
+      "leverage_photo_delete_photo_id"
+    ))
+  end
+
   private
 
   def normalize_list(value)
@@ -190,5 +208,12 @@ class StravaGoal < ApplicationRecord
     return if time_zone.blank? || ActiveSupport::TimeZone[time_zone].present?
 
     errors.add(:time_zone, I18n.t("beta.strava.errors.invalid_time_zone"))
+  end
+
+  def failure_sanction_is_valid
+    sanction = failure_sanction_object
+    if sanction.leverage_photo_lock_enabled && !sanction.leverage_photo_lock_seconds.to_i.positive?
+      errors.add(:failure_sanction, I18n.t("beta.strava.errors.leverage_lock_seconds"))
+    end
   end
 end

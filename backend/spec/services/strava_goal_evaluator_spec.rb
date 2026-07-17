@@ -93,6 +93,55 @@ RSpec.describe StravaGoalEvaluator do
       expect(check.chaster_error).to eq("Aucun cadenas Chaster actif.")
     end
 
+    it "applies configured leverage photo lock when the goal fails" do
+      stub_beta_catalog_feature_flags(
+        "beta_source_strava" => true,
+        "beta_action_chaster" => true,
+        "beta_action_leverage_photo" => true
+      )
+      user.update!(
+        beta_ui_prefs: user.beta_ui_prefs.deep_merge(
+          "catalog_visibility" => {
+            "sources" => { "strava" => true },
+            "actions" => { "chaster" => true, "leverage_photo" => true }
+          }
+        )
+      )
+      photo = create(:leverage_photo, :with_images, user: user)
+      goal = create(
+        :strava_goal,
+        user: user,
+        required_activity_count: 2,
+        window_days: 1,
+        min_duration_seconds: 30.minutes.to_i,
+        chaster_penalty_seconds: 30.minutes.to_i,
+        failure_sanction: {
+          "leverage_photo_lock_enabled" => true,
+          "leverage_photo_lock_seconds" => 1.hour.to_i,
+          "leverage_photo_lock_target_mode" => "specific",
+          "leverage_photo_lock_photo_id" => photo.id
+        }
+      )
+      allow(strava_service).to receive(:activities_between).and_return([])
+      allow(ChasterService).to receive(:new).with(user).and_return(chaster_service)
+      allow(chaster_service).to receive(:current_lock).and_return({ id: "lock-strava" })
+      allow(chaster_service).to receive(:add_time_to_lock)
+      server = instance_double(LeveragePhotos::StartTimerServer, call!: true)
+      allow(LeveragePhotos::StartTimerServer).to receive(:new).and_return(server)
+
+      check = evaluator.evaluate_goal!(goal, due_at: due_at)
+
+      expect(check.status).to eq("failed")
+      expect(check.chaster_applied).to be true
+      expect(LeveragePhotos::StartTimerServer).to have_received(:new).with(
+        photo: photo,
+        duration_seconds: 1.hour.to_i
+      )
+      expect(check.details["sanctions_applied"]).to include(
+        hash_including("action" => "leverage_photo_lock", "status" => "ok")
+      )
+    end
+
     it "evaluates due goals at their configured local check time" do
       travel_to Time.zone.parse("2026-05-06 00:30:00") do
         due_goal = create(:strava_goal, user: user, window_days: 1, check_time_minutes: 22 * 60, time_zone: "UTC")

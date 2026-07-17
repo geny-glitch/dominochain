@@ -54,7 +54,23 @@ class LeveragePhoto < ApplicationRecord
   end
 
   def ready_to_lock?
-    draft? && original_image.attached? && censored_image.attached? && teaser_image.attached?
+    draft? && original_image.attached? && teaser_image.attached?
+  end
+
+  def ready_to_relock?
+    unlocked? && teaser_image.attached? && tlock_blob.attached?
+  end
+
+  def can_start_timer?
+    ready_to_lock? || ready_to_relock?
+  end
+
+  def can_censor?
+    draft? && original_image.attached?
+  end
+
+  def needs_censor?
+    can_censor? && !censored_image.attached?
   end
 
   def can_add_time?
@@ -67,6 +83,10 @@ class LeveragePhoto < ApplicationRecord
 
   def eligible_for_add_time?
     can_add_time?
+  end
+
+  def eligible_for_lock?
+    can_start_timer? || can_add_time?
   end
 
   def eligible_for_delete?
@@ -107,12 +127,10 @@ class LeveragePhoto < ApplicationRecord
     case status
     when "draft"
       errors.add(:original_image, :blank) unless original_image.attached?
-      errors.add(:censored_image, :blank) unless censored_image.attached?
       errors.add(:teaser_image, :blank) unless teaser_image.attached?
     when "active", "unlocked"
       errors.add(:original_image, "must be purged after timer start") if original_image.attached?
       errors.add(:tlock_blob, :blank) unless tlock_blob.attached?
-      errors.add(:censored_image, :blank) unless censored_image.attached?
       errors.add(:teaser_image, :blank) unless teaser_image.attached?
     end
   end

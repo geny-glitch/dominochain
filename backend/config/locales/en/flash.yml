@@ -84,8 +84,15 @@ en:
         no_device: "Register a device in the Android app first."
         boss_controls_wallpaper: "Your boss controls the wallpaper. You cannot change it here."
       leverage_photo:
-        images_required: "Original, censored, and teaser images are required."
+        images_required: "Original and teaser images are required."
+        censor_required: "Censored image is required."
+        censor_unavailable: "This photo cannot be censored right now."
         uploaded: "Leverage photo saved. You can start the timer later."
+        uploaded_without_censor: "Leverage photo saved. You can create a censored reminder later."
+        batch_uploaded:
+          one: "%{count} leverage photo saved. You can create censored reminders later."
+          other: "%{count} leverage photos saved. You can create censored reminders later."
+        censored: "Censored reminder saved."
         timer_started: "Timer started. The original is locked until the countdown ends."
         time_added: "Time added."
         deleted: "Leverage photo permanently deleted."

@@ -1,7 +1,11 @@
-<%# locals: form_url, page_title, back_path, back_label, aspect_ratio (nil = free), submit_mode ("wallpaper"|"leverage_upload"), upload_url, redirect_url, i18n (hash) %>
+<%# locals: form_url, page_title, back_path, back_label, aspect_ratio (nil = free), submit_mode ("wallpaper"|"leverage_upload"|"leverage_censor"), upload_url, redirect_url, i18n (hash), allow_skip_censor, allow_multi, preload_url %>
 <% aspect_ratio = local_assigns.fetch(:aspect_ratio, nil) %>
 <% submit_mode = local_assigns.fetch(:submit_mode, "wallpaper") %>
+<% allow_skip_censor = local_assigns.fetch(:allow_skip_censor, false) %>
+<% allow_multi = local_assigns.fetch(:allow_multi, false) %>
+<% preload_url = local_assigns.fetch(:preload_url, nil) %>
 <% i18n = local_assigns.fetch(:i18n, {}) %>
+<% leverage_flow = %w[leverage_upload leverage_censor].include?(submit_mode) %>
 
 <% content_for :head do %>
   <link rel="stylesheet" href="https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.css" />
@@ -14,8 +18,13 @@
      data-upload-url="<%= upload_url %>"
      data-redirect-url="<%= redirect_url %>"
      data-aspect-ratio="<%= aspect_ratio.nil? ? "" : aspect_ratio %>"
+     data-allow-skip-censor="<%= allow_skip_censor ? "true" : "false" %>"
+     data-allow-multi="<%= allow_multi ? "true" : "false" %>"
+     data-preload-url="<%= preload_url %>"
      data-label-submitting="<%= i18n[:submitting] %>"
      data-label-submit="<%= i18n[:submit] %>"
+     data-label-skip-censor="<%= i18n[:skip_censor] %>"
+     data-label-batch-uploading="<%= i18n[:batch_uploading] %>"
      data-label-error="<%= i18n[:error] %>"
      data-hint-text="<%= i18n[:hint_text] %>"
      data-hint-pixelate="<%= i18n[:hint_pixelate] %>">
@@ -25,21 +34,31 @@
     <header class="ds-upload-header">
       <h1 class="ds-title"><%= page_title %></h1>
       <div class="ds-upload-steps" id="step-indicator">
-        <span class="ds-upload-step ds-upload-step--active" data-step="1"><%= i18n[:step_choose] %></span>
-        <span class="ds-upload-step" data-step="2"><%= i18n[:step_crop] %></span>
+        <% unless submit_mode == "leverage_censor" %>
+          <span class="ds-upload-step ds-upload-step--active" data-step="1"><%= i18n[:step_choose] %></span>
+        <% end %>
+        <span class="ds-upload-step <%= submit_mode == "leverage_censor" ? "ds-upload-step--active" : "" %>" data-step="2"><%= i18n[:step_crop] %></span>
         <span class="ds-upload-step" data-step="3"><%= i18n[:step_edit] %></span>
       </div>
     </header>
 
     <%= form_with url: form_url, method: :post, local: true, multipart: true, id: "upload-form", class: "ds-form" do |f| %>
-      <%= f.file_field :image, accept: "image/*", id: "image-input", style: "display: none" %>
+      <%= f.file_field :image,
+            accept: "image/*",
+            id: "image-input",
+            multiple: allow_multi,
+            style: "display: none" %>
     <% end %>
 
-    <div id="step-choose" class="ds-upload-step-content">
+    <div id="step-choose" class="ds-upload-step-content" <%= "style=\"display: none;\"".html_safe if submit_mode == "leverage_censor" %>>
+      <% if i18n[:choose_help].present? %>
+        <p class="ds-editor-step-label"><%= i18n[:choose_help] %></p>
+      <% end %>
       <label for="image-input" class="ds-upload-choose-card">
         <svg class="ds-upload-choose-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-        <span class="ds-upload-choose-label"><%= i18n[:choose_image] %></span>
+        <span class="ds-upload-choose-label"><%= allow_multi && i18n[:choose_images].present? ? i18n[:choose_images] : i18n[:choose_image] %></span>
       </label>
+      <p id="batch-status" class="ds-editor-step-label" style="display:none;margin-top:1rem;" aria-live="polite"></p>
     </div>
 
     <div id="step-crop" class="ds-upload-step-content" style="display: none;">
@@ -48,12 +67,17 @@
         <img id="crop-img" src="" alt="<%= i18n[:crop_alt] %>" />
       </div>
       <div class="ds-editor-actions">
-        <button type="button" id="change-image-btn" class="ds-btn ds-btn--secondary"><%= i18n[:change] %></button>
+        <% unless submit_mode == "leverage_censor" %>
+          <button type="button" id="change-image-btn" class="ds-btn ds-btn--secondary"><%= i18n[:change] %></button>
+        <% end %>
         <button type="button" id="suivant-btn" class="ds-btn ds-btn--primary"><%= i18n[:next] %></button>
       </div>
     </div>
 
     <div id="step-edit" class="ds-upload-step-content" style="display: none;">
+      <% if leverage_flow && i18n[:censor_intro].present? %>
+        <p class="ds-editor-step-label" id="censor-intro"><%= i18n[:censor_intro] %></p>
+      <% end %>
       <div class="ds-editor-toolbar">
         <button type="button" id="tool-pixelate" class="ds-tool-btn ds-tool-btn--active" title="<%= i18n[:tool_pixelate_title] %>">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
@@ -96,7 +120,7 @@
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="5" y1="17" x2="19" y2="17"/></svg>
             </button>
             <button type="button" id="text-align-right" class="ds-editor-align-btn" title="<%= i18n[:align_right_title] %>" data-align="right">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="10" y1="12" x2="20" y2="12"/><line x1="6" y1="17" x2="20" y2="17"/></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="10" y1="12" x2="20" y2="12"/><line x1="6" y1="17" x2="18" y2="17"/></svg>
             </button>
           </div>
         </label>
@@ -130,6 +154,9 @@
       </div>
       <div class="ds-editor-actions">
         <button type="button" id="edit-back-btn" class="ds-btn ds-btn--secondary"><%= i18n[:edit_back] %></button>
+        <% if allow_skip_censor %>
+          <button type="button" id="skip-censor-btn" class="ds-btn ds-btn--ghost"><%= i18n[:skip_censor] %></button>
+        <% end %>
         <button type="button" id="edit-submit-btn" class="ds-btn ds-btn--primary"><%= i18n[:submit] %></button>
       </div>
     </div>

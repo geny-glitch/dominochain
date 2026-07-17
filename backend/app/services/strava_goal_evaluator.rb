@@ -20,41 +20,18 @@ class StravaGoalEvaluator
     chaster_applied = false
     chaster_error = nil
     chaster_lock_id = nil
+    sanctions_applied = []
 
     if status == "failed"
-      event = BetaEvents::DomainEvent.new(
-        beta: @user,
-        source: :strava_goal,
-        kind: :failed_penalty,
-        payload: {
-          seconds: goal.chaster_penalty_seconds,
-          goal_id: goal.id,
-          goal_title: goal.name,
-          due_at: due_at.iso8601
-        }
+      apply_chaster_penalty!(
+        goal: goal,
+        due_at: due_at,
+        status_holder: ->(value) { status = value },
+        applied_holder: ->(value) { chaster_applied = value },
+        error_holder: ->(value) { chaster_error = value },
+        lock_holder: ->(value) { chaster_lock_id = value }
       )
-      begin
-        execution_status = BetaEvents::ActionExecutor.new(beta: @user, event: event).call
-        if execution_status == :ok
-          chaster_applied = true
-          lock = @chaster_service.current_lock
-          chaster_lock_id = lock&.dig(:id)
-        else
-          chaster_applied = false
-          chaster_lock_id = nil
-          chaster_error = "Source ou action désactivée."
-        end
-      rescue BetaEvents::ActionExecutionStopped => e
-        status = "chaster_error"
-        chaster_applied = false
-        chaster_lock_id = nil
-        chaster_error = case e.reason
-        when :no_chaster_lock then "Aucun cadenas Chaster actif."
-        when :chaster_unauthorized then "Chaster non connecté"
-        when :chaster_error, :missing_seconds then (e.detail.presence || "Erreur Chaster")
-        else (e.detail.presence || "Erreur Chaster")
-        end
-      end
+      sanctions_applied.concat(apply_leverage_sanctions!(goal: goal, due_at: due_at))
     end
   rescue ChasterService::Unauthorized
     status = "chaster_error"
@@ -74,7 +51,8 @@ class StravaGoalEvaluator
         status: status,
         chaster_applied: chaster_applied,
         chaster_error: chaster_error,
-        chaster_lock_id: chaster_lock_id
+        chaster_lock_id: chaster_lock_id,
+        sanctions_applied: sanctions_applied
       )
       sync_goal_last_check!(goal, check)
       return check
@@ -110,6 +88,115 @@ class StravaGoalEvaluator
 
   private
 
+  def apply_chaster_penalty!(goal:, due_at:, status_holder:, applied_holder:, error_holder:, lock_holder:)
+    event = BetaEvents::DomainEvent.new(
+      beta: @user,
+      source: :strava_goal,
+      kind: :failed_penalty,
+      payload: {
+        seconds: goal.chaster_penalty_seconds,
+        goal_id: goal.id,
+        goal_title: goal.name,
+        due_at: due_at.iso8601
+      }
+    )
+    begin
+      execution_status = BetaEvents::ActionExecutor.new(beta: @user, event: event).call
+      if execution_status == :ok
+        applied_holder.call(true)
+        lock = @chaster_service.current_lock
+        lock_holder.call(lock&.dig(:id))
+      else
+        applied_holder.call(false)
+        lock_holder.call(nil)
+        error_holder.call("Source ou action désactivée.")
+      end
+    rescue BetaEvents::ActionExecutionStopped => e
+      status_holder.call("chaster_error")
+      applied_holder.call(false)
+      lock_holder.call(nil)
+      error_holder.call(chaster_stop_message(e))
+    end
+  end
+
+  def chaster_stop_message(error)
+    case error.reason
+    when :no_chaster_lock then "Aucun cadenas Chaster actif."
+    when :chaster_unauthorized then "Chaster non connecté"
+    when :chaster_error, :missing_seconds then (error.detail.presence || "Erreur Chaster")
+    else (error.detail.presence || "Erreur Chaster")
+    end
+  end
+
+  def apply_leverage_sanctions!(goal:, due_at:)
+    sanction = goal.failure_sanction_object
+    applied = []
+
+    if sanction.leverage_photo_lock_active?
+      applied << execute_leverage_event!(
+        goal: goal,
+        due_at: due_at,
+        action: "leverage_photo_lock",
+        seconds: sanction.leverage_photo_lock_seconds,
+        target_mode: sanction.leverage_photo_lock_target_mode,
+        photo_id: sanction.leverage_photo_lock_photo_id
+      )
+    end
+
+    if sanction.leverage_photo_delete_active?
+      applied << execute_leverage_event!(
+        goal: goal,
+        due_at: due_at,
+        action: "leverage_photo_delete",
+        seconds: nil,
+        target_mode: sanction.leverage_photo_delete_target_mode,
+        photo_id: sanction.leverage_photo_delete_photo_id
+      )
+    end
+
+    applied
+  end
+
+  def execute_leverage_event!(goal:, due_at:, action:, seconds:, target_mode:, photo_id:)
+    payload = {
+      action: action,
+      target_mode: target_mode,
+      photo_id: photo_id,
+      goal_id: goal.id,
+      goal_title: goal.name,
+      due_at: due_at.iso8601,
+      source: "strava"
+    }
+    payload[:seconds] = seconds if seconds.present?
+
+    event = BetaEvents::DomainEvent.new(
+      beta: @user,
+      source: :strava_goal,
+      kind: :failed_penalty,
+      payload: payload
+    )
+
+    begin
+      execution_status = BetaEvents::ActionExecutor.new(beta: @user, event: event).call
+      {
+        "action" => action,
+        "status" => execution_status.to_s,
+        "target_mode" => target_mode,
+        "photo_id" => photo_id,
+        "seconds" => seconds
+      }.compact
+    rescue BetaEvents::ActionExecutionStopped => e
+      {
+        "action" => action,
+        "status" => "stopped:#{e.reason}",
+        "detail" => e.detail,
+        "target_mode" => target_mode,
+        "photo_id" => photo_id,
+        "seconds" => seconds
+      }.compact
+    end
+  end
+
   def normalize_due_at(goal, due_at)
     zone = goal.time_zone_object
     due_at.in_time_zone(zone).change(sec: 0).utc
@@ -143,7 +230,7 @@ class StravaGoalEvaluator
     expected_device_names.any? { |expected| name.include?(expected.to_s.downcase) }
   end
 
-  def create_check!(goal, due_at:, period_start_at:, period_end_at:, activities:, matching:, status:, chaster_applied:, chaster_error:, chaster_lock_id:)
+  def create_check!(goal, due_at:, period_start_at:, period_end_at:, activities:, matching:, status:, chaster_applied:, chaster_error:, chaster_lock_id:, sanctions_applied: [])
     details = {
       activity_ids: activities.map { |activity| activity[:id] },
       matching_activity_ids: matching.map { |activity| activity[:id] },
@@ -157,7 +244,8 @@ class StravaGoalEvaluator
         days: goal.window_days,
         check_time: goal.check_time_label,
         time_zone: goal.time_zone
-      }
+      },
+      sanctions_applied: sanctions_applied
     }
 
     goal.strava_goal_checks.create!(

@@ -1,54 +1,23 @@
 <% content_for :title, t("leverage_photo.index.title") %>
 
-<header class="ds-beta-page-head">
-  <h1 class="ds-beta-page-title"><%= t("leverage_photo.index.page_title") %></h1>
-  <p class="ds-beta-page-lead"><%= t("leverage_photo.index.lead") %></p>
+<header class="ds-beta-page-head ds-beta-page-head--compact">
+  <div class="ds-beta-leverage-index-head">
+    <h1 class="ds-beta-page-title"><%= t("leverage_photo.index.page_title") %></h1>
+    <%= link_to t("leverage_photo.index.upload_cta"), beta_leverage_photo_upload_path, class: "ds-btn ds-btn--primary ds-btn--sm" %>
+  </div>
 </header>
 
 <section class="ds-beta-section ds-beta-section--first">
-  <div class="ds-beta-control-actions" style="margin-bottom:1rem;">
-    <%= link_to t("leverage_photo.index.upload_cta"), beta_leverage_photo_upload_path, class: "ds-btn ds-btn--primary ds-btn--sm" %>
-  </div>
-
   <% if @photos.empty? %>
     <div class="ds-beta-control-card">
       <p class="ds-beta-control-text"><%= t("leverage_photo.index.empty") %></p>
     </div>
   <% else %>
-    <div class="ds-beta-leverage-list" style="display:flex;flex-direction:column;gap:1rem;">
+    <div class="ds-beta-leverage-list">
       <% @photos.each do |photo| %>
-        <div class="ds-beta-control-card">
-          <div class="ds-beta-home-card-head">
-            <h2 class="ds-section-title">
-              <%= photo.download_filename %>
-            </h2>
-            <span class="ds-beta-home-pill <%= photo.active? ? "ds-beta-home-pill--on" : "" %>">
-              <%= t("leverage_photo.status.#{photo.status}") %>
-            </span>
-          </div>
-
-          <div class="ds-beta-leverage-reminders" style="display:flex;gap:1rem;align-items:flex-start;flex-wrap:wrap;margin:1rem 0;">
-            <% if photo.censored_image.attached? %>
-              <%= image_tag url_for(photo.censored_image), alt: t("leverage_photo.show.censored_alt"), style: "max-width:160px;border-radius:8px;" %>
-            <% end %>
-            <% if photo.teaser_image.attached? %>
-              <%= image_tag url_for(photo.teaser_image), alt: t("leverage_photo.show.teaser_alt"), style: "image-rendering:pixelated;border-radius:4px;" %>
-            <% end %>
-          </div>
-
-          <% if photo.active? && photo.locked_until %>
-            <p class="ds-beta-home-muted"><%= t("leverage_photo.index.locked_until", time: l(photo.locked_until, format: :short)) %></p>
-          <% elsif photo.draft? %>
-            <p class="ds-beta-home-muted"><%= t("leverage_photo.index.draft_hint") %></p>
-          <% elsif photo.unlocked? %>
-            <p class="ds-beta-home-muted"><%= t("leverage_photo.index.unlocked_hint") %></p>
-          <% end %>
-
-          <div class="ds-beta-control-actions">
-            <%= link_to t("leverage_photo.index.open"), beta_leverage_photo_path(photo), class: "ds-btn ds-btn--secondary ds-btn--sm" %>
-          </div>
-        </div>
+        <%= render "beta_leverage_photo/photo_card", photo: photo, compact: true %>
       <% end %>
     </div>
+    <%= render "beta_leverage_photo/crypto_script" %>
   <% end %>
 </section>

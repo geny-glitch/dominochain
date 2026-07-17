@@ -4,6 +4,7 @@ class LeveragePhotos::ResolveTarget
   class Error < StandardError; end
 
   ACTIONS = {
+    lock: :eligible_for_lock?,
     start: :eligible_for_start?,
     add_time: :eligible_for_add_time?,
     delete: :eligible_for_delete?
@@ -30,7 +31,7 @@ class LeveragePhotos::ResolveTarget
     when "specific"
       resolve_specific(pool)
     when "random"
-      pool.sample
+      resolve_random(pool)
     else
       nil
     end
@@ -49,5 +50,14 @@ class LeveragePhotos::ResolveTarget
     return nil if id <= 0
 
     pool.find { |photo| photo.id == id }
+  end
+
+  def resolve_random(pool)
+    return pool.sample unless @action == :lock
+
+    active = pool.select(&:can_add_time?)
+    return active.sample if active.any?
+
+    pool.sample
   end
 end

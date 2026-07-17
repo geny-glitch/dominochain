@@ -13,8 +13,8 @@ class LeveragePhotos::StartTimer
   end
 
   def call!
-    raise Error, "photo must be draft" unless @photo.draft?
-    raise Error, "original missing" unless @photo.original_image.attached?
+    raise Error, "photo cannot be locked" unless @photo.draft? || @photo.unlocked?
+    raise Error, "original missing" if @photo.draft? && !@photo.original_image.attached?
     raise Error, "tlock blob missing" if @tlock_blob.blank?
     raise Error, "invalid round" if @drand_round <= 0
     raise Error, "invalid locked_until" if @locked_until.blank? || @locked_until <= Time.current
@@ -24,8 +24,12 @@ class LeveragePhotos::StartTimer
     )
 
     LeveragePhoto.transaction do
+      if @photo.unlocked?
+        @photo.tlock_blob.purge if @photo.tlock_blob.attached?
+        @photo.leverage_photo_extensions.destroy_all
+      end
       @photo.tlock_blob.attach(@tlock_blob)
-      @photo.original_image.purge
+      @photo.original_image.purge if @photo.original_image.attached?
       @photo.update!(
         status: "active",
         locked_until: @locked_until,

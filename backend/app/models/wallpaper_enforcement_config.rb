@@ -111,10 +111,7 @@ class WallpaperEnforcementConfig < ApplicationRecord
       if sanction.chaster_add_time_enabled && sanction.chaster_seconds.blank?
         errors.add(attr, :invalid)
       end
-      if sanction.leverage_photo_start_enabled && sanction.leverage_photo_start_seconds.blank?
-        errors.add(attr, :invalid)
-      end
-      if sanction.leverage_photo_add_time_enabled && sanction.leverage_photo_add_time_seconds.blank?
+      if sanction.leverage_photo_lock_enabled && sanction.leverage_photo_lock_seconds.blank?
         errors.add(attr, :invalid)
       end
     end

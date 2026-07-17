@@ -30,6 +30,8 @@ get "beta/sources/vitrine", to: "beta_dashboard#sources_showcase", as: :beta_sou
   post "beta/leverage_photos/upload", to: "beta_leverage_photo#upload", as: :beta_leverage_photo_upload_submit
   get "beta/leverage_photos/:id", to: "beta_leverage_photo#show", as: :beta_leverage_photo
   get "beta/leverage_photos/:id/original", to: "beta_leverage_photo#original", as: :beta_leverage_photo_original
+  get "beta/leverage_photos/:id/censor", to: "beta_leverage_photo#censor_new", as: :beta_leverage_photo_censor
+  post "beta/leverage_photos/:id/censor", to: "beta_leverage_photo#censor", as: :beta_leverage_photo_censor_submit
   post "beta/leverage_photos/:id/start", to: "beta_leverage_photo#start", as: :beta_leverage_photo_start
   post "beta/leverage_photos/:id/add_time", to: "beta_leverage_photo#add_time", as: :beta_leverage_photo_add_time
   get "beta/leverage_photos/:id/tlock_blob", to: "beta_leverage_photo#tlock_blob", as: :beta_leverage_photo_tlock_blob

@@ -84,8 +84,15 @@ fr:
         no_device: "Enregistre d'abord un appareil dans l'app Android."
         boss_controls_wallpaper: "Ton boss contrôle le fond d'écran. Tu ne peux pas le modifier ici."
       leverage_photo:
-        images_required: "Les images originale, censurée et teaser sont requises."
+        images_required: "Les images originale et teaser sont requises."
+        censor_required: "L'image censurée est requise."
+        censor_unavailable: "Cette photo ne peut pas être censurée pour le moment."
         uploaded: "Photo de levier enregistrée. Tu pourras démarrer le timer plus tard."
+        uploaded_without_censor: "Photo de levier enregistrée. Tu pourras créer un rappel censuré plus tard."
+        batch_uploaded:
+          one: "%{count} photo de levier enregistrée. Tu pourras créer des rappels censurés plus tard."
+          other: "%{count} photos de levier enregistrées. Tu pourras créer des rappels censurés plus tard."
+        censored: "Rappel censuré enregistré."
         timer_started: "Timer démarré. L'originale est verrouillée jusqu'à la fin du compte à rebours."
         time_added: "Temps ajouté."
         deleted: "Photo de levier définitivement supprimée."

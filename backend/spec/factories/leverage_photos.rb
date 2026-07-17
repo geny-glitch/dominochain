@@ -28,6 +28,21 @@ FactoryBot.define do
       end
     end
 
+    trait :without_censor do
+      after(:build) do |photo|
+        photo.original_image.attach(
+          io: StringIO.new("fake-original"),
+          filename: "original.jpg",
+          content_type: "image/jpeg"
+        )
+        photo.teaser_image.attach(
+          io: StringIO.new("fake-teaser"),
+          filename: "teaser.jpg",
+          content_type: "image/jpeg"
+        )
+      end
+    end
+
     trait :active do
       with_images
       status { "active" }
@@ -45,6 +60,12 @@ FactoryBot.define do
           content_type: "text/plain"
         )
       end
+    end
+
+    trait :unlocked do
+      active
+      status { "unlocked" }
+      locked_until { 1.minute.ago }
     end
   end
 end

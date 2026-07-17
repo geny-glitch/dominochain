@@ -33,8 +33,8 @@ fr:
           events: "Actions : zap, intensité multipliée par facteur Z"
         leverage_photo:
           label: "Time vault"
-          subtitle: "Verrouiller, prolonger ou supprimer définitivement des photos de levier"
-          events: "Actions : démarrer le verrou, ajouter du temps, suppression définitive"
+          subtitle: "Verrouiller ou prolonger une photo, ou la supprimer définitivement"
+          events: "Actions : verrouiller/prolonger, suppression définitive"
     events:
       sources:
         puryfi: "Purify"
@@ -190,8 +190,9 @@ fr:
       logs_empty: "Aucune sanction Time vault automatisée pour l'instant."
       log_seconds: "%{seconds}s"
       log_action:
-        leverage_photo_start: "Photo verrouillée"
-        leverage_photo_add_time: "Verrou prolongé"
+        leverage_photo_lock: "Verrou photo appliqué"
+        leverage_photo_start: "Verrou photo appliqué"
+        leverage_photo_add_time: "Verrou photo appliqué"
         leverage_photo_delete: "Photo définitivement supprimée"
     task_proof:
       page_title: "Soumettre preuve — %{name}"
@@ -281,8 +282,9 @@ fr:
         pishock_label: "PiShock"
         pishock_intensity: "Intensité"
         pishock_duration: "Durée (s)"
-        leverage_photo_start: "Verrouiller une photo de levier"
-        leverage_photo_add_time: "Prolonger le verrou d'une photo"
+        leverage_photo_lock: "Verrouiller ou prolonger une photo de levier"
+        leverage_photo_start: "Verrouiller ou prolonger une photo de levier"
+        leverage_photo_add_time: "Verrouiller ou prolonger une photo de levier"
         leverage_photo_delete: "Supprimer définitivement une photo"
         leverage_photo_seconds: "Durée (secondes)"
         leverage_photo_seconds_placeholder: "Secondes"

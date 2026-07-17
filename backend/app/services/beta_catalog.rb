@@ -82,8 +82,7 @@ class BetaCatalog
     "BetaEvents::Actions::RecordShowcaseLimiterFromEvent" => "chaster",
     "BetaEvents::Actions::EnqueuePishockForShowcaseGame" => "pishock",
     "BetaEvents::Actions::EnqueuePishockFromEvent" => "pishock",
-    "BetaEvents::Actions::LeveragePhotoStartFromEvent" => "leverage_photo",
-    "BetaEvents::Actions::LeveragePhotoAddTimeFromEvent" => "leverage_photo",
+    "BetaEvents::Actions::LeveragePhotoLockFromEvent" => "leverage_photo",
     "BetaEvents::Actions::LeveragePhotoDeleteFromEvent" => "leverage_photo"
   }.freeze
 

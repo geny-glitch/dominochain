@@ -84,8 +84,15 @@ es:
         no_device: "Registra primero un dispositivo en la app Android."
         boss_controls_wallpaper: "Tu boss controla el fondo. No puedes cambiarlo aquí."
       leverage_photo:
-        images_required: "Se requieren las imágenes original, censurada y teaser."
+        images_required: "Se requieren las imágenes original y teaser."
+        censor_required: "Se requiere la imagen censurada."
+        censor_unavailable: "Esta foto no se puede censurar ahora."
         uploaded: "Foto de presión guardada. Puedes iniciar el temporizador más tarde."
+        uploaded_without_censor: "Foto de presión guardada. Puedes crear un recordatorio censurado más tarde."
+        batch_uploaded:
+          one: "%{count} foto de presión guardada. Puedes crear recordatorios censurados más tarde."
+          other: "%{count} fotos de presión guardadas. Puedes crear recordatorios censurados más tarde."
+        censored: "Recordatorio censurado guardado."
         timer_started: "Temporizador iniciado. El original queda bloqueado hasta el final de la cuenta atrás."
         time_added: "Tiempo añadido."
         deleted: "Foto de presión eliminada definitivamente."

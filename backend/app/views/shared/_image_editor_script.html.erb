@@ -12,7 +12,12 @@
       : parseFloat(aspectRatioAttr);
     const labelSubmitting = root.dataset.labelSubmitting || "Sending...";
     const labelSubmit = root.dataset.labelSubmit || "Submit";
+    const labelSkipCensor = root.dataset.labelSkipCensor || "Skip for now";
+    const labelBatchUploading = root.dataset.labelBatchUploading || "Uploading…";
     const labelError = root.dataset.labelError || "Upload error.";
+    const allowSkipCensor = root.dataset.allowSkipCensor === "true";
+    const allowMulti = root.dataset.allowMulti === "true";
+    const preloadUrl = root.dataset.preloadUrl || "";
     const HINTS = {
       text: root.dataset.hintText || "",
       pixelate: root.dataset.hintPixelate || ""
@@ -29,6 +34,8 @@
     const cropImg       = document.getElementById('crop-img');
     const changeImageBtn = document.getElementById('change-image-btn');
     const suivantBtn   = document.getElementById('suivant-btn');
+    const skipCensorBtn = document.getElementById('skip-censor-btn');
+    const batchStatus   = document.getElementById('batch-status');
 
     let cropper = null;
 
@@ -39,6 +46,85 @@
       stepIndicator.querySelectorAll('.ds-upload-step').forEach(function(el) {
         el.classList.toggle('ds-upload-step--active', parseInt(el.dataset.step) === n);
       });
+    }
+
+    function csrfToken() {
+      return form.querySelector('input[name="authenticity_token"]')?.value ||
+        document.querySelector('meta[name="csrf-token"]')?.content || "";
+    }
+
+    function fileToCanvas(file) {
+      return new Promise(function(resolve, reject) {
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.createElement("canvas");
+          canvas.width = img.naturalWidth || img.width;
+          canvas.height = img.naturalHeight || img.height;
+          canvas.getContext("2d").drawImage(img, 0, 0);
+          URL.revokeObjectURL(url);
+          resolve(canvas);
+        };
+        img.onerror = function() {
+          URL.revokeObjectURL(url);
+          reject(new Error("image load failed"));
+        };
+        img.src = url;
+      });
+    }
+
+    function blobToObjectUrl(blob) {
+      return URL.createObjectURL(blob);
+    }
+
+    async function postLeverageDraft(formData) {
+      const token = csrfToken();
+      if (token) formData.append("authenticity_token", token);
+      const res = await fetch(uploadUrl, {
+        method: "POST",
+        body: formData,
+        credentials: "same-origin",
+        headers: { "X-CSRF-Token": token || "", "Accept": "application/json" }
+      });
+      const data = await res.json().catch(function() { return {}; });
+      if (!res.ok) throw new Error(data.error || "upload failed");
+      return data;
+    }
+
+    async function uploadDraftFromCanvas(canvas, filename, censoredCanvas) {
+      const originalBlob = await canvasToBlob(canvas, "image/jpeg", 0.92);
+      const teaserBlob = await canvasToBlob(buildTeaserCanvas(canvas), "image/jpeg", 0.8);
+      const originalName = filename || "photo.jpg";
+      const formData = new FormData();
+      formData.append("original_filename", originalName);
+      formData.append("original_image", originalBlob, originalName);
+      formData.append("teaser_image", teaserBlob, "teaser.jpg");
+      if (censoredCanvas) {
+        const censoredBlob = await canvasToBlob(censoredCanvas, "image/jpeg", 0.9);
+        formData.append("censored_image", censoredBlob, "censored.jpg");
+      }
+      return postLeverageDraft(formData);
+    }
+
+    async function uploadBatch(files) {
+      const list = Array.prototype.slice.call(files).filter(function(f) {
+        return f && f.type && f.type.startsWith("image/");
+      });
+      if (list.length === 0) return;
+      if (batchStatus) {
+        batchStatus.style.display = "";
+        batchStatus.textContent = labelBatchUploading.replace("%{current}", "0").replace("%{total}", String(list.length));
+      }
+      for (let i = 0; i < list.length; i++) {
+        if (batchStatus) {
+          batchStatus.textContent = labelBatchUploading
+            .replace("%{current}", String(i + 1))
+            .replace("%{total}", String(list.length));
+        }
+        const canvas = await fileToCanvas(list[i]);
+        await uploadDraftFromCanvas(canvas, list[i].name || "photo.jpg", null);
+      }
+      window.location.href = betaPageUrl;
     }
 
     function initCropper() {
@@ -76,7 +162,22 @@
 
     if (input) {
       input.addEventListener('change', function(e) {
-        const file = e.target.files[0];
+        const files = e.target.files;
+        if (!files || files.length === 0) return;
+        if (allowMulti && submitMode === "leverage_upload" && files.length > 1) {
+          uploadBatch(files).catch(function(err) {
+            console.error("[image_editor] batch upload failed", err);
+            if (batchStatus) {
+              batchStatus.style.display = "";
+              batchStatus.textContent = labelError;
+            } else {
+              alert(labelError);
+            }
+            input.value = "";
+          });
+          return;
+        }
+        const file = files[0];
         if (!file || !file.type.startsWith('image/')) return;
         sourceFilename = file.name || null;
         showCrop(file);
@@ -84,6 +185,25 @@
     }
 
     if (changeImageBtn) changeImageBtn.addEventListener('click', resetToChoose);
+
+    if (preloadUrl && submitMode === "leverage_censor") {
+      fetch(preloadUrl, { credentials: "same-origin" })
+        .then(function(res) {
+          if (!res.ok) throw new Error("preload failed");
+          return res.blob();
+        })
+        .then(function(blob) {
+          sourceFilename = "photo.jpg";
+          const url = blobToObjectUrl(blob);
+          cropImg.src = url;
+          setStep(2);
+          cropImg.onload = function() { initCropper(); };
+        })
+        .catch(function(err) {
+          console.error("[image_editor] preload failed", err);
+          alert(labelError);
+        });
+    }
 
     if (suivantBtn) {
       suivantBtn.addEventListener('click', function() {
@@ -173,7 +293,7 @@
     }
 
     function initEditStep(croppedCanvas) {
-      if (submitMode === "leverage_upload") {
+      if (submitMode === "leverage_upload" || submitMode === "leverage_censor") {
         originalCroppedCanvas = document.createElement("canvas");
         originalCroppedCanvas.width = croppedCanvas.width;
         originalCroppedCanvas.height = croppedCanvas.height;
@@ -704,25 +824,42 @@
       commitText();
       if (!editCanvas || !editCanvas.width || !editCtx) return;
       editSubmitBtn.disabled = true;
+      if (skipCensorBtn) skipCensorBtn.disabled = true;
       editSubmitBtn.textContent = labelSubmitting;
-      const token = form.querySelector('input[name="authenticity_token"]')?.value;
+      const token = csrfToken();
       try {
-        const formData = new FormData();
-        if (token) formData.append("authenticity_token", token);
         if (submitMode === "leverage_upload") {
           if (!originalCroppedCanvas) throw new Error("missing original");
-          const originalBlob = await canvasToBlob(originalCroppedCanvas, "image/jpeg", 0.92);
-          const censoredBlob = await canvasToBlob(editCanvas, "image/jpeg", 0.9);
-          const teaserBlob = await canvasToBlob(buildTeaserCanvas(editCanvas), "image/jpeg", 0.8);
-          const originalName = sourceFilename || "photo.jpg";
-          formData.append("original_filename", originalName);
-          formData.append("original_image", originalBlob, originalName);
-          formData.append("censored_image", censoredBlob, "censored.jpg");
-          formData.append("teaser_image", teaserBlob, "teaser.jpg");
-        } else {
-          const blob = await canvasToBlob(editCanvas, "image/jpeg", 0.9);
-          formData.append("image", blob, "wallpaper.jpg");
+          const data = await uploadDraftFromCanvas(
+            originalCroppedCanvas,
+            sourceFilename || "photo.jpg",
+            editCanvas
+          );
+          window.location.href = data.url || betaPageUrl;
+          return;
         }
+        if (submitMode === "leverage_censor") {
+          const censoredBlob = await canvasToBlob(editCanvas, "image/jpeg", 0.9);
+          const formData = new FormData();
+          if (token) formData.append("authenticity_token", token);
+          formData.append("censored_image", censoredBlob, "censored.jpg");
+          const res = await fetch(uploadUrl, {
+            method: "POST",
+            body: formData,
+            credentials: "same-origin",
+            headers: { "X-CSRF-Token": token || "", "Accept": "text/html" },
+            redirect: "follow"
+          });
+          if (res.ok || res.redirected) {
+            window.location.href = res.url || betaPageUrl;
+            return;
+          }
+          throw new Error("upload failed");
+        }
+        const formData = new FormData();
+        if (token) formData.append("authenticity_token", token);
+        const blob = await canvasToBlob(editCanvas, "image/jpeg", 0.9);
+        formData.append("image", blob, "wallpaper.jpg");
         const res = await fetch(uploadUrl, {
           method: "POST",
           body: formData,
@@ -737,9 +874,34 @@
         }
       } catch (err) {
         editSubmitBtn.disabled = false;
+        if (skipCensorBtn) skipCensorBtn.disabled = false;
         editSubmitBtn.textContent = labelSubmit;
         alert(labelError);
       }
     });
+
+    if (skipCensorBtn && allowSkipCensor) {
+      skipCensorBtn.addEventListener("click", async function() {
+        commitText();
+        if (!originalCroppedCanvas) return;
+        skipCensorBtn.disabled = true;
+        if (editSubmitBtn) editSubmitBtn.disabled = true;
+        skipCensorBtn.textContent = labelSubmitting;
+        try {
+          const data = await uploadDraftFromCanvas(
+            originalCroppedCanvas,
+            sourceFilename || "photo.jpg",
+            null
+          );
+          window.location.href = data.url || betaPageUrl;
+        } catch (err) {
+          console.error("[image_editor] skip censor failed", err);
+          skipCensorBtn.disabled = false;
+          if (editSubmitBtn) editSubmitBtn.disabled = false;
+          skipCensorBtn.textContent = labelSkipCensor;
+          alert(labelError);
+        }
+      });
+    }
   })();
 </script>

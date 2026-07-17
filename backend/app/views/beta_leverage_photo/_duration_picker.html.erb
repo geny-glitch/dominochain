@@ -1,11 +1,12 @@
-<%# locals: label, input_name, default_minutes, shortcuts ([[minutes, label], ...]) %>
+<%# locals: label, input_name, default_minutes, shortcuts ([[minutes, label], ...]), field_id (optional unique id) %>
+<% field_id = local_assigns.fetch(:field_id, input_name) %>
 <div class="ds-beta-leverage-duration" style="margin:0.75rem 0;">
-  <label class="ds-form-label" for="<%= input_name %>">
+  <label class="ds-form-label" for="<%= field_id %>">
     <%= label %>
     <span style="display:inline-flex;align-items:center;gap:0.35rem;margin-top:0.35rem;">
       <input
         type="number"
-        id="<%= input_name %>"
+        id="<%= field_id %>"
         class="ds-input"
         style="width:7rem;cursor:text;"
         data-<%= input_name %>
@@ -15,9 +16,9 @@
         value="<%= default_minutes %>"
         inputmode="numeric"
         required
-        aria-describedby="<%= input_name %>-unit"
+        aria-describedby="<%= field_id %>-unit"
       >
-      <span id="<%= input_name %>-unit" class="ds-beta-home-muted"><%= t("leverage_photo.show.minutes_unit") %></span>
+      <span id="<%= field_id %>-unit" class="ds-beta-home-muted"><%= t("leverage_photo.show.minutes_unit") %></span>
     </span>
   </label>
   <div class="ds-beta-leverage-duration-shortcuts" role="group" aria-label="<%= t("leverage_photo.show.duration_shortcuts") %>" style="display:flex;flex-wrap:wrap;gap:0.35rem;margin-top:0.5rem;">

@@ -1,40 +1,25 @@
 <script src="/vendor/tlock-js.js"></script>
 <script>
   (function () {
-    const root = document.querySelector("[data-leverage-photo]");
-    if (!root) return;
+    if (window.__leveragePhotoCryptoBound) return;
+    window.__leveragePhotoCryptoBound = true;
 
-    const statusEl = root.querySelector("[data-crypto-status]");
     const tlock = window.TlockJs;
-
-    function setStatus(message) {
-      if (statusEl) statusEl.textContent = message || "";
-    }
 
     function csrfToken() {
       return document.querySelector('meta[name="csrf-token"]')?.content || "";
     }
 
-    function requireTlock() {
-      if (!tlock || typeof tlock.timelockEncrypt !== "function") {
-        throw new Error(
-          statusEl?.dataset.cryptoLoadError || "Crypto library is not available"
-        );
-      }
-      return tlock;
+    function utf8Bytes(str) {
+      return new TextEncoder().encode(str);
     }
 
-    function readMinutes(selector, fallbackMinutes) {
-      const input = root.querySelector(selector);
-      const minutes = parseInt(input && input.value ? input.value : String(fallbackMinutes), 10);
-      if (!Number.isFinite(minutes) || minutes < 1) {
-        throw new Error(root.dataset.invalidMinutes || "Enter at least 1 minute.");
-      }
-      const maxMinutes = Math.floor(365 * 24 * 60);
-      if (minutes > maxMinutes) {
-        throw new Error(root.dataset.invalidMinutesMax || "Duration is too long.");
-      }
-      return minutes * 60;
+    function bytesToUtf8(bytes) {
+      return new TextDecoder().decode(bytes);
+    }
+
+    function isArmoredAge(text) {
+      return typeof text === "string" && text.indexOf("-----BEGIN AGE ENCRYPTED FILE-----") !== -1;
     }
 
     async function fetchBytes(url) {
@@ -55,240 +40,280 @@
       return await res.text();
     }
 
-    function utf8Bytes(str) {
-      return new TextEncoder().encode(str);
-    }
+    function bindPhotoRoot(root) {
+      if (root.dataset.cryptoBound === "true") return;
+      root.dataset.cryptoBound = "true";
 
-    function bytesToUtf8(bytes) {
-      return new TextDecoder().decode(bytes);
-    }
+      const statusEl = root.querySelector("[data-crypto-status]");
 
-    function isArmoredAge(text) {
-      return typeof text === "string" && text.indexOf("-----BEGIN AGE ENCRYPTED FILE-----") !== -1;
-    }
-
-    async function encryptPayload(bytesOrString, lockedUntil) {
-      const api = requireTlock();
-      const client = api.mainnetClient();
-      const chainInfo = api.defaultChainInfo || (await client.chain().info());
-      // drand-client API: roundAt(timeMs, chainInfo)
-      const round = api.roundAt(lockedUntil.getTime(), chainInfo);
-      if (!Number.isFinite(round) || round < 1) {
-        throw new Error("Invalid drand round for selected duration");
+      function setStatus(message) {
+        if (statusEl) statusEl.textContent = message || "";
       }
-      const payload =
-        typeof bytesOrString === "string" ? utf8Bytes(bytesOrString) : bytesOrString;
-      const armored = await api.timelockEncrypt(
-        round,
-        api.Buffer.from(payload),
-        client
-      );
-      return { armored: armored, round: round, chainHash: chainInfo.hash };
-    }
 
-    async function peelLayers(outerArmored, expectedLayers) {
-      const api = requireTlock();
-      const client = api.mainnetClient();
-      let payload = outerArmored;
-      let layersPeeled = 0;
-      const max = expectedLayers || 20;
-      while (layersPeeled < max) {
-        const decrypted = await api.timelockDecrypt(payload, client);
-        layersPeeled += 1;
-        const asText = bytesToUtf8(decrypted);
-        if (isArmoredAge(asText)) {
-          payload = asText;
-          continue;
+      function requireTlock() {
+        if (!tlock || typeof tlock.timelockEncrypt !== "function") {
+          throw new Error(
+            statusEl?.dataset.cryptoLoadError || "Crypto library is not available"
+          );
         }
-        return { bytes: decrypted, layersPeeled: layersPeeled };
+        return tlock;
       }
-      throw new Error("Too many tlock layers");
-    }
 
-    async function startTimer(durationSeconds) {
-      requireTlock();
-      const lockedUntil = new Date(Date.now() + durationSeconds * 1000);
-      setStatus(statusEl?.dataset.fetchingOriginal || "Fetching original…");
-      const originalBytes = await fetchBytes(root.dataset.originalUrl);
-      setStatus(statusEl?.dataset.encrypting || "Encrypting…");
-      const result = await encryptPayload(originalBytes, lockedUntil);
-
-      const formData = new FormData();
-      formData.append(
-        "tlock_blob",
-        new Blob([result.armored], { type: "text/plain" }),
-        "layer.tlock"
-      );
-      formData.append("drand_round", String(result.round));
-      formData.append("drand_chain_hash", result.chainHash || "");
-      formData.append("duration_seconds", String(durationSeconds));
-      formData.append("locked_until", lockedUntil.toISOString());
-
-      setStatus(statusEl?.dataset.uploading || "Uploading…");
-      const res = await fetch(root.dataset.startUrl, {
-        method: "POST",
-        body: formData,
-        credentials: "same-origin",
-        headers: {
-          "X-CSRF-Token": csrfToken(),
-          Accept: "application/json"
+      function readMinutes(selector, fallbackMinutes) {
+        const input = root.querySelector(selector);
+        const minutes = parseInt(input && input.value ? input.value : String(fallbackMinutes), 10);
+        if (!Number.isFinite(minutes) || minutes < 1) {
+          throw new Error(root.dataset.invalidMinutes || "Enter at least 1 minute.");
         }
-      });
-      const data = await res.json().catch(function () { return {}; });
-      if (!res.ok) throw new Error(data.error || "Start timer failed");
-      return data;
-    }
-
-    async function addTime(addedSeconds) {
-      requireTlock();
-      const base = root.dataset.lockedUntil
-        ? new Date(root.dataset.lockedUntil)
-        : new Date();
-      const from = base.getTime() > Date.now() ? base : new Date();
-      const lockedUntil = new Date(from.getTime() + addedSeconds * 1000);
-
-      setStatus(statusEl?.dataset.fetchingBlob || "Fetching lock blob…");
-      const currentArmored = await fetchText(root.dataset.tlockUrl);
-      setStatus(statusEl?.dataset.encrypting || "Encrypting…");
-      const result = await encryptPayload(currentArmored, lockedUntil);
-
-      const formData = new FormData();
-      formData.append(
-        "tlock_blob",
-        new Blob([result.armored], { type: "text/plain" }),
-        "layer.tlock"
-      );
-      formData.append("drand_round", String(result.round));
-      formData.append("added_seconds", String(addedSeconds));
-      formData.append("locked_until", lockedUntil.toISOString());
-
-      setStatus(statusEl?.dataset.uploading || "Uploading…");
-      const res = await fetch(root.dataset.addTimeUrl, {
-        method: "POST",
-        body: formData,
-        credentials: "same-origin",
-        headers: {
-          "X-CSRF-Token": csrfToken(),
-          Accept: "application/json"
+        const maxMinutes = Math.floor(365 * 24 * 60);
+        if (minutes > maxMinutes) {
+          throw new Error(root.dataset.invalidMinutesMax || "Duration is too long.");
         }
-      });
-      const data = await res.json().catch(function () { return {}; });
-      if (!res.ok) throw new Error(data.error || "Add time failed");
-      return data;
-    }
-
-    async function decryptAndDisplay() {
-      requireTlock();
-      const imageEl = root.querySelector("[data-decrypted-image]");
-      const downloadEl = root.querySelector("[data-download-original]");
-      setStatus(statusEl?.dataset.peeling || "Unlocking…");
-      const armored = await fetchText(root.dataset.decryptUrl);
-      const peeled = await peelLayers(
-        armored,
-        parseInt(root.dataset.layerCount || "1", 10)
-      );
-      const filename = root.dataset.originalFilename || "photo.jpg";
-      const blob = new Blob([peeled.bytes], { type: "image/jpeg" });
-      const url = URL.createObjectURL(blob);
-      if (imageEl) {
-        imageEl.src = url;
-        imageEl.hidden = false;
+        return minutes * 60;
       }
-      if (downloadEl) {
-        downloadEl.href = url;
-        downloadEl.download = filename;
-        downloadEl.hidden = false;
+
+      async function encryptPayload(bytesOrString, lockedUntil) {
+        const api = requireTlock();
+        const client = api.mainnetClient();
+        const chainInfo = api.defaultChainInfo || (await client.chain().info());
+        const round = api.roundAt(lockedUntil.getTime(), chainInfo);
+        if (!Number.isFinite(round) || round < 1) {
+          throw new Error("Invalid drand round for selected duration");
+        }
+        const payload =
+          typeof bytesOrString === "string" ? utf8Bytes(bytesOrString) : bytesOrString;
+        const armored = await api.timelockEncrypt(
+          round,
+          api.Buffer.from(payload),
+          client
+        );
+        return { armored: armored, round: round, chainHash: chainInfo.hash };
       }
-      const autoDownload = document.createElement("a");
-      autoDownload.href = url;
-      autoDownload.download = filename;
-      document.body.appendChild(autoDownload);
-      autoDownload.click();
-      autoDownload.remove();
-      setStatus("");
-      return url;
-    }
 
-    root.querySelectorAll("[data-duration-shortcut]").forEach(function (btn) {
-      btn.addEventListener("click", function () {
-        const targetName = btn.getAttribute("data-target");
-        const minutes = btn.getAttribute("data-minutes");
-        const input = root.querySelector("[data-" + targetName + "]");
-        if (input && minutes) {
-          input.value = minutes;
-          input.focus();
+      async function peelLayers(outerArmored, expectedLayers) {
+        const api = requireTlock();
+        const client = api.mainnetClient();
+        let payload = outerArmored;
+        let layersPeeled = 0;
+        const max = expectedLayers || 20;
+        while (layersPeeled < max) {
+          const decrypted = await api.timelockDecrypt(payload, client);
+          layersPeeled += 1;
+          const asText = bytesToUtf8(decrypted);
+          if (isArmoredAge(asText)) {
+            payload = asText;
+            continue;
+          }
+          return { bytes: decrypted, layersPeeled: layersPeeled };
         }
-      });
-    });
+        throw new Error("Too many tlock layers");
+      }
 
-    const startBtn = root.querySelector("[data-action='start-timer']");
-    if (startBtn) {
-      startBtn.addEventListener("click", async function () {
-        startBtn.disabled = true;
-        setStatus(statusEl?.dataset.starting || "Starting…");
-        try {
-          const durationSeconds = readMinutes("[data-duration-minutes]", 1440);
-          await startTimer(durationSeconds);
-          window.location.reload();
-        } catch (err) {
-          console.error("[leverage_photo] start failed", err);
-          setStatus(err && err.message ? err.message : String(err));
-          startBtn.disabled = false;
+      async function peelOriginalBytes() {
+        setStatus(statusEl?.dataset.fetchingBlob || "Loading locked photo…");
+        const armored = await fetchText(root.dataset.decryptUrl);
+        setStatus(statusEl?.dataset.peeling || "Restoring…");
+        const peeled = await peelLayers(
+          armored,
+          parseInt(root.dataset.layerCount || "1", 10)
+        );
+        return peeled.bytes;
+      }
+
+      async function resolveOriginalBytes() {
+        if (root.dataset.photoStatus === "unlocked") {
+          return peelOriginalBytes();
         }
-      });
-    }
+        setStatus(statusEl?.dataset.fetchingOriginal || "Loading photo…");
+        return fetchBytes(root.dataset.originalUrl);
+      }
 
-    const addBtn = root.querySelector("[data-action='add-time']");
-    if (addBtn) {
-      addBtn.addEventListener("click", async function () {
-        addBtn.disabled = true;
-        setStatus(statusEl?.dataset.adding || "Adding time…");
-        try {
-          const addedSeconds = readMinutes("[data-add-minutes]", 1440);
-          await addTime(addedSeconds);
-          window.location.reload();
-        } catch (err) {
-          console.error("[leverage_photo] add_time failed", err);
-          setStatus(err && err.message ? err.message : String(err));
-          addBtn.disabled = false;
+      async function startTimer(durationSeconds) {
+        requireTlock();
+        const lockedUntil = new Date(Date.now() + durationSeconds * 1000);
+        const originalBytes = await resolveOriginalBytes();
+        setStatus(statusEl?.dataset.encrypting || "Encrypting…");
+        const result = await encryptPayload(originalBytes, lockedUntil);
+
+        const formData = new FormData();
+        formData.append(
+          "tlock_blob",
+          new Blob([result.armored], { type: "text/plain" }),
+          "layer.tlock"
+        );
+        formData.append("drand_round", String(result.round));
+        formData.append("drand_chain_hash", result.chainHash || "");
+        formData.append("duration_seconds", String(durationSeconds));
+        formData.append("locked_until", lockedUntil.toISOString());
+
+        setStatus(statusEl?.dataset.uploading || "Uploading…");
+        const res = await fetch(root.dataset.startUrl, {
+          method: "POST",
+          body: formData,
+          credentials: "same-origin",
+          headers: {
+            "X-CSRF-Token": csrfToken(),
+            Accept: "application/json"
+          }
+        });
+        const data = await res.json().catch(function () { return {}; });
+        if (!res.ok) throw new Error(data.error || "Start timer failed");
+        return data;
+      }
+
+      async function addTime(addedSeconds) {
+        requireTlock();
+        const base = root.dataset.lockedUntil
+          ? new Date(root.dataset.lockedUntil)
+          : new Date();
+        const from = base.getTime() > Date.now() ? base : new Date();
+        const lockedUntil = new Date(from.getTime() + addedSeconds * 1000);
+
+        setStatus(statusEl?.dataset.fetchingBlob || "Fetching lock blob…");
+        const currentArmored = await fetchText(root.dataset.tlockUrl);
+        setStatus(statusEl?.dataset.encrypting || "Encrypting…");
+        const result = await encryptPayload(currentArmored, lockedUntil);
+
+        const formData = new FormData();
+        formData.append(
+          "tlock_blob",
+          new Blob([result.armored], { type: "text/plain" }),
+          "layer.tlock"
+        );
+        formData.append("drand_round", String(result.round));
+        formData.append("added_seconds", String(addedSeconds));
+        formData.append("locked_until", lockedUntil.toISOString());
+
+        setStatus(statusEl?.dataset.uploading || "Uploading…");
+        const res = await fetch(root.dataset.addTimeUrl, {
+          method: "POST",
+          body: formData,
+          credentials: "same-origin",
+          headers: {
+            "X-CSRF-Token": csrfToken(),
+            Accept: "application/json"
+          }
+        });
+        const data = await res.json().catch(function () { return {}; });
+        if (!res.ok) throw new Error(data.error || "Add time failed");
+        return data;
+      }
+
+      async function decryptAndDisplay() {
+        requireTlock();
+        const imageEl = root.querySelector("[data-decrypted-image]");
+        const downloadEl = root.querySelector("[data-download-original]");
+        setStatus(statusEl?.dataset.peeling || "Unlocking…");
+        const armored = await fetchText(root.dataset.decryptUrl);
+        const peeled = await peelLayers(
+          armored,
+          parseInt(root.dataset.layerCount || "1", 10)
+        );
+        const filename = root.dataset.originalFilename || "photo.jpg";
+        const blob = new Blob([peeled.bytes], { type: "image/jpeg" });
+        const url = URL.createObjectURL(blob);
+        if (imageEl) {
+          imageEl.src = url;
+          imageEl.hidden = false;
         }
-      });
-    }
-
-    const decryptBtn = root.querySelector("[data-action='decrypt']");
-    if (decryptBtn) {
-      decryptBtn.addEventListener("click", async function () {
-        decryptBtn.disabled = true;
-        try {
-          await decryptAndDisplay();
-        } catch (err) {
-          console.error("[leverage_photo] decrypt failed", err);
-          setStatus(err && err.message ? err.message : String(err));
-          decryptBtn.disabled = false;
+        if (downloadEl) {
+          downloadEl.href = url;
+          downloadEl.download = filename;
+          downloadEl.hidden = false;
         }
+        const autoDownload = document.createElement("a");
+        autoDownload.href = url;
+        autoDownload.download = filename;
+        document.body.appendChild(autoDownload);
+        autoDownload.click();
+        autoDownload.remove();
+        setStatus("");
+        return url;
+      }
+
+      root.querySelectorAll("[data-duration-shortcut]").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          const targetName = btn.getAttribute("data-target");
+          const minutes = btn.getAttribute("data-minutes");
+          const input = root.querySelector("[data-" + targetName + "]");
+          if (input && minutes) {
+            input.value = minutes;
+            input.focus();
+          }
+        });
       });
+
+      const startBtn = root.querySelector("[data-action='start-timer']");
+      if (startBtn) {
+        startBtn.addEventListener("click", async function () {
+          startBtn.disabled = true;
+          setStatus(statusEl?.dataset.starting || "Starting…");
+          try {
+            const durationSeconds = readMinutes("[data-duration-minutes]", 1440);
+            await startTimer(durationSeconds);
+            window.location.reload();
+          } catch (err) {
+            console.error("[leverage_photo] start failed", err);
+            setStatus(err && err.message ? err.message : String(err));
+            startBtn.disabled = false;
+          }
+        });
+      }
+
+      const addBtn = root.querySelector("[data-action='add-time']");
+      if (addBtn) {
+        addBtn.addEventListener("click", async function () {
+          addBtn.disabled = true;
+          setStatus(statusEl?.dataset.adding || "Adding time…");
+          try {
+            const addedSeconds = readMinutes("[data-add-minutes]", 1440);
+            await addTime(addedSeconds);
+            window.location.reload();
+          } catch (err) {
+            console.error("[leverage_photo] add_time failed", err);
+            setStatus(err && err.message ? err.message : String(err));
+            addBtn.disabled = false;
+          }
+        });
+      }
+
+      const decryptBtn = root.querySelector("[data-action='decrypt']");
+      if (decryptBtn) {
+        decryptBtn.addEventListener("click", async function () {
+          decryptBtn.disabled = true;
+          try {
+            await decryptAndDisplay();
+          } catch (err) {
+            console.error("[leverage_photo] decrypt failed", err);
+            setStatus(err && err.message ? err.message : String(err));
+            decryptBtn.disabled = false;
+          }
+        });
+      }
+
+      const countdown = root.querySelector("[data-countdown]");
+      if (countdown && root.dataset.lockedUntil) {
+        const end = new Date(root.dataset.lockedUntil).getTime();
+        const tick = function () {
+          const remaining = Math.max(0, end - Date.now());
+          const s = Math.floor(remaining / 1000);
+          const d = Math.floor(s / 86400);
+          const h = Math.floor((s % 86400) / 3600);
+          const m = Math.floor((s % 3600) / 60);
+          const sec = s % 60;
+          countdown.textContent =
+            d > 0
+              ? d + "d " + h + "h " + m + "m"
+              : h > 0
+                ? h + "h " + m + "m " + sec + "s"
+                : m + "m " + sec + "s";
+          if (remaining <= 0) countdown.textContent = countdown.dataset.ready || "Ready";
+        };
+        tick();
+        setInterval(tick, 1000);
+      }
     }
 
-    const countdown = root.querySelector("[data-countdown]");
-    if (countdown && root.dataset.lockedUntil) {
-      const end = new Date(root.dataset.lockedUntil).getTime();
-      const tick = function () {
-        const remaining = Math.max(0, end - Date.now());
-        const s = Math.floor(remaining / 1000);
-        const d = Math.floor(s / 86400);
-        const h = Math.floor((s % 86400) / 3600);
-        const m = Math.floor((s % 3600) / 60);
-        const sec = s % 60;
-        countdown.textContent =
-          d > 0
-            ? d + "d " + h + "h " + m + "m"
-            : h > 0
-              ? h + "h " + m + "m " + sec + "s"
-              : m + "m " + sec + "s";
-        if (remaining <= 0) countdown.textContent = countdown.dataset.ready || "Ready";
-      };
-      tick();
-      setInterval(tick, 1000);
-    }
+    document.querySelectorAll("[data-leverage-photo]").forEach(bindPhotoRoot);
   })();
 </script>

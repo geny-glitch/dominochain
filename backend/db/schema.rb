@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_07_16_200000) do
+ActiveRecord::Schema[7.2].define(version: 2026_07_17_104000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -440,6 +440,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_16_200000) do
     t.jsonb "last_check_details", default: {}, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.jsonb "failure_sanction", default: {}, null: false
     t.index ["user_id", "enabled"], name: "index_strava_goals_on_user_id_and_enabled"
     t.index ["user_id"], name: "index_strava_goals_on_user_id"
   end

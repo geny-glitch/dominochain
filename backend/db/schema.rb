@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_07_17_170000) do
+ActiveRecord::Schema[7.2].define(version: 2026_07_17_190000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -127,7 +127,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_17_170000) do
     t.bigint "user_id", null: false
     t.jsonb "movement_sanction", default: {"items"=>[]}, null: false
     t.string "sensitivity", default: "medium", null: false
-    t.integer "violation_cooldown_seconds", default: 30, null: false
+    t.integer "violation_cooldown_seconds", default: 8, null: false
     t.integer "calibration_seconds", default: 5, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false

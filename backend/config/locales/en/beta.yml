@@ -353,6 +353,7 @@ en:
         low: "Low — ignores small movements"
         medium: "Medium"
         high: "High — reacts to small movements"
+      detector_hint: "Motion is detected by comparing consecutive camera frames (Diffy-style)."
       cooldown: "Cooldown between sanctions (seconds)"
       calibration: "Calibration delay (seconds)"
       sanctions_title: "Sanctions on movement"

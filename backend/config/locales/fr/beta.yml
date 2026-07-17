@@ -353,6 +353,7 @@ fr:
         low: "Basse — ignore les petits mouvements"
         medium: "Moyenne"
         high: "Haute — réagit aux petits mouvements"
+      detector_hint: "Les mouvements sont détectés en comparant les images caméra successives (approche type Diffy)."
       cooldown: "Délai entre sanctions (secondes)"
       calibration: "Délai de calibration (secondes)"
       sanctions_title: "Sanctions en cas de mouvement"

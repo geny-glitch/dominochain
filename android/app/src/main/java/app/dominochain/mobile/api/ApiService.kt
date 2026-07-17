@@ -114,7 +114,15 @@ data class CigaretteEntryRequest(val count: Int = 1)
 
 data class CornertimeConfigResponse(
     val sensitivity: String? = null,
+    val detector: String? = null,
+    val diff_sensitivity: Double? = null,
+    val pixel_threshold: Int? = null,
     val motion_threshold: Double? = null,
+    val cell_active_below: Int? = null,
+    val matrix_width: Int? = null,
+    val matrix_height: Int? = null,
+    val source_width: Int? = null,
+    val source_height: Int? = null,
     val pixel_change_delta: Double? = null,
     val violation_cooldown_seconds: Int? = null,
     val calibration_seconds: Int? = null,

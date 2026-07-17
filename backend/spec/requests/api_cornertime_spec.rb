@@ -36,8 +36,10 @@ RSpec.describe "Api::Cornertime", type: :request do
     expect(response).to have_http_status(:ok)
     body = JSON.parse(response.body)
     expect(body["sensitivity"]).to eq("medium")
-    expect(body["motion_threshold"]).to eq(0.04)
-    expect(body["pixel_change_delta"]).to eq(0.10)
+    expect(body["motion_threshold"]).to eq(0.12)
+    expect(body["detector"]).to eq("diffy")
+    expect(body["diff_sensitivity"]).to eq(0.2)
+    expect(body["pixel_threshold"]).to eq(21)
     expect(body["source_enabled"]).to eq(true)
   end
 

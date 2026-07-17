@@ -1,49 +1,99 @@
 package app.dominochain.mobile.cornertime
 
 /**
- * Phase 1 motion detection: fraction of pixels that differ from the
- * calibration baseline by more than [pixelDelta].
+ * Diffy-style consecutive-frame motion detection.
  *
- * Mean absolute difference dilutes local body motion across the whole frame;
- * a changed-pixel ratio reacts to arm/head movement much more reliably.
+ * Ported from https://github.com/maniart/diffyjs (MIT):
+ * blend current vs previous frame with contrast amplification, threshold to
+ * a binary motion map, then average into a coarse matrix. Score = fraction of
+ * cells that contain enough motion.
  */
 class FrameDiffMotionDetector(
-    var pixelDelta: Float = DEFAULT_PIXEL_DELTA
+    var diffSensitivity: Float = 0.2f,
+    var pixelThreshold: Int = 21,
+    var cellActiveBelow: Int = 200,
+    var matrixWidth: Int = 12,
+    var matrixHeight: Int = 8
 ) : MotionDetector {
-    private var baseline: FloatArray? = null
-    private var samples = 0
+    private var previous: FloatArray? = null
+    private var width = 0
+    private var height = 0
+    private var readyFrames = 0
 
     override fun reset() {
-        baseline = null
-        samples = 0
+        previous = null
+        readyFrames = 0
     }
 
     override fun onCalibrationFrame(luma: FloatArray, width: Int, height: Int) {
-        if (luma.average() < 0.02) return
-        val current = baseline
-        if (current == null || current.size != luma.size) {
-            baseline = luma.copyOf()
-            samples = 1
-            return
-        }
-        samples += 1
-        val n = samples.toFloat()
-        for (i in luma.indices) {
-            current[i] += (luma[i] - current[i]) / n
-        }
+        // During warm-up, just seed the previous frame buffer.
+        this.width = width
+        this.height = height
+        previous = luma.copyOf()
+        readyFrames = 1
     }
 
     override fun score(luma: FloatArray, width: Int, height: Int): Float? {
-        val base = baseline ?: return null
-        if (base.size != luma.size || samples < 3) return null
-        var changed = 0
-        for (i in luma.indices) {
-            if (kotlin.math.abs(luma[i] - base[i]) > pixelDelta) changed += 1
+        this.width = width
+        this.height = height
+        val prev = previous
+        if (prev == null || prev.size != luma.size) {
+            previous = luma.copyOf()
+            readyFrames = 1
+            return null
         }
-        return changed.toFloat() / luma.size
+        readyFrames += 1
+        if (readyFrames < 2) {
+            previous = luma.copyOf()
+            return null
+        }
+
+        val amp = (1f - diffSensitivity).coerceAtLeast(0.05f)
+        val diff = ByteArray(luma.size)
+        for (i in luma.indices) {
+            val c = Math.round(luma[i] * 255f / amp)
+            val p = Math.round(prev[i] * 255f / amp)
+            val delta = kotlin.math.abs(c - p)
+            // Diffy encoding: motion → 0, still → 255
+            diff[i] = if (delta > pixelThreshold) 0 else 255.toByte()
+        }
+        previous = luma.copyOf()
+
+        val cellW = width.toFloat() / matrixWidth
+        val cellH = height.toFloat() / matrixHeight
+        var active = 0
+        val total = matrixWidth * matrixHeight
+        for (row in 0 until matrixHeight) {
+            for (col in 0 until matrixWidth) {
+                val x0 = (col * cellW).toInt()
+                val y0 = (row * cellH).toInt()
+                val x1 = ((col + 1) * cellW).toInt().coerceAtMost(width)
+                val y1 = ((row + 1) * cellH).toInt().coerceAtMost(height)
+                if (cellAverage(diff, width, x0, y0, x1, y1) < cellActiveBelow) {
+                    active += 1
+                }
+            }
+        }
+        return if (total > 0) active.toFloat() / total else 0f
     }
 
-    companion object {
-        const val DEFAULT_PIXEL_DELTA = 0.10f
+    private fun cellAverage(
+        diff: ByteArray,
+        stride: Int,
+        x0: Int,
+        y0: Int,
+        x1: Int,
+        y1: Int
+    ): Int {
+        var sum = 0
+        var count = 0
+        for (y in y0 until y1) {
+            val row = y * stride
+            for (x in x0 until x1) {
+                sum += (diff[row + x].toInt() and 0xFF)
+                count += 1
+            }
+        }
+        return if (count > 0) sum / count else 255
     }
 }

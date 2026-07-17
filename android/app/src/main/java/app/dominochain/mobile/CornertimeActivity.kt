@@ -40,11 +40,13 @@ class CornertimeActivity : AppCompatActivity() {
     private var monitoring = false
     private var calibrating = false
     private var calibrationJob: Job? = null
-    private var motionThreshold = 0.04
-    private var cooldownMs = 30_000L
+    private var motionThreshold = 0.12
+    private var sanctionCooldownMs = 8_000L
+    private var detectionDebounceMs = 1_000L
     private var calibrationMs = 5_000L
     private var violationCount = 0
-    private val lastViolationAt = AtomicLong(0)
+    private val lastDetectionAt = AtomicLong(0)
+    private val lastSanctionAt = AtomicLong(0)
     private val reporting = AtomicBoolean(false)
 
     private val frameDiffDetector = FrameDiffMotionDetector()
@@ -84,12 +86,7 @@ class CornertimeActivity : AppCompatActivity() {
                 binding.cornertimeStart.isEnabled = false
                 setHint(getString(R.string.cornertime_source_disabled))
             }
-            applyConfig(
-                threshold = config?.motion_threshold,
-                pixelDelta = config?.pixel_change_delta,
-                cooldown = config?.violation_cooldown_seconds,
-                calibration = config?.calibration_seconds
-            )
+            applyConfig(config)
         }
     }
 
@@ -101,18 +98,16 @@ class CornertimeActivity : AppCompatActivity() {
         }
     }
 
-    private fun applyConfig(
-        threshold: Double?,
-        pixelDelta: Double? = null,
-        cooldown: Int?,
-        calibration: Int?
-    ) {
-        if (threshold != null && threshold > 0) motionThreshold = threshold
-        if (pixelDelta != null && pixelDelta > 0) {
-            frameDiffDetector.pixelDelta = pixelDelta.toFloat()
-        }
-        if (cooldown != null && cooldown > 0) cooldownMs = cooldown * 1000L
-        if (calibration != null && calibration > 0) calibrationMs = calibration * 1000L
+    private fun applyConfig(config: app.dominochain.mobile.api.CornertimeConfigResponse?) {
+        if (config == null) return
+        config.motion_threshold?.takeIf { it > 0 }?.let { motionThreshold = it }
+        config.violation_cooldown_seconds?.takeIf { it > 0 }?.let { sanctionCooldownMs = it * 1000L }
+        config.calibration_seconds?.takeIf { it > 0 }?.let { calibrationMs = it * 1000L }
+        config.diff_sensitivity?.takeIf { it > 0 }?.let { frameDiffDetector.diffSensitivity = it.toFloat() }
+        config.pixel_threshold?.takeIf { it > 0 }?.let { frameDiffDetector.pixelThreshold = it }
+        config.cell_active_below?.takeIf { it > 0 }?.let { frameDiffDetector.cellActiveBelow = it }
+        config.matrix_width?.takeIf { it > 0 }?.let { frameDiffDetector.matrixWidth = it }
+        config.matrix_height?.takeIf { it > 0 }?.let { frameDiffDetector.matrixHeight = it }
     }
 
     private fun startSession() {
@@ -124,13 +119,10 @@ class CornertimeActivity : AppCompatActivity() {
             val result = withContext(Dispatchers.IO) { repository.startSession() }
             result.onSuccess { response ->
                 sessionId = response.session.id
-                applyConfig(
-                    threshold = response.config?.motion_threshold,
-                    pixelDelta = response.config?.pixel_change_delta,
-                    cooldown = response.config?.violation_cooldown_seconds,
-                    calibration = response.config?.calibration_seconds
-                )
+                applyConfig(response.config)
                 violationCount = 0
+                lastDetectionAt.set(0)
+                lastSanctionAt.set(0)
                 updateViolations()
                 bindCamera()
                 CornertimeMonitoringService.start(this@CornertimeActivity)
@@ -241,17 +233,24 @@ class CornertimeActivity : AppCompatActivity() {
 
     private fun maybeReportViolation(score: Double) {
         val now = System.currentTimeMillis()
-        if (now - lastViolationAt.get() < cooldownMs) return
-        if (!reporting.compareAndSet(false, true)) return
-        lastViolationAt.set(now)
-        val id = sessionId ?: run {
-            reporting.set(false)
-            return
-        }
-        // Count locally as soon as movement is detected.
+        if (now - lastDetectionAt.get() < detectionDebounceMs) return
+        lastDetectionAt.set(now)
+
         runOnUiThread {
             violationCount += 1
             updateViolations()
+        }
+
+        if (!reporting.compareAndSet(false, true)) return
+        if (now - lastSanctionAt.get() < sanctionCooldownMs) {
+            reporting.set(false)
+            return
+        }
+        lastSanctionAt.set(now)
+
+        val id = sessionId ?: run {
+            reporting.set(false)
+            return
         }
         lifecycleScope.launch {
             try {
@@ -259,12 +258,10 @@ class CornertimeActivity : AppCompatActivity() {
                     repository.reportViolation(id, score, UUID.randomUUID().toString())
                 }
                 result.onSuccess { response ->
-                    response.session?.violation_count?.let { serverCount ->
-                        violationCount = maxOf(violationCount, serverCount)
-                        updateViolations()
-                    }
                     response.cooldown_remaining_seconds?.let { seconds ->
-                        if (seconds > 0) cooldownMs = maxOf(1000L, seconds * 1000L)
+                        if (seconds > 0) {
+                            sanctionCooldownMs = maxOf(detectionDebounceMs, seconds * 1000L)
+                        }
                     }
                 }
             } finally {

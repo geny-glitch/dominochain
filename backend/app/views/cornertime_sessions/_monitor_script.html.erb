@@ -21,24 +21,41 @@
 
   var stream = null;
   var sessionId = null;
-  var baseline = null;
-  var baselineSamples = 0;
   var rafId = null;
-  var lastSampleAt = 0;
   var lastViolationAt = 0;
+  var lastSanctionAt = 0;
   var violationCount = 0;
   var startedAt = null;
   var elapsedTimer = null;
   var monitoring = false;
   var calibrating = false;
-  var cooldownMs = (config.violation_cooldown_seconds || 30) * 1000;
-  var calibrationMs = (config.calibration_seconds || 5) * 1000;
-  var threshold = config.motion_threshold || 0.04;
-  var pixelDelta = config.pixel_change_delta || 0.10;
-  var sampleIntervalMs = 150;
-  var analysisWidth = 96;
-  var analysisHeight = 72;
   var reporting = false;
+
+  var DETECTION_DEBOUNCE_MS = 1000;
+  var sanctionCooldownMs = (config.violation_cooldown_seconds || 8) * 1000;
+  var calibrationMs = (config.calibration_seconds || 5) * 1000;
+  var diffSensitivity = config.diff_sensitivity || 0.2;
+  var pixelThreshold = config.pixel_threshold || 21;
+  var motionThreshold = config.motion_threshold || 0.12;
+  var cellActiveBelow = config.cell_active_below || 200;
+  var matrixW = config.matrix_width || 12;
+  var matrixH = config.matrix_height || 8;
+  var sourceW = config.source_width || 160;
+  var sourceH = config.source_height || 120;
+
+  function applyConfig(cfg) {
+    if (!cfg) return;
+    sanctionCooldownMs = (cfg.violation_cooldown_seconds || 8) * 1000;
+    calibrationMs = (cfg.calibration_seconds || 5) * 1000;
+    diffSensitivity = cfg.diff_sensitivity || 0.2;
+    pixelThreshold = cfg.pixel_threshold || 21;
+    motionThreshold = cfg.motion_threshold || 0.12;
+    cellActiveBelow = cfg.cell_active_below || 200;
+    matrixW = cfg.matrix_width || 12;
+    matrixH = cfg.matrix_height || 8;
+    sourceW = cfg.source_width || 160;
+    sourceH = cfg.source_height || 120;
+  }
 
   function setStatus(key) {
     statusEl.textContent = i18n[key] || key;
@@ -70,50 +87,89 @@
     violationsEl.textContent = (i18n.violations || "Movements: %{count}").replace("%{count}", String(violationCount));
   }
 
-  function grayscaleFrame() {
-    if (!video.videoWidth || !video.videoHeight) return null;
-    canvas.width = analysisWidth;
-    canvas.height = analysisHeight;
-    ctx.drawImage(video, 0, 0, analysisWidth, analysisHeight);
-    var image = ctx.getImageData(0, 0, analysisWidth, analysisHeight);
-    var data = image.data;
-    var gray = new Float32Array(analysisWidth * analysisHeight);
-    var sum = 0;
-    for (var i = 0, p = 0; i < data.length; i += 4, p++) {
-      var v = (0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]) / 255;
-      gray[p] = v;
-      sum += v;
-    }
-    // Skip black / empty frames during camera warm-up.
-    if (sum / gray.length < 0.02) return null;
-    return gray;
-  }
-
-  function accumulateBaseline(frame) {
-    if (!baseline || baseline.length !== frame.length) {
-      baseline = new Float32Array(frame.length);
-      baselineSamples = 0;
-    }
-    baselineSamples += 1;
-    var n = baselineSamples;
-    for (var i = 0; i < frame.length; i++) {
-      baseline[i] += (frame[i] - baseline[i]) / n;
-    }
-  }
-
-  // Fraction of pixels that moved beyond pixelDelta vs calibration baseline.
-  function motionScore(frame) {
-    if (!baseline || baseline.length !== frame.length) return 0;
-    var changed = 0;
-    for (var i = 0; i < frame.length; i++) {
-      if (Math.abs(frame[i] - baseline[i]) > pixelDelta) changed += 1;
-    }
-    return changed / frame.length;
-  }
-
   function uuid() {
     if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
     return "v-" + Date.now() + "-" + Math.floor(Math.random() * 1e9);
+  }
+
+  // Diffy-style detector: consecutive frames → high-contrast diff → motion matrix.
+  // Ported from https://github.com/maniart/diffyjs (MIT).
+  function DiffyDetector(width, height, resX, resY, sensitivity, threshold) {
+    this.width = width;
+    this.height = height;
+    this.resolutionX = resX;
+    this.resolutionY = resY;
+    this.sensitivity = sensitivity;
+    this.threshold = threshold;
+    this.previousFrame = null;
+    this.diffBuffer = new Uint8ClampedArray(width * height);
+  }
+
+  DiffyDetector.prototype.reset = function () {
+    this.previousFrame = null;
+  };
+
+  DiffyDetector.prototype.processFrame = function (rgba) {
+    if (!this.previousFrame) {
+      this.previousFrame = new Uint8ClampedArray(rgba);
+      return 0;
+    }
+    this.createDiffBuffer(rgba, this.previousFrame);
+    var score = this.motionScoreFromMatrix();
+    this.previousFrame = new Uint8ClampedArray(rgba);
+    return score;
+  };
+
+  DiffyDetector.prototype.createDiffBuffer = function (current, previous) {
+    var amp = 1 - this.sensitivity;
+    if (amp < 0.05) amp = 0.05;
+    var len = this.width * this.height;
+    for (var i = 0; i < len; i++) {
+      var h = i * 4;
+      var cAvg = Math.round((current[h] + current[h + 1] + current[h + 2]) / 3);
+      var pAvg = Math.round((previous[h] + previous[h + 1] + previous[h + 2]) / 3);
+      var delta = Math.abs(Math.round(cAvg / amp) - Math.round(pAvg / amp));
+      // Diffy encoding: motion → 0, still → 255
+      this.diffBuffer[i] = delta > this.threshold ? 0 : 255;
+    }
+  };
+
+  DiffyDetector.prototype.cellAverage = function (x0, y0, x1, y1) {
+    var sum = 0;
+    var count = 0;
+    for (var y = y0; y < y1 && y < this.height; y++) {
+      for (var x = x0; x < x1 && x < this.width; x++) {
+        sum += this.diffBuffer[y * this.width + x];
+        count += 1;
+      }
+    }
+    return count > 0 ? sum / count : 255;
+  };
+
+  DiffyDetector.prototype.motionScoreFromMatrix = function () {
+    var cellW = this.width / this.resolutionX;
+    var cellH = this.height / this.resolutionY;
+    var active = 0;
+    var total = this.resolutionX * this.resolutionY;
+    for (var row = 0; row < this.resolutionY; row++) {
+      for (var col = 0; col < this.resolutionX; col++) {
+        var x0 = Math.floor(col * cellW);
+        var y0 = Math.floor(row * cellH);
+        var x1 = Math.floor((col + 1) * cellW);
+        var y1 = Math.floor((row + 1) * cellH);
+        var avg = this.cellAverage(x0, y0, x1, y1);
+        if (avg < cellActiveBelow) active += 1;
+      }
+    }
+    return total > 0 ? active / total : 0;
+  };
+
+  var detector = null;
+
+  function ensureDetector() {
+    canvas.width = sourceW;
+    canvas.height = sourceH;
+    detector = new DiffyDetector(sourceW, sourceH, matrixW, matrixH, diffSensitivity, pixelThreshold);
   }
 
   async function api(url, method, body) {
@@ -139,14 +195,20 @@
   }
 
   async function reportViolation(score) {
-    if (!sessionId || reporting) return;
+    if (!sessionId) return;
     var now = Date.now();
-    if (now - lastViolationAt < cooldownMs) return;
+
+    // Always count local detections with a short debounce (independent of sanction cooldown).
+    if (now - lastViolationAt < DETECTION_DEBOUNCE_MS) return;
     lastViolationAt = now;
-    reporting = true;
-    // Count locally as soon as movement is detected (not only when a sanction applies).
     violationCount += 1;
     updateViolations();
+
+    // Sanctions: only hit the server when the sanction cooldown allows.
+    if (reporting) return;
+    if (now - lastSanctionAt < sanctionCooldownMs) return;
+    lastSanctionAt = now;
+    reporting = true;
     try {
       var data = await api(
         root.dataset.violationUrlTemplate.replace(":id", sessionId),
@@ -157,15 +219,15 @@
           client_violation_id: uuid()
         }
       );
-      if (data.session && typeof data.session.violation_count === "number") {
-        violationCount = Math.max(violationCount, data.session.violation_count);
-        updateViolations();
-      }
       if (typeof data.cooldown_remaining_seconds === "number" && data.cooldown_remaining_seconds > 0) {
-        cooldownMs = Math.max(1000, data.cooldown_remaining_seconds * 1000);
+        sanctionCooldownMs = Math.max(DETECTION_DEBOUNCE_MS, data.cooldown_remaining_seconds * 1000);
+      } else if (data.status === "applied" || data.status === "no_sanctions") {
+        // Keep configured cooldown after a successful sanction attempt.
       }
       if (data.status === "no_sanctions") {
         setHint(i18n.no_sanctions || "");
+      } else if (data.status === "applied") {
+        setHint("");
       }
     } catch (e) {
       setHint(e.message);
@@ -174,22 +236,16 @@
     }
   }
 
-  function tick(ts) {
+  function tick() {
     if (!monitoring) return;
     rafId = requestAnimationFrame(tick);
-    if (document.hidden) return;
-    if (ts - lastSampleAt < sampleIntervalMs) return;
-    lastSampleAt = ts;
+    if (document.hidden || calibrating || !detector) return;
+    if (!video.videoWidth) return;
 
-    var frame = grayscaleFrame();
-    if (!frame) return;
-    if (calibrating) {
-      accumulateBaseline(frame);
-      return;
-    }
-    if (!baseline || baselineSamples < 3) return;
-    var score = motionScore(frame);
-    if (score > threshold) {
+    ctx.drawImage(video, 0, 0, sourceW, sourceH);
+    var image = ctx.getImageData(0, 0, sourceW, sourceH);
+    var score = detector.processFrame(image.data);
+    if (score > motionThreshold) {
       reportViolation(score);
     }
   }
@@ -223,30 +279,26 @@
       await startCamera();
       var data = await api(root.dataset.startUrl, "POST", {});
       sessionId = data.session.id;
-      config = data.config || config;
-      cooldownMs = (config.violation_cooldown_seconds || 30) * 1000;
-      calibrationMs = (config.calibration_seconds || 5) * 1000;
-      threshold = config.motion_threshold || 0.04;
-      pixelDelta = config.pixel_change_delta || 0.10;
+      applyConfig(data.config || config);
       violationCount = 0;
       updateViolations();
       startedAt = Date.now();
       updateElapsed();
       elapsedTimer = setInterval(updateElapsed, 1000);
-      baseline = null;
-      baselineSamples = 0;
+      ensureDetector();
       calibrating = true;
       monitoring = true;
       stopBtn.disabled = false;
       setStatus("calibrating");
-      lastSampleAt = 0;
       lastViolationAt = 0;
+      lastSanctionAt = 0;
       rafId = requestAnimationFrame(tick);
+      // Short warm-up so Diffy has a previous frame before scoring.
       setTimeout(function () {
         if (!monitoring) return;
         calibrating = false;
         setStatus("active");
-      }, calibrationMs);
+      }, Math.max(calibrationMs, 800));
     } catch (e) {
       stopCamera();
       startBtn.disabled = false;
@@ -268,6 +320,7 @@
     rafId = null;
     if (elapsedTimer) clearInterval(elapsedTimer);
     elapsedTimer = null;
+    detector = null;
     stopCamera();
     stopBtn.disabled = true;
     startBtn.disabled = !sourceEnabled;
@@ -288,6 +341,7 @@
     if (document.hidden) {
       setStatus("paused");
       setHint(i18n.tab_hidden);
+      if (detector) detector.reset();
     } else if (calibrating) {
       setStatus("calibrating");
       setHint("");

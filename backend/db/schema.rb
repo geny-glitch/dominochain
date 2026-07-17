@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_07_17_191000) do
+ActiveRecord::Schema[7.2].define(version: 2026_07_17_210000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -131,6 +131,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_17_191000) do
     t.integer "calibration_seconds", default: 5, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.jsonb "early_stop_sanction", default: {"items"=>[]}, null: false
     t.index ["user_id"], name: "index_cornertime_configs_on_user_id", unique: true
   end
 
@@ -144,6 +145,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_17_191000) do
     t.integer "violation_count", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "planned_duration_seconds"
     t.index ["device_id"], name: "index_cornertime_sessions_on_device_id"
     t.index ["user_id", "started_at"], name: "index_cornertime_sessions_on_user_id_and_started_at"
     t.index ["user_id", "status"], name: "index_cornertime_sessions_on_user_id_and_status"
@@ -651,7 +653,9 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_17_191000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.datetime "first_downloaded_at"
+    t.bigint "leverage_photo_id"
     t.index ["device_id"], name: "index_wallpapers_on_device_id"
+    t.index ["leverage_photo_id"], name: "index_wallpapers_on_leverage_photo_id"
   end
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
@@ -698,4 +702,5 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_17_191000) do
   add_foreign_key "wallpaper_pair_reviews", "users", column: "reviewed_by_id"
   add_foreign_key "wallpaper_pair_reviews", "wallpapers"
   add_foreign_key "wallpapers", "devices"
+  add_foreign_key "wallpapers", "leverage_photos"
 end

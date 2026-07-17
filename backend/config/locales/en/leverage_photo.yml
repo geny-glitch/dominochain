@@ -69,6 +69,8 @@ en:
       needs_censor_short: "no censor"
       unlocked_hint: "Ready to restore or lock again."
       create_censor: "Create censored version"
+      set_as_wallpaper: "Set as wallpaper"
+      set_as_wallpaper_confirm: "Use this photo as your phone wallpaper? While locked, the censored version (or teaser) will show instead."
     show:
       title: "Leverage photo"
       page_title: "Leverage photo"

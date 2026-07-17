@@ -99,6 +99,8 @@ fr:
         time_added: "Temps ajouté."
         deleted: "Photo de levier définitivement supprimée."
         not_found: "Photo de levier introuvable."
+        wallpaper_set: "Fond d'écran mis à jour avec cette photo."
+        wallpaper_no_image: "Cette photo n'a pas encore d'image utilisable en fond d'écran."
     pishock_debug:
       fill_username_api: "Renseigne le nom d'utilisateur et la clé API."
       step1_done: "Étape 1 exécutée."

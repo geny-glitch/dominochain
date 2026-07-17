@@ -25,9 +25,11 @@ class CornertimeRepository {
         }
     }
 
-    suspend fun startSession(): Result<CornertimeSessionStartResponse> {
+    suspend fun startSession(durationMinutes: Int): Result<CornertimeSessionStartResponse> {
         return try {
-            val response = api.startCornertimeSession(CornertimeSessionRequest(client = "android"))
+            val response = api.startCornertimeSession(
+                CornertimeSessionRequest(client = "android", duration_minutes = durationMinutes)
+            )
             if (response.isSuccessful) {
                 response.body()?.let { Result.success(it) }
                     ?: Result.failure(Exception("Empty response"))

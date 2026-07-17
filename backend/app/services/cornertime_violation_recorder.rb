@@ -85,7 +85,11 @@ class CornertimeViolationRecorder
       )
     end
 
-    actions = BetaEvents::SanctionApplier.new(beta: @user, source: :cornertime).apply!(
+    actions = BetaEvents::SanctionApplier.new(
+      beta: @user,
+      source: :cornertime,
+      kind_map: CornertimeConfig.kind_map_for(:movement_detected)
+    ).apply!(
       sanction,
       metadata: {
         "session_id" => @session.id,

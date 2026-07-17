@@ -40,6 +40,7 @@ get "beta/sources/vitrine", to: "beta_dashboard#sources_showcase", as: :beta_sou
   post "beta/leverage_photos/:id/censor", to: "beta_leverage_photo#censor", as: :beta_leverage_photo_censor_submit
   post "beta/leverage_photos/:id/start", to: "beta_leverage_photo#start", as: :beta_leverage_photo_start
   post "beta/leverage_photos/:id/add_time", to: "beta_leverage_photo#add_time", as: :beta_leverage_photo_add_time
+  post "beta/leverage_photos/:id/set_as_wallpaper", to: "beta_leverage_photo#set_as_wallpaper", as: :beta_leverage_photo_set_as_wallpaper
   get "beta/leverage_photos/:id/tlock_blob", to: "beta_leverage_photo#tlock_blob", as: :beta_leverage_photo_tlock_blob
   get "beta/leverage_photos/:id/decrypt_payload", to: "beta_leverage_photo#decrypt_payload", as: :beta_leverage_photo_decrypt_payload
   delete "beta/leverage_photos/:id", to: "beta_leverage_photo#destroy", as: :beta_leverage_photo_destroy

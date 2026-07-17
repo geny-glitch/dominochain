@@ -22,11 +22,15 @@
          active: t("cornertime.session.status_active"),
          paused: t("cornertime.session.status_paused"),
          stopped: t("cornertime.session.status_stopped"),
+         completed: t("cornertime.session.status_completed"),
+         early_stop: t("cornertime.session.status_early_stop"),
          error: t("cornertime.session.status_error"),
          camera_denied: t("cornertime.session.camera_denied"),
          tab_hidden: t("cornertime.session.tab_hidden_hint"),
          violations: t("cornertime.session.violations", count: "%{count}"),
          elapsed: t("cornertime.session.elapsed", time: "%{time}"),
+         remaining: t("cornertime.session.remaining", time: "%{time}"),
+         duration_required: t("cornertime.session.duration_required"),
          source_disabled: t("cornertime.session.source_disabled"),
          no_sanctions: t("cornertime.session.no_sanctions"),
          start: t("cornertime.session.start"),
@@ -47,6 +51,16 @@
       <canvas id="cornertime-canvas" width="160" height="120" hidden aria-hidden="true"></canvas>
     </div>
 
+    <div class="ds-form-group" id="cornertime-duration-wrap">
+      <label class="ds-form-label" for="cornertime-duration"><%= t("cornertime.session.duration_label") %></label>
+      <select id="cornertime-duration" class="ds-select" name="cornertime_duration" required>
+        <option value=""><%= t("cornertime.session.duration_required") %></option>
+        <% CornertimeSession::ALLOWED_DURATIONS_MINUTES.each do |minutes| %>
+          <option value="<%= minutes %>"><%= t("cornertime.session.duration_option", minutes: minutes) %></option>
+        <% end %>
+      </select>
+    </div>
+
     <div class="ds-form-group">
       <label class="ds-checkbox-label" for="cornertime-voice">
         <input type="checkbox" id="cornertime-voice" name="cornertime_voice" checked>
@@ -62,6 +76,7 @@
     <p class="ds-beta-control-text" id="cornertime-status" role="status"><%= t("cornertime.session.status_idle") %></p>
     <p class="ds-beta-control-hint" id="cornertime-violations"><%= t("cornertime.session.violations", count: 0) %></p>
     <p class="ds-beta-control-hint" id="cornertime-elapsed"><%= t("cornertime.session.elapsed", time: "00:00") %></p>
+    <p class="ds-beta-control-hint" id="cornertime-remaining" hidden></p>
     <p class="ds-beta-control-hint" id="cornertime-hint" hidden></p>
 
     <div class="ds-beta-control-actions">

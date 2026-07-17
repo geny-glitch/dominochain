@@ -29,6 +29,7 @@ fr:
         showcase_backdoor: "Backdoor par %{player_name} : « %{message} »"
         strava_goal: "Objectif Strava manqué : %{goal_title}"
         cornertime: "Mouvement pendant le corner time"
+        cornertime_early_stop: "Corner time arrêté trop tôt"
         wallpaper:
           default: "Sanction fond d'écran"
           mismatch_add_time: "Mauvais fond d'écran"

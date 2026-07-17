@@ -73,7 +73,11 @@ class ChasterTimeEventDescription
     when :api, :api_chaster
       I18n.t("chaster.time_events.summaries.api")
     when :cornertime
-      I18n.t("chaster.time_events.summaries.cornertime")
+      if kind == :early_stop
+        I18n.t("chaster.time_events.summaries.cornertime_early_stop")
+      else
+        I18n.t("chaster.time_events.summaries.cornertime")
+      end
     else
       nil
     end

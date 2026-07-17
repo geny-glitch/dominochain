@@ -137,10 +137,14 @@ data class CornertimeConfigResponse(
     val calibration_seconds: Int? = null,
     val source_enabled: Boolean? = null,
     val locale: String? = null,
-    val voice: CornertimeVoicePrompts? = null
+    val voice: CornertimeVoicePrompts? = null,
+    val allowed_durations_minutes: List<Int>? = null
 )
 
-data class CornertimeSessionRequest(val client: String = "android")
+data class CornertimeSessionRequest(
+    val client: String = "android",
+    val duration_minutes: Int
+)
 
 data class CornertimeSessionPayload(
     val id: Long,
@@ -148,6 +152,9 @@ data class CornertimeSessionPayload(
     val client: String? = null,
     val started_at: String? = null,
     val ended_at: String? = null,
+    val planned_duration_seconds: Int? = null,
+    val planned_duration_minutes: Int? = null,
+    val ends_at: String? = null,
     val violation_count: Int? = null
 )
 
@@ -157,7 +164,9 @@ data class CornertimeSessionStartResponse(
 )
 
 data class CornertimeSessionStopResponse(
-    val session: CornertimeSessionPayload
+    val session: CornertimeSessionPayload,
+    val early_stop: Boolean? = null,
+    val actions_executed: List<Map<String, Any?>>? = null
 )
 
 data class CornertimeViolationRequest(

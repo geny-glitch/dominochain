@@ -99,6 +99,8 @@ es:
         time_added: "Tiempo añadido."
         deleted: "Foto de presión eliminada definitivamente."
         not_found: "Foto de presión no encontrada."
+        wallpaper_set: "Fondo de pantalla actualizado con esta foto."
+        wallpaper_no_image: "Esta foto aún no tiene una imagen usable como fondo."
     pishock_debug:
       fill_username_api: "Introduce el nombre de usuario y la clave API."
       step1_done: "Paso 1 completado."

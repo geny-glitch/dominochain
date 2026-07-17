@@ -454,6 +454,12 @@ class BetaDashboardController < ApplicationController
         allowed: BetaEvents::SourceRegistry.allowed_for(:cornertime, :movement_detected)
       ).to_h
     end
+    if params[:early_stop_sanction].present?
+      attrs[:early_stop_sanction] = SanctionSet.from_params(
+        params[:early_stop_sanction],
+        allowed: BetaEvents::SourceRegistry.allowed_for(:cornertime, :early_stop)
+      ).to_h
+    end
     attrs.compact
   end
 

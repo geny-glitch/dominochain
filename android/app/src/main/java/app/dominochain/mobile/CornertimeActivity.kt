@@ -69,6 +69,10 @@ class CornertimeActivity : AppCompatActivity() {
     private var availableVoices: List<Voice> = emptyList()
     private var selectedVoiceName: String? = null
     private var voicePickerReady = false
+    private var durationOptions: List<Int> = DEFAULT_DURATIONS_MINUTES
+    private var sessionEndsAtMs: Long? = null
+    private var remainingJob: Job? = null
+    private var finishing = false
 
     private val cameraPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -93,6 +97,7 @@ class CornertimeActivity : AppCompatActivity() {
         voiceReturnToPosition = getString(R.string.cornertime_voice_return_to_position)
         selectedVoiceName = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
             .getString(PREF_VOICE_NAME, null)
+        setupDurationPicker(durationOptions)
         initTts()
         binding.cornertimeVoice.setOnCheckedChangeListener { _, checked ->
             binding.cornertimeVoicePick.visibility = if (checked) View.VISIBLE else View.GONE
@@ -103,7 +108,7 @@ class CornertimeActivity : AppCompatActivity() {
             ensureCameraAndStart()
         }
         binding.cornertimeStop.setOnClickListener {
-            stopSession()
+            stopSession(autoComplete = false)
         }
 
         lifecycleScope.launch {
@@ -141,7 +146,38 @@ class CornertimeActivity : AppCompatActivity() {
         config.drift_threshold?.takeIf { it > 0 }?.let { frameDiffDetector.driftThreshold = it.toFloat() }
         config.drift_hold_ms?.takeIf { it > 0 }?.let { frameDiffDetector.driftHoldMs = it.toLong() }
         config.drift_pixel_delta?.takeIf { it > 0 }?.let { frameDiffDetector.driftPixelDelta = it.toFloat() }
+        config.allowed_durations_minutes
+            ?.mapNotNull { it.takeIf { minutes -> minutes > 0 } }
+            ?.takeIf { it.isNotEmpty() }
+            ?.let {
+                durationOptions = it
+                setupDurationPicker(it)
+            }
         applyVoiceFromConfig(config)
+    }
+
+    private fun setupDurationPicker(minutesOptions: List<Int>) {
+        val labels = minutesOptions.map { getString(R.string.cornertime_duration_option, it) }
+        binding.cornertimeDuration.adapter =
+            ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, labels)
+        val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+        val saved = prefs.getInt(PREF_DURATION_MINUTES, minutesOptions.firstOrNull() ?: 10)
+        val index = minutesOptions.indexOf(saved).takeIf { it >= 0 }
+            ?: minutesOptions.indexOf(10).takeIf { it >= 0 }
+            ?: 0
+        binding.cornertimeDuration.setSelection(index)
+        binding.cornertimeDuration.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                val minutes = durationOptions.getOrNull(position) ?: return
+                prefs.edit().putInt(PREF_DURATION_MINUTES, minutes).apply()
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) = Unit
+        }
+    }
+
+    private fun selectedDurationMinutes(): Int? {
+        return durationOptions.getOrNull(binding.cornertimeDuration.selectedItemPosition)
     }
 
     private fun applyVoiceFromConfig(config: app.dominochain.mobile.api.CornertimeConfigResponse) {
@@ -157,12 +193,18 @@ class CornertimeActivity : AppCompatActivity() {
     }
 
     private fun startSession() {
+        val durationMinutes = selectedDurationMinutes()
+        if (durationMinutes == null) {
+            setHint(getString(R.string.cornertime_duration_required))
+            return
+        }
         binding.cornertimeStart.isEnabled = false
+        binding.cornertimeDuration.isEnabled = false
         setHint(null)
         setStatus(getString(R.string.cornertime_status_starting))
 
         lifecycleScope.launch {
-            val result = withContext(Dispatchers.IO) { repository.startSession() }
+            val result = withContext(Dispatchers.IO) { repository.startSession(durationMinutes) }
             result.onSuccess { response ->
                 sessionId = response.session.id
                 applyConfig(response.config)
@@ -170,15 +212,58 @@ class CornertimeActivity : AppCompatActivity() {
                 lastDetectionAt.set(0)
                 lastSanctionAt.set(0)
                 updateViolations()
+                sessionEndsAtMs = response.session.ends_at?.let { parseIsoMillis(it) }
+                    ?: response.session.planned_duration_seconds?.let {
+                        System.currentTimeMillis() + it * 1000L
+                    }
+                startRemainingTicker()
                 bindCamera()
                 CornertimeMonitoringService.start(this@CornertimeActivity)
                 beginCalibration()
             }.onFailure {
                 binding.cornertimeStart.isEnabled = true
+                binding.cornertimeDuration.isEnabled = true
                 setStatus(getString(R.string.cornertime_status_error))
                 setHint(it.message)
             }
         }
+    }
+
+    private fun parseIsoMillis(value: String): Long? {
+        return try {
+            java.time.Instant.parse(value).toEpochMilli()
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private fun startRemainingTicker() {
+        remainingJob?.cancel()
+        remainingJob = lifecycleScope.launch {
+            while (monitoring || calibrating || sessionId != null) {
+                val endsAt = sessionEndsAtMs
+                if (endsAt == null) {
+                    binding.cornertimeRemaining.visibility = View.GONE
+                } else {
+                    val leftMs = endsAt - System.currentTimeMillis()
+                    binding.cornertimeRemaining.visibility = View.VISIBLE
+                    binding.cornertimeRemaining.text =
+                        getString(R.string.cornertime_remaining, formatDuration(leftMs))
+                    if (leftMs <= 0L && !finishing) {
+                        stopSession(autoComplete = true)
+                        break
+                    }
+                }
+                delay(1000)
+            }
+        }
+    }
+
+    private fun formatDuration(ms: Long): String {
+        val total = maxOf(0, ms / 1000).toInt()
+        val m = total / 60
+        val s = total % 60
+        return "%02d:%02d".format(m, s)
     }
 
     private fun beginCalibration() {
@@ -440,14 +525,19 @@ class CornertimeActivity : AppCompatActivity() {
         }
     }
 
-    private fun stopSession() {
+    private fun stopSession(autoComplete: Boolean = false) {
+        if (finishing) return
+        finishing = true
         monitoring = false
         calibrating = false
         calibrationJob?.cancel()
+        remainingJob?.cancel()
+        remainingJob = null
         stopSpeaking()
         binding.cornertimeStop.isEnabled = false
         binding.cornertimeStart.isEnabled = true
-        setStatus(getString(R.string.cornertime_status_stopped))
+        binding.cornertimeDuration.isEnabled = true
+        binding.cornertimeRemaining.visibility = View.GONE
         CornertimeMonitoringService.stop(this)
         try {
             ProcessCameraProvider.getInstance(this).get().unbindAll()
@@ -457,13 +547,34 @@ class CornertimeActivity : AppCompatActivity() {
         cameraExecutor = null
         poseDetector?.close()
         poseDetector = null
+        sessionEndsAtMs = null
 
         val id = sessionId
         sessionId = null
         if (id != null) {
             lifecycleScope.launch {
-                withContext(Dispatchers.IO) { repository.stopSession(id) }
+                val result = withContext(Dispatchers.IO) { repository.stopSession(id) }
+                result.onSuccess { response ->
+                    when {
+                        response.early_stop == true ->
+                            setStatus(getString(R.string.cornertime_status_early_stop))
+                        autoComplete || response.session.status == "completed" ->
+                            setStatus(getString(R.string.cornertime_status_completed))
+                        else ->
+                            setStatus(getString(R.string.cornertime_status_stopped))
+                    }
+                }.onFailure {
+                    setStatus(getString(R.string.cornertime_status_error))
+                    setHint(it.message)
+                }
+                finishing = false
             }
+        } else {
+            setStatus(
+                if (autoComplete) getString(R.string.cornertime_status_completed)
+                else getString(R.string.cornertime_status_stopped)
+            )
+            finishing = false
         }
     }
 
@@ -499,6 +610,8 @@ class CornertimeActivity : AppCompatActivity() {
         private const val ANALYSIS_HEIGHT = 120
         private const val PREFS_NAME = "cornertime"
         private const val PREF_VOICE_NAME = "tts_voice_name"
+        private const val PREF_DURATION_MINUTES = "duration_minutes"
+        private val DEFAULT_DURATIONS_MINUTES = listOf(1, 5, 10, 15, 20, 30, 45, 60)
         private val FEMALE_VOICE_RE = Pattern.compile(
             "female|woman|girl|samantha|victoria|karen|moira|fiona|tessa|amelie|amélie|hortense|denise|audrey|marie|virginie|zira|susan|linda|ava|emma|joanna|salli|ivy|kendra|kimberly|amy|aria|jenny|natalie|sofie|elsa|alva|nicky|heather|#female",
             Pattern.CASE_INSENSITIVE

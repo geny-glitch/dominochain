@@ -190,6 +190,11 @@ module BetaEvents
                 kind: :movement_detected,
                 mode: :payload,
                 accepted_catalogs: CORNERTIME_CATALOGS
+              ),
+              early_stop: EventDef.new(
+                kind: :early_stop,
+                mode: :payload,
+                accepted_catalogs: CORNERTIME_CATALOGS
               )
             },
             default_event: nil

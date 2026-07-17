@@ -19,6 +19,9 @@ module CornertimePayload
       client: session.client,
       started_at: session.started_at&.iso8601,
       ended_at: session.ended_at&.iso8601,
+      planned_duration_seconds: session.planned_duration_seconds,
+      planned_duration_minutes: session.planned_duration_minutes,
+      ends_at: session.ends_at&.iso8601,
       violation_count: session.violation_count
     }
   end
@@ -35,7 +38,9 @@ module CornertimePayload
 
   def beta_locale_for(user)
     raw = user&.beta_ui_prefs&.dig("locale")
-    sym = raw.to_s.downcase.tr("_", "-").split("-").first.to_sym
+    return I18n.default_locale if raw.blank?
+
+    sym = raw.to_s.downcase.tr("_", "-").split("-").first&.to_sym
     SetLocale::SUPPORTED_LOCALES.include?(sym) ? sym : I18n.default_locale
   end
 

@@ -49,5 +49,7 @@ RSpec.describe BetaEvents::SourceRegistry do
       "leverage_photo.lock",
       "leverage_photo.delete"
     )
+    expect(source.event(:early_stop).mode).to eq(:payload)
+    expect(described_class.allowed_for(:cornertime, :early_stop)).to include("chaster.add_time")
   end
 end

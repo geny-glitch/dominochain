@@ -7,7 +7,7 @@ class BetaLeveragePhotoController < ApplicationController
   before_action :require_beta_role!
   before_action :require_catalog_action!
   before_action :set_photo, only: %i[
-    show original censor_new censor start add_time tlock_blob decrypt_payload destroy
+    show original censor_new censor start add_time tlock_blob decrypt_payload destroy set_as_wallpaper
   ]
   before_action :ensure_lockable_for_start!, only: %i[start]
   before_action :ensure_draft_photo!, only: %i[original]
@@ -161,6 +161,24 @@ class BetaLeveragePhotoController < ApplicationController
   def destroy
     @photo.permanently_delete!
     redirect_to beta_leverage_photos_path, notice: t("flash.beta.leverage_photo.deleted")
+  end
+
+  def set_as_wallpaper
+    LeveragePhotos::ApplyAsWallpaper.new(photo: @photo, user: current_user).call!
+    redirect_back fallback_location: beta_leverage_photos_path, notice: t("flash.beta.leverage_photo.wallpaper_set")
+  rescue LeveragePhotos::ApplyAsWallpaper::Error => e
+    alert =
+      case e.message
+      when "boss controls wallpaper"
+        t("flash.beta.wallpaper.boss_controls_wallpaper")
+      when "no device"
+        t("flash.beta.wallpaper.no_device")
+      when "no displayable image"
+        t("flash.beta.leverage_photo.wallpaper_no_image")
+      else
+        e.message
+      end
+    redirect_back fallback_location: beta_leverage_photos_path, alert: alert
   end
 
   private

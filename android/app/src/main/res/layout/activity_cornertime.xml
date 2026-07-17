@@ -22,6 +22,20 @@
         style="@style/DsBody"
         android:textColor="@color/ds_text_muted" />
 
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/ds_space_xs"
+        android:text="@string/cornertime_duration_label"
+        style="@style/DsSmall"
+        android:textColor="@color/ds_text_muted" />
+
+    <Spinner
+        android:id="@+id/cornertime_duration"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/ds_space_md" />
+
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -51,6 +65,15 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="@dimen/ds_space_xs"
         android:text="@string/cornertime_violations"
+        style="@style/DsSmall"
+        android:textColor="@color/ds_text_muted" />
+
+    <TextView
+        android:id="@+id/cornertime_remaining"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/ds_space_xs"
+        android:visibility="gone"
         style="@style/DsSmall"
         android:textColor="@color/ds_text_muted" />
 

@@ -108,6 +108,16 @@
       </div>
     <% end %>
 
+    <% if photo.wallpaper_display_attachment.present? && !current_user.controlled_by_boss? %>
+      <div class="ds-beta-control-actions" style="flex-wrap:wrap;gap:0.5rem;margin-top:0.75rem;">
+        <%= button_to t("leverage_photo.index.set_as_wallpaper"),
+              beta_leverage_photo_set_as_wallpaper_path(photo),
+              method: :post,
+              class: "ds-btn ds-btn--secondary ds-btn--sm",
+              form: { data: { turbo_confirm: t("leverage_photo.index.set_as_wallpaper_confirm") } } %>
+      </div>
+    <% end %>
+
     <p class="ds-beta-home-muted" data-crypto-status
        data-starting="<%= t("leverage_photo.show.status_starting") %>"
        data-adding="<%= t("leverage_photo.show.status_adding") %>"

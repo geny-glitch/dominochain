@@ -25,7 +25,7 @@ fr:
         cornertime:
           label: "Corner time"
           subtitle: "Caméra · reste immobile ou affronte les sanctions"
-          events: "Événement : movement.detected"
+          events: "Événements : movement.detected, early_stop"
       actions:
         chaster:
           label: "Chaster"
@@ -415,12 +415,15 @@ fr:
       cooldown: "Délai entre sanctions (secondes)"
       calibration: "Délai de calibration (secondes)"
       sanctions_title: "Sanctions en cas de mouvement"
+      early_stop_sanctions_title: "Sanctions si la session est arrêtée trop tôt"
+      early_stop_sanctions_hint: "Appliquées quand le sub termine la session avant la durée choisie."
       save: "Enregistrer"
       logs_title: "Sessions récentes"
       no_sessions: "Aucune session pour le moment."
       session_started: "Début %{time}"
       session_ended: "Fin %{time}"
       session_client: "Client : %{client}"
+      session_duration: "%{minutes} min prévues"
       session_violations: "%{count} mouvements"
       session_status:
         calibrating: "Calibration"

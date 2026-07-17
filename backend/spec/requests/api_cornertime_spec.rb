@@ -51,10 +51,12 @@ RSpec.describe "Api::Cornertime", type: :request do
     )
 
     post "/api/cornertime/sessions",
-      params: { client: "android" }.to_json,
+      params: { client: "android", duration_minutes: 10 }.to_json,
       headers: auth_headers.merge("CONTENT_TYPE" => "application/json")
     expect(response).to have_http_status(:created)
-    session_id = JSON.parse(response.body).dig("session", "id")
+    body = JSON.parse(response.body)
+    session_id = body.dig("session", "id")
+    expect(body.dig("session", "planned_duration_minutes")).to eq(10)
 
     post "/api/cornertime/sessions/#{session_id}/violations",
       params: {
@@ -65,8 +67,41 @@ RSpec.describe "Api::Cornertime", type: :request do
     expect(response).to have_http_status(:created)
     expect(JSON.parse(response.body)["status"]).to eq("applied")
 
+    # Travel past planned duration so stop is a clean completion, not early_stop.
+    travel 11.minutes do
+      patch "/api/cornertime/sessions/#{session_id}/stop", headers: auth_headers
+      expect(response).to have_http_status(:ok)
+      stop_body = JSON.parse(response.body)
+      expect(stop_body.dig("session", "status")).to eq("completed")
+      expect(stop_body["early_stop"]).to eq(false)
+    end
+  end
+
+  it "applies early_stop sanctions when stopped before the planned duration" do
+    user.ensure_cornertime_config!.update!(
+      early_stop_sanction: {
+        "items" => [
+          {
+            "possibility_id" => "chaster.add_time",
+            "enabled" => true,
+            "config" => { "seconds" => 120 }
+          }
+        ]
+      }
+    )
+    allow(BetaEvents::SanctionApplier).to receive(:new).and_return(
+      instance_double(BetaEvents::SanctionApplier, apply!: [{ "possibility_id" => "chaster.add_time" }])
+    )
+
+    post "/api/cornertime/sessions",
+      params: { client: "android", duration_minutes: 30 }.to_json,
+      headers: auth_headers.merge("CONTENT_TYPE" => "application/json")
+    session_id = JSON.parse(response.body).dig("session", "id")
+
     patch "/api/cornertime/sessions/#{session_id}/stop", headers: auth_headers
     expect(response).to have_http_status(:ok)
-    expect(JSON.parse(response.body).dig("session", "status")).to eq("stopped")
+    body = JSON.parse(response.body)
+    expect(body.dig("session", "status")).to eq("stopped")
+    expect(body["early_stop"]).to eq(true)
   end
 end

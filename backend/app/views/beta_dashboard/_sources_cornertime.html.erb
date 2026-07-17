@@ -51,6 +51,14 @@
             allowed_possibility_ids: BetaEvents::SourceRegistry.allowed_for(:cornertime, :movement_detected),
             photos: @leverage_photos %>
 
+      <h3 class="ds-section-subtitle"><%= t("beta.cornertime_source.early_stop_sanctions_title") %></h3>
+      <p class="ds-beta-control-hint"><%= t("beta.cornertime_source.early_stop_sanctions_hint") %></p>
+      <%= render "sanction_set_fields",
+            field_prefix: "early_stop_sanction",
+            sanction_set: @config.early_stop_sanction_object,
+            allowed_possibility_ids: BetaEvents::SourceRegistry.allowed_for(:cornertime, :early_stop),
+            photos: @leverage_photos %>
+
       <div class="ds-beta-control-actions">
         <%= submit_tag t("beta.cornertime_source.save"), class: "ds-btn ds-btn--primary" %>
       </div>
@@ -71,6 +79,9 @@
               · <%= t("beta.cornertime_source.session_ended", time: l(session.ended_at, format: :short)) %>
             <% end %>
             · <%= t("beta.cornertime_source.session_client", client: session.client) %>
+            <% if session.planned_duration_minutes.present? %>
+              · <%= t("beta.cornertime_source.session_duration", minutes: session.planned_duration_minutes) %>
+            <% end %>
             · <%= t("beta.cornertime_source.session_violations", count: session.violation_count) %>
             <% if session.cornertime_violations.any? %>
               <ul class="ds-beta-bullet-list">

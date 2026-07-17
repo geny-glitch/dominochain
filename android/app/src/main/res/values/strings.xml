@@ -119,5 +119,11 @@
     <string name="cornertime_voice_intro">Immobile. Tu bouges, tu es puni.</string>
     <string name="cornertime_voice_stop_moving">Bouge pas.</string>
     <string name="cornertime_voice_return_to_position">Remets-toi.</string>
+    <string name="cornertime_duration_label">Durée de la session</string>
+    <string name="cornertime_duration_option">%1$d min</string>
+    <string name="cornertime_duration_required">Choisis combien de temps dure la session.</string>
+    <string name="cornertime_remaining">Reste : %1$s</string>
+    <string name="cornertime_status_completed">Temps écoulé — session terminée</string>
+    <string name="cornertime_status_early_stop">Arrêt trop tôt — conséquences appliquées</string>
     <string name="permission_camera">Caméra (corner time)</string>
 </resources>

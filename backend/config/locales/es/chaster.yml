@@ -29,6 +29,7 @@ es:
         showcase_backdoor: "Backdoor por %{player_name}: «%{message}»"
         strava_goal: "Objetivo Strava fallido: %{goal_title}"
         cornertime: "Movimiento durante el corner time"
+        cornertime_early_stop: "Corner time cortado antes de tiempo"
         wallpaper:
           default: "Sanción de fondo"
           mismatch_add_time: "Fondo incorrecto"

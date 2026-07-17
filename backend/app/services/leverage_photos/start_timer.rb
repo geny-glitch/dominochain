@@ -23,11 +23,13 @@ class LeveragePhotos::StartTimer
       LeveragePhoto::MAX_DURATION_SECONDS
     )
 
+    touched_devices = []
     LeveragePhoto.transaction do
       if @photo.unlocked?
         @photo.tlock_blob.purge if @photo.tlock_blob.attached?
         @photo.leverage_photo_extensions.destroy_all
       end
+      touched_devices = LeveragePhotos::SyncLinkedWallpapers.on_locking!(@photo, notify: false)
       @photo.tlock_blob.attach(@tlock_blob)
       @photo.original_image.purge if @photo.original_image.attached?
       @photo.update!(
@@ -40,6 +42,8 @@ class LeveragePhotos::StartTimer
       )
       @photo.assert_attachments!
     end
+
+    FcmService.send_background_changed_notifications_to_devices(devices: touched_devices) if touched_devices.any?
 
     @photo
   end

@@ -118,6 +118,17 @@
       <span class="ds-beta-leverage-row__btn-spacer" aria-hidden="true"></span>
     <% end %>
 
+    <% if photo.wallpaper_display_attachment.present? && !current_user.controlled_by_boss? %>
+      <%= button_to beta_leverage_photo_set_as_wallpaper_path(photo),
+            method: :post,
+            class: "ds-btn ds-btn--ghost ds-btn--icon ds-btn--sm",
+            title: t("leverage_photo.index.set_as_wallpaper"),
+            form: { data: { turbo_confirm: t("leverage_photo.index.set_as_wallpaper_confirm") } },
+            aria: { label: t("leverage_photo.index.set_as_wallpaper") } do %>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      <% end %>
+    <% end %>
+
     <%= button_to beta_leverage_photo_destroy_path(photo),
           method: :delete,
           class: "ds-btn ds-btn--ghost ds-btn--icon ds-btn--sm",

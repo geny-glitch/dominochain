@@ -61,11 +61,19 @@ class CornertimeConfig < ApplicationRecord
       less_than_or_equal_to: MAX_CALIBRATION_SECONDS
     }
   validate :movement_sanction_is_valid
+  validate :early_stop_sanction_is_valid
 
   def movement_sanction_object
     SanctionSet.from_hash(
       movement_sanction,
       allowed: BetaEvents::SourceRegistry.allowed_for(:cornertime, :movement_detected)
+    )
+  end
+
+  def early_stop_sanction_object
+    SanctionSet.from_hash(
+      early_stop_sanction,
+      allowed: BetaEvents::SourceRegistry.allowed_for(:cornertime, :early_stop)
     )
   end
 
@@ -94,19 +102,38 @@ class CornertimeConfig < ApplicationRecord
       source_width: SOURCE_WIDTH,
       source_height: SOURCE_HEIGHT,
       violation_cooldown_seconds: violation_cooldown_seconds,
-      calibration_seconds: calibration_seconds
+      calibration_seconds: calibration_seconds,
+      allowed_durations_minutes: CornertimeSession::ALLOWED_DURATIONS_MINUTES
+    }
+  end
+
+  def self.kind_map_for(event_kind)
+    kind = event_kind.to_sym
+    {
+      "chaster.add_time" => kind,
+      "chaster.freeze" => kind,
+      "pishock.shock" => kind,
+      "leverage_photo.lock" => kind,
+      "leverage_photo.delete" => kind
     }
   end
 
   private
 
   def movement_sanction_is_valid
-    sanction = movement_sanction_object
+    validate_sanction_active_targets!(movement_sanction_object, :movement_sanction)
+  end
+
+  def early_stop_sanction_is_valid
+    validate_sanction_active_targets!(early_stop_sanction_object, :early_stop_sanction)
+  end
+
+  def validate_sanction_active_targets!(sanction, attr)
     if sanction.enabled?("chaster.add_time") && !sanction.item_for("chaster.add_time")&.active?
-      errors.add(:movement_sanction, :invalid)
+      errors.add(attr, :invalid)
     end
     if sanction.enabled?("leverage_photo.lock") && !sanction.item_for("leverage_photo.lock")&.active?
-      errors.add(:movement_sanction, :invalid)
+      errors.add(attr, :invalid)
     end
   end
 end

@@ -10,6 +10,7 @@ class LeveragePhoto < ApplicationRecord
 
   belongs_to :user
   has_many :leverage_photo_extensions, dependent: :destroy
+  has_many :wallpapers, dependent: :nullify
 
   has_one_attached :original_image
   has_one_attached :censored_image
@@ -99,6 +100,25 @@ class LeveragePhoto < ApplicationRecord
 
   def mark_unlocked!
     update!(status: "unlocked")
+    LeveragePhotos::SyncLinkedWallpapers.on_unlocked!(self)
+  end
+
+  def wallpaper_display_attachment
+    if original_image.attached?
+      original_image
+    elsif censored_image.attached?
+      censored_image
+    elsif teaser_image.attached?
+      teaser_image
+    end
+  end
+
+  def wallpaper_locked_attachment
+    if censored_image.attached?
+      censored_image
+    elsif teaser_image.attached?
+      teaser_image
+    end
   end
 
   def permanently_delete!

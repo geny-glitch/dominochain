@@ -9,7 +9,8 @@ module Api
         result = CornertimeSessionStarter.new(
           user: current_user,
           client: params[:client].presence || "android",
-          device: current_device
+          device: current_device,
+          duration_minutes: params[:duration_minutes]
         ).call
 
         unless result.ok
@@ -25,8 +26,12 @@ module Api
 
       def stop
         session = current_user.cornertime_sessions.find(params[:id])
-        session.stop!
-        render json: { session: CornertimePayload.session_json(session) }
+        result = CornertimeSessionFinisher.new(session: session).call
+        render json: {
+          session: CornertimePayload.session_json(result.session),
+          early_stop: result.early_stop,
+          actions_executed: result.actions_executed
+        }
       rescue ActiveRecord::RecordNotFound
         render json: { error: I18n.t("cornertime.errors.session_not_found") }, status: :not_found
       end

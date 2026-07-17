@@ -9,13 +9,17 @@
   var statusEl = document.getElementById("cornertime-status");
   var violationsEl = document.getElementById("cornertime-violations");
   var elapsedEl = document.getElementById("cornertime-elapsed");
+  var remainingEl = document.getElementById("cornertime-remaining");
   var hintEl = document.getElementById("cornertime-hint");
   var startBtn = document.getElementById("cornertime-start");
   var stopBtn = document.getElementById("cornertime-stop");
+  var durationSelect = document.getElementById("cornertime-duration");
+  var durationWrap = document.getElementById("cornertime-duration-wrap");
   var voiceToggle = document.getElementById("cornertime-voice");
   var voicePick = document.getElementById("cornertime-voice-pick");
   var voicePickWrap = document.getElementById("cornertime-voice-pick-wrap");
   var VOICE_STORAGE_KEY = "cornertime_tts_voice";
+  var DURATION_STORAGE_KEY = "cornertime_duration_minutes";
   var FEMALE_VOICE_RE = /female|woman|girl|samantha|victoria|karen|moira|fiona|tessa|amelie|am[eé]lie|hortense|denise|audrey|marie|virginie|zira|susan|linda|ava|emma|joanna|salli|ivy|kendra|kimberly|amy|aria|jenny|natalie|sofie|elsa|alva|nicky|heather|google fran[cç]ais|microsoft hortense/i;
   var MALE_VOICE_RE = /male|man|boy|david|daniel|alex|fred|thomas|paul|nicolas|jacques|mark|james|brian|matthew|joey|justin|kevin|guy|eric|microsoft paul|microsoft guy/i;
 
@@ -34,10 +38,13 @@
   var lastSanctionAt = 0;
   var violationCount = 0;
   var startedAt = null;
+  var endsAt = null;
+  var plannedDurationMs = null;
   var elapsedTimer = null;
   var monitoring = false;
   var calibrating = false;
   var reporting = false;
+  var finishing = false;
 
   var DETECTION_DEBOUNCE_MS = 1000;
   var sanctionCooldownMs = (config.violation_cooldown_seconds || 8) * 1000;
@@ -220,7 +227,7 @@
   }
 
   function formatElapsed(ms) {
-    var total = Math.floor(ms / 1000);
+    var total = Math.max(0, Math.floor(ms / 1000));
     var m = Math.floor(total / 60);
     var s = total % 60;
     return String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
@@ -228,7 +235,41 @@
 
   function updateElapsed() {
     if (!startedAt) return;
-    elapsedEl.textContent = (i18n.elapsed || "Elapsed: %{time}").replace("%{time}", formatElapsed(Date.now() - startedAt));
+    var now = Date.now();
+    elapsedEl.textContent = (i18n.elapsed || "Elapsed: %{time}").replace("%{time}", formatElapsed(now - startedAt));
+    if (remainingEl && endsAt) {
+      var left = endsAt - now;
+      remainingEl.hidden = false;
+      remainingEl.textContent = (i18n.remaining || "Left: %{time}").replace("%{time}", formatElapsed(left));
+      if (left <= 0 && monitoring && !finishing) {
+        stopSession({ autoComplete: true });
+      }
+    }
+  }
+
+  function selectedDurationMinutes() {
+    if (!durationSelect) return null;
+    var value = parseInt(durationSelect.value, 10);
+    return isNaN(value) ? null : value;
+  }
+
+  function setDurationControlsEnabled(enabled) {
+    if (durationSelect) durationSelect.disabled = !enabled;
+  }
+
+  try {
+    var savedDuration = localStorage.getItem(DURATION_STORAGE_KEY);
+    if (savedDuration && durationSelect) {
+      durationSelect.value = savedDuration;
+    }
+  } catch (e) { /* ignore */ }
+
+  if (durationSelect) {
+    durationSelect.addEventListener("change", function () {
+      try {
+        if (durationSelect.value) localStorage.setItem(DURATION_STORAGE_KEY, durationSelect.value);
+      } catch (e) { /* ignore */ }
+    });
   }
 
   function updateViolations() {
@@ -532,21 +573,30 @@
       setHint(i18n.source_disabled);
       return;
     }
+    var durationMinutes = selectedDurationMinutes();
+    if (!durationMinutes) {
+      setHint(i18n.duration_required || "");
+      return;
+    }
     startBtn.disabled = true;
     setHint("");
     try {
       await startCamera();
-      var data = await api(root.dataset.startUrl, "POST", {});
+      var data = await api(root.dataset.startUrl, "POST", { duration_minutes: durationMinutes });
       sessionId = data.session.id;
       applyConfig(data.config || config);
       violationCount = 0;
       updateViolations();
-      startedAt = Date.now();
+      startedAt = data.session.started_at ? Date.parse(data.session.started_at) : Date.now();
+      plannedDurationMs = (data.session.planned_duration_seconds || durationMinutes * 60) * 1000;
+      endsAt = data.session.ends_at ? Date.parse(data.session.ends_at) : (startedAt + plannedDurationMs);
       updateElapsed();
       elapsedTimer = setInterval(updateElapsed, 1000);
       ensureDetectors();
       calibrating = true;
       monitoring = true;
+      finishing = false;
+      setDurationControlsEnabled(false);
       stopBtn.disabled = false;
       setStatus("calibrating");
       lastViolationAt = 0;
@@ -562,6 +612,7 @@
       stopCamera();
       startBtn.disabled = false;
       stopBtn.disabled = true;
+      setDurationControlsEnabled(true);
       if (e.name === "NotAllowedError" || e.name === "PermissionDeniedError") {
         setStatus("error");
         setHint(i18n.camera_denied);
@@ -572,7 +623,10 @@
     }
   }
 
-  async function stopSession() {
+  async function stopSession(opts) {
+    opts = opts || {};
+    if (finishing) return;
+    finishing = true;
     monitoring = false;
     calibrating = false;
     stopSpeaking();
@@ -585,16 +639,35 @@
     stopCamera();
     stopBtn.disabled = true;
     startBtn.disabled = !sourceEnabled;
-    setStatus("stopped");
+    setDurationControlsEnabled(true);
     setHint("");
-    if (sessionId) {
+    if (remainingEl) {
+      remainingEl.hidden = true;
+      remainingEl.textContent = "";
+    }
+    var endedSessionId = sessionId;
+    sessionId = null;
+    startedAt = null;
+    endsAt = null;
+    plannedDurationMs = null;
+    if (endedSessionId) {
       try {
-        await api(root.dataset.stopUrlTemplate.replace(":id", sessionId), "PATCH");
+        var data = await api(root.dataset.stopUrlTemplate.replace(":id", endedSessionId), "PATCH");
+        if (data.early_stop) {
+          setStatus("early_stop");
+        } else if (opts.autoComplete || (data.session && data.session.status === "completed")) {
+          setStatus("completed");
+        } else {
+          setStatus("stopped");
+        }
       } catch (e) {
+        setStatus("error");
         setHint(e.message);
       }
-      sessionId = null;
+    } else {
+      setStatus(opts.autoComplete ? "completed" : "stopped");
     }
+    finishing = false;
   }
 
   document.addEventListener("visibilitychange", function () {

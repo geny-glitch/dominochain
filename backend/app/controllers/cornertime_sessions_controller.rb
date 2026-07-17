@@ -16,7 +16,8 @@ class CornertimeSessionsController < ApplicationController
     result = CornertimeSessionStarter.new(
       user: current_user,
       client: "web",
-      device: nil
+      device: nil,
+      duration_minutes: params[:duration_minutes]
     ).call
 
     unless result.ok
@@ -32,8 +33,12 @@ class CornertimeSessionsController < ApplicationController
 
   def stop
     session = current_user.cornertime_sessions.find(params[:id])
-    session.stop!
-    render json: { session: CornertimePayload.session_json(session) }
+    result = CornertimeSessionFinisher.new(session: session).call
+    render json: {
+      session: CornertimePayload.session_json(result.session),
+      early_stop: result.early_stop,
+      actions_executed: result.actions_executed
+    }
   rescue ActiveRecord::RecordNotFound
     render json: { error: I18n.t("cornertime.errors.session_not_found") }, status: :not_found
   end

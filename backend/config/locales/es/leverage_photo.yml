@@ -69,6 +69,8 @@ es:
       needs_censor_short: "sin censura"
       unlocked_hint: "Lista para restaurar o volver a bloquear."
       create_censor: "Crear versión censurada"
+      set_as_wallpaper: "Usar como fondo de pantalla"
+      set_as_wallpaper_confirm: "¿Usar esta foto como fondo del teléfono? Mientras esté bloqueada, se mostrará la versión censurada (o el teaser)."
     show:
       title: "Foto de presión"
       page_title: "Foto de presión"

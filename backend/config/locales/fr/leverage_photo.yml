@@ -69,6 +69,8 @@ fr:
       needs_censor_short: "sans censure"
       unlocked_hint: "Prête à être restaurée ou reverrouillée."
       create_censor: "Créer une version censurée"
+      set_as_wallpaper: "Mettre en fond d'écran"
+      set_as_wallpaper_confirm: "Utiliser cette photo comme fond d'écran du téléphone ? Tant qu'elle est verrouillée, la version censurée (ou le teaser) s'affichera à la place."
     show:
       title: "Photo de levier"
       page_title: "Photo de levier"

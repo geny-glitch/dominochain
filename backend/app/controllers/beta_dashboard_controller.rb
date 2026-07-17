@@ -435,26 +435,7 @@ class BetaDashboardController < ApplicationController
     raw = params[key]
     return nil unless raw.is_a?(ActionController::Parameters) || raw.is_a?(Hash)
 
-    chaster_add_time_enabled = CheckboxParamNormalizer.to_bool(raw[:chaster_add_time_enabled])
-    chaster_seconds = raw[:chaster_seconds].presence&.to_i
-    leverage_photo_lock_enabled = CheckboxParamNormalizer.to_bool(raw[:leverage_photo_lock_enabled])
-    leverage_photo_delete_enabled = CheckboxParamNormalizer.to_bool(raw[:leverage_photo_delete_enabled])
-
-    {
-      "chaster_add_time_enabled" => chaster_add_time_enabled,
-      "chaster_seconds" => chaster_add_time_enabled ? chaster_seconds : nil,
-      "chaster_freeze_enabled" => ChasterService.freeze_ui_enabled? && CheckboxParamNormalizer.to_bool(raw[:chaster_freeze_enabled]),
-      "pishock_enabled" => CheckboxParamNormalizer.to_bool(raw[:pishock_enabled]),
-      "pishock_intensity" => raw[:pishock_intensity].to_i,
-      "pishock_duration" => raw[:pishock_duration].to_i,
-      "leverage_photo_lock_enabled" => leverage_photo_lock_enabled,
-      "leverage_photo_lock_seconds" => leverage_photo_lock_enabled ? raw[:leverage_photo_lock_seconds].presence&.to_i : nil,
-      "leverage_photo_lock_target_mode" => raw[:leverage_photo_lock_target_mode].presence || "random",
-      "leverage_photo_lock_photo_id" => raw[:leverage_photo_lock_photo_id].presence&.to_i,
-      "leverage_photo_delete_enabled" => leverage_photo_delete_enabled,
-      "leverage_photo_delete_target_mode" => raw[:leverage_photo_delete_target_mode].presence || "random",
-      "leverage_photo_delete_photo_id" => raw[:leverage_photo_delete_photo_id].presence&.to_i
-    }
+    SanctionSet.from_params(raw, allowed: BetaEvents::SourceRegistry::WALLPAPER_ALLOWED).to_h
   end
 
   def wallpaper_history_scope

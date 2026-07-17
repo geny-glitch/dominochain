@@ -94,6 +94,7 @@ class StravaGoalEvaluator
       source: :strava_goal,
       kind: :failed_penalty,
       payload: {
+        possibility_id: "chaster.add_time",
         seconds: goal.chaster_penalty_seconds,
         goal_id: goal.id,
         goal_title: goal.name,
@@ -130,69 +131,47 @@ class StravaGoalEvaluator
 
   def apply_leverage_sanctions!(goal:, due_at:)
     sanction = goal.failure_sanction_object
-    applied = []
+    return [] unless sanction.any_active?
 
-    if sanction.leverage_photo_lock_active?
-      applied << execute_leverage_event!(
-        goal: goal,
-        due_at: due_at,
-        action: "leverage_photo_lock",
-        seconds: sanction.leverage_photo_lock_seconds,
-        target_mode: sanction.leverage_photo_lock_target_mode,
-        photo_id: sanction.leverage_photo_lock_photo_id
-      )
-    end
-
-    if sanction.leverage_photo_delete_active?
-      applied << execute_leverage_event!(
-        goal: goal,
-        due_at: due_at,
-        action: "leverage_photo_delete",
-        seconds: nil,
-        target_mode: sanction.leverage_photo_delete_target_mode,
-        photo_id: sanction.leverage_photo_delete_photo_id
-      )
-    end
-
-    applied
-  end
-
-  def execute_leverage_event!(goal:, due_at:, action:, seconds:, target_mode:, photo_id:)
-    payload = {
-      action: action,
-      target_mode: target_mode,
-      photo_id: photo_id,
-      goal_id: goal.id,
-      goal_title: goal.name,
-      due_at: due_at.iso8601,
-      source: "strava"
+    kind_map = {
+      "leverage_photo.lock" => :failed_penalty,
+      "leverage_photo.delete" => :failed_penalty
     }
-    payload[:seconds] = seconds if seconds.present?
 
-    event = BetaEvents::DomainEvent.new(
+    applier = BetaEvents::SanctionApplier.new(
       beta: @user,
       source: :strava_goal,
-      kind: :failed_penalty,
-      payload: payload
+      kind_map: kind_map,
+      execute: lambda { |event, context|
+        # Enrich payload with goal metadata for audit/descriptions.
+        enriched = BetaEvents::DomainEvent.new(
+          beta: @user,
+          source: event.source,
+          kind: event.kind,
+          payload: event.payload.merge(
+            goal_id: goal.id,
+            goal_title: goal.name,
+            due_at: due_at.iso8601,
+            source: "strava"
+          )
+        )
+        begin
+          status = BetaEvents::ActionExecutor.new(beta: @user, event: enriched, context: context).call
+          status.to_s
+        rescue BetaEvents::ActionExecutionStopped => e
+          "stopped:#{e.reason}"
+        end
+      }
     )
 
-    begin
-      execution_status = BetaEvents::ActionExecutor.new(beta: @user, event: event).call
+    applier.apply!(sanction).map do |row|
       {
-        "action" => action,
-        "status" => execution_status.to_s,
-        "target_mode" => target_mode,
-        "photo_id" => photo_id,
-        "seconds" => seconds
-      }.compact
-    rescue BetaEvents::ActionExecutionStopped => e
-      {
-        "action" => action,
-        "status" => "stopped:#{e.reason}",
-        "detail" => e.detail,
-        "target_mode" => target_mode,
-        "photo_id" => photo_id,
-        "seconds" => seconds
+        "action" => row["action"],
+        "possibility_id" => row["possibility_id"],
+        "status" => row["result"].to_s,
+        "target_mode" => row["target_mode"],
+        "photo_id" => row["leverage_photo_id"],
+        "seconds" => row["seconds"]
       }.compact
     end
   end

@@ -36,7 +36,15 @@ RSpec.describe BetaEvents::ActionExecutor do
 
   before do
     stub_beta_catalog_feature_flags(feature_flag_overrides)
-    allow(BetaEvents::ConsequenceRegistry).to receive(:actions_for).with(event).and_return([ BetaEvents::Actions::ChasterAddTimeFromEvent ])
+    allow(BetaEvents::ConsequenceResolver).to receive(:resolved_actions_for).with(event).and_return(
+      [
+        BetaEvents::ConsequenceResolver::ResolvedAction.new(
+          executor: BetaEvents::Actions::ChasterAddTimeFromEvent,
+          possibility_id: "chaster.add_time",
+          config: { seconds: 120 }
+        )
+      ]
+    )
     allow(BetaEvents::Actions::ChasterAddTimeFromEvent).to receive(:new).and_return(action_instance)
   end
 

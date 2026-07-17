@@ -142,15 +142,7 @@ class StravaController < ApplicationController
       :activity_types,
       :device_names,
       :chaster_penalty_minutes,
-      failure_sanction: [
-        :leverage_photo_lock_enabled,
-        :leverage_photo_lock_seconds,
-        :leverage_photo_lock_target_mode,
-        :leverage_photo_lock_photo_id,
-        :leverage_photo_delete_enabled,
-        :leverage_photo_delete_target_mode,
-        :leverage_photo_delete_photo_id
-      ]
+      failure_sanction: {}
     )
 
     {
@@ -165,25 +157,14 @@ class StravaController < ApplicationController
       activity_types: merged_activity_types_param(p),
       device_names: p[:device_names].to_s,
       chaster_penalty_seconds: positive_integer_or_nil(p[:chaster_penalty_minutes]).to_i * 60,
-      failure_sanction: parse_failure_sanction_params(p[:failure_sanction])
+      failure_sanction: parse_failure_sanction_params(params[:failure_sanction])
     }
   end
 
   def parse_failure_sanction_params(raw)
     return {} if raw.blank?
 
-    leverage_photo_lock_enabled = CheckboxParamNormalizer.to_bool(raw[:leverage_photo_lock_enabled])
-    leverage_photo_delete_enabled = CheckboxParamNormalizer.to_bool(raw[:leverage_photo_delete_enabled])
-
-    {
-      "leverage_photo_lock_enabled" => leverage_photo_lock_enabled,
-      "leverage_photo_lock_seconds" => leverage_photo_lock_enabled ? raw[:leverage_photo_lock_seconds].presence&.to_i : nil,
-      "leverage_photo_lock_target_mode" => raw[:leverage_photo_lock_target_mode].presence || "random",
-      "leverage_photo_lock_photo_id" => raw[:leverage_photo_lock_photo_id].presence&.to_i,
-      "leverage_photo_delete_enabled" => leverage_photo_delete_enabled,
-      "leverage_photo_delete_target_mode" => raw[:leverage_photo_delete_target_mode].presence || "random",
-      "leverage_photo_delete_photo_id" => raw[:leverage_photo_delete_photo_id].presence&.to_i
-    }
+    SanctionSet.from_params(raw, allowed: BetaEvents::SourceRegistry::STRAVA_ALLOWED).to_h
   end
 
   def merged_activity_types_param(permitted)

@@ -252,71 +252,46 @@ class WallpaperEnforcementEvaluator
   end
 
   def apply_scenario_sanctions!(config:, sanction:, reference_time:, details:, kinds:, track_freeze:, chaster_seconds_multiplier: 1)
-    sanctions = []
+    kind_map = {
+      "chaster.add_time" => kinds[:chaster_add_time],
+      "chaster.freeze" => kinds[:chaster_freeze],
+      "pishock.shock" => kinds[:pishock],
+      "leverage_photo.lock" => kinds[:leverage_photo_lock] || :leverage_photo_lock,
+      "leverage_photo.delete" => kinds[:leverage_photo_delete] || :leverage_photo_delete
+    }.compact
 
-    if sanction.chaster_add_time_active?
-      chaster_seconds = sanction.chaster_seconds.to_i * chaster_seconds_multiplier
-      sanctions.concat(apply_single_sanction!(
-        config: config,
-        action: "chaster_add_time",
-        kind: kinds[:chaster_add_time],
-        reference_time: reference_time,
-        details: details,
-        chaster_seconds: chaster_seconds
-      ))
+    config_overrides = {}
+    if chaster_seconds_multiplier.to_i > 1
+      config_overrides["chaster.add_time"] = { seconds_multiplier: chaster_seconds_multiplier }
     end
 
-    if sanction.chaster_freeze_active? && ChasterService.freeze_ui_enabled? && (!track_freeze || !config.frozen_by_enforcement?)
-      if freeze_supported_for_user?
-        sanctions.concat(apply_single_sanction!(
-          config: config,
-          action: "chaster_freeze",
-          kind: kinds[:chaster_freeze],
-          reference_time: reference_time,
-          details: details
-        ))
-        config.update!(frozen_by_enforcement: true) if track_freeze
-      end
-    end
+    applier = BetaEvents::SanctionApplier.new(
+      beta: @user,
+      source: :wallpaper,
+      kind_map: kind_map,
+      execute: ->(event, context) { execute_event(event, context: context) }
+    )
 
-    if sanction.pishock_active?
-      sanctions.concat(apply_single_sanction!(
-        config: config,
-        action: "pishock",
-        kind: kinds[:pishock],
-        reference_time: reference_time,
-        details: details,
-        pishock_intensity: sanction.pishock_intensity,
-        pishock_duration: sanction.pishock_duration
-      ))
-    end
+    results = applier.apply!(
+      sanction,
+      metadata: details,
+      config_overrides: config_overrides,
+      hooks: {
+        skip_freeze: lambda {
+          !ChasterService.freeze_ui_enabled? ||
+            (track_freeze && config.frozen_by_enforcement?) ||
+            !freeze_supported_for_user?
+        },
+        after: lambda { |item, _result, _context|
+          if item.possibility_id == "chaster.freeze" && track_freeze
+            config.update!(frozen_by_enforcement: true)
+          end
+        }
+      }
+    )
 
-    if sanction.leverage_photo_lock_active?
-      sanctions.concat(apply_single_sanction!(
-        config: config,
-        action: "leverage_photo_lock",
-        kind: kinds[:leverage_photo_lock] || :leverage_photo_lock,
-        reference_time: reference_time,
-        details: details,
-        leverage_seconds: sanction.leverage_photo_lock_seconds,
-        leverage_target_mode: sanction.leverage_photo_lock_target_mode,
-        leverage_photo_id: sanction.leverage_photo_lock_photo_id
-      ))
-    end
-
-    if sanction.leverage_photo_delete_active?
-      sanctions.concat(apply_single_sanction!(
-        config: config,
-        action: "leverage_photo_delete",
-        kind: kinds[:leverage_photo_delete] || :leverage_photo_delete,
-        reference_time: reference_time,
-        details: details,
-        leverage_target_mode: sanction.leverage_photo_delete_target_mode,
-        leverage_photo_id: sanction.leverage_photo_delete_photo_id
-      ))
-    end
-
-    sanctions
+    results.each { |r| r["applied_at"] = reference_time.iso8601 }
+    results
   end
 
   def freeze_supported_for_user?
@@ -324,71 +299,6 @@ class WallpaperEnforcementEvaluator
     return false unless lock
 
     lock[:can_freeze] != false
-  end
-
-  def apply_single_sanction!(config:, action:, kind:, reference_time:, details:, chaster_seconds: nil, pishock_intensity: nil, pishock_duration: nil, leverage_seconds: nil, leverage_target_mode: nil, leverage_photo_id: nil)
-    payload_details = details.dup
-    payload_details["enforcement_kind"] = kind.to_s
-    payload = {
-      action: action,
-      source: "wallpaper",
-      metadata: payload_details
-    }
-    payload[:seconds] = chaster_seconds if action == "chaster_add_time"
-    payload[:pishock_intensity] = pishock_intensity if action == "pishock"
-    payload[:pishock_duration] = pishock_duration if action == "pishock"
-    if action.start_with?("leverage_photo")
-      payload[:seconds] = leverage_seconds if leverage_seconds.present?
-      payload[:target_mode] = leverage_target_mode.presence || "random"
-      payload[:photo_id] = leverage_photo_id if leverage_photo_id.present?
-    end
-
-    event = BetaEvents::DomainEvent.new(
-      beta: @user,
-      source: :wallpaper,
-      kind: kind,
-      payload: payload
-    )
-    context = BetaEvents::Context.new(beta: @user, event: event)
-    result = execute_event(event, context: context)
-    [
-      {
-        "kind" => kind.to_s,
-        "action" => action,
-        "result" => result,
-        "applied_at" => reference_time.iso8601,
-        **sanction_metadata_for(
-          action,
-          chaster_seconds,
-          pishock_intensity,
-          pishock_duration,
-          leverage_seconds,
-          leverage_target_mode,
-          context.leverage_photo_id || leverage_photo_id
-        )
-      }
-    ]
-  end
-
-  def sanction_metadata_for(action, chaster_seconds, pishock_intensity, pishock_duration, leverage_seconds = nil, leverage_target_mode = nil, leverage_photo_id = nil)
-    case action
-    when "chaster_add_time"
-      { "chaster_seconds" => chaster_seconds }
-    when "pishock"
-      {
-        "pishock_intensity" => pishock_intensity,
-        "pishock_duration" => pishock_duration
-      }
-    when "leverage_photo_lock", "leverage_photo_start", "leverage_photo_add_time", "leverage_photo_delete"
-      meta = {
-        "target_mode" => leverage_target_mode,
-        "leverage_photo_id" => leverage_photo_id
-      }
-      meta["seconds"] = leverage_seconds if leverage_seconds.present?
-      meta
-    else
-      {}
-    end
   end
 
   def unfreeze_if_needed!(config)
@@ -399,6 +309,7 @@ class WallpaperEnforcementEvaluator
       source: :wallpaper,
       kind: :enforcement_unfreeze,
       payload: {
+        possibility_id: "chaster.unfreeze",
         action: "chaster_freeze",
         source: "wallpaper",
         summary: "Wallpaper compliance restored"

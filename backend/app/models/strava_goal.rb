@@ -155,20 +155,15 @@ class StravaGoal < ApplicationRecord
   end
 
   def failure_sanction_object
-    WallpaperSanction.from_hash(failure_sanction)
+    SanctionSet.from_hash(failure_sanction, allowed: BetaEvents::SourceRegistry::STRAVA_ALLOWED)
   end
 
   def failure_sanction=(value)
-    sanction = WallpaperSanction.from_hash(value.is_a?(Hash) ? value : {})
-    super(sanction.to_h.slice(
-      "leverage_photo_lock_enabled",
-      "leverage_photo_lock_seconds",
-      "leverage_photo_lock_target_mode",
-      "leverage_photo_lock_photo_id",
-      "leverage_photo_delete_enabled",
-      "leverage_photo_delete_target_mode",
-      "leverage_photo_delete_photo_id"
-    ))
+    sanction = SanctionSet.from_hash(
+      value.is_a?(Hash) ? value : {},
+      allowed: BetaEvents::SourceRegistry::STRAVA_ALLOWED
+    )
+    super(sanction.to_h)
   end
 
   private
@@ -212,7 +207,7 @@ class StravaGoal < ApplicationRecord
 
   def failure_sanction_is_valid
     sanction = failure_sanction_object
-    if sanction.leverage_photo_lock_enabled && !sanction.leverage_photo_lock_seconds.to_i.positive?
+    if sanction.enabled?("leverage_photo.lock") && !sanction.item_for("leverage_photo.lock")&.active?
       errors.add(:failure_sanction, I18n.t("beta.strava.errors.leverage_lock_seconds"))
     end
   end

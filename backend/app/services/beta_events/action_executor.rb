@@ -26,11 +26,12 @@ module BetaEvents
       return :source_disabled unless catalog.source_enabled_for_event_source?(@event.source)
 
       executed = false
-      ConsequenceRegistry.actions_for(@event).each do |action_class|
-        next unless catalog.action_enabled_for_class?(action_class)
+      ConsequenceResolver.resolved_actions_for(@event).each do |resolved|
+        next unless catalog.action_enabled_for_class?(resolved.executor)
 
         executed = true
-        action_class.new.call(@context)
+        @context.action_config = resolved.config
+        resolved.executor.new.call(@context)
       end
       executed ? :ok : :no_enabled_actions
     rescue ActionExecutionStopped

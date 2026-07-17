@@ -1,53 +1,15 @@
 <%# locals: (field_prefix:, row_id:, sanction:, photos:) %>
-<% sanction ||= WallpaperSanction.from_hash({}) %>
+<% allowed = BetaEvents::SourceRegistry::STRAVA_ALLOWED %>
+<% sanction_set = sanction.is_a?(SanctionSet) ? sanction : SanctionSet.from_hash(sanction || {}, allowed: allowed) %>
 <% photos ||= [] %>
 
-<div class="ds-form-group ds-strava-leverage-sanctions" id="<%= row_id %>_wrap" data-strava-leverage-sanctions>
+<div class="ds-form-group ds-strava-leverage-sanctions" id="<%= row_id %>_wrap">
   <p class="ds-form-label"><%= t("beta.strava.leverage_sanctions_title") %></p>
   <p class="ds-beta-control-hint"><%= t("beta.strava.leverage_sanctions_hint") %></p>
 
-  <%= render "wallpaper_leverage_sanction_row",
+  <%= render "sanction_set_fields",
         field_prefix: field_prefix,
-        row_id: row_id,
-        toggle_key: "leverage_photo_lock",
-        toggle_label: t("beta.wallpaper_source.sanction.leverage_photo_lock"),
-        toggle_enabled: sanction.leverage_photo_lock_enabled,
-        seconds_name: "leverage_photo_lock_seconds",
-        seconds_value: sanction.leverage_photo_lock_seconds || 1.day.to_i,
-        target_mode: sanction.leverage_photo_lock_target_mode,
-        photo_id: sanction.leverage_photo_lock_photo_id,
-        photos: photos %>
-
-  <%= render "wallpaper_leverage_sanction_row",
-        field_prefix: field_prefix,
-        row_id: row_id,
-        toggle_key: "leverage_photo_delete",
-        toggle_label: t("beta.wallpaper_source.sanction.leverage_photo_delete"),
-        toggle_enabled: sanction.leverage_photo_delete_enabled,
-        target_mode: sanction.leverage_photo_delete_target_mode,
-        photo_id: sanction.leverage_photo_delete_photo_id,
+        sanction_set: sanction_set,
+        allowed_possibility_ids: allowed,
         photos: photos %>
 </div>
-
-<script>
-(function () {
-  var scope = document.getElementById("<%= row_id %>_wrap");
-  if (!scope) return;
-  function syncRow(row) {
-    if (!row) return;
-    row.querySelectorAll("[data-sanction-toggle]").forEach(function (toggle) {
-      var key = toggle.getAttribute("data-sanction-toggle");
-      var enabled = toggle.checked;
-      row.querySelectorAll('[data-sanction-field="' + key + '"]').forEach(function (input) {
-        input.disabled = !enabled;
-      });
-    });
-  }
-  scope.querySelectorAll("[data-sanction-row]").forEach(syncRow);
-  scope.addEventListener("change", function (event) {
-    if (event.target && event.target.matches("[data-sanction-toggle]")) {
-      syncRow(event.target.closest("[data-sanction-row]"));
-    }
-  });
-})();
-</script>

@@ -6,7 +6,7 @@ module BetaEvents
       def call(context)
         beta = context.beta
         ev = context.event
-        seconds = ev[:seconds]
+        seconds = context.config_value(:seconds, :seconds)
         raise ActionExecutionStopped.new(:missing_seconds) if seconds.blank? || !seconds.to_i.positive?
 
         seconds = seconds.to_i
@@ -33,6 +33,7 @@ module BetaEvents
           metadata: enrichment[:metadata]
         )
         context.chaster_lock_snapshot = lock
+        record_rate_limit_if_needed!(context, seconds)
       rescue ChasterService::Unauthorized
         on_chaster_unauthorized(context)
         raise ActionExecutionStopped.new(:chaster_unauthorized)
@@ -42,6 +43,13 @@ module BetaEvents
       end
 
       private
+
+      def record_rate_limit_if_needed!(context, seconds)
+        rate_limit = context.config_value(:rate_limit, :rate_limit)
+        return if rate_limit.blank?
+
+        ShowcaseAddTimeLimiter.record!(beta_id: context.beta.id, seconds: seconds)
+      end
 
       def resolve_lock(service, ev)
         if ev[:lock_id].present?

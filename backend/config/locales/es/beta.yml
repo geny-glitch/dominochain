@@ -35,6 +35,35 @@ es:
           label: "Time vault"
           subtitle: "Bloquear o ampliar una foto, o eliminarla definitivamente"
           events: "Acciones: bloquear/ampliar, eliminación definitiva"
+    sanctions:
+      shared:
+        target_mode: "Foto objetivo"
+        target_random: "Foto elegible aleatoria"
+        target_specific: "Foto específica"
+        photo_select: "Foto"
+        photo_select_blank: "Elegir una foto"
+      chaster:
+        add_time:
+          label: "Segundos Chaster a añadir"
+          fields:
+            seconds_placeholder: "Segundos"
+        freeze:
+          label: "Congelar el candado"
+          hint: "El candado se descongela cuando se restablece el cumplimiento del fondo (comprobación OK o cambio de fondo)."
+      pishock:
+        shock:
+          label: "PiShock"
+          fields:
+            intensity: "Intensidad"
+            duration: "Duración (s)"
+      leverage_photo:
+        lock:
+          label: "Bloquear o ampliar una foto leverage"
+          fields:
+            seconds: "Duración (segundos)"
+            seconds_placeholder: "Segundos"
+        delete:
+          label: "Eliminar definitivamente una foto leverage"
     events:
       sources:
         puryfi: "Purify"

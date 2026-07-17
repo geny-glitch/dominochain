@@ -1,0 +1,124 @@
+<%# locals: (field_prefix:, sanction_set:, allowed_possibility_ids:, photos: [], exclude: []) %>
+<% allowed = Array(allowed_possibility_ids) - Array(exclude).map(&:to_s) %>
+<% sanction_set ||= SanctionSet.from_hash({}, allowed: allowed) %>
+<% row_id = field_prefix.to_s.tr("[]", "__") %>
+<% photos = local_assigns.fetch(:photos) { @leverage_photos || [] } %>
+
+<div class="ds-wallpaper-scenario-sanctions" data-sanction-set>
+  <% allowed.each do |possibility_id| %>
+    <% possibility = BetaEvents::ActionRegistry.find(possibility_id) %>
+    <% next unless possibility %>
+    <% next if possibility_id == "chaster.freeze" && !ChasterService.freeze_ui_enabled? %>
+
+    <% item = sanction_set.item_for(possibility_id) || SanctionSet::Item.new(possibility_id: possibility_id, enabled: false, config: {}) %>
+    <% toggle_key = possibility_id %>
+    <% field_base = "#{field_prefix}[#{possibility_id}]" %>
+    <% schema = possibility.config_fields %>
+    <% has_leverage_target = schema.key?(:target_mode) %>
+    <% number_fields = schema.select { |_k, s| s[:ui] == :number } %>
+    <% field_count = number_fields.size + (has_leverage_target ? 2 : 0) %>
+
+    <div class="ds-wallpaper-sanction-row ds-wallpaper-sanction-row--fields-<%= [field_count, 1].max %>" data-sanction-row>
+      <%= hidden_field_tag "#{field_base}[enabled]", "0", id: nil %>
+
+      <label class="ds-beta-catalog-toggle ds-wallpaper-sanction-toggle" for="<%= "#{row_id}_#{toggle_key.tr('.', '_')}_enabled" %>">
+        <%= check_box_tag "#{field_base}[enabled]", "1", item.enabled,
+              id: "#{row_id}_#{toggle_key.tr('.', '_')}_enabled",
+              class: "ds-beta-catalog-toggle-input",
+              data: { sanction_toggle: toggle_key } %>
+        <span class="ds-beta-catalog-toggle-switch" aria-hidden="true"></span>
+        <span class="ds-wallpaper-sanction-toggle-label"><%= t("beta.sanctions.#{possibility_id}.label") %></span>
+      </label>
+
+      <% number_fields.each do |key, field_schema| %>
+        <% field_id = "#{row_id}_#{toggle_key.tr('.', '_')}_#{key}" %>
+        <% label = t("beta.sanctions.#{possibility_id}.fields.#{key}", default: "") %>
+        <div class="ds-wallpaper-sanction-field">
+          <% if label.present? %>
+            <%= label_tag field_id, label, class: "ds-wallpaper-sanction-field-label" %>
+          <% end %>
+          <%= number_field_tag "#{field_base}[#{key}]",
+                item.config[key] || field_schema[:default],
+                min: field_schema[:min],
+                max: field_schema[:max],
+                placeholder: t("beta.sanctions.#{possibility_id}.fields.#{key}_placeholder", default: nil),
+                id: field_id,
+                class: "ds-wallpaper-sanction-input",
+                disabled: !item.enabled,
+                data: { sanction_field: toggle_key },
+                aria: label.present? ? { label: label } : {} %>
+        </div>
+      <% end %>
+
+      <% if has_leverage_target %>
+        <% mode_id = "#{row_id}_#{toggle_key.tr('.', '_')}_target_mode" %>
+        <% photo_select_id = "#{row_id}_#{toggle_key.tr('.', '_')}_photo_id" %>
+        <div class="ds-wallpaper-sanction-field" style="grid-column:1/-1;">
+          <label class="ds-wallpaper-sanction-field-label" for="<%= mode_id %>"><%= t("beta.sanctions.shared.target_mode") %></label>
+          <%= select_tag "#{field_base}[target_mode]",
+                options_for_select(
+                  [
+                    [t("beta.sanctions.shared.target_random"), "random"],
+                    [t("beta.sanctions.shared.target_specific"), "specific"]
+                  ],
+                  item.config[:target_mode] || "random"
+                ),
+                id: mode_id,
+                class: "ds-wallpaper-sanction-input",
+                disabled: !item.enabled,
+                data: { sanction_field: toggle_key } %>
+        </div>
+        <div class="ds-wallpaper-sanction-field" style="grid-column:1/-1;">
+          <label class="ds-wallpaper-sanction-field-label" for="<%= photo_select_id %>"><%= t("beta.sanctions.shared.photo_select") %></label>
+          <%= select_tag "#{field_base}[photo_id]",
+                options_for_select(
+                  [[t("beta.sanctions.shared.photo_select_blank"), ""]] +
+                    Array(photos).map { |photo| ["#{photo.download_filename} (#{t("leverage_photo.status.#{photo.status}")})", photo.id] },
+                  item.config[:photo_id]
+                ),
+                id: photo_select_id,
+                class: "ds-wallpaper-sanction-input",
+                disabled: !item.enabled,
+                data: { sanction_field: toggle_key } %>
+        </div>
+      <% end %>
+
+      <% hint = t("beta.sanctions.#{possibility_id}.hint", default: nil) %>
+      <% if hint.present? %>
+        <p class="ds-beta-control-hint ds-wallpaper-sanction-hint"><%= hint %></p>
+      <% end %>
+    </div>
+  <% end %>
+
+  <% unless ChasterService.freeze_ui_enabled? %>
+    <% if allowed.include?("chaster.freeze") %>
+      <%= hidden_field_tag "#{field_prefix}[chaster.freeze][enabled]", "0" %>
+    <% end %>
+  <% end %>
+</div>
+
+<script>
+(function () {
+  var scope = document.currentScript.previousElementSibling;
+  if (!scope || !scope.matches("[data-sanction-set]")) {
+    scope = document.currentScript.parentElement && document.currentScript.parentElement.querySelector("[data-sanction-set]");
+  }
+  if (!scope) return;
+  function syncRow(row) {
+    if (!row) return;
+    row.querySelectorAll("[data-sanction-toggle]").forEach(function (toggle) {
+      var key = toggle.getAttribute("data-sanction-toggle");
+      var enabled = toggle.checked;
+      row.querySelectorAll('[data-sanction-field="' + key + '"]').forEach(function (input) {
+        input.disabled = !enabled;
+      });
+    });
+  }
+  scope.querySelectorAll("[data-sanction-row]").forEach(syncRow);
+  scope.addEventListener("change", function (event) {
+    if (event.target && event.target.matches("[data-sanction-toggle]")) {
+      syncRow(event.target.closest("[data-sanction-row]"));
+    }
+  });
+})();
+</script>

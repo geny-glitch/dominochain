@@ -35,6 +35,35 @@ fr:
           label: "Time vault"
           subtitle: "Verrouiller ou prolonger une photo, ou la supprimer définitivement"
           events: "Actions : verrouiller/prolonger, suppression définitive"
+    sanctions:
+      shared:
+        target_mode: "Photo cible"
+        target_random: "Photo éligible aléatoire"
+        target_specific: "Photo spécifique"
+        photo_select: "Photo"
+        photo_select_blank: "Choisir une photo"
+      chaster:
+        add_time:
+          label: "Secondes Chaster à ajouter"
+          fields:
+            seconds_placeholder: "Secondes"
+        freeze:
+          label: "Geler le cadenas"
+          hint: "Le cadenas est dégelé quand la conformité du fond d'écran est rétablie (vérification OK ou changement de fond)."
+      pishock:
+        shock:
+          label: "PiShock"
+          fields:
+            intensity: "Intensité"
+            duration: "Durée (s)"
+      leverage_photo:
+        lock:
+          label: "Verrouiller ou prolonger une photo leverage"
+          fields:
+            seconds: "Durée (secondes)"
+            seconds_placeholder: "Secondes"
+        delete:
+          label: "Supprimer définitivement une photo leverage"
     events:
       sources:
         puryfi: "Purify"

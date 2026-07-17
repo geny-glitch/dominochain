@@ -79,8 +79,6 @@ class BetaCatalog
     "BetaEvents::Actions::ChasterAddTimeFromEvent" => "chaster",
     "BetaEvents::Actions::ChasterFreezeFromEvent" => "chaster",
     "BetaEvents::Actions::ChasterUnfreezeFromEvent" => "chaster",
-    "BetaEvents::Actions::RecordShowcaseLimiterFromEvent" => "chaster",
-    "BetaEvents::Actions::EnqueuePishockForShowcaseGame" => "pishock",
     "BetaEvents::Actions::EnqueuePishockFromEvent" => "pishock",
     "BetaEvents::Actions::LeveragePhotoLockFromEvent" => "leverage_photo",
     "BetaEvents::Actions::LeveragePhotoDeleteFromEvent" => "leverage_photo"
@@ -147,7 +145,8 @@ class BetaCatalog
   end
 
   def action_enabled_for_class?(action_class)
-    action_id = ACTION_CLASS_TO_CATALOG_ACTION_ID[action_class.to_s]
+    action_id = BetaEvents::ActionRegistry.catalog_id_for_executor(action_class) ||
+      ACTION_CLASS_TO_CATALOG_ACTION_ID[action_class.to_s]
     return true if action_id.blank?
 
     action_enabled?(action_id)

@@ -1,8 +1,9 @@
 <%# locals: (field_prefix:, sanction:, delay_field:, delay_value:, show_delay: true, delay_container_data: {}) %>
-<% sanction_obj = WallpaperSanction.from_hash(sanction) %>
-<% row_id = field_prefix.tr("[", "_").tr("]", "") %>
-<% leverage_photos = local_assigns.fetch(:leverage_photos) { @leverage_photos } %>
+<% allowed = BetaEvents::SourceRegistry::WALLPAPER_ALLOWED.dup %>
 <% show_leverage = local_assigns.fetch(:show_leverage) { @leverage_action_enabled } %>
+<% allowed -= %w[leverage_photo.lock leverage_photo.delete] unless show_leverage %>
+<% sanction_obj = SanctionSet.from_hash(sanction, allowed: allowed) %>
+<% leverage_photos = local_assigns.fetch(:leverage_photos) { @leverage_photos } %>
 
 <% if show_delay %>
   <div class="ds-form-group" <%= tag.attributes(delay_container_data) if delay_container_data.present? %>>
@@ -11,80 +12,8 @@
   </div>
 <% end %>
 
-<div class="ds-wallpaper-scenario-sanctions">
-  <%= render "wallpaper_sanction_row",
-        field_prefix: field_prefix,
-        row_id: row_id,
-        toggle_key: "chaster_add_time",
-        toggle_label: t("beta.wallpaper_source.sanction.chaster_seconds"),
-        toggle_enabled: sanction_obj.chaster_add_time_enabled,
-        fields: [{
-          name: "chaster_seconds",
-          value: sanction_obj.chaster_seconds,
-          min: 1,
-          max: 86_400,
-          placeholder: t("beta.wallpaper_source.sanction.chaster_seconds_placeholder")
-        }] %>
-
-  <% if ChasterService.freeze_ui_enabled? %>
-    <%= render "wallpaper_sanction_row",
-          field_prefix: field_prefix,
-          row_id: row_id,
-          toggle_key: "chaster_freeze",
-          toggle_label: t("beta.wallpaper_source.sanction.freeze_lock"),
-          toggle_enabled: sanction_obj.chaster_freeze_enabled,
-          fields: [],
-          hint: t("beta.wallpaper_source.sanction.freeze_unfreeze_hint") %>
-  <% else %>
-    <%= hidden_field_tag "#{field_prefix}[chaster_freeze_enabled]", "0" %>
-  <% end %>
-
-  <%= render "wallpaper_sanction_row",
-        field_prefix: field_prefix,
-        row_id: row_id,
-        toggle_key: "pishock",
-        toggle_label: t("beta.wallpaper_source.sanction.pishock_label"),
-        toggle_enabled: sanction_obj.pishock_enabled,
-        fields: [
-          {
-            name: "pishock_intensity",
-            label: t("beta.wallpaper_source.sanction.pishock_intensity"),
-            value: sanction_obj.pishock_intensity,
-            min: 1,
-            max: 100,
-            aria: t("beta.wallpaper_source.sanction.pishock_intensity")
-          },
-          {
-            name: "pishock_duration",
-            label: t("beta.wallpaper_source.sanction.pishock_duration"),
-            value: sanction_obj.pishock_duration,
-            min: 1,
-            max: 15,
-            aria: t("beta.wallpaper_source.sanction.pishock_duration")
-          }
-        ] %>
-
-  <% if show_leverage %>
-    <%= render "wallpaper_leverage_sanction_row",
-          field_prefix: field_prefix,
-          row_id: row_id,
-          toggle_key: "leverage_photo_lock",
-          toggle_label: t("beta.wallpaper_source.sanction.leverage_photo_lock"),
-          toggle_enabled: sanction_obj.leverage_photo_lock_enabled,
-          seconds_name: "leverage_photo_lock_seconds",
-          seconds_value: sanction_obj.leverage_photo_lock_seconds,
-          target_mode: sanction_obj.leverage_photo_lock_target_mode,
-          photo_id: sanction_obj.leverage_photo_lock_photo_id,
-          photos: leverage_photos %>
-
-    <%= render "wallpaper_leverage_sanction_row",
-          field_prefix: field_prefix,
-          row_id: row_id,
-          toggle_key: "leverage_photo_delete",
-          toggle_label: t("beta.wallpaper_source.sanction.leverage_photo_delete"),
-          toggle_enabled: sanction_obj.leverage_photo_delete_enabled,
-          target_mode: sanction_obj.leverage_photo_delete_target_mode,
-          photo_id: sanction_obj.leverage_photo_delete_photo_id,
-          photos: leverage_photos %>
-  <% end %>
-</div>
+<%= render "sanction_set_fields",
+      field_prefix: field_prefix,
+      sanction_set: sanction_obj,
+      allowed_possibility_ids: allowed,
+      photos: leverage_photos %>

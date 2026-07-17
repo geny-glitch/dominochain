@@ -3,10 +3,26 @@
 require "rails_helper"
 
 RSpec.describe "Showcase add_time rate limit", type: :request do
-  let(:beta) { create(:user, :beta, nickname: "limbeta") }
+  let(:beta) do
+    create(:user, :beta, nickname: "limbeta").tap do |user|
+      user.update!(
+        showcase_snake_enabled: true,
+        showcase_quiz_enabled: true,
+        showcase_dino_enabled: true,
+        showcase_tetris_enabled: true,
+        beta_ui_prefs: {
+          "catalog_visibility" => {
+            "sources" => { "showcase" => true },
+            "actions" => { "chaster" => true, "pishock" => true }
+          }
+        }
+      )
+    end
+  end
   let(:service_double) { instance_double(ChasterService) }
 
   before do
+    stub_beta_catalog_feature_flags
     allow(ChasterService).to receive(:new).with(beta).and_return(service_double)
     allow(service_double).to receive(:current_lock).and_return({ id: "lock-1" })
     allow(service_double).to receive(:add_time_to_lock)

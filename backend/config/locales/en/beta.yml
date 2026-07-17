@@ -35,6 +35,35 @@ en:
           label: "Time vault"
           subtitle: "Lock or extend a photo, or permanently delete it"
           events: "Actions: lock/extend, permanent delete"
+    sanctions:
+      shared:
+        target_mode: "Photo target"
+        target_random: "Random eligible photo"
+        target_specific: "Specific photo"
+        photo_select: "Photo"
+        photo_select_blank: "Choose a photo"
+      chaster:
+        add_time:
+          label: "Chaster seconds to add"
+          fields:
+            seconds_placeholder: "Seconds"
+        freeze:
+          label: "Freeze lock"
+          hint: "The lock is unfrozen when wallpaper compliance is restored (verified check or wallpaper change)."
+      pishock:
+        shock:
+          label: "PiShock"
+          fields:
+            intensity: "Intensity"
+            duration: "Duration (s)"
+      leverage_photo:
+        lock:
+          label: "Lock or extend a leverage photo"
+          fields:
+            seconds: "Duration (seconds)"
+            seconds_placeholder: "Seconds"
+        delete:
+          label: "Permanently delete a leverage photo"
     events:
       sources:
         puryfi: "Purify"

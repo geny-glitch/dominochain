@@ -22,8 +22,7 @@
       text: root.dataset.hintText || "",
       pixelate: root.dataset.hintPixelate || ""
     };
-    let originalCroppedCanvas = null;
-    let sourceFilename = null;
+    let sourceFile = null;
 
     const input         = document.getElementById('image-input');
     const form          = document.getElementById('upload-form');
@@ -91,13 +90,14 @@
       return data;
     }
 
-    async function uploadDraftFromCanvas(canvas, filename, censoredCanvas) {
-      const originalBlob = await canvasToBlob(canvas, "image/jpeg", 0.92);
-      const teaserBlob = await canvasToBlob(buildTeaserCanvas(canvas), "image/jpeg", 0.8);
-      const originalName = filename || "photo.jpg";
+    async function uploadDraftFromFile(file, censoredCanvas) {
+      if (!file) throw new Error("missing original file");
+      const originalCanvas = await fileToCanvas(file);
+      const teaserBlob = await canvasToBlob(buildTeaserCanvas(originalCanvas), "image/jpeg", 0.8);
+      const originalName = file.name || "photo.jpg";
       const formData = new FormData();
       formData.append("original_filename", originalName);
-      formData.append("original_image", originalBlob, originalName);
+      formData.append("original_image", file, originalName);
       formData.append("teaser_image", teaserBlob, "teaser.jpg");
       if (censoredCanvas) {
         const censoredBlob = await canvasToBlob(censoredCanvas, "image/jpeg", 0.9);
@@ -121,8 +121,7 @@
             .replace("%{current}", String(i + 1))
             .replace("%{total}", String(list.length));
         }
-        const canvas = await fileToCanvas(list[i]);
-        await uploadDraftFromCanvas(canvas, list[i].name || "photo.jpg", null);
+        await uploadDraftFromFile(list[i], null);
       }
       window.location.href = betaPageUrl;
     }
@@ -156,7 +155,7 @@
       if (cropper) { cropper.destroy(); cropper = null; }
       cropImg.src = '';
       input.value = '';
-      sourceFilename = null;
+      sourceFile = null;
       setStep(1);
     }
 
@@ -179,7 +178,7 @@
         }
         const file = files[0];
         if (!file || !file.type.startsWith('image/')) return;
-        sourceFilename = file.name || null;
+        sourceFile = file;
         showCrop(file);
       });
     }
@@ -193,7 +192,7 @@
           return res.blob();
         })
         .then(function(blob) {
-          sourceFilename = "photo.jpg";
+          sourceFile = new File([blob], "photo.jpg", { type: blob.type || "image/jpeg" });
           const url = blobToObjectUrl(blob);
           cropImg.src = url;
           setStep(2);
@@ -293,14 +292,6 @@
     }
 
     function initEditStep(croppedCanvas) {
-      if (submitMode === "leverage_upload" || submitMode === "leverage_censor") {
-        originalCroppedCanvas = document.createElement("canvas");
-        originalCroppedCanvas.width = croppedCanvas.width;
-        originalCroppedCanvas.height = croppedCanvas.height;
-        originalCroppedCanvas.getContext("2d").drawImage(croppedCanvas, 0, 0);
-      } else {
-        originalCroppedCanvas = null;
-      }
       editCanvas.width  = croppedCanvas.width;
       editCanvas.height = croppedCanvas.height;
       editCtx = editCanvas.getContext('2d');
@@ -829,12 +820,7 @@
       const token = csrfToken();
       try {
         if (submitMode === "leverage_upload") {
-          if (!originalCroppedCanvas) throw new Error("missing original");
-          const data = await uploadDraftFromCanvas(
-            originalCroppedCanvas,
-            sourceFilename || "photo.jpg",
-            editCanvas
-          );
+          const data = await uploadDraftFromFile(sourceFile, editCanvas);
           window.location.href = data.url || betaPageUrl;
           return;
         }
@@ -883,16 +869,12 @@
     if (skipCensorBtn && allowSkipCensor) {
       skipCensorBtn.addEventListener("click", async function() {
         commitText();
-        if (!originalCroppedCanvas) return;
+        if (!sourceFile) return;
         skipCensorBtn.disabled = true;
         if (editSubmitBtn) editSubmitBtn.disabled = true;
         skipCensorBtn.textContent = labelSubmitting;
         try {
-          const data = await uploadDraftFromCanvas(
-            originalCroppedCanvas,
-            sourceFilename || "photo.jpg",
-            null
-          );
+          const data = await uploadDraftFromFile(sourceFile, null);
           window.location.href = data.url || betaPageUrl;
         } catch (err) {
           console.error("[image_editor] skip censor failed", err);

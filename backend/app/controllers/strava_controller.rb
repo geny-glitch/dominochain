@@ -164,7 +164,7 @@ class StravaController < ApplicationController
   def parse_failure_sanction_params(raw)
     return {} if raw.blank?
 
-    SanctionSet.from_params(raw, allowed: BetaEvents::SourceRegistry::STRAVA_ALLOWED).to_h
+    SanctionSet.from_params(raw, allowed: BetaEvents::SourceRegistry.allowed_for(:strava_goal, :failed_penalty)).to_h
   end
 
   def merged_activity_types_param(permitted)

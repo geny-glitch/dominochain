@@ -1,5 +1,5 @@
 <%# locals: (field_prefix:, row_id:, sanction:, photos:) %>
-<% allowed = BetaEvents::SourceRegistry::STRAVA_ALLOWED %>
+<% allowed = BetaEvents::SourceRegistry.allowed_for(:strava_goal, :failed_penalty) %>
 <% sanction_set = sanction.is_a?(SanctionSet) ? sanction : SanctionSet.from_hash(sanction || {}, allowed: allowed) %>
 <% photos ||= [] %>
 

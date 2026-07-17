@@ -45,15 +45,15 @@ class WallpaperEnforcementConfig < ApplicationRecord
   }
 
   def mismatch_sanction_object
-    SanctionSet.from_hash(mismatch_sanction, allowed: BetaEvents::SourceRegistry::WALLPAPER_ALLOWED)
+    SanctionSet.from_hash(mismatch_sanction, allowed: BetaEvents::SourceRegistry.allowed_for(:wallpaper, :default))
   end
 
   def permissions_lost_sanction_object
-    SanctionSet.from_hash(permissions_lost_sanction, allowed: BetaEvents::SourceRegistry::WALLPAPER_ALLOWED)
+    SanctionSet.from_hash(permissions_lost_sanction, allowed: BetaEvents::SourceRegistry.allowed_for(:wallpaper, :default))
   end
 
   def app_unreachable_sanction_object
-    SanctionSet.from_hash(app_unreachable_sanction, allowed: BetaEvents::SourceRegistry::WALLPAPER_ALLOWED)
+    SanctionSet.from_hash(app_unreachable_sanction, allowed: BetaEvents::SourceRegistry.allowed_for(:wallpaper, :default))
   end
 
   def due_for_scheduled_check?(reference_time = Time.current)
@@ -107,7 +107,7 @@ class WallpaperEnforcementConfig < ApplicationRecord
       permissions_lost_sanction: permissions_lost_sanction,
       app_unreachable_sanction: app_unreachable_sanction
     }.each do |attr, value|
-      sanction = SanctionSet.from_hash(value, allowed: BetaEvents::SourceRegistry::WALLPAPER_ALLOWED)
+      sanction = SanctionSet.from_hash(value, allowed: BetaEvents::SourceRegistry.allowed_for(:wallpaper, :default))
       if sanction.enabled?("chaster.add_time") && !sanction.item_for("chaster.add_time")&.active?
         errors.add(attr, :invalid)
       end

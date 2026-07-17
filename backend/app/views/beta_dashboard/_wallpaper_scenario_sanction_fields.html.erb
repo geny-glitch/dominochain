@@ -1,7 +1,9 @@
 <%# locals: (field_prefix:, sanction:, delay_field:, delay_value:, show_delay: true, delay_container_data: {}) %>
-<% allowed = BetaEvents::SourceRegistry::WALLPAPER_ALLOWED.dup %>
+<% allowed = BetaEvents::SourceRegistry.allowed_for(:wallpaper, :default).dup %>
 <% show_leverage = local_assigns.fetch(:show_leverage) { @leverage_action_enabled } %>
-<% allowed -= %w[leverage_photo.lock leverage_photo.delete] unless show_leverage %>
+<% unless show_leverage %>
+  <% allowed.reject! { |pid| BetaEvents::ActionRegistry.find(pid)&.catalog_id == "leverage_photo" } %>
+<% end %>
 <% sanction_obj = SanctionSet.from_hash(sanction, allowed: allowed) %>
 <% leverage_photos = local_assigns.fetch(:leverage_photos) { @leverage_photos } %>
 

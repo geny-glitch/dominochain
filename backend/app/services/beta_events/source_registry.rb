@@ -5,20 +5,18 @@ module BetaEvents
   class SourceRegistry
     SHOWCASE_RATE_LIMIT = { window_seconds: 300, max_seconds: 172_800 }.freeze
 
-    WALLPAPER_ALLOWED = %w[
-      chaster.add_time
-      chaster.freeze
-      pishock.shock
-      leverage_photo.lock
-      leverage_photo.delete
-    ].freeze
+    # Action catalogs accepted on configurable sanction forms (not possibility ids).
+    WALLPAPER_CATALOGS = %w[chaster pishock leverage_photo].freeze
+    STRAVA_CATALOGS = %w[leverage_photo].freeze
 
-    STRAVA_ALLOWED = %w[
-      leverage_photo.lock
-      leverage_photo.delete
-    ].freeze
-
-    EventDef = Struct.new(:kind, :mode, :allowed, :bindings, keyword_init: true)
+    EventDef = Struct.new(
+      :kind,
+      :mode,
+      :accepted_catalogs,
+      :extra_allowed,
+      :bindings,
+      keyword_init: true
+    )
     SourceDef = Struct.new(:catalog_id, :event_source, :events, :default_event, keyword_init: true) do
       def event(kind)
         events[kind.to_sym] || default_event
@@ -42,6 +40,7 @@ module BetaEvents
         all.values.find { |s| s.catalog_id == catalog_id.to_s }
       end
 
+      # Possibility ids for sanction forms / SanctionSet (derived from accepted_catalogs).
       def allowed_for(event_source, kind)
         source = for_event_source(event_source)
         return [] unless source
@@ -49,7 +48,24 @@ module BetaEvents
         event_def = source.event(kind)
         return [] unless event_def
 
-        event_def.allowed || event_def.bindings&.map { |b| b[:possibility_id].to_s } || []
+        if event_def.accepted_catalogs.present?
+          return ActionRegistry.user_configurable_ids(catalog_ids: event_def.accepted_catalogs)
+        end
+
+        event_def.bindings&.map { |b| b[:possibility_id].to_s } || []
+      end
+
+      # Possibility ids accepted at runtime for payload events (form ids + extras like strava chaster).
+      def runtime_allowed_for(event_source, kind)
+        source = for_event_source(event_source)
+        return [] unless source
+
+        event_def = source.event(kind)
+        return [] unless event_def
+
+        base = allowed_for(event_source, kind)
+        extras = Array(event_def.extra_allowed).map(&:to_s)
+        (base + extras).uniq
       end
 
       private
@@ -100,7 +116,9 @@ module BetaEvents
               failed_penalty: EventDef.new(
                 kind: :failed_penalty,
                 mode: :payload,
-                allowed: (%w[chaster.add_time] + STRAVA_ALLOWED).freeze
+                accepted_catalogs: STRAVA_CATALOGS,
+                # Dedicated chaster_penalty_minutes field — not shown on leverage sanction form.
+                extra_allowed: %w[chaster.add_time]
               )
             },
             default_event: nil
@@ -160,7 +178,7 @@ module BetaEvents
             default_event: EventDef.new(
               kind: :default,
               mode: :payload,
-              allowed: WALLPAPER_ALLOWED
+              accepted_catalogs: WALLPAPER_CATALOGS
             )
           )
         }.freeze

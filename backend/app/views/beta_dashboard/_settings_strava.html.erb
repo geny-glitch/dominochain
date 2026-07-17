@@ -167,7 +167,7 @@
           <%= render "strava_leverage_sanctions",
                 field_prefix: "failure_sanction",
                 row_id: "new_strava_goal",
-                sanction: SanctionSet.from_hash({}, allowed: BetaEvents::SourceRegistry::STRAVA_ALLOWED),
+                sanction: SanctionSet.from_hash({}, allowed: BetaEvents::SourceRegistry.allowed_for(:strava_goal, :failed_penalty)),
                 photos: @leverage_photos %>
         <% end %>
         <p class="ds-beta-control-hint"><%= t("beta.strava.new_goal_criteria_hint") %></p>

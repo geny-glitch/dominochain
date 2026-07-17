@@ -9,10 +9,15 @@ module BetaEvents
       :catalog_id,
       :executor,
       :config_schema,
+      :user_configurable,
       keyword_init: true
     ) do
       def config_fields
         config_schema || {}
+      end
+
+      def user_configurable?
+        user_configurable != false
       end
     end
 
@@ -62,6 +67,16 @@ module BetaEvents
 
       def legacy_action_for(possibility_id)
         POSSIBILITY_TO_LEGACY_ACTION[possibility_id.to_s]
+      end
+
+      # Possibility ids shown on sanction forms, optionally scoped to action catalogs.
+      def user_configurable_ids(catalog_ids: nil)
+        scope = all.values.select(&:user_configurable?)
+        if catalog_ids.present?
+          allowed = Array(catalog_ids).map(&:to_s)
+          scope = scope.select { |p| allowed.include?(p.catalog_id) }
+        end
+        scope.map(&:id)
       end
 
       def normalize_config(possibility_id, raw)
@@ -118,6 +133,7 @@ module BetaEvents
             id: "chaster.add_time",
             catalog_id: "chaster",
             executor: Actions::ChasterAddTimeFromEvent,
+            user_configurable: true,
             config_schema: {
               seconds: { type: :integer, min: 1, max: 86_400 * 365, required: true, ui: :number },
               rate_limit: { type: :object, optional: true, ui: :hidden }
@@ -127,18 +143,21 @@ module BetaEvents
             id: "chaster.freeze",
             catalog_id: "chaster",
             executor: Actions::ChasterFreezeFromEvent,
+            user_configurable: true,
             config_schema: {}
           },
           {
             id: "chaster.unfreeze",
             catalog_id: "chaster",
             executor: Actions::ChasterUnfreezeFromEvent,
+            user_configurable: false,
             config_schema: {}
           },
           {
             id: "pishock.shock",
             catalog_id: "pishock",
             executor: Actions::EnqueuePishockFromEvent,
+            user_configurable: true,
             config_schema: {
               intensity: { type: :integer, min: 1, max: 100, default: 50, ui: :number },
               duration: { type: :integer, min: 1, max: 15, default: 1, ui: :number }
@@ -148,6 +167,7 @@ module BetaEvents
             id: "leverage_photo.lock",
             catalog_id: "leverage_photo",
             executor: Actions::LeveragePhotoLockFromEvent,
+            user_configurable: true,
             config_schema: {
               seconds: {
                 type: :integer,
@@ -164,6 +184,7 @@ module BetaEvents
             id: "leverage_photo.delete",
             catalog_id: "leverage_photo",
             executor: Actions::LeveragePhotoDeleteFromEvent,
+            user_configurable: true,
             config_schema: {
               target_mode: { type: :enum, values: %w[random specific], default: "random", ui: :leverage_target },
               photo_id: { type: :integer, optional: true, ui: :leverage_photo_id }

@@ -22,7 +22,7 @@ class MigrateSanctionSetsToItemsFormat < ActiveRecord::Migration[7.2]
           next if raw.blank?
           next if raw.is_a?(Hash) && raw.key?("items")
 
-          updates[attr] = SanctionSet.from_hash(raw, allowed: BetaEvents::SourceRegistry::WALLPAPER_ALLOWED).to_h
+          updates[attr] = SanctionSet.from_hash(raw, allowed: BetaEvents::SourceRegistry.allowed_for(:wallpaper, :default)).to_h
         end
         config.update_columns(updates) if updates.any?
       end
@@ -37,7 +37,7 @@ class MigrateSanctionSetsToItemsFormat < ActiveRecord::Migration[7.2]
         next if raw.blank?
         next if raw.is_a?(Hash) && raw.key?("items")
 
-        converted = SanctionSet.from_hash(raw, allowed: BetaEvents::SourceRegistry::STRAVA_ALLOWED).to_h
+        converted = SanctionSet.from_hash(raw, allowed: BetaEvents::SourceRegistry.allowed_for(:strava_goal, :failed_penalty)).to_h
         goal.update_columns(failure_sanction: converted)
       end
     end

@@ -14,15 +14,23 @@ RSpec.describe BetaEvents::SourceRegistry do
     expect(chaster[:rate_limit]).to include(window_seconds: 300, max_seconds: 172_800)
   end
 
-  it "exposes wallpaper allowed possibilities via default payload mode" do
+  it "derives wallpaper form possibilities from accepted catalogs" do
     source = described_class.for_event_source(:wallpaper)
     expect(source.event(:mismatch_add_time).mode).to eq(:payload)
-    expect(source.event(:mismatch_add_time).allowed).to eq(described_class::WALLPAPER_ALLOWED)
+    expect(source.event(:mismatch_add_time).accepted_catalogs).to eq(described_class::WALLPAPER_CATALOGS)
+    expect(described_class.allowed_for(:wallpaper, :mismatch_add_time)).to match_array(
+      BetaEvents::ActionRegistry.user_configurable_ids(catalog_ids: described_class::WALLPAPER_CATALOGS)
+    )
+    expect(described_class.allowed_for(:wallpaper, :mismatch_add_time)).not_to include("chaster.unfreeze")
     expect(source.event(:enforcement_unfreeze).mode).to eq(:fixed)
   end
 
-  it "lists strava leverage possibilities" do
-    expect(described_class.allowed_for(:strava_goal, :failed_penalty)).to include(
+  it "lists strava form possibilities as leverage only, with chaster at runtime" do
+    expect(described_class.allowed_for(:strava_goal, :failed_penalty)).to contain_exactly(
+      "leverage_photo.lock",
+      "leverage_photo.delete"
+    )
+    expect(described_class.runtime_allowed_for(:strava_goal, :failed_penalty)).to include(
       "chaster.add_time",
       "leverage_photo.lock",
       "leverage_photo.delete"

@@ -155,13 +155,13 @@ class StravaGoal < ApplicationRecord
   end
 
   def failure_sanction_object
-    SanctionSet.from_hash(failure_sanction, allowed: BetaEvents::SourceRegistry::STRAVA_ALLOWED)
+    SanctionSet.from_hash(failure_sanction, allowed: BetaEvents::SourceRegistry.allowed_for(:strava_goal, :failed_penalty))
   end
 
   def failure_sanction=(value)
     sanction = SanctionSet.from_hash(
       value.is_a?(Hash) ? value : {},
-      allowed: BetaEvents::SourceRegistry::STRAVA_ALLOWED
+      allowed: BetaEvents::SourceRegistry.allowed_for(:strava_goal, :failed_penalty)
     )
     super(sanction.to_h)
   end

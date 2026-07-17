@@ -56,4 +56,16 @@ RSpec.describe BetaEvents::ActionRegistry do
     binding = { possibility_id: "pishock.shock", config_resolver: :showcase_score }
     expect(described_class.resolve_binding_config(binding, event)).to be_nil
   end
+
+  it "lists user-configurable ids by catalog and excludes unfreeze" do
+    expect(described_class.user_configurable_ids).not_to include("chaster.unfreeze")
+    expect(described_class.user_configurable_ids(catalog_ids: %w[leverage_photo])).to contain_exactly(
+      "leverage_photo.lock",
+      "leverage_photo.delete"
+    )
+    expect(described_class.user_configurable_ids(catalog_ids: %w[chaster])).to contain_exactly(
+      "chaster.add_time",
+      "chaster.freeze"
+    )
+  end
 end

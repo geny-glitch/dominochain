@@ -3,7 +3,7 @@
 require "rails_helper"
 
 RSpec.describe SanctionSet do
-  let(:wallpaper_allowed) { BetaEvents::SourceRegistry::WALLPAPER_ALLOWED }
+  let(:wallpaper_allowed) { BetaEvents::SourceRegistry.allowed_for(:wallpaper, :default) }
 
   it "parses unified lock fields from flat legacy format" do
     sanction = described_class.from_hash(

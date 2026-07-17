@@ -435,7 +435,7 @@ class BetaDashboardController < ApplicationController
     raw = params[key]
     return nil unless raw.is_a?(ActionController::Parameters) || raw.is_a?(Hash)
 
-    SanctionSet.from_params(raw, allowed: BetaEvents::SourceRegistry::WALLPAPER_ALLOWED).to_h
+    SanctionSet.from_params(raw, allowed: BetaEvents::SourceRegistry.allowed_for(:wallpaper, :default)).to_h
   end
 
   def wallpaper_history_scope

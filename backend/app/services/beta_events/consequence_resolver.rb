@@ -51,7 +51,7 @@ module BetaEvents
         possibility_id = resolve_possibility_id(event)
         return [] if possibility_id.blank?
 
-        allowed = event_def.allowed
+        allowed = SourceRegistry.runtime_allowed_for(event.source, event.kind)
         if allowed.present? && !allowed.include?(possibility_id)
           return []
         end

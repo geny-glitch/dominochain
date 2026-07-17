@@ -57,6 +57,19 @@ jobs:
         env:
           KEYSTORE_FILE: ${{ secrets.KEYSTORE_FILE }}
 
+      - name: Decode google-services.json
+        run: |
+          if [ "${APK_FLAVOR}" = "staging" ]; then
+            mkdir -p android/app/src/staging
+            echo "${GOOGLE_SERVICES_JSON_STAGING}" | base64 --decode > android/app/src/staging/google-services.json
+          else
+            mkdir -p android/app/src/prod
+            echo "${GOOGLE_SERVICES_JSON_PROD}" | base64 --decode > android/app/src/prod/google-services.json
+          fi
+        env:
+          GOOGLE_SERVICES_JSON_STAGING: ${{ secrets.GOOGLE_SERVICES_JSON_STAGING }}
+          GOOGLE_SERVICES_JSON_PROD: ${{ secrets.GOOGLE_SERVICES_JSON_PROD }}
+
       - name: Compute next OTA version code
         id: ota_version
         run: |

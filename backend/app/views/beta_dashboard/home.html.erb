@@ -4,7 +4,7 @@
 <% show_strava = beta_catalog_source_enabled?("strava") %>
 <% show_cigarettes = beta_catalog_source_enabled?("cigarettes") %>
 <% show_showcase = beta_catalog_source_enabled?("showcase") %>
-<% show_leverage = beta_catalog_source_enabled?("leverage_photo") && @leverage_photo.present? %>
+<% show_leverage = beta_catalog_action_enabled?("leverage_photo") && @leverage_photo.present? %>
 <% show_widgets = show_pishock || show_strava || show_cigarettes || show_showcase || show_leverage %>
 
 <header class="ds-beta-page-head">

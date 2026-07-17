@@ -50,6 +50,12 @@ module BetaEvents
         [ Actions::ChasterFreezeFromEvent ]
       when "pishock"
         [ Actions::EnqueuePishockFromEvent ]
+      when "leverage_photo_start"
+        [ Actions::LeveragePhotoStartFromEvent ]
+      when "leverage_photo_add_time"
+        [ Actions::LeveragePhotoAddTimeFromEvent ]
+      when "leverage_photo_delete"
+        [ Actions::LeveragePhotoDeleteFromEvent ]
       else
         []
       end

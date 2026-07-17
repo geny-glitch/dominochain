@@ -22,7 +22,7 @@ RSpec.describe BetaLeveragePhotoController, type: :request do
 
   before do
     sign_in user
-    stub_beta_catalog_feature_flags("beta_source_leverage_photo" => true)
+    stub_beta_catalog_feature_flags("beta_action_leverage_photo" => true)
   end
 
   describe "POST /beta/leverage_photos/upload" do

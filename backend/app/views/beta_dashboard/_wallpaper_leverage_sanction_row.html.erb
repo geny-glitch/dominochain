@@ -1,0 +1,38 @@
+<%# locals: (field_prefix:, row_id:, toggle_key:, toggle_label:, toggle_enabled:, seconds_name: nil, seconds_value: nil, target_mode:, photo_id:, photos:) %>
+<div class="ds-wallpaper-sanction-row ds-wallpaper-sanction-row--fields-<%= seconds_name.present? ? 3 : 2 %>" data-sanction-row>
+  <%= hidden_field_tag "#{field_prefix}[#{toggle_key}_enabled]", "0", id: nil %>
+
+  <label class="ds-beta-catalog-toggle ds-wallpaper-sanction-toggle" for="<%= "#{row_id}_#{toggle_key}_enabled" %>">
+    <%= check_box_tag "#{field_prefix}[#{toggle_key}_enabled]", "1", toggle_enabled,
+          id: "#{row_id}_#{toggle_key}_enabled",
+          class: "ds-beta-catalog-toggle-input",
+          data: { sanction_toggle: toggle_key } %>
+    <span class="ds-beta-catalog-toggle-switch" aria-hidden="true"></span>
+    <span class="ds-wallpaper-sanction-toggle-label"><%= toggle_label %></span>
+  </label>
+
+  <% if seconds_name.present? %>
+    <% field_id = "#{row_id}_#{seconds_name}" %>
+    <div class="ds-wallpaper-sanction-field">
+      <%= label_tag field_id, t("beta.wallpaper_source.sanction.leverage_photo_seconds"), class: "ds-wallpaper-sanction-field-label" %>
+      <%= number_field_tag "#{field_prefix}[#{seconds_name}]",
+            seconds_value,
+            min: LeveragePhoto::MIN_DURATION_SECONDS,
+            max: LeveragePhoto::MAX_DURATION_SECONDS,
+            placeholder: t("beta.wallpaper_source.sanction.leverage_photo_seconds_placeholder"),
+            id: field_id,
+            class: "ds-wallpaper-sanction-input",
+            disabled: !toggle_enabled,
+            data: { sanction_field: toggle_key } %>
+    </div>
+  <% end %>
+
+  <%= render "wallpaper_leverage_photo_target_fields",
+        field_prefix: field_prefix,
+        row_id: row_id,
+        toggle_key: toggle_key,
+        target_mode: target_mode,
+        photo_id: photo_id,
+        photos: photos,
+        toggle_enabled: toggle_enabled %>
+</div>

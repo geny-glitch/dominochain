@@ -1,0 +1,63 @@
+<% content_for :title, t("beta.actions_leverage_photo.page_title", nickname: current_user.nickname) %>
+
+<header class="ds-beta-page-head">
+  <div class="ds-beta-page-head-row">
+    <h1 class="ds-beta-page-title"><%= t("beta.catalog.actions.leverage_photo.label") %></h1>
+    <%= form_with url: beta_catalog_visibility_path, method: :patch, local: true, class: "ds-beta-catalog-toggle-form" do %>
+      <%= hidden_field_tag :kind, "action" %>
+      <%= hidden_field_tag :item_id, "leverage_photo" %>
+      <%= hidden_field_tag :enabled, "0" %>
+      <%= hidden_field_tag :return_to, request.fullpath %>
+      <label class="ds-form-label ds-beta-catalog-toggle" title="<%= t("beta.settings.toggle_aria", label: t("beta.catalog.actions.leverage_photo.label")) %>">
+        <%= check_box_tag :enabled, "1", beta_catalog_action_enabled?("leverage_photo"), id: "catalog_action_leverage_photo_page", class: "ds-beta-catalog-toggle-input", onchange: "this.form.requestSubmit();", "aria-label": t("beta.settings.toggle_aria", label: t("beta.catalog.actions.leverage_photo.label")) %>
+        <span class="ds-beta-catalog-toggle-switch" aria-hidden="true"></span>
+      </label>
+    <% end %>
+  </div>
+  <p class="ds-beta-page-lead">
+    <%= t("beta.actions_leverage_photo.lead") %>
+  </p>
+</header>
+
+<section class="ds-beta-section ds-beta-section--first">
+  <h2 class="ds-section-title"><%= t("beta.actions_leverage_photo.config_title") %></h2>
+  <div class="ds-beta-control-card">
+    <p class="ds-beta-control-text"><%= t("beta.actions_leverage_photo.config_intro") %></p>
+    <div class="ds-beta-control-actions">
+      <%= link_to t("beta.actions_leverage_photo.open_photos"), beta_leverage_photos_path, class: "ds-btn ds-btn--primary ds-btn--sm" %>
+      <%= link_to t("beta.actions_leverage_photo.upload"), beta_leverage_photo_upload_path, class: "ds-btn ds-btn--secondary ds-btn--sm" %>
+    </div>
+    <p class="ds-beta-control-hint" style="margin-top:1rem;">
+      <%= t("beta.actions_leverage_photo.photo_count", count: @photo_count) %>
+    </p>
+  </div>
+</section>
+
+<section class="ds-beta-section">
+  <h2 class="ds-section-title"><%= t("beta.actions_leverage_photo.logs_title") %></h2>
+  <div class="ds-beta-control-card">
+    <% if @recent_leverage_sanctions.blank? %>
+      <p class="ds-beta-home-muted"><%= t("beta.actions_leverage_photo.logs_empty") %></p>
+    <% else %>
+      <ul class="ds-beta-control-list" style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:0.75rem;">
+        <% @recent_leverage_sanctions.each do |entry| %>
+          <li>
+            <p class="ds-beta-control-text" style="margin:0;">
+              <%= t("beta.actions_leverage_photo.log_action.#{entry["action"]}", default: entry["action"].to_s) %>
+            </p>
+            <p class="ds-beta-home-muted" style="margin:0.15rem 0 0;">
+              <%= l(entry["checked_at"], format: :short) if entry["checked_at"] %>
+              <% if entry["leverage_photo_id"].present? %>
+                · #<%= entry["leverage_photo_id"] %>
+              <% end %>
+              <% if entry["seconds"].present? %>
+                · <%= t("beta.actions_leverage_photo.log_seconds", seconds: entry["seconds"]) %>
+              <% end %>
+              · <%= entry["result"] %>
+            </p>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+  </div>
+</section>

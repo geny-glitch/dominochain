@@ -108,9 +108,15 @@ class WallpaperEnforcementConfig < ApplicationRecord
       app_unreachable_sanction: app_unreachable_sanction
     }.each do |attr, value|
       sanction = WallpaperSanction.from_hash(value)
-      next unless sanction.chaster_add_time_enabled && sanction.chaster_seconds.blank?
-
-      errors.add(attr, :invalid)
+      if sanction.chaster_add_time_enabled && sanction.chaster_seconds.blank?
+        errors.add(attr, :invalid)
+      end
+      if sanction.leverage_photo_start_enabled && sanction.leverage_photo_start_seconds.blank?
+        errors.add(attr, :invalid)
+      end
+      if sanction.leverage_photo_add_time_enabled && sanction.leverage_photo_add_time_seconds.blank?
+        errors.add(attr, :invalid)
+      end
     end
   end
 end

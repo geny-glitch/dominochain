@@ -2,9 +2,16 @@
 
 class WallpaperSanction
   LEGACY_ACTIONS = %w[none chaster_add_time chaster_freeze pishock].freeze
+  TARGET_MODES = %w[specific random].freeze
 
   attr_reader :chaster_add_time_enabled, :chaster_seconds, :chaster_freeze_enabled,
-              :pishock_enabled, :pishock_intensity, :pishock_duration
+              :pishock_enabled, :pishock_intensity, :pishock_duration,
+              :leverage_photo_start_enabled, :leverage_photo_start_seconds,
+              :leverage_photo_start_target_mode, :leverage_photo_start_photo_id,
+              :leverage_photo_add_time_enabled, :leverage_photo_add_time_seconds,
+              :leverage_photo_add_time_target_mode, :leverage_photo_add_time_photo_id,
+              :leverage_photo_delete_enabled, :leverage_photo_delete_target_mode,
+              :leverage_photo_delete_photo_id
 
   def self.from_hash(value)
     hash = value.is_a?(Hash) ? value.stringify_keys : {}
@@ -34,7 +41,18 @@ class WallpaperSanction
       chaster_freeze_enabled: cast_bool(hash["chaster_freeze_enabled"]),
       pishock_enabled: cast_bool(hash["pishock_enabled"]),
       pishock_intensity: hash["pishock_intensity"],
-      pishock_duration: hash["pishock_duration"]
+      pishock_duration: hash["pishock_duration"],
+      leverage_photo_start_enabled: cast_bool(hash["leverage_photo_start_enabled"]),
+      leverage_photo_start_seconds: hash["leverage_photo_start_seconds"],
+      leverage_photo_start_target_mode: hash["leverage_photo_start_target_mode"],
+      leverage_photo_start_photo_id: hash["leverage_photo_start_photo_id"],
+      leverage_photo_add_time_enabled: cast_bool(hash["leverage_photo_add_time_enabled"]),
+      leverage_photo_add_time_seconds: hash["leverage_photo_add_time_seconds"],
+      leverage_photo_add_time_target_mode: hash["leverage_photo_add_time_target_mode"],
+      leverage_photo_add_time_photo_id: hash["leverage_photo_add_time_photo_id"],
+      leverage_photo_delete_enabled: cast_bool(hash["leverage_photo_delete_enabled"]),
+      leverage_photo_delete_target_mode: hash["leverage_photo_delete_target_mode"],
+      leverage_photo_delete_photo_id: hash["leverage_photo_delete_photo_id"]
     )
   end
 
@@ -48,7 +66,18 @@ class WallpaperSanction
     chaster_freeze_enabled: false,
     pishock_enabled: false,
     pishock_intensity: 50,
-    pishock_duration: 1
+    pishock_duration: 1,
+    leverage_photo_start_enabled: false,
+    leverage_photo_start_seconds: nil,
+    leverage_photo_start_target_mode: "random",
+    leverage_photo_start_photo_id: nil,
+    leverage_photo_add_time_enabled: false,
+    leverage_photo_add_time_seconds: nil,
+    leverage_photo_add_time_target_mode: "random",
+    leverage_photo_add_time_photo_id: nil,
+    leverage_photo_delete_enabled: false,
+    leverage_photo_delete_target_mode: "random",
+    leverage_photo_delete_photo_id: nil
   )
     @chaster_add_time_enabled = self.class.cast_bool(chaster_add_time_enabled)
     @chaster_freeze_enabled = self.class.cast_bool(chaster_freeze_enabled)
@@ -56,6 +85,20 @@ class WallpaperSanction
     @chaster_seconds = normalize_chaster_seconds(chaster_seconds)
     @pishock_intensity = pishock_intensity.to_i.clamp(1, 100)
     @pishock_duration = pishock_duration.to_i.clamp(1, 15)
+
+    @leverage_photo_start_enabled = self.class.cast_bool(leverage_photo_start_enabled)
+    @leverage_photo_start_seconds = normalize_leverage_seconds(leverage_photo_start_seconds)
+    @leverage_photo_start_target_mode = normalize_target_mode(leverage_photo_start_target_mode)
+    @leverage_photo_start_photo_id = normalize_photo_id(leverage_photo_start_photo_id)
+
+    @leverage_photo_add_time_enabled = self.class.cast_bool(leverage_photo_add_time_enabled)
+    @leverage_photo_add_time_seconds = normalize_leverage_seconds(leverage_photo_add_time_seconds)
+    @leverage_photo_add_time_target_mode = normalize_target_mode(leverage_photo_add_time_target_mode)
+    @leverage_photo_add_time_photo_id = normalize_photo_id(leverage_photo_add_time_photo_id)
+
+    @leverage_photo_delete_enabled = self.class.cast_bool(leverage_photo_delete_enabled)
+    @leverage_photo_delete_target_mode = normalize_target_mode(leverage_photo_delete_target_mode)
+    @leverage_photo_delete_photo_id = normalize_photo_id(leverage_photo_delete_photo_id)
   end
 
   def chaster_add_time_active?
@@ -70,8 +113,21 @@ class WallpaperSanction
     pishock_enabled
   end
 
+  def leverage_photo_start_active?
+    leverage_photo_start_enabled && leverage_photo_start_seconds.to_i.positive?
+  end
+
+  def leverage_photo_add_time_active?
+    leverage_photo_add_time_enabled && leverage_photo_add_time_seconds.to_i.positive?
+  end
+
+  def leverage_photo_delete_active?
+    leverage_photo_delete_enabled
+  end
+
   def any_active?
-    chaster_add_time_active? || chaster_freeze_active? || pishock_active?
+    chaster_add_time_active? || chaster_freeze_active? || pishock_active? ||
+      leverage_photo_start_active? || leverage_photo_add_time_active? || leverage_photo_delete_active?
   end
 
   # Legacy compatibility for callers that still read a single action.
@@ -79,6 +135,9 @@ class WallpaperSanction
     return "chaster_add_time" if chaster_add_time_active?
     return "chaster_freeze" if chaster_freeze_active?
     return "pishock" if pishock_active?
+    return "leverage_photo_start" if leverage_photo_start_active?
+    return "leverage_photo_add_time" if leverage_photo_add_time_active?
+    return "leverage_photo_delete" if leverage_photo_delete_active?
 
     "none"
   end
@@ -94,7 +153,18 @@ class WallpaperSanction
       "chaster_freeze_enabled" => chaster_freeze_enabled,
       "pishock_enabled" => pishock_enabled,
       "pishock_intensity" => pishock_intensity,
-      "pishock_duration" => pishock_duration
+      "pishock_duration" => pishock_duration,
+      "leverage_photo_start_enabled" => leverage_photo_start_enabled,
+      "leverage_photo_start_seconds" => leverage_photo_start_enabled ? leverage_photo_start_seconds : nil,
+      "leverage_photo_start_target_mode" => leverage_photo_start_target_mode,
+      "leverage_photo_start_photo_id" => leverage_photo_start_enabled && leverage_photo_start_target_mode == "specific" ? leverage_photo_start_photo_id : nil,
+      "leverage_photo_add_time_enabled" => leverage_photo_add_time_enabled,
+      "leverage_photo_add_time_seconds" => leverage_photo_add_time_enabled ? leverage_photo_add_time_seconds : nil,
+      "leverage_photo_add_time_target_mode" => leverage_photo_add_time_target_mode,
+      "leverage_photo_add_time_photo_id" => leverage_photo_add_time_enabled && leverage_photo_add_time_target_mode == "specific" ? leverage_photo_add_time_photo_id : nil,
+      "leverage_photo_delete_enabled" => leverage_photo_delete_enabled,
+      "leverage_photo_delete_target_mode" => leverage_photo_delete_target_mode,
+      "leverage_photo_delete_photo_id" => leverage_photo_delete_enabled && leverage_photo_delete_target_mode == "specific" ? leverage_photo_delete_photo_id : nil
     }
   end
 
@@ -104,5 +174,23 @@ class WallpaperSanction
     return nil if value.blank?
 
     value.to_i.clamp(1, 86_400 * 365)
+  end
+
+  def normalize_leverage_seconds(value)
+    return nil if value.blank?
+
+    value.to_i.clamp(LeveragePhoto::MIN_DURATION_SECONDS, LeveragePhoto::MAX_DURATION_SECONDS)
+  end
+
+  def normalize_target_mode(value)
+    mode = value.to_s
+    TARGET_MODES.include?(mode) ? mode : "random"
+  end
+
+  def normalize_photo_id(value)
+    return nil if value.blank?
+
+    id = value.to_i
+    id.positive? ? id : nil
   end
 end

@@ -22,10 +22,6 @@ fr:
           label: "Fond d'écran"
           subtitle: "App Android · conformité du fond d'écran"
           events: "Événements : mismatch, permissions, hors ligne"
-        leverage_photo:
-          label: "Photo de levier"
-          subtitle: "Photo volontaire · verrou temporel cryptographique"
-          events: "Événements : démarrage du timer, déblocage"
       actions:
         chaster:
           label: "Chaster"
@@ -35,6 +31,10 @@ fr:
           label: "PiShock"
           subtitle: "Collier / shocker · réactions physiques"
           events: "Actions : zap, intensité multipliée par facteur Z"
+        leverage_photo:
+          label: "Time vault"
+          subtitle: "Verrouiller, prolonger ou supprimer définitivement des photos de levier"
+          events: "Actions : démarrer le verrou, ajouter du temps, suppression définitive"
     events:
       sources:
         puryfi: "Purify"
@@ -175,6 +175,24 @@ fr:
     actions_chaster:
       page_title: "Actions · Chaster — %{nickname}"
       lead: "Connexion à Chaster.app pour ajout du temps en fonction des événements que tu configureras."
+    actions_leverage_photo:
+      page_title: "Actions · Time vault — %{nickname}"
+      lead: "Utilise des photos de levier comme conséquences quand les sources déclenchent des sanctions."
+      config_title: "Configuration"
+      config_intro: "Uploade et gère tes photos de levier, puis active les sanctions Time vault sur des sources comme Fond d'écran."
+      open_photos: "Gérer les photos"
+      upload: "Uploader une photo"
+      photo_count:
+        zero: "Aucune photo pour l'instant"
+        one: "%{count} photo"
+        other: "%{count} photos"
+      logs_title: "Sanctions récentes"
+      logs_empty: "Aucune sanction Time vault automatisée pour l'instant."
+      log_seconds: "%{seconds}s"
+      log_action:
+        leverage_photo_start: "Photo verrouillée"
+        leverage_photo_add_time: "Verrou prolongé"
+        leverage_photo_delete: "Photo définitivement supprimée"
     task_proof:
       page_title: "Soumettre preuve — %{name}"
       back_account: "← Retour au compte"
@@ -263,6 +281,16 @@ fr:
         pishock_label: "PiShock"
         pishock_intensity: "Intensité"
         pishock_duration: "Durée (s)"
+        leverage_photo_start: "Verrouiller une photo de levier"
+        leverage_photo_add_time: "Prolonger le verrou d'une photo"
+        leverage_photo_delete: "Supprimer définitivement une photo"
+        leverage_photo_seconds: "Durée (secondes)"
+        leverage_photo_seconds_placeholder: "Secondes"
+        leverage_photo_target: "Photo ciblée"
+        leverage_photo_target_random: "Photo éligible au hasard"
+        leverage_photo_target_specific: "Photo précise"
+        leverage_photo_select: "Photo"
+        leverage_photo_select_blank: "Choisir une photo"
       check_status:
         verified: "Conforme"
         mismatch: "Non conforme"

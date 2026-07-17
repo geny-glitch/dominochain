@@ -61,6 +61,18 @@ class LeveragePhoto < ApplicationRecord
     active? && tlock_blob.attached? && tlock_layer_count < MAX_TLOCK_LAYERS
   end
 
+  def eligible_for_start?
+    ready_to_lock?
+  end
+
+  def eligible_for_add_time?
+    can_add_time?
+  end
+
+  def eligible_for_delete?
+    !deleted?
+  end
+
   def unlock_due?(at = Time.current)
     active? && locked_until.present? && locked_until <= at
   end

@@ -8,12 +8,12 @@ class BetaDashboardController < ApplicationController
     "sources_cigarettes" => "cigarettes",
     "sources_strava" => "strava",
     "sources_showcase" => "showcase",
-    "sources_wallpaper" => "wallpaper",
-    "sources_leverage_photo" => "leverage_photo"
+    "sources_wallpaper" => "wallpaper"
   }.freeze
   CATALOG_ACTION_ACTIONS = {
     "actions_chaster" => "chaster",
-    "actions_pishock" => "pishock"
+    "actions_pishock" => "pishock",
+    "actions_leverage_photo" => "leverage_photo"
   }.freeze
 
   before_action :authenticate_user!
@@ -61,12 +61,15 @@ class BetaDashboardController < ApplicationController
     @wallpaper_applications = wallpaper_history_scope.limit(24)
     @compliance_checks = compliance_checks_scope.limit(24)
     @chaster_lock = fetch_chaster_lock
+    @leverage_photos = current_user.leverage_photos.not_deleted.newest_first
+    @leverage_action_enabled = BetaCatalog.new(current_user).action_platform_enabled?("leverage_photo")
   end
 
-  def sources_leverage_photo
+  def actions_leverage_photo
     @photos = current_user.leverage_photos.not_deleted.newest_first
     @photos.each { |photo| photo.mark_unlocked! if photo.unlock_due? }
     @photo_count = @photos.size
+    @recent_leverage_sanctions = recent_leverage_sanctions
   end
 
   def update_wallpaper_enforcement
@@ -432,13 +435,28 @@ class BetaDashboardController < ApplicationController
 
     chaster_add_time_enabled = CheckboxParamNormalizer.to_bool(raw[:chaster_add_time_enabled])
     chaster_seconds = raw[:chaster_seconds].presence&.to_i
+    leverage_photo_start_enabled = CheckboxParamNormalizer.to_bool(raw[:leverage_photo_start_enabled])
+    leverage_photo_add_time_enabled = CheckboxParamNormalizer.to_bool(raw[:leverage_photo_add_time_enabled])
+    leverage_photo_delete_enabled = CheckboxParamNormalizer.to_bool(raw[:leverage_photo_delete_enabled])
+
     {
       "chaster_add_time_enabled" => chaster_add_time_enabled,
       "chaster_seconds" => chaster_add_time_enabled ? chaster_seconds : nil,
       "chaster_freeze_enabled" => ChasterService.freeze_ui_enabled? && CheckboxParamNormalizer.to_bool(raw[:chaster_freeze_enabled]),
       "pishock_enabled" => CheckboxParamNormalizer.to_bool(raw[:pishock_enabled]),
       "pishock_intensity" => raw[:pishock_intensity].to_i,
-      "pishock_duration" => raw[:pishock_duration].to_i
+      "pishock_duration" => raw[:pishock_duration].to_i,
+      "leverage_photo_start_enabled" => leverage_photo_start_enabled,
+      "leverage_photo_start_seconds" => leverage_photo_start_enabled ? raw[:leverage_photo_start_seconds].presence&.to_i : nil,
+      "leverage_photo_start_target_mode" => raw[:leverage_photo_start_target_mode].presence || "random",
+      "leverage_photo_start_photo_id" => raw[:leverage_photo_start_photo_id].presence&.to_i,
+      "leverage_photo_add_time_enabled" => leverage_photo_add_time_enabled,
+      "leverage_photo_add_time_seconds" => leverage_photo_add_time_enabled ? raw[:leverage_photo_add_time_seconds].presence&.to_i : nil,
+      "leverage_photo_add_time_target_mode" => raw[:leverage_photo_add_time_target_mode].presence || "random",
+      "leverage_photo_add_time_photo_id" => raw[:leverage_photo_add_time_photo_id].presence&.to_i,
+      "leverage_photo_delete_enabled" => leverage_photo_delete_enabled,
+      "leverage_photo_delete_target_mode" => raw[:leverage_photo_delete_target_mode].presence || "random",
+      "leverage_photo_delete_photo_id" => raw[:leverage_photo_delete_photo_id].presence&.to_i
     }
   end
 
@@ -466,5 +484,20 @@ class BetaDashboardController < ApplicationController
     photos.find(&:unlocked?) ||
       photos.select(&:active?).min_by { |p| p.locked_until || Time.zone.at(0) } ||
       photos.first
+  end
+
+  def recent_leverage_sanctions
+    current_user.wallpaper_compliance_checks.recent.limit(40).flat_map do |check|
+      Array(check.sanctions_applied).filter_map do |sanction|
+        next unless sanction.is_a?(Hash)
+        action = sanction["action"].to_s
+        next unless action.start_with?("leverage_photo")
+
+        sanction.merge(
+          "checked_at" => check.checked_at,
+          "check_status" => check.status
+        )
+      end
+    end.first(12)
   end
 end

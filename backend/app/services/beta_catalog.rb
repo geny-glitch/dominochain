@@ -5,19 +5,19 @@ class BetaCatalog
   SOURCES_KEY = "sources"
   ACTIONS_KEY = "actions"
   CACHE_NAMESPACE_KEY = "beta_catalog:feature_flags:namespace:v1"
-  FLAGS_CACHE_VERSION = 3
+  FLAGS_CACHE_VERSION = 4
   FLAGS_CACHE_TTL = 1.minute
   SOURCE_FEATURE_FLAGS = {
     "puryfi" => "beta_source_puryfi",
     "cigarettes" => "beta_source_cigarettes",
     "strava" => "beta_source_strava",
     "showcase" => "beta_source_showcase",
-    "wallpaper" => "beta_source_wallpaper",
-    "leverage_photo" => "beta_source_leverage_photo"
+    "wallpaper" => "beta_source_wallpaper"
   }.freeze
   ACTION_FEATURE_FLAGS = {
     "chaster" => "beta_action_chaster",
-    "pishock" => "beta_action_pishock"
+    "pishock" => "beta_action_pishock",
+    "leverage_photo" => "beta_action_leverage_photo"
   }.freeze
 
   SOURCE_DEFS = [
@@ -45,11 +45,6 @@ class BetaCatalog
       id: "wallpaper",
       path_helper: :beta_sources_wallpaper_path,
       action_name: "sources_wallpaper"
-    },
-    {
-      id: "leverage_photo",
-      path_helper: :beta_sources_leverage_photo_path,
-      action_name: "sources_leverage_photo"
     }
   ].freeze
 
@@ -63,6 +58,11 @@ class BetaCatalog
       id: "pishock",
       path_helper: :beta_actions_pishock_path,
       action_name: "actions_pishock"
+    },
+    {
+      id: "leverage_photo",
+      path_helper: :beta_actions_leverage_photo_path,
+      action_name: "actions_leverage_photo"
     }
   ].freeze
 
@@ -81,7 +81,10 @@ class BetaCatalog
     "BetaEvents::Actions::ChasterUnfreezeFromEvent" => "chaster",
     "BetaEvents::Actions::RecordShowcaseLimiterFromEvent" => "chaster",
     "BetaEvents::Actions::EnqueuePishockForShowcaseGame" => "pishock",
-    "BetaEvents::Actions::EnqueuePishockFromEvent" => "pishock"
+    "BetaEvents::Actions::EnqueuePishockFromEvent" => "pishock",
+    "BetaEvents::Actions::LeveragePhotoStartFromEvent" => "leverage_photo",
+    "BetaEvents::Actions::LeveragePhotoAddTimeFromEvent" => "leverage_photo",
+    "BetaEvents::Actions::LeveragePhotoDeleteFromEvent" => "leverage_photo"
   }.freeze
 
   def initialize(user)

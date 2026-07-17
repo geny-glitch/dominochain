@@ -22,10 +22,6 @@ en:
           label: "Wallpaper"
           subtitle: "Android app · wallpaper compliance"
           events: "Events: mismatch, permissions, offline"
-        leverage_photo:
-          label: "Leverage photo"
-          subtitle: "Self-imposed photo · cryptographic time-lock"
-          events: "Events: timer start, unlock"
       actions:
         chaster:
           label: "Chaster"
@@ -35,6 +31,10 @@ en:
           label: "PiShock"
           subtitle: "Collar / shocker · physical reactions"
           events: "Actions: zap, intensity multiplied by factor Z"
+        leverage_photo:
+          label: "Time vault"
+          subtitle: "Lock, extend, or permanently delete leverage photos"
+          events: "Actions: start lock, add time, permanent delete"
     events:
       sources:
         puryfi: "Purify"
@@ -175,6 +175,24 @@ en:
     actions_chaster:
       page_title: "Actions · Chaster — %{nickname}"
       lead: "Log in to Chaster.app to add lock time based on the events you configure."
+    actions_leverage_photo:
+      page_title: "Actions · Time vault — %{nickname}"
+      lead: "Use leverage photos as consequences when sources trigger sanctions."
+      config_title: "Configuration"
+      config_intro: "Upload and manage your leverage photos, then enable Time vault sanctions on sources like Wallpaper."
+      open_photos: "Manage photos"
+      upload: "Upload a photo"
+      photo_count:
+        zero: "No photos yet"
+        one: "%{count} photo"
+        other: "%{count} photos"
+      logs_title: "Recent sanctions"
+      logs_empty: "No automated Time vault sanctions yet."
+      log_seconds: "%{seconds}s"
+      log_action:
+        leverage_photo_start: "Photo locked"
+        leverage_photo_add_time: "Lock extended"
+        leverage_photo_delete: "Photo permanently deleted"
     task_proof:
       page_title: "Submit proof — %{name}"
       back_account: "← Back to account"
@@ -263,6 +281,16 @@ en:
         pishock_label: "PiShock"
         pishock_intensity: "Intensity"
         pishock_duration: "Duration (s)"
+        leverage_photo_start: "Lock a leverage photo"
+        leverage_photo_add_time: "Extend a leverage photo lock"
+        leverage_photo_delete: "Permanently delete a leverage photo"
+        leverage_photo_seconds: "Duration (seconds)"
+        leverage_photo_seconds_placeholder: "Seconds"
+        leverage_photo_target: "Photo target"
+        leverage_photo_target_random: "Random eligible photo"
+        leverage_photo_target_specific: "Specific photo"
+        leverage_photo_select: "Photo"
+        leverage_photo_select_blank: "Choose a photo"
       check_status:
         verified: "Verified"
         mismatch: "Mismatch"

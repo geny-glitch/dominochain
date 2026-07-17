@@ -5,7 +5,7 @@ class BetaLeveragePhotoController < ApplicationController
 
   before_action :authenticate_user!
   before_action :require_beta_role!
-  before_action :require_catalog_source!
+  before_action :require_catalog_action!
   before_action :set_photo, only: %i[
     show original start add_time tlock_blob decrypt_payload destroy
   ]
@@ -133,8 +133,8 @@ class BetaLeveragePhotoController < ApplicationController
     redirect_to dashboard_path, alert: t("flash.beta.beta_only")
   end
 
-  def require_catalog_source!
-    return if BetaCatalog.new(current_user).source_platform_enabled?("leverage_photo")
+  def require_catalog_action!
+    return if BetaCatalog.new(current_user).action_platform_enabled?("leverage_photo")
 
     redirect_to beta_settings_path, alert: t("flash.beta.catalog_unavailable")
   end

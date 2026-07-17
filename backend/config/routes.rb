@@ -25,7 +25,6 @@ Rails.application.routes.draw do
 get "beta/sources/strava", to: "beta_dashboard#sources_strava", as: :beta_sources_strava
 get "beta/sources/vitrine", to: "beta_dashboard#sources_showcase", as: :beta_sources_showcase
   get "beta/sources/wallpaper", to: "beta_dashboard#sources_wallpaper", as: :beta_sources_wallpaper
-  get "beta/sources/leverage_photo", to: "beta_dashboard#sources_leverage_photo", as: :beta_sources_leverage_photo
   get "beta/leverage_photos", to: "beta_leverage_photo#index", as: :beta_leverage_photos
   get "beta/leverage_photos/upload", to: "beta_leverage_photo#upload_new", as: :beta_leverage_photo_upload
   post "beta/leverage_photos/upload", to: "beta_leverage_photo#upload", as: :beta_leverage_photo_upload_submit
@@ -42,7 +41,9 @@ get "beta/sources/vitrine", to: "beta_dashboard#sources_showcase", as: :beta_sou
   get "beta/wallpaper/upload", to: "beta_wallpaper#upload", as: :beta_wallpaper_upload
   post "beta/wallpaper/upload", to: "beta_wallpaper#create", as: :beta_wallpaper_create
   get "beta/actions/chaster", to: "beta_dashboard#actions_chaster", as: :beta_actions_chaster
-get "beta/actions/pishock", to: "beta_dashboard#actions_pishock", as: :beta_actions_pishock
+  get "beta/actions/pishock", to: "beta_dashboard#actions_pishock", as: :beta_actions_pishock
+  get "beta/actions/leverage_photo", to: "beta_dashboard#actions_leverage_photo", as: :beta_actions_leverage_photo
+  get "beta/sources/leverage_photo", to: redirect("/beta/actions/leverage_photo")
   get "beta/reglages", to: "beta_dashboard#settings", as: :beta_settings
   patch "beta/catalogue/visibility", to: "beta_dashboard#update_catalog_visibility", as: :beta_catalog_visibility
   get "beta/compte", to: "beta_dashboard#account", as: :beta_account

@@ -151,7 +151,8 @@ class User < ApplicationRecord
     }
     prefs["catalog_visibility"]["actions"] = {
       "chaster" => false,
-      "pishock" => false
+      "pishock" => false,
+      "leverage_photo" => false
     }
     self.beta_ui_prefs = prefs
   end

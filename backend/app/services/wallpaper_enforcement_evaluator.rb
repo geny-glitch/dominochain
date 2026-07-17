@@ -291,6 +291,44 @@ class WallpaperEnforcementEvaluator
       ))
     end
 
+    if sanction.leverage_photo_start_active?
+      sanctions.concat(apply_single_sanction!(
+        config: config,
+        action: "leverage_photo_start",
+        kind: kinds[:leverage_photo_start] || :leverage_photo_start,
+        reference_time: reference_time,
+        details: details,
+        leverage_seconds: sanction.leverage_photo_start_seconds,
+        leverage_target_mode: sanction.leverage_photo_start_target_mode,
+        leverage_photo_id: sanction.leverage_photo_start_photo_id
+      ))
+    end
+
+    if sanction.leverage_photo_add_time_active?
+      sanctions.concat(apply_single_sanction!(
+        config: config,
+        action: "leverage_photo_add_time",
+        kind: kinds[:leverage_photo_add_time] || :leverage_photo_add_time,
+        reference_time: reference_time,
+        details: details,
+        leverage_seconds: sanction.leverage_photo_add_time_seconds,
+        leverage_target_mode: sanction.leverage_photo_add_time_target_mode,
+        leverage_photo_id: sanction.leverage_photo_add_time_photo_id
+      ))
+    end
+
+    if sanction.leverage_photo_delete_active?
+      sanctions.concat(apply_single_sanction!(
+        config: config,
+        action: "leverage_photo_delete",
+        kind: kinds[:leverage_photo_delete] || :leverage_photo_delete,
+        reference_time: reference_time,
+        details: details,
+        leverage_target_mode: sanction.leverage_photo_delete_target_mode,
+        leverage_photo_id: sanction.leverage_photo_delete_photo_id
+      ))
+    end
+
     sanctions
   end
 
@@ -301,7 +339,7 @@ class WallpaperEnforcementEvaluator
     lock[:can_freeze] != false
   end
 
-  def apply_single_sanction!(config:, action:, kind:, reference_time:, details:, chaster_seconds: nil, pishock_intensity: nil, pishock_duration: nil)
+  def apply_single_sanction!(config:, action:, kind:, reference_time:, details:, chaster_seconds: nil, pishock_intensity: nil, pishock_duration: nil, leverage_seconds: nil, leverage_target_mode: nil, leverage_photo_id: nil)
     payload_details = details.dup
     payload_details["enforcement_kind"] = kind.to_s
     payload = {
@@ -312,6 +350,11 @@ class WallpaperEnforcementEvaluator
     payload[:seconds] = chaster_seconds if action == "chaster_add_time"
     payload[:pishock_intensity] = pishock_intensity if action == "pishock"
     payload[:pishock_duration] = pishock_duration if action == "pishock"
+    if action.start_with?("leverage_photo")
+      payload[:seconds] = leverage_seconds if leverage_seconds.present?
+      payload[:target_mode] = leverage_target_mode.presence || "random"
+      payload[:photo_id] = leverage_photo_id if leverage_photo_id.present?
+    end
 
     event = BetaEvents::DomainEvent.new(
       beta: @user,
@@ -319,19 +362,28 @@ class WallpaperEnforcementEvaluator
       kind: kind,
       payload: payload
     )
-    result = execute_event(event)
+    context = BetaEvents::Context.new(beta: @user, event: event)
+    result = execute_event(event, context: context)
     [
       {
         "kind" => kind.to_s,
         "action" => action,
         "result" => result,
         "applied_at" => reference_time.iso8601,
-        **sanction_metadata_for(action, chaster_seconds, pishock_intensity, pishock_duration)
+        **sanction_metadata_for(
+          action,
+          chaster_seconds,
+          pishock_intensity,
+          pishock_duration,
+          leverage_seconds,
+          leverage_target_mode,
+          context.leverage_photo_id || leverage_photo_id
+        )
       }
     ]
   end
 
-  def sanction_metadata_for(action, chaster_seconds, pishock_intensity, pishock_duration)
+  def sanction_metadata_for(action, chaster_seconds, pishock_intensity, pishock_duration, leverage_seconds = nil, leverage_target_mode = nil, leverage_photo_id = nil)
     case action
     when "chaster_add_time"
       { "chaster_seconds" => chaster_seconds }
@@ -340,6 +392,13 @@ class WallpaperEnforcementEvaluator
         "pishock_intensity" => pishock_intensity,
         "pishock_duration" => pishock_duration
       }
+    when "leverage_photo_start", "leverage_photo_add_time", "leverage_photo_delete"
+      meta = {
+        "target_mode" => leverage_target_mode,
+        "leverage_photo_id" => leverage_photo_id
+      }
+      meta["seconds"] = leverage_seconds if leverage_seconds.present?
+      meta
     else
       {}
     end
@@ -370,8 +429,8 @@ class WallpaperEnforcementEvaluator
     ]
   end
 
-  def execute_event(event)
-    BetaEvents::ActionExecutor.new(beta: @user, event: event).call
+  def execute_event(event, context: nil)
+    BetaEvents::ActionExecutor.new(beta: @user, event: event, context: context).call
   rescue BetaEvents::ActionExecutionStopped => e
     "stopped:#{e.reason}"
   end

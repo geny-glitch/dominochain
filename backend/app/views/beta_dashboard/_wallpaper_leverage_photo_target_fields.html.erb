@@ -1,0 +1,35 @@
+<%# locals: (field_prefix:, row_id:, toggle_key:, target_mode:, photo_id:, photos:, toggle_enabled: true) %>
+<% mode_field = "#{toggle_key}_target_mode" %>
+<% photo_field = "#{toggle_key}_photo_id" %>
+<% mode_id = "#{row_id}_#{mode_field}" %>
+<% photo_select_id = "#{row_id}_#{photo_field}" %>
+
+<div class="ds-wallpaper-sanction-field" style="grid-column:1/-1;">
+  <label class="ds-wallpaper-sanction-field-label" for="<%= mode_id %>"><%= t("beta.wallpaper_source.sanction.leverage_photo_target") %></label>
+  <%= select_tag "#{field_prefix}[#{mode_field}]",
+        options_for_select(
+          [
+            [t("beta.wallpaper_source.sanction.leverage_photo_target_random"), "random"],
+            [t("beta.wallpaper_source.sanction.leverage_photo_target_specific"), "specific"]
+          ],
+          target_mode
+        ),
+        id: mode_id,
+        class: "ds-wallpaper-sanction-input",
+        disabled: !toggle_enabled,
+        data: { sanction_field: toggle_key } %>
+</div>
+
+<div class="ds-wallpaper-sanction-field" style="grid-column:1/-1;">
+  <label class="ds-wallpaper-sanction-field-label" for="<%= photo_select_id %>"><%= t("beta.wallpaper_source.sanction.leverage_photo_select") %></label>
+  <%= select_tag "#{field_prefix}[#{photo_field}]",
+        options_for_select(
+          [[t("beta.wallpaper_source.sanction.leverage_photo_select_blank"), ""]] +
+            Array(photos).map { |photo| ["#{photo.download_filename} (#{t("leverage_photo.status.#{photo.status}")})", photo.id] },
+          photo_id
+        ),
+        id: photo_select_id,
+        class: "ds-wallpaper-sanction-input",
+        disabled: !toggle_enabled,
+        data: { sanction_field: toggle_key } %>
+</div>

@@ -1,6 +1,8 @@
 <%# locals: (field_prefix:, sanction:, delay_field:, delay_value:, show_delay: true, delay_container_data: {}) %>
 <% sanction_obj = WallpaperSanction.from_hash(sanction) %>
 <% row_id = field_prefix.tr("[", "_").tr("]", "") %>
+<% leverage_photos = local_assigns.fetch(:leverage_photos) { @leverage_photos } %>
+<% show_leverage = local_assigns.fetch(:show_leverage) { @leverage_action_enabled } %>
 
 <% if show_delay %>
   <div class="ds-form-group" <%= tag.attributes(delay_container_data) if delay_container_data.present? %>>
@@ -61,4 +63,40 @@
             aria: t("beta.wallpaper_source.sanction.pishock_duration")
           }
         ] %>
+
+  <% if show_leverage %>
+    <%= render "wallpaper_leverage_sanction_row",
+          field_prefix: field_prefix,
+          row_id: row_id,
+          toggle_key: "leverage_photo_start",
+          toggle_label: t("beta.wallpaper_source.sanction.leverage_photo_start"),
+          toggle_enabled: sanction_obj.leverage_photo_start_enabled,
+          seconds_name: "leverage_photo_start_seconds",
+          seconds_value: sanction_obj.leverage_photo_start_seconds,
+          target_mode: sanction_obj.leverage_photo_start_target_mode,
+          photo_id: sanction_obj.leverage_photo_start_photo_id,
+          photos: leverage_photos %>
+
+    <%= render "wallpaper_leverage_sanction_row",
+          field_prefix: field_prefix,
+          row_id: row_id,
+          toggle_key: "leverage_photo_add_time",
+          toggle_label: t("beta.wallpaper_source.sanction.leverage_photo_add_time"),
+          toggle_enabled: sanction_obj.leverage_photo_add_time_enabled,
+          seconds_name: "leverage_photo_add_time_seconds",
+          seconds_value: sanction_obj.leverage_photo_add_time_seconds,
+          target_mode: sanction_obj.leverage_photo_add_time_target_mode,
+          photo_id: sanction_obj.leverage_photo_add_time_photo_id,
+          photos: leverage_photos %>
+
+    <%= render "wallpaper_leverage_sanction_row",
+          field_prefix: field_prefix,
+          row_id: row_id,
+          toggle_key: "leverage_photo_delete",
+          toggle_label: t("beta.wallpaper_source.sanction.leverage_photo_delete"),
+          toggle_enabled: sanction_obj.leverage_photo_delete_enabled,
+          target_mode: sanction_obj.leverage_photo_delete_target_mode,
+          photo_id: sanction_obj.leverage_photo_delete_photo_id,
+          photos: leverage_photos %>
+  <% end %>
 </div>

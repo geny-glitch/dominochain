@@ -13,6 +13,17 @@ RSpec.describe BetaCatalog do
     catalog = described_class.new(user)
     ids = catalog.source_items.map { |item| item[:id] }
     expect(ids).to include("wallpaper")
+    expect(ids).not_to include("leverage_photo")
+  end
+
+  it "includes leverage_photo in action items when flag enabled" do
+    stub_beta_catalog_feature_flags(
+      "beta_source_wallpaper" => true,
+      "beta_action_leverage_photo" => true
+    )
+    catalog = described_class.new(user)
+    ids = catalog.action_items.map { |item| item[:id] }
+    expect(ids).to include("leverage_photo")
   end
 
   it "maps wallpaper events to the wallpaper catalog source" do

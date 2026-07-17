@@ -694,15 +694,10 @@
 }
 
 .ds-wallpaper-enforcement-save-bar {
-  position: fixed;
-  left: 50%;
-  bottom: $ds-space-lg;
-  z-index: 30;
   display: flex;
-  justify-content: center;
-  padding: $ds-space-sm;
-  transform: translateX(-50%);
-  pointer-events: none;
+  justify-content: flex-start;
+  margin-top: $ds-space-lg;
+  padding-top: $ds-space-md;
 
   &[hidden] {
     display: none;
@@ -710,15 +705,7 @@
 }
 
 .ds-wallpaper-enforcement-save-btn {
-  pointer-events: auto;
   min-width: 10rem;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba($ds-magenta, 0.35);
-}
-
-@media (min-width: 52.01rem) {
-  .ds-wallpaper-enforcement-save-bar {
-    left: calc(50% + 8rem);
-  }
 }
 
 .ds-beta-home-hero {
@@ -1170,6 +1157,12 @@
   flex-direction: column;
   gap: $ds-space-md;
   margin-bottom: $ds-space-lg;
+
+  [data-wallpaper-scenarios-list] {
+    display: flex;
+    flex-direction: column;
+    gap: $ds-space-xl;
+  }
 }
 
 .ds-wallpaper-scenario-card {
@@ -1207,9 +1200,29 @@
 
 .ds-wallpaper-scenario-action {
   display: flex;
+  flex-direction: column;
+  gap: $ds-space-sm;
+  padding-top: $ds-space-sm;
+  border-top: 1px solid $ds-border;
+
+  &:first-child {
+    padding-top: 0;
+    border-top: 0;
+  }
+}
+
+.ds-wallpaper-scenario-action-main {
+  display: flex;
   align-items: center;
   justify-content: space-between;
   gap: $ds-space-md;
+  flex-wrap: wrap;
+}
+
+.ds-wallpaper-scenario-action-buttons {
+  display: flex;
+  align-items: center;
+  gap: $ds-space-xs;
   flex-wrap: wrap;
 }
 
@@ -1219,9 +1232,35 @@
   line-height: 1.4;
 }
 
+.ds-wallpaper-scenario-action-editor {
+  display: flex;
+  flex-direction: column;
+  gap: $ds-space-sm;
+  padding: $ds-space-sm;
+  border: 1px solid $ds-border;
+  border-radius: $ds-radius-lg;
+
+  &[hidden] {
+    display: none;
+  }
+}
+
+.ds-wallpaper-scenario-card-footer {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: $ds-space-sm;
+  padding-top: $ds-space-sm;
+  border-top: 1px solid $ds-border;
+
+  &[hidden] {
+    display: none;
+  }
+}
+
 .ds-wallpaper-consequence-composer {
   display: flex;
   flex-direction: column;
+  align-items: stretch;
   gap: $ds-space-sm;
   margin-top: $ds-space-sm;
 }

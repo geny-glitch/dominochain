@@ -90,6 +90,7 @@
 
     <%= form_with url: beta_wallpaper_enforcement_path, method: :patch, local: true, class: "ds-form", data: { turbo: false, wallpaper_enforcement_form: true } do %>
       <div data-wallpaper-enforcement-options<%= " hidden" unless @config.enabled %>>
+        <div data-wallpaper-options-fields>
         <div class="ds-form-group">
         <%= label_tag :check_interval_minutes, t("beta.wallpaper_source.check_interval"), class: "ds-form-label" %>
         <%= number_field_tag :check_interval_minutes, @config.check_interval_minutes, min: WallpaperEnforcementConfig::MIN_INTERVAL_MINUTES, max: WallpaperEnforcementConfig::MAX_INTERVAL_MINUTES, class: "ds-input" %>
@@ -104,11 +105,13 @@
         </label>
       </div>
 
-      <%= render "wallpaper_scenarios_list", scenario_set: @config.scenario_set, leverage_photos: @leverage_photos %>
-
-      <div class="ds-wallpaper-enforcement-save-bar" data-wallpaper-enforcement-save-bar hidden>
-        <%= submit_tag t("beta.wallpaper_source.save"), class: "ds-btn ds-btn--primary ds-wallpaper-enforcement-save-btn" %>
+      <div class="ds-beta-control-actions" data-wallpaper-dirty-save="options" hidden>
+        <%= submit_tag t("beta.wallpaper_source.save_options"),
+              class: "ds-btn ds-btn--secondary ds-btn--sm" %>
       </div>
+      </div>
+
+      <%= render "wallpaper_scenarios_list", scenario_set: @config.scenario_set, leverage_photos: @leverage_photos %>
       </div>
     <% end %>
 

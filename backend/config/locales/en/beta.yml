@@ -74,7 +74,10 @@ en:
       empty: "No consequences yet. Add one to react when a wallpaper check fails."
       add_consequence: "Add a consequence"
       edit_trigger: "Edit trigger"
+      edit_action: "Edit"
+      done_editing: "Done"
       remove_action: "Remove"
+      save: "Save scenario"
       events:
         mismatch:
           label: "Mismatch"
@@ -325,6 +328,7 @@ en:
       enabled: "Enable automatic checks"
       check_interval: "Check interval (minutes)"
       dismiss_apps: "Close apps before capture (show home screen)"
+      save_options: "Save check options"
       run_test_check: "Run check now (staging test)"
       run_test_check_confirm: "Trigger a wallpaper compliance check immediately? This sends a screenshot request to your device."
       run_test_check_hint: "Staging only. Bypasses the check interval and runs the same flow as the scheduled job for your account."

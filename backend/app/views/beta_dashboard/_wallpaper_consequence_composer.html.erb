@@ -2,11 +2,7 @@
 <% photos ||= [] %>
 
 <div class="ds-wallpaper-consequence-composer" data-wallpaper-consequence-composer>
-  <button type="button" class="ds-btn ds-btn--primary ds-btn--sm" data-composer-open>
-    <%= t("beta.scenarios.add_consequence") %>
-  </button>
-
-  <div class="ds-wallpaper-composer-panel" data-composer-panel hidden>
+  <div class="ds-wallpaper-composer-panel" data-composer-panel>
     <p class="ds-form-label"><%= t("beta.scenarios.composer.title") %></p>
 
     <div data-composer-step="event">
@@ -23,7 +19,6 @@
               data: { composer_event: true } %>
       </div>
       <div class="ds-beta-control-actions">
-        <button type="button" class="ds-btn ds-btn--secondary ds-btn--sm" data-composer-cancel><%= t("beta.scenarios.composer.cancel") %></button>
         <button type="button" class="ds-btn ds-btn--primary ds-btn--sm" data-composer-next="trigger" disabled><%= t("beta.scenarios.composer.next") %></button>
       </div>
     </div>
@@ -97,7 +92,10 @@
         targetRandom: I18n.t("beta.sanctions.shared.target_random"),
         targetSpecific: I18n.t("beta.sanctions.shared.target_specific"),
         removeAction: I18n.t("beta.scenarios.remove_action"),
-        editTrigger: I18n.t("beta.scenarios.edit_trigger")
+        editAction: I18n.t("beta.scenarios.edit_action"),
+        doneEditing: I18n.t("beta.scenarios.done_editing"),
+        editTrigger: I18n.t("beta.scenarios.edit_trigger"),
+        saveScenario: I18n.t("beta.scenarios.save")
       },
       photos: Array(photos).map { |p| { id: p.id, label: "#{p.download_filename} (#{I18n.t("leverage_photo.status.#{p.status}")})" } }
     }.to_json) %>

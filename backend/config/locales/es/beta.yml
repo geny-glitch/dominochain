@@ -74,7 +74,10 @@ es:
       empty: "Aún no hay consecuencias. Añade una para reaccionar cuando falle una comprobación."
       add_consequence: "Añadir una consecuencia"
       edit_trigger: "Editar disparador"
+      edit_action: "Editar"
+      done_editing: "Listo"
       remove_action: "Quitar"
+      save: "Guardar escenario"
       events:
         mismatch:
           label: "Incumplimiento"
@@ -325,6 +328,7 @@ es:
       enabled: "Activar comprobaciones automáticas"
       check_interval: "Intervalo de comprobación (minutos)"
       dismiss_apps: "Cerrar apps antes de capturar (mostrar inicio)"
+      save_options: "Guardar opciones de comprobación"
       run_test_check: "Ejecutar comprobación (test staging)"
       run_test_check_confirm: "¿Disparar una comprobación del fondo ahora? Se enviará una solicitud de captura a tu dispositivo."
       run_test_check_hint: "Solo staging. Omite el intervalo configurado y ejecuta el mismo flujo que el job programado para tu cuenta."

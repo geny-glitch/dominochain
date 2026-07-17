@@ -74,7 +74,10 @@ fr:
       empty: "Aucune conséquence pour l'instant. Ajoutez-en une pour réagir quand un contrôle échoue."
       add_consequence: "Ajouter une conséquence"
       edit_trigger: "Modifier le déclencheur"
+      edit_action: "Modifier"
+      done_editing: "Terminé"
       remove_action: "Retirer"
+      save: "Enregistrer le scénario"
       events:
         mismatch:
           label: "Non-conformité"
@@ -325,6 +328,7 @@ fr:
       enabled: "Activer les vérifications automatiques"
       check_interval: "Fréquence de vérification (minutes)"
       dismiss_apps: "Fermer les apps avant capture (afficher l'écran d'accueil)"
+      save_options: "Enregistrer les options de contrôle"
       run_test_check: "Lancer une vérification (test staging)"
       run_test_check_confirm: "Déclencher une vérification du fond d'écran maintenant ? Une demande de capture sera envoyée à ton appareil."
       run_test_check_hint: "Staging uniquement. Ignore l'intervalle configuré et exécute le même flux que le job planifié pour ton compte."

@@ -23,6 +23,10 @@
     <% end %>
   </div>
 
+  <div class="ds-beta-control-actions" data-wallpaper-dirty-save="list" hidden>
+    <%= submit_tag t("beta.scenarios.save"), class: "ds-btn ds-btn--primary ds-btn--sm" %>
+  </div>
+
   <%= render "wallpaper_consequence_composer",
         allowed_actions: allowed_actions,
         photos: photos %>

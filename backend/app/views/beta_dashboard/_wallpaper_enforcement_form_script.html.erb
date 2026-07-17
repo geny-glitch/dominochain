@@ -18,47 +18,62 @@
     card.querySelectorAll("[data-wallpaper-enforcement-options]").forEach(function (options) {
       options.hidden = !enabled;
     });
-
-    card.querySelectorAll("[data-wallpaper-enforcement-save-bar]").forEach(function (saveBar) {
-      if (!enabled) {
-        saveBar.hidden = true;
-        saveBar.setAttribute("aria-hidden", "true");
-      }
-    });
   }
 
-  function setSaveBarVisible(saveBar, visible) {
-    if (!saveBar) return;
-    saveBar.hidden = !visible;
-    saveBar.setAttribute("aria-hidden", visible ? "false" : "true");
+  function setSaveVisible(el, visible) {
+    if (!el) return;
+    el.hidden = !visible;
+    el.setAttribute("aria-hidden", visible ? "false" : "true");
   }
 
-  function markFormDirty(form) {
-    var saveBar = form.querySelector("[data-wallpaper-enforcement-save-bar]");
-    setSaveBarVisible(saveBar, true);
+  function markScenarioDirty(card) {
+    if (!card) return;
+    setSaveVisible(card.querySelector("[data-wallpaper-dirty-save]"), true);
+  }
+
+  function markOptionsDirty(form) {
+    setSaveVisible(form.querySelector('[data-wallpaper-dirty-save="options"]'), true);
+  }
+
+  function markListDirty(form) {
+    setSaveVisible(form.querySelector('[data-wallpaper-dirty-save="list"]'), true);
+  }
+
+  function markFormDirty(form, scopeEl) {
+    var card = scopeEl && scopeEl.closest ? scopeEl.closest("[data-wallpaper-scenario-card]") : null;
+    if (card) {
+      markScenarioDirty(card);
+      return;
+    }
+    if (scopeEl && scopeEl.matches && scopeEl.matches("[data-wallpaper-scenario-card]")) {
+      markScenarioDirty(scopeEl);
+      return;
+    }
+    markOptionsDirty(form);
   }
 
   function initDirtySaveBar(form) {
-    var saveBar = form.querySelector("[data-wallpaper-enforcement-save-bar]");
-    if (!saveBar) return;
+    function onDirty(event) {
+      var target = event.target;
+      if (!target || target.closest("[data-wallpaper-consequence-composer]")) return;
 
-    var dirty = false;
+      var card = target.closest("[data-wallpaper-scenario-card]");
+      if (card) {
+        markScenarioDirty(card);
+        return;
+      }
 
-    function markDirty() {
-      if (dirty) return;
-      dirty = true;
-      setSaveBarVisible(saveBar, true);
+      if (target.closest("[data-wallpaper-options-fields]")) {
+        markOptionsDirty(form);
+      }
     }
 
-    function resetDirty() {
-      dirty = false;
-      setSaveBarVisible(saveBar, false);
-    }
-
-    form.addEventListener("input", markDirty);
-    form.addEventListener("change", markDirty);
-    form.addEventListener("submit", resetDirty);
+    form.addEventListener("input", onDirty);
+    form.addEventListener("change", onDirty);
   }
+
+  var ICON_PENCIL = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
+  var ICON_TRASH = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>';
 
   function csrfToken() {
     var meta = document.querySelector('meta[name="csrf-token"]');
@@ -242,19 +257,120 @@
     var schema = (bootstrap.actionSchemas && bootstrap.actionSchemas[possibilityId]) || {};
     var label = (bootstrap.i18n.actions[possibilityId] && bootstrap.i18n.actions[possibilityId].label) || possibilityId;
     var summary = actionSummary(bootstrap, possibilityId, config);
+    var editableKeys = Object.keys(schema).filter(function (key) { return schema[key].ui !== "hidden"; });
     var html = '<li class="ds-wallpaper-scenario-action" data-scenario-action data-possibility-id="' + escapeHtml(possibilityId) + '">';
     html += '<input type="hidden" name="' + prefix + "[actions][" + actionIndex + '][possibility_id]" value="' + escapeHtml(possibilityId) + '">';
-    Object.keys(schema).forEach(function (key) {
-      if (schema[key].ui === "hidden") return;
+    editableKeys.forEach(function (key) {
       var value = config[key] != null ? config[key] : (schema[key].default != null ? schema[key].default : "");
-      html += '<input type="hidden" name="' + prefix + "[actions][" + actionIndex + "][config][" + key + ']" value="' + escapeHtml(value) + '">';
+      html += '<input type="hidden" name="' + prefix + "[actions][" + actionIndex + "][config][" + key + ']" value="' + escapeHtml(value) + '" data-action-config-key="' + escapeHtml(key) + '">';
     });
-    html += '<span class="ds-wallpaper-scenario-action-label">' + escapeHtml(label);
+    html += '<div class="ds-wallpaper-scenario-action-main">';
+    html += '<span class="ds-wallpaper-scenario-action-label" data-scenario-action-label">' + escapeHtml(label);
     if (summary) html += " · " + escapeHtml(summary);
     html += "</span>";
-    html += '<button type="button" class="ds-btn ds-btn--secondary ds-btn--sm" data-scenario-remove-action>' +
-      escapeHtml(bootstrap.i18n.removeAction) + "</button></li>";
+    html += '<div class="ds-wallpaper-scenario-action-buttons">';
+    if (editableKeys.length > 0) {
+      html += '<button type="button" class="ds-btn ds-btn--secondary ds-btn--icon ds-btn--sm" data-scenario-edit-action title="' +
+        escapeHtml(bootstrap.i18n.editAction) + '" aria-label="' + escapeHtml(bootstrap.i18n.editAction) + '">' +
+        ICON_PENCIL + "</button>";
+    }
+    html += '<button type="button" class="ds-btn ds-btn--secondary ds-btn--icon ds-btn--sm" data-scenario-remove-action title="' +
+      escapeHtml(bootstrap.i18n.removeAction) + '" aria-label="' + escapeHtml(bootstrap.i18n.removeAction) + '">' +
+      ICON_TRASH + "</button>";
+    html += "</div></div>";
+    html += '<div class="ds-wallpaper-scenario-action-editor" data-scenario-action-editor hidden></div>';
+    html += "</li>";
     return html;
+  }
+
+  function readActionConfig(actionLi) {
+    var config = {};
+    actionLi.querySelectorAll("[data-action-config-key]").forEach(function (input) {
+      config[input.getAttribute("data-action-config-key")] = input.value;
+    });
+    return config;
+  }
+
+  function writeActionConfig(actionLi, config) {
+    Object.keys(config).forEach(function (key) {
+      var input = actionLi.querySelector('[data-action-config-key="' + key + '"]');
+      if (input) input.value = config[key] == null ? "" : config[key];
+    });
+  }
+
+  function refreshActionLabel(bootstrap, actionLi) {
+    var possibilityId = actionLi.getAttribute("data-possibility-id");
+    var label = (bootstrap.i18n.actions[possibilityId] && bootstrap.i18n.actions[possibilityId].label) || possibilityId;
+    var summary = actionSummary(bootstrap, possibilityId, readActionConfig(actionLi));
+    var labelEl = actionLi.querySelector("[data-scenario-action-label]");
+    if (!labelEl) return;
+    labelEl.textContent = summary ? (label + " · " + summary) : label;
+  }
+
+  function buildActionEditorHtml(bootstrap, possibilityId, config) {
+    var schema = (bootstrap.actionSchemas && bootstrap.actionSchemas[possibilityId]) || {};
+    var labels = (bootstrap.i18n.actions[possibilityId] && bootstrap.i18n.actions[possibilityId].fields) || {};
+    var html = "";
+    Object.keys(schema).forEach(function (key) {
+      var field = schema[key];
+      if (field.ui === "hidden") return;
+      var label = labels[key] || key;
+      var value = config[key] != null ? config[key] : (field.default != null ? field.default : "");
+      html += '<div class="ds-form-group">';
+      if (field.ui === "number" || field.type === "integer") {
+        html += '<label class="ds-form-label">' + escapeHtml(label) + "</label>";
+        html += '<input type="number" class="ds-input" data-action-edit-key="' + escapeHtml(key) + '"';
+        if (field.min != null) html += ' min="' + field.min + '"';
+        if (field.max != null) html += ' max="' + field.max + '"';
+        html += ' value="' + escapeHtml(value) + '">';
+      } else if (field.ui === "leverage_target") {
+        html += '<label class="ds-form-label">' + escapeHtml(label) + "</label>";
+        html += '<select class="ds-input" data-action-edit-key="target_mode">';
+        html += '<option value="random"' + (value === "random" ? " selected" : "") + ">" + escapeHtml(bootstrap.i18n.targetRandom) + "</option>";
+        html += '<option value="specific"' + (value === "specific" ? " selected" : "") + ">" + escapeHtml(bootstrap.i18n.targetSpecific) + "</option>";
+        html += "</select>";
+      } else if (field.ui === "leverage_photo_id") {
+        html += '<label class="ds-form-label">' + escapeHtml(label) + "</label>";
+        html += '<select class="ds-input" data-action-edit-key="photo_id">';
+        html += '<option value=""></option>';
+        (bootstrap.photos || []).forEach(function (photo) {
+          html += '<option value="' + escapeHtml(photo.id) + '"' + (String(value) === String(photo.id) ? " selected" : "") + ">" +
+            escapeHtml(photo.label) + "</option>";
+        });
+        html += "</select>";
+      }
+      html += "</div>";
+    });
+    html += '<div class="ds-beta-control-actions">';
+    html += '<button type="button" class="ds-btn ds-btn--primary ds-btn--sm" data-scenario-done-edit-action>' +
+      escapeHtml(bootstrap.i18n.doneEditing) + "</button>";
+    html += "</div>";
+    return html;
+  }
+
+  function openActionEditor(bootstrap, actionLi) {
+    var editor = actionLi.querySelector("[data-scenario-action-editor]");
+    var editBtn = actionLi.querySelector("[data-scenario-edit-action]");
+    if (!editor) return;
+    var possibilityId = actionLi.getAttribute("data-possibility-id");
+    editor.innerHTML = buildActionEditorHtml(bootstrap, possibilityId, readActionConfig(actionLi));
+    editor.hidden = false;
+    if (editBtn) editBtn.hidden = true;
+  }
+
+  function closeActionEditor(bootstrap, actionLi) {
+    var editor = actionLi.querySelector("[data-scenario-action-editor]");
+    var editBtn = actionLi.querySelector("[data-scenario-edit-action]");
+    if (!editor) return;
+    var config = {};
+    editor.querySelectorAll("[data-action-edit-key]").forEach(function (input) {
+      config[input.getAttribute("data-action-edit-key")] = input.value;
+    });
+    writeActionConfig(actionLi, config);
+    refreshActionLabel(bootstrap, actionLi);
+    editor.innerHTML = "";
+    editor.hidden = true;
+    if (editBtn) editBtn.hidden = false;
   }
 
   function buildTriggerFieldsHtml(bootstrap, eventId, prefix, values) {
@@ -282,7 +398,7 @@
           var id = "composer_mode_" + eventId + "_" + mode + "_" + Date.now() + "_" + i;
           var checked = mode === value ? " checked" : "";
           html += '<label class="ds-radio-option" for="' + id + '">';
-          html += '<input class="ds-radio-option__input" type="radio" name="' + prefix + "[trigger][mode]" id="' + id + '" value="' + escapeHtml(mode) + '"' + checked + ">";
+          html += '<input class="ds-radio-option__input" type="radio" name="' + prefix + '[trigger][mode]" id="' + id + '" value="' + escapeHtml(mode) + '"' + checked + ">";
           html += '<span class="ds-radio-option__content"><span class="ds-radio-option__label">' +
             escapeHtml((bootstrap.i18n.modes && bootstrap.i18n.modes[mode]) || mode) + "</span>";
           if (bootstrap.i18n.modeHints && bootstrap.i18n.modeHints[mode]) {
@@ -313,31 +429,29 @@
     html += '<header class="ds-wallpaper-scenario-card-header"><div>';
     html += '<p class="ds-wallpaper-scenario-card-title">' + escapeHtml(title) + "</p>";
     html += '<p class="ds-beta-control-hint" data-scenario-trigger-summary></p>';
-    html += '</div><button type="button" class="ds-btn ds-btn--secondary ds-btn--sm" data-scenario-edit-trigger>' +
-      escapeHtml(bootstrap.i18n.editTrigger) + "</button></header>";
+    html += '</div><button type="button" class="ds-btn ds-btn--secondary ds-btn--icon ds-btn--sm" data-scenario-edit-trigger title="' +
+      escapeHtml(bootstrap.i18n.editTrigger) + '" aria-label="' + escapeHtml(bootstrap.i18n.editTrigger) + '">' +
+      ICON_PENCIL + "</button></header>";
     html += '<div class="ds-wallpaper-scenario-trigger" data-scenario-trigger-fields hidden>';
     html += buildTriggerFieldsHtml(bootstrap, eventId, prefix, triggerValues);
     html += "</div>";
     html += '<ul class="ds-wallpaper-scenario-actions" data-scenario-actions>';
     html += buildActionRow(bootstrap, prefix, 0, action.possibility_id, action.config);
-    html += "</ul></article>";
+    html += "</ul>";
+    html += '<div class="ds-wallpaper-scenario-card-footer" data-wallpaper-dirty-save hidden>';
+    html += '<button type="submit" class="ds-btn ds-btn--primary ds-btn--sm" data-scenario-save>' +
+      escapeHtml(bootstrap.i18n.saveScenario) + "</button>";
+    html += "</div></article>";
     return html;
   }
 
   function collectTriggerDraft(composer) {
     var values = {};
-    composer.querySelectorAll("[data-composer-trigger-fields] [name]").forEach(function (input) {
-      if (input.type === "radio" && !input.checked) return;
-      var match = input.nameAttribute("data-scenario-trigger-key") || (input.name.match(/\[trigger\]\[([^\]]+)\]/) || [])[1];
-      if (!match && input.name.indexOf("[mode]") !== -1) match = "mode";
-      if (match) values[match] = input.value;
-    });
-    // Draft fields use temporary names without full prefix
     composer.querySelectorAll("[data-composer-trigger-fields] input, [data-composer-trigger-fields] select").forEach(function (input) {
       if (input.type === "radio" && !input.checked) return;
       var key = input.getAttribute("data-composer-trigger-key") || input.getAttribute("data-scenario-trigger-key");
       if (!key && input.name) {
-        var m = input.name.match(/\[([^\]]+)\]$/);
+        var m = String(input.name).match(/\[([^\]]+)\]$/) || String(input.name).match(/_([a-z0-9_]+)$/i);
         if (m) key = m[1];
       }
       if (key) values[key] = input.value;
@@ -444,8 +558,6 @@
   }
 
   function resetComposer(composer) {
-    var panel = composer.querySelector("[data-composer-panel]");
-    if (panel) panel.hidden = true;
     var eventSelect = composer.querySelector("[data-composer-event]");
     var actionSelect = composer.querySelector("[data-composer-action]");
     if (eventSelect) eventSelect.value = "";
@@ -470,19 +582,6 @@
     updateEmptyState(root);
 
     composer.addEventListener("click", function (event) {
-      var openBtn = event.target.closest("[data-composer-open]");
-      if (openBtn && composer.contains(openBtn)) {
-        composer.querySelector("[data-composer-panel]").hidden = false;
-        showComposerStep(composer, "event");
-        return;
-      }
-
-      var cancelBtn = event.target.closest("[data-composer-cancel]");
-      if (cancelBtn && composer.contains(cancelBtn)) {
-        resetComposer(composer);
-        return;
-      }
-
       var backBtn = event.target.closest("[data-composer-back]");
       if (backBtn && composer.contains(backBtn)) {
         showComposerStep(composer, backBtn.getAttribute("data-composer-back"));
@@ -533,7 +632,7 @@
 
         updateEmptyState(root);
         resetComposer(composer);
-        markFormDirty(form);
+        markScenarioDirty(card);
       }
     });
 
@@ -564,6 +663,20 @@
         return;
       }
 
+      var editActionBtn = event.target.closest("[data-scenario-edit-action]");
+      if (editActionBtn) {
+        var actionToEdit = editActionBtn.closest("[data-scenario-action]");
+        if (actionToEdit) openActionEditor(bootstrap, actionToEdit);
+        return;
+      }
+
+      var doneEditBtn = event.target.closest("[data-scenario-done-edit-action]");
+      if (doneEditBtn) {
+        var actionEdited = doneEditBtn.closest("[data-scenario-action]");
+        if (actionEdited) closeActionEditor(bootstrap, actionEdited);
+        return;
+      }
+
       var removeBtn = event.target.closest("[data-scenario-remove-action]");
       if (removeBtn) {
         var actionLi = removeBtn.closest("[data-scenario-action]");
@@ -574,11 +687,12 @@
         if (remaining.length === 0) {
           scenarioCard.remove();
           reindexScenarioCards(root);
+          updateEmptyState(root);
+          markListDirty(form);
         } else {
           reindexActions(scenarioCard);
+          markScenarioDirty(scenarioCard);
         }
-        updateEmptyState(root);
-        markFormDirty(form);
       }
     });
 
@@ -589,6 +703,20 @@
         syncScenarioModeFields(card);
       }
     });
+
+    root.addEventListener("input", syncOpenActionEditor);
+    root.addEventListener("change", syncOpenActionEditor);
+
+    function syncOpenActionEditor(event) {
+      var editInput = event.target.closest("[data-action-edit-key]");
+      if (!editInput) return;
+      var actionLi = editInput.closest("[data-scenario-action]");
+      if (!actionLi) return;
+      var key = editInput.getAttribute("data-action-edit-key");
+      var hidden = actionLi.querySelector('[data-action-config-key="' + key + '"]');
+      if (hidden) hidden.value = editInput.value;
+      refreshActionLabel(bootstrap, actionLi);
+    }
   }
 
   function initWallpaperEnforcementForm(form) {

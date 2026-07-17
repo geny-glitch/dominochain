@@ -2,6 +2,7 @@ package app.dominochain.mobile
 
 import android.content.Context
 import android.util.Log
+import app.dominochain.mobile.api.RetrofitClient
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import kotlinx.coroutines.Dispatchers
@@ -27,7 +28,7 @@ class PermissionsWorker(
 
             val result = PermissionsChecker.check(applicationContext)
 
-            app.dominochain.mobile.api.RetrofitClient.sessionManager = sessionManager
+            RetrofitClient.sessionManager = sessionManager
             val repository = DeviceRepository()
             repository.reportPermissionsStatus(deviceId, result.allOk, result.missingReasons)
 

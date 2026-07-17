@@ -22,6 +22,10 @@ en:
           label: "Wallpaper"
           subtitle: "Android app · wallpaper compliance"
           events: "Events: mismatch, permissions, offline"
+        leverage_photo:
+          label: "Leverage photo"
+          subtitle: "Self-imposed photo · cryptographic time-lock"
+          events: "Events: timer start, unlock"
       actions:
         chaster:
           label: "Chaster"
@@ -72,6 +76,10 @@ en:
       showcase_title: "Showcase"
       showcase_rates_html: "Quiz %{quiz}s/pt · Snake %{snake}s · Dino %{dino}s · Tetris %{tetris}s/line"
       configure_showcase: "Configure Showcase"
+      leverage_photo_title: "Leverage photo"
+      leverage_photo_hint: "Photo ready — start the timer when you want."
+      leverage_photo_until: "Locked until %{time}"
+      open_leverage_photo: "Open"
       widgets_empty: "No active widgets in the catalog. Enable sources/actions in settings."
       open_catalog: "Open catalog"
       events_title: "Recent events"

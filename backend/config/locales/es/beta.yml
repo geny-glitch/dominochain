@@ -22,6 +22,10 @@ es:
           label: "Fondo de pantalla"
           subtitle: "App Android · cumplimiento del fondo"
           events: "Eventos: mismatch, permisos, sin conexión"
+        leverage_photo:
+          label: "Foto de presión"
+          subtitle: "Foto autoimpuesta · bloqueo temporal criptográfico"
+          events: "Eventos: inicio del temporizador, desbloqueo"
       actions:
         chaster:
           label: "Chaster"
@@ -72,6 +76,10 @@ es:
       showcase_title: "Vitrina"
       showcase_rates_html: "Quiz %{quiz}s/pt · Snake %{snake}s · Dino %{dino}s · Tetris %{tetris}s/línea"
       configure_showcase: "Configurar vitrina"
+      leverage_photo_title: "Foto de presión"
+      leverage_photo_hint: "Foto lista — inicia el temporizador cuando quieras."
+      leverage_photo_until: "Bloqueada hasta %{time}"
+      open_leverage_photo: "Abrir"
       widgets_empty: "No hay widgets activos en el catálogo. Activa fuentes/acciones en ajustes."
       open_catalog: "Abrir catálogo"
       events_title: "Últimos eventos"

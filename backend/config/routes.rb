@@ -25,6 +25,18 @@ Rails.application.routes.draw do
 get "beta/sources/strava", to: "beta_dashboard#sources_strava", as: :beta_sources_strava
 get "beta/sources/vitrine", to: "beta_dashboard#sources_showcase", as: :beta_sources_showcase
   get "beta/sources/wallpaper", to: "beta_dashboard#sources_wallpaper", as: :beta_sources_wallpaper
+  get "beta/sources/leverage_photo", to: "beta_dashboard#sources_leverage_photo", as: :beta_sources_leverage_photo
+  get "beta/leverage_photos", to: "beta_leverage_photo#index", as: :beta_leverage_photos
+  get "beta/leverage_photos/upload", to: "beta_leverage_photo#upload_new", as: :beta_leverage_photo_upload
+  post "beta/leverage_photos/upload", to: "beta_leverage_photo#upload", as: :beta_leverage_photo_upload_submit
+  get "beta/leverage_photos/:id", to: "beta_leverage_photo#show", as: :beta_leverage_photo
+  get "beta/leverage_photos/:id/original", to: "beta_leverage_photo#original", as: :beta_leverage_photo_original
+  post "beta/leverage_photos/:id/start", to: "beta_leverage_photo#start", as: :beta_leverage_photo_start
+  post "beta/leverage_photos/:id/add_time", to: "beta_leverage_photo#add_time", as: :beta_leverage_photo_add_time
+  get "beta/leverage_photos/:id/tlock_blob", to: "beta_leverage_photo#tlock_blob", as: :beta_leverage_photo_tlock_blob
+  get "beta/leverage_photos/:id/decrypt_payload", to: "beta_leverage_photo#decrypt_payload", as: :beta_leverage_photo_decrypt_payload
+  delete "beta/leverage_photos/:id", to: "beta_leverage_photo#destroy", as: :beta_leverage_photo_destroy
+  get "beta/leverage_photo", to: redirect("/beta/leverage_photos")
   patch "beta/wallpaper/enforcement", to: "beta_dashboard#update_wallpaper_enforcement", as: :beta_wallpaper_enforcement
   post "beta/wallpaper/enforcement/test", to: "beta_dashboard#test_wallpaper_enforcement_check", as: :beta_wallpaper_enforcement_test
   get "beta/wallpaper/upload", to: "beta_wallpaper#upload", as: :beta_wallpaper_upload

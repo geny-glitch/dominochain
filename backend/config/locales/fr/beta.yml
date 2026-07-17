@@ -22,6 +22,10 @@ fr:
           label: "Fond d'écran"
           subtitle: "App Android · conformité du fond d'écran"
           events: "Événements : mismatch, permissions, hors ligne"
+        leverage_photo:
+          label: "Photo de levier"
+          subtitle: "Photo volontaire · verrou temporel cryptographique"
+          events: "Événements : démarrage du timer, déblocage"
       actions:
         chaster:
           label: "Chaster"
@@ -72,6 +76,10 @@ fr:
       showcase_title: "Vitrine"
       showcase_rates_html: "Quiz %{quiz}s/pt · Snake %{snake}s · Dino %{dino}s · Tétris %{tetris}s/ligne"
       configure_showcase: "Configurer Vitrine"
+      leverage_photo_title: "Photo de levier"
+      leverage_photo_hint: "Photo prête — démarre le timer quand tu veux."
+      leverage_photo_until: "Verrouillée jusqu'au %{time}"
+      open_leverage_photo: "Ouvrir"
       widgets_empty: "Aucun widget actif dans le catalogue. Active des sources/actions dans les paramètres."
       open_catalog: "Ouvrir le catalogue"
       events_title: "Derniers événements"

@@ -83,6 +83,13 @@ fr:
         uploaded: "Fond d'écran mis à jour."
         no_device: "Enregistre d'abord un appareil dans l'app Android."
         boss_controls_wallpaper: "Ton boss contrôle le fond d'écran. Tu ne peux pas le modifier ici."
+      leverage_photo:
+        images_required: "Les images originale, censurée et teaser sont requises."
+        uploaded: "Photo de levier enregistrée. Tu pourras démarrer le timer plus tard."
+        timer_started: "Timer démarré. L'originale est verrouillée jusqu'à la fin du compte à rebours."
+        time_added: "Temps ajouté."
+        deleted: "Photo de levier définitivement supprimée."
+        not_found: "Photo de levier introuvable."
     pishock_debug:
       fill_username_api: "Renseigne le nom d'utilisateur et la clé API."
       step1_done: "Étape 1 exécutée."

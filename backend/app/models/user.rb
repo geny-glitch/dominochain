@@ -25,6 +25,7 @@ class User < ApplicationRecord
   has_many :strava_goal_checks, dependent: :destroy
   has_one :wallpaper_enforcement_config, dependent: :destroy
   has_many :wallpaper_compliance_checks, dependent: :destroy
+  has_many :leverage_photos, dependent: :destroy
 
   validates :nickname, presence: true, uniqueness: true
   validates :nickname, format: { with: /\A[a-zA-Z0-9_]+\z/, message: :invalid_nickname_format }

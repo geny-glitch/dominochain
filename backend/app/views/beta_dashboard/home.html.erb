@@ -4,7 +4,8 @@
 <% show_strava = beta_catalog_source_enabled?("strava") %>
 <% show_cigarettes = beta_catalog_source_enabled?("cigarettes") %>
 <% show_showcase = beta_catalog_source_enabled?("showcase") %>
-<% show_widgets = show_pishock || show_strava || show_cigarettes || show_showcase %>
+<% show_leverage = beta_catalog_source_enabled?("leverage_photo") && @leverage_photo.present? %>
+<% show_widgets = show_pishock || show_strava || show_cigarettes || show_showcase || show_leverage %>
 
 <header class="ds-beta-page-head">
   <h1 class="ds-beta-page-title"><%= t("beta.home.greeting", nickname: current_user.nickname) %></h1>
@@ -110,6 +111,28 @@
             ) %>
           </p>
           <%= link_to t("beta.home.configure_showcase"), beta_sources_showcase_path, class: "ds-btn ds-btn--ghost ds-btn--sm" %>
+        </article>
+      <% end %>
+
+      <% if show_leverage %>
+        <article class="ds-beta-home-card">
+          <div class="ds-beta-home-card-head">
+            <h3 class="ds-beta-home-card-title"><%= t("beta.home.leverage_photo_title") %></h3>
+            <span class="ds-beta-home-pill <%= @leverage_photo.active? ? "ds-beta-home-pill--on" : "" %>">
+              <%= t("leverage_photo.status.#{@leverage_photo.status}") %>
+            </span>
+          </div>
+          <% if @leverage_photo.teaser_image.attached? %>
+            <%= image_tag url_for(@leverage_photo.teaser_image), alt: t("leverage_photo.show.teaser_alt"), style: "image-rendering:pixelated;margin:0.5rem 0;" %>
+          <% end %>
+          <p class="ds-beta-home-muted">
+            <% if @leverage_photo.active? && @leverage_photo.locked_until %>
+              <%= t("beta.home.leverage_photo_until", time: l(@leverage_photo.locked_until, format: :short)) %>
+            <% else %>
+              <%= t("beta.home.leverage_photo_hint") %>
+            <% end %>
+          </p>
+          <%= link_to t("beta.home.open_leverage_photo"), beta_leverage_photos_path, class: "ds-btn ds-btn--ghost ds-btn--sm" %>
         </article>
       <% end %>
     </div>

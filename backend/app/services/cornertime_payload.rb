@@ -4,8 +4,11 @@ module CornertimePayload
   module_function
 
   def config_json(config)
+    locale = beta_locale_for(config.user)
     config.client_config_payload.merge(
-      source_enabled: BetaCatalog.new(config.user).source_enabled?("cornertime")
+      source_enabled: BetaCatalog.new(config.user).source_enabled?("cornertime"),
+      locale: locale.to_s,
+      voice: voice_prompts_for(locale)
     )
   end
 
@@ -27,6 +30,20 @@ module CornertimePayload
       detected_at: violation.detected_at&.iso8601,
       motion_score: violation.motion_score,
       actions_executed: violation.actions_executed
+    }
+  end
+
+  def beta_locale_for(user)
+    raw = user&.beta_ui_prefs&.dig("locale")
+    sym = raw.to_s.downcase.tr("_", "-").split("-").first.to_sym
+    SetLocale::SUPPORTED_LOCALES.include?(sym) ? sym : I18n.default_locale
+  end
+
+  def voice_prompts_for(locale)
+    {
+      intro: I18n.t("cornertime.session.voice_intro", locale: locale),
+      stop_moving: I18n.t("cornertime.session.voice_stop_moving", locale: locale),
+      return_to_position: I18n.t("cornertime.session.voice_return_to_position", locale: locale)
     }
   end
 end

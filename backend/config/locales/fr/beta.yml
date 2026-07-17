@@ -50,6 +50,7 @@ fr:
         add_time:
           label: "Secondes Chaster à ajouter"
           fields:
+            seconds: "Secondes"
             seconds_placeholder: "Secondes"
         freeze:
           label: "Geler le cadenas"
@@ -68,6 +69,59 @@ fr:
             seconds_placeholder: "Secondes"
         delete:
           label: "Supprimer définitivement une photo leverage"
+    scenarios:
+      section_title: "Conséquences"
+      empty: "Aucune conséquence pour l'instant. Ajoutez-en une pour réagir quand un contrôle échoue."
+      add_consequence: "Ajouter une conséquence"
+      edit_trigger: "Modifier le déclencheur"
+      remove_action: "Retirer"
+      events:
+        mismatch:
+          label: "Non-conformité"
+        permissions_lost:
+          label: "Permissions perdues"
+        app_unreachable:
+          label: "App injoignable"
+      triggers:
+        mismatch:
+          delay_minutes: "Délai avant application (minutes)"
+          mode: "Quand appliquer"
+          consecutive_threshold: "Échecs consécutifs"
+        permissions_lost:
+          delay_minutes: "Délai avant application (minutes)"
+        app_unreachable:
+          threshold_minutes: "Temps sans contact (minutes)"
+          delay_minutes: "Délai avant application (minutes)"
+      composer:
+        title: "Nouvelle conséquence"
+        pick_event: "Choisir quand l'appliquer"
+        event_blank: "Choisir un événement"
+        configure_trigger: "Configurer le déclencheur"
+        reuse_scenario: "Cet événement a déjà un scénario — votre action réutilisera les mêmes réglages de déclenchement."
+        pick_action: "Choisir ce qui se passe"
+        action_blank: "Choisir une action"
+        configure_action: "Configurer l'action"
+        cancel: "Annuler"
+        back: "Retour"
+        next: "Suivant"
+        confirm: "Ajouter"
+      summary:
+        delay_minutes:
+          one: "délai %{count} min"
+          other: "délai %{count} min"
+        consecutive_threshold:
+          one: "%{count} échec"
+          other: "%{count} échecs"
+        threshold_minutes:
+          one: "%{count} min sans contact"
+          other: "%{count} min sans contact"
+        seconds:
+          one: "%{count} seconde"
+          other: "%{count} secondes"
+        freeze: "Gel"
+        pishock: "Intensité %{intensity} · %{duration}s"
+        leverage_lock: "%{seconds}s · %{mode}"
+        leverage_delete: "%{mode}"
     events:
       sources:
         puryfi: "Purify"
@@ -353,7 +407,7 @@ fr:
         low: "Basse — ignore les petits mouvements"
         medium: "Moyenne"
         high: "Haute — réagit aux petits mouvements"
-      detector_hint: "Les mouvements sont détectés en comparant les images caméra successives (approche type Diffy)."
+      detector_hint: "Les mouvements brusques sont détectés tout de suite. Une sortie lente de la pose calibrée est détectée après un court maintien (le petit rééquilibrage est toléré)."
       cooldown: "Délai entre sanctions (secondes)"
       calibration: "Délai de calibration (secondes)"
       sanctions_title: "Sanctions en cas de mouvement"

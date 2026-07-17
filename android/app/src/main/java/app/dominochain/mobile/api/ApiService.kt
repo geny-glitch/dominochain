@@ -112,12 +112,21 @@ data class NameRequest(val name: String?)
 data class PermissionsRequest(val permissions_ok: Boolean, val permissions_missing: List<String>? = null)
 data class CigaretteEntryRequest(val count: Int = 1)
 
+data class CornertimeVoicePrompts(
+    val intro: String? = null,
+    val stop_moving: String? = null,
+    val return_to_position: String? = null
+)
+
 data class CornertimeConfigResponse(
     val sensitivity: String? = null,
     val detector: String? = null,
     val diff_sensitivity: Double? = null,
     val pixel_threshold: Int? = null,
     val motion_threshold: Double? = null,
+    val drift_threshold: Double? = null,
+    val drift_hold_ms: Int? = null,
+    val drift_pixel_delta: Int? = null,
     val cell_active_below: Int? = null,
     val matrix_width: Int? = null,
     val matrix_height: Int? = null,
@@ -126,7 +135,9 @@ data class CornertimeConfigResponse(
     val pixel_change_delta: Double? = null,
     val violation_cooldown_seconds: Int? = null,
     val calibration_seconds: Int? = null,
-    val source_enabled: Boolean? = null
+    val source_enabled: Boolean? = null,
+    val locale: String? = null,
+    val voice: CornertimeVoicePrompts? = null
 )
 
 data class CornertimeSessionRequest(val client: String = "android")

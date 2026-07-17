@@ -10,6 +10,7 @@
 <section class="ds-beta-section ds-beta-section--first">
   <div class="ds-beta-control-card" id="cornertime-monitor"
        data-source-enabled="<%= @source_enabled %>"
+       data-speech-lang="<%= (@config_payload[:locale] || CornertimePayload.beta_locale_for(current_user)).to_s.tr('_', '-') %>"
        data-config='<%= @config_payload.to_json %>'
        data-start-url="<%= cornertime_session_path %>"
        data-stop-url-template="<%= cornertime_session_stop_path(id: ":id") %>"
@@ -29,7 +30,10 @@
          source_disabled: t("cornertime.session.source_disabled"),
          no_sanctions: t("cornertime.session.no_sanctions"),
          start: t("cornertime.session.start"),
-         stop: t("cornertime.session.stop")
+         stop: t("cornertime.session.stop"),
+         voice_intro: (@config_payload.dig(:voice, :intro) || t("cornertime.session.voice_intro")),
+         voice_stop_moving: (@config_payload.dig(:voice, :stop_moving) || t("cornertime.session.voice_stop_moving")),
+         voice_return_to_position: (@config_payload.dig(:voice, :return_to_position) || t("cornertime.session.voice_return_to_position"))
        }.to_json %>'>
     <% unless @source_enabled %>
       <p class="ds-beta-control-hint" id="cornertime-disabled-hint"><%= t("cornertime.session.source_disabled") %></p>
@@ -41,6 +45,18 @@
     <div class="ds-form-group">
       <video id="cornertime-video" autoplay playsinline muted style="width:100%;max-width:480px;border-radius:12px;background:#111;aspect-ratio:3/4;object-fit:cover;"></video>
       <canvas id="cornertime-canvas" width="160" height="120" hidden aria-hidden="true"></canvas>
+    </div>
+
+    <div class="ds-form-group">
+      <label class="ds-checkbox-label" for="cornertime-voice">
+        <input type="checkbox" id="cornertime-voice" name="cornertime_voice" checked>
+        <%= t("cornertime.session.voice_enabled") %>
+      </label>
+    </div>
+
+    <div class="ds-form-group" id="cornertime-voice-pick-wrap">
+      <label class="ds-form-label" for="cornertime-voice-pick"><%= t("cornertime.session.voice_pick") %></label>
+      <select id="cornertime-voice-pick" class="ds-select" name="cornertime_voice_pick"></select>
     </div>
 
     <p class="ds-beta-control-text" id="cornertime-status" role="status"><%= t("cornertime.session.status_idle") %></p>

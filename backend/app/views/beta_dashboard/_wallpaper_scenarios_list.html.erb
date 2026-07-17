@@ -1,0 +1,29 @@
+<%# locals: (scenario_set:, leverage_photos: []) %>
+<% scenario_set ||= ScenarioSet.new(scenarios: []) %>
+<% photos = leverage_photos.presence || @leverage_photos || [] %>
+<% allowed_actions = BetaEvents::SourceRegistry.allowed_for(:wallpaper, :default) %>
+<% unless @leverage_action_enabled %>
+  <% allowed_actions = allowed_actions.reject { |pid| BetaEvents::ActionRegistry.find(pid)&.catalog_id == "leverage_photo" } %>
+<% end %>
+
+<div class="ds-wallpaper-scenarios" data-wallpaper-scenarios>
+  <h3 class="ds-section-subtitle"><%= t("beta.scenarios.section_title") %></h3>
+
+  <div data-wallpaper-scenarios-list>
+    <% if scenario_set.empty? %>
+      <p class="ds-beta-control-hint" data-wallpaper-scenarios-empty><%= t("beta.scenarios.empty") %></p>
+    <% else %>
+      <p class="ds-beta-control-hint" data-wallpaper-scenarios-empty hidden><%= t("beta.scenarios.empty") %></p>
+      <% scenario_set.scenarios.each_with_index do |scenario, index| %>
+        <%= render "wallpaper_scenario_card",
+              scenario: scenario,
+              index: index,
+              photos: photos %>
+      <% end %>
+    <% end %>
+  </div>
+
+  <%= render "wallpaper_consequence_composer",
+        allowed_actions: allowed_actions,
+        photos: photos %>
+</div>

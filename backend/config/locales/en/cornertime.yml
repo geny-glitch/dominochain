@@ -25,3 +25,8 @@ en:
       elapsed: "Elapsed: %{time}"
       no_sanctions: "Movement detected, but no sanction is configured yet."
       source_disabled: "Corner time is not enabled. Enable it from Sources first."
+      voice_enabled: "Voice commands"
+      voice_pick: "Voice"
+      voice_intro: "Still. You move, you get punished."
+      voice_stop_moving: "Don't move."
+      voice_return_to_position: "Back in place."

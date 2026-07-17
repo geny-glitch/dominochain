@@ -1165,6 +1165,76 @@
   margin-bottom: $ds-space-lg;
 }
 
+.ds-wallpaper-scenarios {
+  display: flex;
+  flex-direction: column;
+  gap: $ds-space-md;
+  margin-bottom: $ds-space-lg;
+}
+
+.ds-wallpaper-scenario-card {
+  display: flex;
+  flex-direction: column;
+  gap: $ds-space-sm;
+  padding: $ds-space-md;
+  border: 1px solid $ds-border;
+  border-radius: $ds-radius-lg;
+  background: $ds-bg;
+}
+
+.ds-wallpaper-scenario-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: $ds-space-md;
+}
+
+.ds-wallpaper-scenario-card-title {
+  margin: 0;
+  font-size: $ds-body-size;
+  font-weight: 600;
+  color: $ds-text;
+}
+
+.ds-wallpaper-scenario-actions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: $ds-space-sm;
+}
+
+.ds-wallpaper-scenario-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $ds-space-md;
+  flex-wrap: wrap;
+}
+
+.ds-wallpaper-scenario-action-label {
+  color: $ds-text;
+  font-size: $ds-body-size;
+  line-height: 1.4;
+}
+
+.ds-wallpaper-consequence-composer {
+  display: flex;
+  flex-direction: column;
+  gap: $ds-space-sm;
+  margin-top: $ds-space-sm;
+}
+
+.ds-wallpaper-composer-panel {
+  display: flex;
+  flex-direction: column;
+  gap: $ds-space-md;
+  padding: $ds-space-md;
+  border: 1px dashed $ds-border;
+  border-radius: $ds-radius-lg;
+}
+
 .ds-radio-group {
   display: flex;
   flex-direction: column;

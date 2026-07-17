@@ -44,5 +44,7 @@ FactoryBot.define do
         "pishock_duration" => 1
       }
     end
+    # Empty by default so specs that mutate legacy delay/mode columns still work via fallback.
+    scenarios { { "scenarios" => [] } }
   end
 end

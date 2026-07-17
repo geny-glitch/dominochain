@@ -104,58 +104,7 @@
         </label>
       </div>
 
-      <h3 class="ds-section-subtitle"><%= t("beta.wallpaper_source.mismatch_title") %></h3>
-
-      <div class="ds-form-group">
-        <%= render "radio_group",
-              name: :mismatch_sanction_mode,
-              legend: t("beta.wallpaper_source.mismatch_sanction_mode"),
-              selected: @config.mismatch_sanction_mode,
-              options: WallpaperEnforcementConfig::SANCTION_MODES.index_with { |mode|
-                t("beta.wallpaper_source.mismatch_sanction_modes.#{mode}")
-              },
-              option_hints: WallpaperEnforcementConfig::SANCTION_MODES.index_with { |mode|
-                t("beta.wallpaper_source.mismatch_sanction_mode_hints.#{mode}")
-              },
-              group_data: { mismatch_mode_control: true } %>
-      </div>
-
-      <div class="ds-form-group" data-mismatch-mode-field="consecutive_failures" hidden>
-        <%= label_tag :mismatch_consecutive_threshold, t("beta.wallpaper_source.mismatch_consecutive_threshold"), class: "ds-form-label" %>
-        <%= number_field_tag :mismatch_consecutive_threshold,
-              @config.mismatch_consecutive_threshold,
-              min: WallpaperEnforcementConfig::MIN_CONSECUTIVE_THRESHOLD,
-              max: WallpaperEnforcementConfig::MAX_CONSECUTIVE_THRESHOLD,
-              class: "ds-input" %>
-      </div>
-
-      <%= render "wallpaper_scenario_sanction_fields",
-            field_prefix: "mismatch_sanction",
-            sanction: @config.mismatch_sanction,
-            delay_field: :mismatch_delay_minutes,
-            delay_value: @config.mismatch_delay_minutes,
-            delay_container_data: { mismatch_mode_field: "delay" } %>
-
-      <h3 class="ds-section-subtitle"><%= t("beta.wallpaper_source.permissions_lost_title") %></h3>
-      <%= render "wallpaper_scenario_sanction_fields",
-            field_prefix: "permissions_lost_sanction",
-            sanction: @config.permissions_lost_sanction,
-            delay_field: :permissions_lost_delay_minutes,
-            delay_value: @config.permissions_lost_delay_minutes %>
-
-      <h3 class="ds-section-subtitle"><%= t("beta.wallpaper_source.app_unreachable_title") %></h3>
-
-      <div class="ds-form-group">
-        <%= label_tag :app_unreachable_threshold_minutes, t("beta.wallpaper_source.unreachable_threshold"), class: "ds-form-label" %>
-        <%= number_field_tag :app_unreachable_threshold_minutes, @config.app_unreachable_threshold_minutes, min: WallpaperEnforcementConfig::MIN_UNREACHABLE_MINUTES, max: WallpaperEnforcementConfig::MAX_UNREACHABLE_MINUTES, class: "ds-input" %>
-        <p class="ds-beta-control-hint"><%= t("beta.wallpaper_source.unreachable_threshold_hint") %></p>
-      </div>
-
-      <%= render "wallpaper_scenario_sanction_fields",
-            field_prefix: "app_unreachable_sanction",
-            sanction: @config.app_unreachable_sanction,
-            delay_field: :app_unreachable_delay_minutes,
-            delay_value: @config.app_unreachable_delay_minutes %>
+      <%= render "wallpaper_scenarios_list", scenario_set: @config.scenario_set, leverage_photos: @leverage_photos %>
 
       <div class="ds-wallpaper-enforcement-save-bar" data-wallpaper-enforcement-save-bar hidden>
         <%= submit_tag t("beta.wallpaper_source.save"), class: "ds-btn ds-btn--primary ds-wallpaper-enforcement-save-btn" %>

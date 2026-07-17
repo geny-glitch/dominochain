@@ -114,5 +114,10 @@
     <string name="cornertime_notification_channel">Corner time</string>
     <string name="cornertime_notification_title">Corner time actif</string>
     <string name="cornertime_notification_body">Reste immobile. Touche pour revenir à la session.</string>
+    <string name="cornertime_voice_enabled">Ordres vocaux</string>
+    <string name="cornertime_voice_pick">Voix</string>
+    <string name="cornertime_voice_intro">Immobile. Tu bouges, tu es puni.</string>
+    <string name="cornertime_voice_stop_moving">Bouge pas.</string>
+    <string name="cornertime_voice_return_to_position">Remets-toi.</string>
     <string name="permission_camera">Caméra (corner time)</string>
 </resources>

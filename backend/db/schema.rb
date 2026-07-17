@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_07_17_190000) do
+ActiveRecord::Schema[7.2].define(version: 2026_07_17_191000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -628,6 +628,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_17_190000) do
     t.integer "mismatch_consecutive_threshold", default: 3, null: false
     t.integer "mismatch_recheck_count", default: 0, null: false
     t.integer "mismatch_consecutive_count", default: 0, null: false
+    t.jsonb "scenarios", default: {"scenarios"=>[]}, null: false
     t.index ["user_id"], name: "index_wallpaper_enforcement_configs_on_user_id", unique: true
   end
 

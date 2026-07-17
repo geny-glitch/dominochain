@@ -3,7 +3,11 @@ package app.dominochain.mobile
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.speech.tts.TextToSpeech
+import android.speech.tts.Voice
 import android.view.View
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
@@ -23,11 +27,13 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.Locale
 import java.util.UUID
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
+import java.util.regex.Pattern
 
 class CornertimeActivity : AppCompatActivity() {
 
@@ -41,6 +47,7 @@ class CornertimeActivity : AppCompatActivity() {
     private var calibrating = false
     private var calibrationJob: Job? = null
     private var motionThreshold = 0.12
+    private var driftThreshold = 0.18
     private var sanctionCooldownMs = 8_000L
     private var detectionDebounceMs = 1_000L
     private var calibrationMs = 5_000L
@@ -53,6 +60,15 @@ class CornertimeActivity : AppCompatActivity() {
     private var poseDetector: PoseMotionDetector? = null
     private var activeDetector: MotionDetector = frameDiffDetector
     private var usePoseDetection = false
+    private var tts: TextToSpeech? = null
+    private var ttsReady = false
+    private var voiceLocaleTag = "fr"
+    private var voiceIntro: String = ""
+    private var voiceStopMoving: String = ""
+    private var voiceReturnToPosition: String = ""
+    private var availableVoices: List<Voice> = emptyList()
+    private var selectedVoiceName: String? = null
+    private var voicePickerReady = false
 
     private val cameraPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -72,6 +88,16 @@ class CornertimeActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         usePoseDetection = intent.getBooleanExtra(EXTRA_USE_POSE, false)
+        voiceIntro = getString(R.string.cornertime_voice_intro)
+        voiceStopMoving = getString(R.string.cornertime_voice_stop_moving)
+        voiceReturnToPosition = getString(R.string.cornertime_voice_return_to_position)
+        selectedVoiceName = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+            .getString(PREF_VOICE_NAME, null)
+        initTts()
+        binding.cornertimeVoice.setOnCheckedChangeListener { _, checked ->
+            binding.cornertimeVoicePick.visibility = if (checked) View.VISIBLE else View.GONE
+            binding.cornertimeVoicePickLabel.visibility = if (checked) View.VISIBLE else View.GONE
+        }
 
         binding.cornertimeStart.setOnClickListener {
             ensureCameraAndStart()
@@ -100,7 +126,11 @@ class CornertimeActivity : AppCompatActivity() {
 
     private fun applyConfig(config: app.dominochain.mobile.api.CornertimeConfigResponse?) {
         if (config == null) return
-        config.motion_threshold?.takeIf { it > 0 }?.let { motionThreshold = it }
+        config.motion_threshold?.takeIf { it > 0 }?.let {
+            motionThreshold = it
+            frameDiffDetector.motionThreshold = it.toFloat()
+        }
+        config.drift_threshold?.takeIf { it > 0 }?.let { driftThreshold = it }
         config.violation_cooldown_seconds?.takeIf { it > 0 }?.let { sanctionCooldownMs = it * 1000L }
         config.calibration_seconds?.takeIf { it > 0 }?.let { calibrationMs = it * 1000L }
         config.diff_sensitivity?.takeIf { it > 0 }?.let { frameDiffDetector.diffSensitivity = it.toFloat() }
@@ -108,6 +138,22 @@ class CornertimeActivity : AppCompatActivity() {
         config.cell_active_below?.takeIf { it > 0 }?.let { frameDiffDetector.cellActiveBelow = it }
         config.matrix_width?.takeIf { it > 0 }?.let { frameDiffDetector.matrixWidth = it }
         config.matrix_height?.takeIf { it > 0 }?.let { frameDiffDetector.matrixHeight = it }
+        config.drift_threshold?.takeIf { it > 0 }?.let { frameDiffDetector.driftThreshold = it.toFloat() }
+        config.drift_hold_ms?.takeIf { it > 0 }?.let { frameDiffDetector.driftHoldMs = it.toLong() }
+        config.drift_pixel_delta?.takeIf { it > 0 }?.let { frameDiffDetector.driftPixelDelta = it.toFloat() }
+        applyVoiceFromConfig(config)
+    }
+
+    private fun applyVoiceFromConfig(config: app.dominochain.mobile.api.CornertimeConfigResponse) {
+        config.locale?.takeIf { it.isNotBlank() }?.let { tag ->
+            voiceLocaleTag = tag.replace('_', '-')
+            applyTtsLanguage()
+        }
+        config.voice?.let { voice ->
+            voice.intro?.takeIf { it.isNotBlank() }?.let { voiceIntro = it }
+            voice.stop_moving?.takeIf { it.isNotBlank() }?.let { voiceStopMoving = it }
+            voice.return_to_position?.takeIf { it.isNotBlank() }?.let { voiceReturnToPosition = it }
+        }
     }
 
     private fun startSession() {
@@ -157,7 +203,116 @@ class CornertimeActivity : AppCompatActivity() {
             if (!monitoring) return@launch
             calibrating = false
             setStatus(getString(R.string.cornertime_status_active))
+            speak(voiceIntro)
         }
+    }
+
+    private fun initTts() {
+        tts = TextToSpeech(this) { status ->
+            ttsReady = status == TextToSpeech.SUCCESS
+            if (ttsReady) {
+                runOnUiThread { applyTtsLanguage() }
+            }
+        }
+    }
+
+    private fun applyTtsLanguage() {
+        if (!ttsReady) return
+        val locale = Locale.forLanguageTag(voiceLocaleTag)
+        val result = tts?.setLanguage(locale)
+        if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+            tts?.language = Locale.forLanguageTag(voiceLocaleTag.take(2))
+        }
+        refreshVoicePicker()
+        applySelectedVoice()
+    }
+
+    private fun voicesForLocale(): List<Voice> {
+        val engine = tts ?: return emptyList()
+        val all = engine.voices ?: return emptyList()
+        val wanted = voiceLocaleTag.lowercase(Locale.ROOT)
+        val prefix = wanted.take(2)
+        val exact = all.filter { it.locale.toLanguageTag().lowercase(Locale.ROOT) == wanted }
+        if (exact.isNotEmpty()) return exact.sortedWith(voiceComparator())
+        return all
+            .filter { it.locale.language.lowercase(Locale.ROOT) == prefix }
+            .sortedWith(voiceComparator())
+    }
+
+    private fun voiceComparator(): Comparator<Voice> {
+        return Comparator { a, b ->
+            val af = if (isFemaleVoice(a.name)) 0 else 1
+            val bf = if (isFemaleVoice(b.name)) 0 else 1
+            if (af != bf) af - bf else a.name.compareTo(b.name, ignoreCase = true)
+        }
+    }
+
+    private fun isFemaleVoice(name: String): Boolean {
+        if (MALE_VOICE_RE.matcher(name).find()) return false
+        return FEMALE_VOICE_RE.matcher(name).find()
+    }
+
+    private fun preferredVoice(voices: List<Voice>): Voice? {
+        if (voices.isEmpty()) return null
+        selectedVoiceName?.let { saved ->
+            voices.find { it.name == saved }?.let { return it }
+        }
+        return voices.find { isFemaleVoice(it.name) } ?: voices.first()
+    }
+
+    private fun refreshVoicePicker() {
+        availableVoices = voicesForLocale()
+        val labels = availableVoices.map { voice ->
+            if (isFemaleVoice(voice.name)) "${voice.name} ♀" else voice.name
+        }
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, labels)
+        binding.cornertimeVoicePick.adapter = adapter
+        val preferred = preferredVoice(availableVoices)
+        val index = preferred?.let { availableVoices.indexOf(it) } ?: -1
+        voicePickerReady = false
+        if (index >= 0) binding.cornertimeVoicePick.setSelection(index)
+        binding.cornertimeVoicePick.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                if (!voicePickerReady) {
+                    voicePickerReady = true
+                    return
+                }
+                val voice = availableVoices.getOrNull(position) ?: return
+                selectedVoiceName = voice.name
+                getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+                    .edit()
+                    .putString(PREF_VOICE_NAME, voice.name)
+                    .apply()
+                applySelectedVoice()
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) = Unit
+        }
+        voicePickerReady = true
+        val checked = binding.cornertimeVoice.isChecked
+        binding.cornertimeVoicePick.visibility = if (checked && availableVoices.isNotEmpty()) View.VISIBLE else View.GONE
+        binding.cornertimeVoicePickLabel.visibility =
+            if (checked && availableVoices.isNotEmpty()) View.VISIBLE else View.GONE
+    }
+
+    private fun applySelectedVoice() {
+        val voice = preferredVoice(availableVoices) ?: return
+        selectedVoiceName = voice.name
+        tts?.voice = voice
+    }
+
+    private fun voiceEnabled(): Boolean {
+        return binding.cornertimeVoice.isChecked && ttsReady
+    }
+
+    private fun speak(text: String) {
+        if (!voiceEnabled() || text.isBlank()) return
+        applySelectedVoice()
+        tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "cornertime-${System.currentTimeMillis()}")
+    }
+
+    private fun stopSpeaking() {
+        tts?.stop()
     }
 
     private fun bindCamera() {
@@ -223,22 +378,37 @@ class CornertimeActivity : AppCompatActivity() {
             }
             return
         }
-        val score = activeDetector.score(luma, ANALYSIS_WIDTH, ANALYSIS_HEIGHT)
-            ?: frameDiffDetector.score(luma, ANALYSIS_WIDTH, ANALYSIS_HEIGHT)
-            ?: return
-        if (score > motionThreshold) {
-            maybeReportViolation(score.toDouble())
+        val result = frameDiffDetector.evaluate(luma, ANALYSIS_WIDTH, ANALYSIS_HEIGHT)
+        if (result.shouldTrigger) {
+            maybeReportViolation(result.score.toDouble(), result.kind, luma)
         }
     }
 
-    private fun maybeReportViolation(score: Double) {
+    private fun maybeReportViolation(
+        score: Double,
+        kind: FrameDiffMotionDetector.TriggerKind,
+        luma: FloatArray
+    ) {
         val now = System.currentTimeMillis()
         if (now - lastDetectionAt.get() < detectionDebounceMs) return
         lastDetectionAt.set(now)
 
+        if (kind == FrameDiffMotionDetector.TriggerKind.DRIFT) {
+            frameDiffDetector.rebaseBaseline(luma)
+        }
+
         runOnUiThread {
             violationCount += 1
             updateViolations()
+            val prompt = when (kind) {
+                FrameDiffMotionDetector.TriggerKind.DRIFT -> voiceReturnToPosition
+                FrameDiffMotionDetector.TriggerKind.INSTANT -> voiceStopMoving
+                else -> null
+            }
+            if (prompt != null) {
+                setHint(prompt)
+                speak(prompt)
+            }
         }
 
         if (!reporting.compareAndSet(false, true)) return
@@ -274,6 +444,7 @@ class CornertimeActivity : AppCompatActivity() {
         monitoring = false
         calibrating = false
         calibrationJob?.cancel()
+        stopSpeaking()
         binding.cornertimeStop.isEnabled = false
         binding.cornertimeStart.isEnabled = true
         setStatus(getString(R.string.cornertime_status_stopped))
@@ -316,6 +487,9 @@ class CornertimeActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         if (monitoring) stopSession()
+        tts?.shutdown()
+        tts = null
+        ttsReady = false
         super.onDestroy()
     }
 
@@ -323,5 +497,15 @@ class CornertimeActivity : AppCompatActivity() {
         const val EXTRA_USE_POSE = "use_pose"
         private const val ANALYSIS_WIDTH = 160
         private const val ANALYSIS_HEIGHT = 120
+        private const val PREFS_NAME = "cornertime"
+        private const val PREF_VOICE_NAME = "tts_voice_name"
+        private val FEMALE_VOICE_RE = Pattern.compile(
+            "female|woman|girl|samantha|victoria|karen|moira|fiona|tessa|amelie|amélie|hortense|denise|audrey|marie|virginie|zira|susan|linda|ava|emma|joanna|salli|ivy|kendra|kimberly|amy|aria|jenny|natalie|sofie|elsa|alva|nicky|heather|#female",
+            Pattern.CASE_INSENSITIVE
+        )
+        private val MALE_VOICE_RE = Pattern.compile(
+            "male|man|boy|david|daniel|alex|fred|thomas|paul|nicolas|jacques|mark|james|brian|matthew|joey|justin|kevin|guy|eric|#male",
+            Pattern.CASE_INSENSITIVE
+        )
     }
 }

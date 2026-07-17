@@ -24,18 +24,7 @@ class WallpaperEnforcementConfig < ApplicationRecord
 
   validates :check_interval_minutes,
     numericality: { only_integer: true, greater_than_or_equal_to: MIN_INTERVAL_MINUTES, less_than_or_equal_to: MAX_INTERVAL_MINUTES }
-  validates :mismatch_delay_minutes, :permissions_lost_delay_minutes, :app_unreachable_delay_minutes,
-    numericality: { only_integer: true, greater_than_or_equal_to: MIN_DELAY_MINUTES, less_than_or_equal_to: MAX_DELAY_MINUTES }
-  validates :app_unreachable_threshold_minutes,
-    numericality: { only_integer: true, greater_than_or_equal_to: MIN_UNREACHABLE_MINUTES, less_than_or_equal_to: MAX_UNREACHABLE_MINUTES }
-  validates :mismatch_sanction_mode, inclusion: { in: SANCTION_MODES }
-  validates :mismatch_consecutive_threshold,
-    numericality: {
-      only_integer: true,
-      greater_than_or_equal_to: MIN_CONSECUTIVE_THRESHOLD,
-      less_than_or_equal_to: MAX_CONSECUTIVE_THRESHOLD
-    }
-  validate :sanctions_are_valid
+  validate :scenarios_are_valid
 
   scope :due_for_check, lambda { |reference_time = Time.current|
     where(enabled: true).where(
@@ -44,16 +33,108 @@ class WallpaperEnforcementConfig < ApplicationRecord
     )
   }
 
+  def reload(*)
+    @scenario_set = nil
+    @stored_scenario_set = nil
+    super
+  end
+
+  def scenario_set
+    @scenario_set ||= begin
+      stored = stored_scenario_set
+      stored.any? ? stored : ScenarioSet.from_legacy_config(self)
+    end
+  end
+
+  def scenario_for(event)
+    scenario_set.for_event(event)
+  end
+
+  def mismatch_scenario
+    scenario_for("mismatch")
+  end
+
+  def permissions_lost_scenario
+    scenario_for("permissions_lost")
+  end
+
+  def app_unreachable_scenario
+    scenario_for("app_unreachable")
+  end
+
+  # Compat readers used by evaluator / device reachability.
+  # When scenarios JSONB is populated it wins; otherwise legacy columns/JSONB are used
+  # so specs and transitional records can still mutate delay/mode columns directly.
   def mismatch_sanction_object
-    SanctionSet.from_hash(mismatch_sanction, allowed: BetaEvents::SourceRegistry.allowed_for(:wallpaper, :default))
+    if stored_scenario_set.any?
+      mismatch_scenario&.to_sanction_set || SanctionSet.from_hash({}, allowed: wallpaper_allowed)
+    else
+      SanctionSet.from_hash(mismatch_sanction, allowed: wallpaper_allowed)
+    end
   end
 
   def permissions_lost_sanction_object
-    SanctionSet.from_hash(permissions_lost_sanction, allowed: BetaEvents::SourceRegistry.allowed_for(:wallpaper, :default))
+    if stored_scenario_set.any?
+      permissions_lost_scenario&.to_sanction_set || SanctionSet.from_hash({}, allowed: wallpaper_allowed)
+    else
+      SanctionSet.from_hash(permissions_lost_sanction, allowed: wallpaper_allowed)
+    end
   end
 
   def app_unreachable_sanction_object
-    SanctionSet.from_hash(app_unreachable_sanction, allowed: BetaEvents::SourceRegistry.allowed_for(:wallpaper, :default))
+    if stored_scenario_set.any?
+      app_unreachable_scenario&.to_sanction_set || SanctionSet.from_hash({}, allowed: wallpaper_allowed)
+    else
+      SanctionSet.from_hash(app_unreachable_sanction, allowed: wallpaper_allowed)
+    end
+  end
+
+  def mismatch_delay_minutes
+    if (scenario = stored_scenario_set.for_event("mismatch"))
+      scenario.delay_minutes
+    else
+      self[:mismatch_delay_minutes] || 30
+    end
+  end
+
+  def mismatch_sanction_mode
+    if (scenario = stored_scenario_set.for_event("mismatch"))
+      scenario.mode
+    else
+      self[:mismatch_sanction_mode] || SANCTION_MODE_STRICT
+    end
+  end
+
+  def mismatch_consecutive_threshold
+    if (scenario = stored_scenario_set.for_event("mismatch"))
+      scenario.consecutive_threshold
+    else
+      self[:mismatch_consecutive_threshold] || MIN_CONSECUTIVE_THRESHOLD
+    end
+  end
+
+  def permissions_lost_delay_minutes
+    if (scenario = stored_scenario_set.for_event("permissions_lost"))
+      scenario.delay_minutes
+    else
+      self[:permissions_lost_delay_minutes] || 0
+    end
+  end
+
+  def app_unreachable_delay_minutes
+    if (scenario = stored_scenario_set.for_event("app_unreachable"))
+      scenario.delay_minutes
+    else
+      self[:app_unreachable_delay_minutes] || 0
+    end
+  end
+
+  def app_unreachable_threshold_minutes
+    if (scenario = stored_scenario_set.for_event("app_unreachable"))
+      scenario.threshold_minutes
+    else
+      self[:app_unreachable_threshold_minutes] || 120
+    end
   end
 
   def due_for_scheduled_check?(reference_time = Time.current)
@@ -99,20 +180,35 @@ class WallpaperEnforcementConfig < ApplicationRecord
     )
   end
 
+  def assign_scenarios!(scenario_set)
+    self.scenarios = scenario_set.to_h
+    # Clear legacy sanction JSONB so empty scenarios are not resurrected by fallback.
+    blank = { "items" => [] }
+    self.mismatch_sanction = blank
+    self.permissions_lost_sanction = blank
+    self.app_unreachable_sanction = blank
+    @scenario_set = scenario_set
+    @stored_scenario_set = scenario_set
+  end
+
   private
 
-  def sanctions_are_valid
-    {
-      mismatch_sanction: mismatch_sanction,
-      permissions_lost_sanction: permissions_lost_sanction,
-      app_unreachable_sanction: app_unreachable_sanction
-    }.each do |attr, value|
-      sanction = SanctionSet.from_hash(value, allowed: BetaEvents::SourceRegistry.allowed_for(:wallpaper, :default))
+  def wallpaper_allowed
+    BetaEvents::SourceRegistry.allowed_for(:wallpaper, :default)
+  end
+
+  def stored_scenario_set
+    @stored_scenario_set ||= ScenarioSet.from_hash(self[:scenarios])
+  end
+
+  def scenarios_are_valid
+    stored_scenario_set.scenarios.each do |scenario|
+      sanction = scenario.to_sanction_set(allowed: wallpaper_allowed)
       if sanction.enabled?("chaster.add_time") && !sanction.item_for("chaster.add_time")&.active?
-        errors.add(attr, :invalid)
+        errors.add(:scenarios, :invalid)
       end
       if sanction.enabled?("leverage_photo.lock") && !sanction.item_for("leverage_photo.lock")&.active?
-        errors.add(attr, :invalid)
+        errors.add(:scenarios, :invalid)
       end
     end
   end

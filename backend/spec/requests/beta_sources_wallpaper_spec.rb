@@ -29,14 +29,22 @@ RSpec.describe "Beta sources wallpaper page", type: :request do
       expect(response.body).to include('data-wallpaper-enforcement-toggle-form="true"')
       expect(response.body).to include('data-wallpaper-enforcement-form="true"')
       expect(response.body).not_to include('actions_hint_html')
-      expect(response.body).to include('class="ds-radio-group"')
-      expect(response.body).to include('name="mismatch_sanction_mode"')
-      expect(response.body).to include('type="radio"')
+      expect(response.body).to include('data-wallpaper-scenarios')
+      expect(response.body).to include('data-wallpaper-consequence-composer')
       expect(response.body).to include('data-wallpaper-enforcement-save-bar')
       expect(response.body).to include("requestSubmit()")
       expect(response.body).to include(beta_public_boss_path)
       expect(response.body).to include(beta_catalog_visibility_path)
       expect(response.body).to include(beta_wallpaper_enforcement_path)
+    end
+
+    it "shows empty consequence state when no scenarios are configured" do
+      config.update!(scenarios: { "scenarios" => [] }, mismatch_sanction: { "items" => [] })
+
+      get beta_sources_wallpaper_path
+
+      expect(response.body).to include('data-wallpaper-scenarios-empty')
+      expect(response.body).to include(I18n.t("beta.scenarios.add_consequence"))
     end
   end
 
@@ -86,22 +94,25 @@ RSpec.describe "Beta sources wallpaper page", type: :request do
       {
         dismiss_apps_before_capture: [ "0", "1" ],
         check_interval_minutes: config.check_interval_minutes,
-        mismatch_delay_minutes: config.mismatch_delay_minutes,
-        mismatch_sanction_mode: config.mismatch_sanction_mode,
-        mismatch_consecutive_threshold: config.mismatch_consecutive_threshold,
-        permissions_lost_delay_minutes: config.permissions_lost_delay_minutes,
-        app_unreachable_delay_minutes: config.app_unreachable_delay_minutes,
-        app_unreachable_threshold_minutes: config.app_unreachable_threshold_minutes,
-        mismatch_sanction: {
-          chaster_add_time_enabled: [ "0", "1" ],
-          chaster_seconds: 3600,
-          chaster_freeze_enabled: "0",
-          pishock_enabled: "0",
-          pishock_intensity: 50,
-          pishock_duration: 1
-        },
-        permissions_lost_sanction: config.permissions_lost_sanction,
-        app_unreachable_sanction: config.app_unreachable_sanction
+        scenarios: {
+          scenarios: {
+            "0" => {
+              id: "scenario-mismatch-1",
+              event: "mismatch",
+              trigger: {
+                delay_minutes: 30,
+                mode: WallpaperEnforcementConfig::SANCTION_MODE_STRICT,
+                consecutive_threshold: 3
+              },
+              actions: {
+                "0" => {
+                  possibility_id: "chaster.add_time",
+                  config: { seconds: 3600 }
+                }
+              }
+            }
+          }
+        }
       }.deep_merge(overrides)
     end
 
@@ -135,17 +146,39 @@ RSpec.describe "Beta sources wallpaper page", type: :request do
       expect(config.reload.enabled).to be false
     end
 
-    it "persists sanction toggles from nested checkbox submissions" do
+    it "persists a consequence into scenarios JSONB" do
       patch beta_wallpaper_enforcement_path, params: enforcement_params
 
-      sanction = config.reload.mismatch_sanction_object
+      config.reload
+      scenario = config.scenario_for("mismatch")
+      expect(scenario).to be_present
+      expect(scenario.delay_minutes).to eq(30)
+      sanction = scenario.to_sanction_set
       expect(sanction.chaster_add_time_enabled).to be true
       expect(sanction.chaster_seconds).to eq(3600)
     end
 
-    it "persists mismatch sanction mode from radio group submission" do
+    it "persists mismatch trigger mode on the scenario" do
       patch beta_wallpaper_enforcement_path, params: enforcement_params(
-        mismatch_sanction_mode: WallpaperEnforcementConfig::SANCTION_MODE_DOUBLE_CHECK
+        scenarios: {
+          scenarios: {
+            "0" => {
+              id: "scenario-mismatch-1",
+              event: "mismatch",
+              trigger: {
+                delay_minutes: 30,
+                mode: WallpaperEnforcementConfig::SANCTION_MODE_DOUBLE_CHECK,
+                consecutive_threshold: 3
+              },
+              actions: {
+                "0" => {
+                  possibility_id: "chaster.add_time",
+                  config: { seconds: 3600 }
+                }
+              }
+            }
+          }
+        }
       )
 
       expect(config.reload.mismatch_sanction_mode).to eq(WallpaperEnforcementConfig::SANCTION_MODE_DOUBLE_CHECK)

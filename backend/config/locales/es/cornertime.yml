@@ -25,3 +25,8 @@ es:
       elapsed: "Duración: %{time}"
       no_sanctions: "Movimiento detectado, pero aún no hay ninguna sanción configurada."
       source_disabled: "Corner time no está activado. Actívalo primero en Fuentes."
+      voice_enabled: "Órdenes de voz"
+      voice_pick: "Voz"
+      voice_intro: "Quieto. Te mueves, te castigan."
+      voice_stop_moving: "No te muevas."
+      voice_return_to_position: "En tu sitio."

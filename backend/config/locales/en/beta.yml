@@ -50,6 +50,7 @@ en:
         add_time:
           label: "Chaster seconds to add"
           fields:
+            seconds: "Seconds"
             seconds_placeholder: "Seconds"
         freeze:
           label: "Freeze lock"
@@ -68,6 +69,59 @@ en:
             seconds_placeholder: "Seconds"
         delete:
           label: "Permanently delete a leverage photo"
+    scenarios:
+      section_title: "Consequences"
+      empty: "No consequences yet. Add one to react when a wallpaper check fails."
+      add_consequence: "Add a consequence"
+      edit_trigger: "Edit trigger"
+      remove_action: "Remove"
+      events:
+        mismatch:
+          label: "Mismatch"
+        permissions_lost:
+          label: "Permissions lost"
+        app_unreachable:
+          label: "App unreachable"
+      triggers:
+        mismatch:
+          delay_minutes: "Delay before applying (minutes)"
+          mode: "When to apply"
+          consecutive_threshold: "Failed checks in a row"
+        permissions_lost:
+          delay_minutes: "Delay before applying (minutes)"
+        app_unreachable:
+          threshold_minutes: "Time without contact (minutes)"
+          delay_minutes: "Delay before applying (minutes)"
+      composer:
+        title: "New consequence"
+        pick_event: "Choose when this should apply"
+        event_blank: "Choose an event"
+        configure_trigger: "Configure when it triggers"
+        reuse_scenario: "This event already has a scenario — your action will use the same trigger settings."
+        pick_action: "Choose what happens"
+        action_blank: "Choose an action"
+        configure_action: "Configure the action"
+        cancel: "Cancel"
+        back: "Back"
+        next: "Next"
+        confirm: "Add"
+      summary:
+        delay_minutes:
+          one: "%{count} min delay"
+          other: "%{count} min delay"
+        consecutive_threshold:
+          one: "%{count} failed check"
+          other: "%{count} failed checks"
+        threshold_minutes:
+          one: "%{count} min without contact"
+          other: "%{count} min without contact"
+        seconds:
+          one: "%{count} second"
+          other: "%{count} seconds"
+        freeze: "Freeze"
+        pishock: "Intensity %{intensity} · %{duration}s"
+        leverage_lock: "%{seconds}s · %{mode}"
+        leverage_delete: "%{mode}"
     events:
       sources:
         puryfi: "Purify"
@@ -353,7 +407,7 @@ en:
         low: "Low — ignores small movements"
         medium: "Medium"
         high: "High — reacts to small movements"
-      detector_hint: "Motion is detected by comparing consecutive camera frames (Diffy-style)."
+      detector_hint: "Fast moves are caught immediately. Slow drifting away from the calibrated pose is caught after a short hold (small rebalancing is tolerated)."
       cooldown: "Cooldown between sanctions (seconds)"
       calibration: "Calibration delay (seconds)"
       sanctions_title: "Sanctions on movement"

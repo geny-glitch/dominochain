@@ -12,19 +12,50 @@ RSpec.describe WallpaperEnforcementEvaluator do
       :wallpaper_enforcement_config,
       user: user,
       enabled: true,
-      mismatch_delay_minutes: 30,
-      mismatch_sanction: {
-        "chaster_add_time_enabled" => true,
-        "chaster_seconds" => 600,
-        "chaster_freeze_enabled" => false,
-        "pishock_enabled" => false,
-        "pishock_intensity" => 50,
-        "pishock_duration" => 1
+      mismatch_sanction: { "items" => [] },
+      scenarios: {
+        "scenarios" => [
+          {
+            "id" => "mismatch-1",
+            "event" => "mismatch",
+            "trigger" => {
+              "delay_minutes" => 30,
+              "mode" => WallpaperEnforcementConfig::SANCTION_MODE_STRICT,
+              "consecutive_threshold" => 3
+            },
+            "actions" => [
+              {
+                "possibility_id" => "chaster.add_time",
+                "config" => { "seconds" => 600 }
+              }
+            ]
+          }
+        ]
       }
     )
   end
   let(:chaster_service) { instance_double(ChasterService, current_lock: { id: "lock-1", can_freeze: true }) }
   let(:evaluator) { described_class.new(user, chaster_service: chaster_service) }
+
+  def update_mismatch_trigger!(**attrs)
+    set = config.scenario_set
+    scenario = set.for_event("mismatch")
+    trigger = scenario.trigger.merge(attrs)
+    updated = ScenarioSet.new(
+      scenarios: set.scenarios.map do |s|
+        next s unless s.event == "mismatch"
+
+        ScenarioSet::Scenario.new(
+          id: s.id,
+          event: s.event,
+          trigger: trigger,
+          actions: s.actions
+        )
+      end
+    )
+    config.assign_scenarios!(updated)
+    config.save!
+  end
 
   before do
     stub_beta_catalog_feature_flags("beta_source_wallpaper" => true, "beta_action_chaster" => true)
@@ -125,7 +156,7 @@ RSpec.describe WallpaperEnforcementEvaluator do
 
     context "with double_check sanction mode" do
       before do
-        config.update!(mismatch_sanction_mode: WallpaperEnforcementConfig::SANCTION_MODE_DOUBLE_CHECK)
+        update_mismatch_trigger!(mode: WallpaperEnforcementConfig::SANCTION_MODE_DOUBLE_CHECK)
       end
 
       it "schedules rechecks instead of applying sanctions while rechecks remain" do
@@ -174,9 +205,9 @@ RSpec.describe WallpaperEnforcementEvaluator do
 
     context "with consecutive_failures sanction mode" do
       before do
-        config.update!(
-          mismatch_sanction_mode: WallpaperEnforcementConfig::SANCTION_MODE_CONSECUTIVE_FAILURES,
-          mismatch_consecutive_threshold: 3
+        update_mismatch_trigger!(
+          mode: WallpaperEnforcementConfig::SANCTION_MODE_CONSECUTIVE_FAILURES,
+          consecutive_threshold: 3
         )
       end
 

@@ -3,21 +3,41 @@
 class CornertimeConfig < ApplicationRecord
   SENSITIVITIES = %w[low medium high].freeze
 
-  # Diffy-style presets (see https://github.com/maniart/diffyjs):
-  # - diff_sensitivity: contrast amp on consecutive-frame blend (0..1, ~0.2 typical)
-  # - pixel_threshold: min abs luma delta (0..255) that paints a motion pixel
-  # - motion_threshold: fraction of matrix cells that must be active to count as movement
-  DIFFY_PRESETS = {
-    "low" => { diff_sensitivity: 0.15, pixel_threshold: 30, motion_threshold: 0.22 }.freeze,
-    "medium" => { diff_sensitivity: 0.2, pixel_threshold: 21, motion_threshold: 0.12 }.freeze,
-    "high" => { diff_sensitivity: 0.35, pixel_threshold: 15, motion_threshold: 0.06 }.freeze
+  # Dual detector:
+  # 1) Diffy consecutive-frame (instant motion)
+  # 2) Pose drift vs calibration baseline (slow crawl / leaving the frame)
+  #    — must stay above drift_threshold for drift_hold_ms (tolerates rebalancing)
+  DETECTOR_PRESETS = {
+    "low" => {
+      diff_sensitivity: 0.15,
+      pixel_threshold: 30,
+      motion_threshold: 0.22,
+      drift_threshold: 0.28,
+      drift_hold_ms: 2500,
+      drift_pixel_delta: 22
+    }.freeze,
+    "medium" => {
+      diff_sensitivity: 0.2,
+      pixel_threshold: 21,
+      motion_threshold: 0.12,
+      drift_threshold: 0.18,
+      drift_hold_ms: 1800,
+      drift_pixel_delta: 18
+    }.freeze,
+    "high" => {
+      diff_sensitivity: 0.35,
+      pixel_threshold: 15,
+      motion_threshold: 0.06,
+      drift_threshold: 0.12,
+      drift_hold_ms: 1200,
+      drift_pixel_delta: 14
+    }.freeze
   }.freeze
 
   MATRIX_WIDTH = 12
   MATRIX_HEIGHT = 8
   SOURCE_WIDTH = 160
   SOURCE_HEIGHT = 120
-  # A matrix cell is "active" when its Diffy average is below this (0 = full motion, 255 = still).
   CELL_ACTIVE_BELOW = 200
 
   MIN_COOLDOWN_SECONDS = 5
@@ -49,22 +69,25 @@ class CornertimeConfig < ApplicationRecord
     )
   end
 
-  def diffy_preset
-    DIFFY_PRESETS.fetch(sensitivity, DIFFY_PRESETS["medium"])
+  def detector_preset
+    DETECTOR_PRESETS.fetch(sensitivity, DETECTOR_PRESETS["medium"])
   end
 
   def motion_threshold
-    diffy_preset[:motion_threshold]
+    detector_preset[:motion_threshold]
   end
 
   def client_config_payload
-    preset = diffy_preset
+    preset = detector_preset
     {
       sensitivity: sensitivity,
-      detector: "diffy",
+      detector: "diffy_plus_drift",
       diff_sensitivity: preset[:diff_sensitivity],
       pixel_threshold: preset[:pixel_threshold],
       motion_threshold: preset[:motion_threshold],
+      drift_threshold: preset[:drift_threshold],
+      drift_hold_ms: preset[:drift_hold_ms],
+      drift_pixel_delta: preset[:drift_pixel_delta],
       cell_active_below: CELL_ACTIVE_BELOW,
       matrix_width: MATRIX_WIDTH,
       matrix_height: MATRIX_HEIGHT,

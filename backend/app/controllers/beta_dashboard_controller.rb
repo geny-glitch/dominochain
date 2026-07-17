@@ -103,6 +103,9 @@ class BetaDashboardController < ApplicationController
 
     config.assign_attributes(enforcement_config_params)
     config.enabled = checkbox_param_bool(:enabled) if params.key?(:enabled)
+    if params.key?(:scenarios)
+      config.assign_scenarios!(ScenarioSet.from_params(params[:scenarios]))
+    end
     config.save!
     PosthogProductAnalytics.configured_source(current_user, name: "wallpaper")
 
@@ -431,28 +434,12 @@ class BetaDashboardController < ApplicationController
 
   def enforcement_config_params
     attrs = {
-      check_interval_minutes: params[:check_interval_minutes],
-      mismatch_delay_minutes: params[:mismatch_delay_minutes],
-      mismatch_sanction_mode: params[:mismatch_sanction_mode],
-      mismatch_consecutive_threshold: params[:mismatch_consecutive_threshold],
-      permissions_lost_delay_minutes: params[:permissions_lost_delay_minutes],
-      app_unreachable_delay_minutes: params[:app_unreachable_delay_minutes],
-      app_unreachable_threshold_minutes: params[:app_unreachable_threshold_minutes],
-      mismatch_sanction: parse_sanction_params(:mismatch_sanction),
-      permissions_lost_sanction: parse_sanction_params(:permissions_lost_sanction),
-      app_unreachable_sanction: parse_sanction_params(:app_unreachable_sanction)
+      check_interval_minutes: params[:check_interval_minutes]
     }
     if params.key?(:dismiss_apps_before_capture)
       attrs[:dismiss_apps_before_capture] = checkbox_param_bool(:dismiss_apps_before_capture)
     end
     attrs.compact
-  end
-
-  def parse_sanction_params(key)
-    raw = params[key]
-    return nil unless raw.is_a?(ActionController::Parameters) || raw.is_a?(Hash)
-
-    SanctionSet.from_params(raw, allowed: BetaEvents::SourceRegistry.allowed_for(:wallpaper, :default)).to_h
   end
 
   def cornertime_config_params

@@ -50,6 +50,7 @@ es:
         add_time:
           label: "Segundos Chaster a añadir"
           fields:
+            seconds: "Segundos"
             seconds_placeholder: "Segundos"
         freeze:
           label: "Congelar el candado"
@@ -68,6 +69,59 @@ es:
             seconds_placeholder: "Segundos"
         delete:
           label: "Eliminar definitivamente una foto leverage"
+    scenarios:
+      section_title: "Consecuencias"
+      empty: "Aún no hay consecuencias. Añade una para reaccionar cuando falle una comprobación."
+      add_consequence: "Añadir una consecuencia"
+      edit_trigger: "Editar disparador"
+      remove_action: "Quitar"
+      events:
+        mismatch:
+          label: "Incumplimiento"
+        permissions_lost:
+          label: "Permisos perdidos"
+        app_unreachable:
+          label: "App inalcanzable"
+      triggers:
+        mismatch:
+          delay_minutes: "Retraso antes de aplicar (minutos)"
+          mode: "Cuándo aplicar"
+          consecutive_threshold: "Fallos consecutivos"
+        permissions_lost:
+          delay_minutes: "Retraso antes de aplicar (minutos)"
+        app_unreachable:
+          threshold_minutes: "Tiempo sin contacto (minutos)"
+          delay_minutes: "Retraso antes de aplicar (minutos)"
+      composer:
+        title: "Nueva consecuencia"
+        pick_event: "Elige cuándo aplicar"
+        event_blank: "Elige un evento"
+        configure_trigger: "Configura el disparador"
+        reuse_scenario: "Este evento ya tiene un escenario — tu acción reutilizará los mismos ajustes de disparo."
+        pick_action: "Elige qué ocurre"
+        action_blank: "Elige una acción"
+        configure_action: "Configura la acción"
+        cancel: "Cancelar"
+        back: "Atrás"
+        next: "Siguiente"
+        confirm: "Añadir"
+      summary:
+        delay_minutes:
+          one: "retraso %{count} min"
+          other: "retraso %{count} min"
+        consecutive_threshold:
+          one: "%{count} fallo"
+          other: "%{count} fallos"
+        threshold_minutes:
+          one: "%{count} min sin contacto"
+          other: "%{count} min sin contacto"
+        seconds:
+          one: "%{count} segundo"
+          other: "%{count} segundos"
+        freeze: "Congelar"
+        pishock: "Intensidad %{intensity} · %{duration}s"
+        leverage_lock: "%{seconds}s · %{mode}"
+        leverage_delete: "%{mode}"
     events:
       sources:
         puryfi: "Purify"
@@ -353,7 +407,7 @@ es:
         low: "Baja — ignora movimientos pequeños"
         medium: "Media"
         high: "Alta — reacciona a movimientos pequeños"
-      detector_hint: "Los movimientos se detectan comparando fotogramas consecutivos de la cámara (estilo Diffy)."
+      detector_hint: "Los movimientos bruscos se detectan al momento. Una salida lenta de la pose calibrada se detecta tras un breve mantenimiento (se tolera un pequeño reequilibrio)."
       cooldown: "Espera entre sanciones (segundos)"
       calibration: "Retraso de calibración (segundos)"
       sanctions_title: "Sanciones por movimiento"

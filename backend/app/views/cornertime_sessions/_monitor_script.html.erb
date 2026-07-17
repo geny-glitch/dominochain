@@ -12,12 +12,20 @@
   var hintEl = document.getElementById("cornertime-hint");
   var startBtn = document.getElementById("cornertime-start");
   var stopBtn = document.getElementById("cornertime-stop");
+  var voiceToggle = document.getElementById("cornertime-voice");
+  var voicePick = document.getElementById("cornertime-voice-pick");
+  var voicePickWrap = document.getElementById("cornertime-voice-pick-wrap");
+  var VOICE_STORAGE_KEY = "cornertime_tts_voice";
+  var FEMALE_VOICE_RE = /female|woman|girl|samantha|victoria|karen|moira|fiona|tessa|amelie|am[eé]lie|hortense|denise|audrey|marie|virginie|zira|susan|linda|ava|emma|joanna|salli|ivy|kendra|kimberly|amy|aria|jenny|natalie|sofie|elsa|alva|nicky|heather|google fran[cç]ais|microsoft hortense/i;
+  var MALE_VOICE_RE = /male|man|boy|david|daniel|alex|fred|thomas|paul|nicolas|jacques|mark|james|brian|matthew|joey|justin|kevin|guy|eric|microsoft paul|microsoft guy/i;
 
   var i18n = JSON.parse(root.dataset.i18n || "{}");
   var config = JSON.parse(root.dataset.config || "{}");
   var sourceEnabled = root.dataset.sourceEnabled === "true";
   var csrf = document.querySelector('meta[name="csrf-token"]');
   var csrfToken = csrf ? csrf.getAttribute("content") : "";
+  var speechLocale = (root.dataset.speechLang || "en").replace("_", "-");
+  var speechVoice = null;
 
   var stream = null;
   var sessionId = null;
@@ -37,6 +45,9 @@
   var diffSensitivity = config.diff_sensitivity || 0.2;
   var pixelThreshold = config.pixel_threshold || 21;
   var motionThreshold = config.motion_threshold || 0.12;
+  var driftThreshold = config.drift_threshold || 0.18;
+  var driftHoldMs = config.drift_hold_ms || 1800;
+  var driftPixelDelta = config.drift_pixel_delta || 18;
   var cellActiveBelow = config.cell_active_below || 200;
   var matrixW = config.matrix_width || 12;
   var matrixH = config.matrix_height || 8;
@@ -50,12 +61,32 @@
     diffSensitivity = cfg.diff_sensitivity || 0.2;
     pixelThreshold = cfg.pixel_threshold || 21;
     motionThreshold = cfg.motion_threshold || 0.12;
+    driftThreshold = cfg.drift_threshold || 0.18;
+    driftHoldMs = cfg.drift_hold_ms || 1800;
+    driftPixelDelta = cfg.drift_pixel_delta || 18;
     cellActiveBelow = cfg.cell_active_below || 200;
     matrixW = cfg.matrix_width || 12;
     matrixH = cfg.matrix_height || 8;
     sourceW = cfg.source_width || 160;
     sourceH = cfg.source_height || 120;
+    applyVoiceFromConfig(cfg);
   }
+
+  // Beta locale drives both spoken text and TTS voice (same source).
+  function applyVoiceFromConfig(cfg) {
+    if (!cfg) return;
+    if (cfg.locale) {
+      speechLocale = String(cfg.locale).replace("_", "-");
+      speechVoice = null;
+    }
+    var voice = cfg.voice || {};
+    if (voice.intro) i18n.voice_intro = voice.intro;
+    if (voice.stop_moving) i18n.voice_stop_moving = voice.stop_moving;
+    if (voice.return_to_position) i18n.voice_return_to_position = voice.return_to_position;
+    refreshVoicePicker();
+  }
+
+  applyVoiceFromConfig(config);
 
   function setStatus(key) {
     statusEl.textContent = i18n[key] || key;
@@ -69,6 +100,123 @@
     }
     hintEl.hidden = false;
     hintEl.textContent = text;
+  }
+
+  function voiceEnabled() {
+    return !!(voiceToggle && voiceToggle.checked && window.speechSynthesis);
+  }
+
+  function voiceLabel(v) {
+    return (v.name || v.voiceURI || v.lang || "voice").trim();
+  }
+
+  function voicesForLocale() {
+    if (!window.speechSynthesis) return [];
+    var voices = window.speechSynthesis.getVoices() || [];
+    var wanted = speechLocale.toLowerCase();
+    var prefix = wanted.slice(0, 2);
+    var exact = voices.filter(function (v) {
+      return (v.lang || "").toLowerCase() === wanted;
+    });
+    if (exact.length) return exact;
+    return voices.filter(function (v) {
+      return (v.lang || "").toLowerCase().indexOf(prefix) === 0;
+    });
+  }
+
+  function isFemaleVoice(v) {
+    var label = voiceLabel(v);
+    if (MALE_VOICE_RE.test(label)) return false;
+    return FEMALE_VOICE_RE.test(label);
+  }
+
+  function preferredVoice(voices) {
+    if (!voices.length) return null;
+    var saved = null;
+    try { saved = localStorage.getItem(VOICE_STORAGE_KEY); } catch (e) { saved = null; }
+    if (saved) {
+      var match = voices.find(function (v) {
+        return voiceLabel(v) === saved || v.voiceURI === saved;
+      });
+      if (match) return match;
+    }
+    return voices.find(isFemaleVoice) || voices[0];
+  }
+
+  function resolveSpeechVoice() {
+    return preferredVoice(voicesForLocale());
+  }
+
+  function refreshVoicePicker() {
+    if (!voicePick) return;
+    var voices = voicesForLocale();
+    var selected = preferredVoice(voices);
+    speechVoice = selected;
+    voicePick.innerHTML = "";
+    if (!voices.length) {
+      if (voicePickWrap) voicePickWrap.hidden = true;
+      return;
+    }
+    if (voicePickWrap) voicePickWrap.hidden = false;
+    voices.forEach(function (v) {
+      var opt = document.createElement("option");
+      opt.value = voiceLabel(v);
+      opt.textContent = voiceLabel(v) + (isFemaleVoice(v) ? " ♀" : "");
+      if (selected && voiceLabel(v) === voiceLabel(selected)) opt.selected = true;
+      voicePick.appendChild(opt);
+    });
+  }
+
+  function ensureSpeechVoice() {
+    if (speechVoice) return speechVoice;
+    speechVoice = resolveSpeechVoice();
+    return speechVoice;
+  }
+
+  function syncVoicePickerVisibility() {
+    if (!voicePickWrap) return;
+    voicePickWrap.hidden = !(voiceToggle && voiceToggle.checked);
+    if (!voicePickWrap.hidden) refreshVoicePicker();
+  }
+
+  if (window.speechSynthesis) {
+    window.speechSynthesis.addEventListener("voiceschanged", function () {
+      refreshVoicePicker();
+    });
+    refreshVoicePicker();
+  }
+
+  if (voiceToggle) {
+    voiceToggle.addEventListener("change", syncVoicePickerVisibility);
+    syncVoicePickerVisibility();
+  }
+
+  if (voicePick) {
+    voicePick.addEventListener("change", function () {
+      var voices = voicesForLocale();
+      var chosen = voices.find(function (v) { return voiceLabel(v) === voicePick.value; });
+      if (!chosen) return;
+      speechVoice = chosen;
+      try { localStorage.setItem(VOICE_STORAGE_KEY, voiceLabel(chosen)); } catch (e) { /* ignore */ }
+    });
+  }
+
+  function speak(text) {
+    if (!voiceEnabled() || !text) return;
+    try {
+      window.speechSynthesis.cancel();
+      var utter = new SpeechSynthesisUtterance(text);
+      utter.lang = speechLocale;
+      var voice = ensureSpeechVoice();
+      if (voice) utter.voice = voice;
+      utter.rate = 1;
+      window.speechSynthesis.speak(utter);
+    } catch (e) { /* ignore TTS failures */ }
+  }
+
+  function stopSpeaking() {
+    if (!window.speechSynthesis) return;
+    try { window.speechSynthesis.cancel(); } catch (e) { /* ignore */ }
   }
 
   function formatElapsed(ms) {
@@ -92,8 +240,15 @@
     return "v-" + Date.now() + "-" + Math.floor(Math.random() * 1e9);
   }
 
-  // Diffy-style detector: consecutive frames → high-contrast diff → motion matrix.
-  // Ported from https://github.com/maniart/diffyjs (MIT).
+  function toLuma(rgba, width, height) {
+    var out = new Float32Array(width * height);
+    for (var i = 0, p = 0; i < rgba.length; i += 4, p++) {
+      out[p] = (rgba[i] + rgba[i + 1] + rgba[i + 2]) / 3;
+    }
+    return out;
+  }
+
+  // Diffy-style instant motion (consecutive frames).
   function DiffyDetector(width, height, resX, resY, sensitivity, threshold) {
     this.width = width;
     this.height = height;
@@ -129,7 +284,6 @@
       var cAvg = Math.round((current[h] + current[h + 1] + current[h + 2]) / 3);
       var pAvg = Math.round((previous[h] + previous[h + 1] + previous[h + 2]) / 3);
       var delta = Math.abs(Math.round(cAvg / amp) - Math.round(pAvg / amp));
-      // Diffy encoding: motion → 0, still → 255
       this.diffBuffer[i] = delta > this.threshold ? 0 : 255;
     }
   };
@@ -157,19 +311,109 @@
         var y0 = Math.floor(row * cellH);
         var x1 = Math.floor((col + 1) * cellW);
         var y1 = Math.floor((row + 1) * cellH);
-        var avg = this.cellAverage(x0, y0, x1, y1);
-        if (avg < cellActiveBelow) active += 1;
+        if (this.cellAverage(x0, y0, x1, y1) < cellActiveBelow) active += 1;
       }
     }
     return total > 0 ? active / total : 0;
   };
 
-  var detector = null;
+  // Long-horizon pose drift vs calibration baseline.
+  // Tolerates brief rebalancing; triggers only if drift stays high for holdMs.
+  function DriftDetector(width, height, resX, resY, pixelDelta, driftThreshold, holdMs) {
+    this.width = width;
+    this.height = height;
+    this.resolutionX = resX;
+    this.resolutionY = resY;
+    this.pixelDelta = pixelDelta;
+    this.driftThreshold = driftThreshold;
+    this.holdMs = holdMs;
+    this.baseline = null;
+    this.samples = 0;
+    this.driftSince = null;
+  }
 
-  function ensureDetector() {
+  DriftDetector.prototype.reset = function () {
+    this.baseline = null;
+    this.samples = 0;
+    this.driftSince = null;
+  };
+
+  DriftDetector.prototype.accumulate = function (luma) {
+    if (!this.baseline || this.baseline.length !== luma.length) {
+      this.baseline = new Float32Array(luma.length);
+      this.samples = 0;
+    }
+    this.samples += 1;
+    var n = this.samples;
+    for (var i = 0; i < luma.length; i++) {
+      this.baseline[i] += (luma[i] - this.baseline[i]) / n;
+    }
+  };
+
+  DriftDetector.prototype.cellMean = function (buf, x0, y0, x1, y1) {
+    var sum = 0;
+    var count = 0;
+    for (var y = y0; y < y1 && y < this.height; y++) {
+      for (var x = x0; x < x1 && x < this.width; x++) {
+        sum += buf[y * this.width + x];
+        count += 1;
+      }
+    }
+    return count > 0 ? sum / count : 0;
+  };
+
+  DriftDetector.prototype.driftScore = function (luma) {
+    if (!this.baseline || this.samples < 3) return 0;
+    var cellW = this.width / this.resolutionX;
+    var cellH = this.height / this.resolutionY;
+    var drifted = 0;
+    var total = this.resolutionX * this.resolutionY;
+    for (var row = 0; row < this.resolutionY; row++) {
+      for (var col = 0; col < this.resolutionX; col++) {
+        var x0 = Math.floor(col * cellW);
+        var y0 = Math.floor(row * cellH);
+        var x1 = Math.floor((col + 1) * cellW);
+        var y1 = Math.floor((row + 1) * cellH);
+        var cur = this.cellMean(luma, x0, y0, x1, y1);
+        var base = this.cellMean(this.baseline, x0, y0, x1, y1);
+        if (Math.abs(cur - base) > this.pixelDelta) drifted += 1;
+      }
+    }
+    return total > 0 ? drifted / total : 0;
+  };
+
+  // Returns { score, triggered } — triggered only after sustained drift.
+  DriftDetector.prototype.evaluate = function (luma, now) {
+    var score = this.driftScore(luma);
+    if (score > this.driftThreshold) {
+      if (this.driftSince == null) this.driftSince = now;
+      if (now - this.driftSince >= this.holdMs) {
+        return { score: score, triggered: true };
+      }
+      return { score: score, triggered: false };
+    }
+    this.driftSince = null;
+    return { score: score, triggered: false };
+  };
+
+  // After a drift sanction, re-anchor so staying put does not keep firing.
+  DriftDetector.prototype.rebaseTo = function (luma) {
+    this.baseline = new Float32Array(luma);
+    this.samples = Math.max(this.samples, 8);
+    this.driftSince = null;
+  };
+
+  var diffy = null;
+  var drift = null;
+
+  function ensureDetectors() {
     canvas.width = sourceW;
     canvas.height = sourceH;
-    detector = new DiffyDetector(sourceW, sourceH, matrixW, matrixH, diffSensitivity, pixelThreshold);
+    diffy = new DiffyDetector(sourceW, sourceH, matrixW, matrixH, diffSensitivity, pixelThreshold);
+    drift = new DriftDetector(
+      sourceW, sourceH, matrixW, matrixH,
+      driftPixelDelta, driftThreshold, driftHoldMs
+    );
   }
 
   async function api(url, method, body) {
@@ -194,17 +438,24 @@
     return data;
   }
 
-  async function reportViolation(score) {
+  async function reportViolation(score, kind, luma) {
     if (!sessionId) return;
     var now = Date.now();
 
-    // Always count local detections with a short debounce (independent of sanction cooldown).
     if (now - lastViolationAt < DETECTION_DEBOUNCE_MS) return;
     lastViolationAt = now;
     violationCount += 1;
     updateViolations();
 
-    // Sanctions: only hit the server when the sanction cooldown allows.
+    if (kind === "drift") {
+      speak(i18n.voice_return_to_position || "");
+      setHint(i18n.voice_return_to_position || "");
+      if (drift && luma) drift.rebaseTo(luma);
+    } else {
+      speak(i18n.voice_stop_moving || "");
+      setHint(i18n.voice_stop_moving || "");
+    }
+
     if (reporting) return;
     if (now - lastSanctionAt < sanctionCooldownMs) return;
     lastSanctionAt = now;
@@ -221,13 +472,9 @@
       );
       if (typeof data.cooldown_remaining_seconds === "number" && data.cooldown_remaining_seconds > 0) {
         sanctionCooldownMs = Math.max(DETECTION_DEBOUNCE_MS, data.cooldown_remaining_seconds * 1000);
-      } else if (data.status === "applied" || data.status === "no_sanctions") {
-        // Keep configured cooldown after a successful sanction attempt.
       }
       if (data.status === "no_sanctions") {
         setHint(i18n.no_sanctions || "");
-      } else if (data.status === "applied") {
-        setHint("");
       }
     } catch (e) {
       setHint(e.message);
@@ -239,14 +486,26 @@
   function tick() {
     if (!monitoring) return;
     rafId = requestAnimationFrame(tick);
-    if (document.hidden || calibrating || !detector) return;
+    if (document.hidden || !diffy || !drift) return;
     if (!video.videoWidth) return;
 
     ctx.drawImage(video, 0, 0, sourceW, sourceH);
     var image = ctx.getImageData(0, 0, sourceW, sourceH);
-    var score = detector.processFrame(image.data);
-    if (score > motionThreshold) {
-      reportViolation(score);
+    var luma = toLuma(image.data, sourceW, sourceH);
+
+    if (calibrating) {
+      drift.accumulate(luma);
+      diffy.processFrame(image.data); // seed previous frame only
+      return;
+    }
+
+    var instant = diffy.processFrame(image.data);
+    var driftResult = drift.evaluate(luma, Date.now());
+
+    if (instant > motionThreshold) {
+      reportViolation(instant, "instant", null);
+    } else if (driftResult.triggered) {
+      reportViolation(driftResult.score, "drift", luma);
     }
   }
 
@@ -285,7 +544,7 @@
       startedAt = Date.now();
       updateElapsed();
       elapsedTimer = setInterval(updateElapsed, 1000);
-      ensureDetector();
+      ensureDetectors();
       calibrating = true;
       monitoring = true;
       stopBtn.disabled = false;
@@ -293,12 +552,12 @@
       lastViolationAt = 0;
       lastSanctionAt = 0;
       rafId = requestAnimationFrame(tick);
-      // Short warm-up so Diffy has a previous frame before scoring.
       setTimeout(function () {
         if (!monitoring) return;
         calibrating = false;
         setStatus("active");
-      }, Math.max(calibrationMs, 800));
+        speak(i18n.voice_intro || "");
+      }, Math.max(calibrationMs, 1200));
     } catch (e) {
       stopCamera();
       startBtn.disabled = false;
@@ -316,11 +575,13 @@
   async function stopSession() {
     monitoring = false;
     calibrating = false;
+    stopSpeaking();
     if (rafId) cancelAnimationFrame(rafId);
     rafId = null;
     if (elapsedTimer) clearInterval(elapsedTimer);
     elapsedTimer = null;
-    detector = null;
+    diffy = null;
+    drift = null;
     stopCamera();
     stopBtn.disabled = true;
     startBtn.disabled = !sourceEnabled;
@@ -341,7 +602,8 @@
     if (document.hidden) {
       setStatus("paused");
       setHint(i18n.tab_hidden);
-      if (detector) detector.reset();
+      if (diffy) diffy.reset();
+      if (drift) drift.driftSince = null;
     } else if (calibrating) {
       setStatus("calibrating");
       setHint("");

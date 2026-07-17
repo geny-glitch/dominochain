@@ -58,10 +58,34 @@
         android:id="@+id/cornertime_hint"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="@dimen/ds_space_md"
+        android:layout_marginBottom="@dimen/ds_space_sm"
         android:visibility="gone"
         style="@style/DsSmall"
         android:textColor="@color/ds_magenta" />
+
+    <CheckBox
+        android:id="@+id/cornertime_voice"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/ds_space_sm"
+        android:checked="true"
+        android:text="@string/cornertime_voice_enabled"
+        style="@style/DsBody" />
+
+    <TextView
+        android:id="@+id/cornertime_voice_pick_label"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/ds_space_xs"
+        android:text="@string/cornertime_voice_pick"
+        style="@style/DsSmall"
+        android:textColor="@color/ds_text_muted" />
+
+    <Spinner
+        android:id="@+id/cornertime_voice_pick"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/ds_space_md" />
 
     <LinearLayout
         android:layout_width="match_parent"

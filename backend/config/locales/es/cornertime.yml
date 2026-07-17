@@ -1,0 +1,27 @@
+es:
+  cornertime:
+    errors:
+      source_disabled: "Corner time está desactivado."
+      invalid_client: "Cliente no compatible."
+      session_not_found: "Sesión no encontrada."
+      session_not_active: "Esta sesión ya no está activa."
+      action_failed: "No se pudo aplicar la sanción. Inténtalo de nuevo."
+    session:
+      page_title: "Corner time — %{nickname}"
+      heading: "Corner time"
+      lead: "Quédate quieto frente a la cámara. Un movimiento no autorizado activa las sanciones configuradas."
+      start: "Iniciar sesión"
+      stop: "Detener sesión"
+      status_idle: "Listo"
+      status_requesting_camera: "Solicitando cámara…"
+      status_calibrating: "Quédate quieto — calibrando…"
+      status_active: "Quédate quieto — vigilancia"
+      status_paused: "En pausa — mantén esta pestaña abierta"
+      status_stopped: "Sesión terminada"
+      status_error: "Algo salió mal"
+      camera_denied: "Se necesita acceso a la cámara para empezar."
+      tab_hidden_hint: "Mantén esta pestaña visible durante la sesión."
+      violations: "Movimientos detectados: %{count}"
+      elapsed: "Duración: %{time}"
+      no_sanctions: "Movimiento detectado, pero aún no hay ninguna sanción configurada."
+      source_disabled: "Corner time no está activado. Actívalo primero en Fuentes."

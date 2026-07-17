@@ -22,6 +22,10 @@ fr:
           label: "Fond d'écran"
           subtitle: "App Android · conformité du fond d'écran"
           events: "Événements : mismatch, permissions, hors ligne"
+        cornertime:
+          label: "Corner time"
+          subtitle: "Caméra · reste immobile ou affronte les sanctions"
+          events: "Événement : movement.detected"
       actions:
         chaster:
           label: "Chaster"
@@ -337,3 +341,36 @@ fr:
         compare_timeout: "Comparaison expirée"
         compare_error: "Erreur de comparaison"
         ambiguous_match: "Correspondance ambiguë"
+    cornertime_source:
+      page_title: "Sources · Corner time — %{nickname}"
+      heading: "Corner time"
+      lead: "Reste immobile devant la caméra. Chaque mouvement non autorisé peut déclencher les sanctions que tu configures."
+      install_lead: "Démarre une session depuis l'app Android ou ton navigateur. Garde la caméra pointée vers toi et reste immobile."
+      open_session: "Ouvrir la session navigateur"
+      android_hint: "Sur Android, ouvre Corner time depuis l'écran d'accueil après avoir activé cette source."
+      sensitivity: "Sensibilité"
+      sensitivities:
+        low: "Basse — ignore les petits mouvements"
+        medium: "Moyenne"
+        high: "Haute — réagit aux petits mouvements"
+      cooldown: "Délai entre sanctions (secondes)"
+      calibration: "Délai de calibration (secondes)"
+      sanctions_title: "Sanctions en cas de mouvement"
+      save: "Enregistrer"
+      logs_title: "Sessions récentes"
+      no_sessions: "Aucune session pour le moment."
+      session_started: "Début %{time}"
+      session_ended: "Fin %{time}"
+      session_client: "Client : %{client}"
+      session_violations: "%{count} mouvements"
+      session_status:
+        calibrating: "Calibration"
+        active: "Active"
+        stopped: "Arrêtée"
+        completed: "Terminée"
+      violation_status:
+        applied: "Sanction appliquée"
+        cooldown_skipped: "Ignoré (délai)"
+        source_disabled: "Source désactivée"
+        no_sanctions: "Aucune sanction configurée"
+        error: "Échec"

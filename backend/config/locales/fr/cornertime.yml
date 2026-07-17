@@ -1,0 +1,27 @@
+fr:
+  cornertime:
+    errors:
+      source_disabled: "Corner time est désactivé."
+      invalid_client: "Client non pris en charge."
+      session_not_found: "Session introuvable."
+      session_not_active: "Cette session n'est plus active."
+      action_failed: "Impossible d'appliquer la sanction. Réessaie."
+    session:
+      page_title: "Corner time — %{nickname}"
+      heading: "Corner time"
+      lead: "Reste immobile devant la caméra. Un mouvement non autorisé déclenche les sanctions configurées."
+      start: "Démarrer la session"
+      stop: "Arrêter la session"
+      status_idle: "Prêt"
+      status_requesting_camera: "Demande d'accès à la caméra…"
+      status_calibrating: "Ne bouge pas — calibration…"
+      status_active: "Reste immobile — surveillance"
+      status_paused: "En pause — garde cet onglet ouvert"
+      status_stopped: "Session terminée"
+      status_error: "Une erreur est survenue"
+      camera_denied: "L'accès à la caméra est nécessaire pour démarrer."
+      tab_hidden_hint: "Garde cet onglet visible pendant la session."
+      violations: "Mouvements détectés : %{count}"
+      elapsed: "Durée : %{time}"
+      no_sanctions: "Mouvement détecté, mais aucune sanction n'est encore configurée."
+      source_disabled: "Corner time n'est pas activé. Active-le d'abord dans Sources."

@@ -13,6 +13,7 @@ en:
         showcase_game_quiz: "Quiz"
         strava_goal: "Strava"
         wallpaper: "Wallpaper check"
+        cornertime: "Corner time"
       games:
         snake: "Snake"
         dino: "Dino Run"
@@ -27,6 +28,7 @@ en:
         showcase_game_tetris: "%{game} — %{lines} lines"
         showcase_backdoor: "Backdoor by %{player_name}: \"%{message}\""
         strava_goal: "Missed Strava goal: %{goal_title}"
+        cornertime: "Movement during corner time"
         wallpaper:
           default: "Wallpaper enforcement"
           mismatch_add_time: "Wrong wallpaper"

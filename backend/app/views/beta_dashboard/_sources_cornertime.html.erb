@@ -1,0 +1,91 @@
+<section class="ds-beta-section ds-beta-section--first">
+  <h2 class="ds-section-title"><%= t("beta.integration_sections.installation") %></h2>
+  <div class="ds-beta-control-card">
+    <p class="ds-beta-control-text"><%= t("beta.cornertime_source.install_lead") %></p>
+    <div class="ds-beta-control-actions">
+      <%= link_to t("beta.cornertime_source.open_session"), cornertime_session_path, class: "ds-btn ds-btn--secondary ds-btn--sm" %>
+    </div>
+    <p class="ds-beta-control-hint"><%= t("beta.cornertime_source.android_hint") %></p>
+  </div>
+</section>
+
+<section class="ds-beta-section ds-beta-section--tight-top">
+  <h2 class="ds-section-title"><%= t("beta.integration_sections.configuration") %></h2>
+  <div class="ds-beta-control-card">
+    <%= form_with url: beta_cornertime_config_path, method: :patch, local: true, class: "ds-form", data: { turbo: false } do %>
+      <div class="ds-form-group">
+        <%= label_tag :sensitivity, t("beta.cornertime_source.sensitivity"), class: "ds-form-label" %>
+        <%= select_tag :sensitivity,
+              options_for_select(
+                CornertimeConfig::SENSITIVITIES.map { |s| [t("beta.cornertime_source.sensitivities.#{s}"), s] },
+                @config.sensitivity
+              ),
+              class: "ds-input" %>
+      </div>
+
+      <div class="ds-form-group">
+        <%= label_tag :violation_cooldown_seconds, t("beta.cornertime_source.cooldown"), class: "ds-form-label" %>
+        <%= number_field_tag :violation_cooldown_seconds,
+              @config.violation_cooldown_seconds,
+              min: CornertimeConfig::MIN_COOLDOWN_SECONDS,
+              max: CornertimeConfig::MAX_COOLDOWN_SECONDS,
+              class: "ds-input",
+              required: true %>
+      </div>
+
+      <div class="ds-form-group">
+        <%= label_tag :calibration_seconds, t("beta.cornertime_source.calibration"), class: "ds-form-label" %>
+        <%= number_field_tag :calibration_seconds,
+              @config.calibration_seconds,
+              min: CornertimeConfig::MIN_CALIBRATION_SECONDS,
+              max: CornertimeConfig::MAX_CALIBRATION_SECONDS,
+              class: "ds-input",
+              required: true %>
+      </div>
+
+      <h3 class="ds-section-subtitle"><%= t("beta.cornertime_source.sanctions_title") %></h3>
+      <%= render "sanction_set_fields",
+            field_prefix: "movement_sanction",
+            sanction_set: @config.movement_sanction_object,
+            allowed_possibility_ids: BetaEvents::SourceRegistry.allowed_for(:cornertime, :movement_detected),
+            photos: @leverage_photos %>
+
+      <div class="ds-beta-control-actions">
+        <%= submit_tag t("beta.cornertime_source.save"), class: "ds-btn ds-btn--primary" %>
+      </div>
+    <% end %>
+  </div>
+</section>
+
+<section class="ds-beta-section ds-beta-section--tight-top">
+  <h2 class="ds-section-title"><%= t("beta.integration_sections.logs_tracking") %></h2>
+  <div class="ds-beta-control-card">
+    <% if @sessions.any? %>
+      <ul class="ds-beta-bullet-list">
+        <% @sessions.each do |session| %>
+          <li>
+            <strong><%= t("beta.cornertime_source.session_status.#{session.status}") %></strong>
+            — <%= t("beta.cornertime_source.session_started", time: l(session.started_at, format: :short)) %>
+            <% if session.ended_at.present? %>
+              · <%= t("beta.cornertime_source.session_ended", time: l(session.ended_at, format: :short)) %>
+            <% end %>
+            · <%= t("beta.cornertime_source.session_client", client: session.client) %>
+            · <%= t("beta.cornertime_source.session_violations", count: session.violation_count) %>
+            <% if session.cornertime_violations.any? %>
+              <ul class="ds-beta-bullet-list">
+                <% session.cornertime_violations.limit(5).each do |violation| %>
+                  <li>
+                    <%= l(violation.detected_at, format: :short) %>
+                    — <%= t("beta.cornertime_source.violation_status.#{violation.status}") %>
+                  </li>
+                <% end %>
+              </ul>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="ds-beta-control-hint"><%= t("beta.cornertime_source.no_sessions") %></p>
+    <% end %>
+  </div>
+</section>

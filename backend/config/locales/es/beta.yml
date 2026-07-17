@@ -22,6 +22,10 @@ es:
           label: "Fondo de pantalla"
           subtitle: "App Android · cumplimiento del fondo"
           events: "Eventos: mismatch, permisos, sin conexión"
+        cornertime:
+          label: "Corner time"
+          subtitle: "Cámara · quédate quieto o afronta sanciones"
+          events: "Evento: movement.detected"
       actions:
         chaster:
           label: "Chaster"
@@ -337,3 +341,36 @@ es:
         compare_timeout: "Comparación expirada"
         compare_error: "Error de comparación"
         ambiguous_match: "Coincidencia ambigua"
+    cornertime_source:
+      page_title: "Fuentes · Corner time — %{nickname}"
+      heading: "Corner time"
+      lead: "Quédate quieto frente a la cámara. Cada movimiento no autorizado puede activar las sanciones que configures."
+      install_lead: "Inicia una sesión desde la app Android o el navegador. Mantén la cámara apuntándote y quédate quieto."
+      open_session: "Abrir sesión en el navegador"
+      android_hint: "En Android, abre Corner time desde la pantalla de inicio tras activar esta fuente."
+      sensitivity: "Sensibilidad"
+      sensitivities:
+        low: "Baja — ignora movimientos pequeños"
+        medium: "Media"
+        high: "Alta — reacciona a movimientos pequeños"
+      cooldown: "Espera entre sanciones (segundos)"
+      calibration: "Retraso de calibración (segundos)"
+      sanctions_title: "Sanciones por movimiento"
+      save: "Guardar"
+      logs_title: "Sesiones recientes"
+      no_sessions: "Todavía no hay sesiones."
+      session_started: "Inicio %{time}"
+      session_ended: "Fin %{time}"
+      session_client: "Cliente: %{client}"
+      session_violations: "%{count} movimientos"
+      session_status:
+        calibrating: "Calibrando"
+        active: "Activa"
+        stopped: "Detenida"
+        completed: "Completada"
+      violation_status:
+        applied: "Sanción aplicada"
+        cooldown_skipped: "Ignorado (espera)"
+        source_disabled: "Fuente desactivada"
+        no_sanctions: "Sin sanción configurada"
+        error: "Error"

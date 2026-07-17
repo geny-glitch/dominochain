@@ -1,0 +1,27 @@
+en:
+  cornertime:
+    errors:
+      source_disabled: "Corner time is disabled."
+      invalid_client: "Unsupported client."
+      session_not_found: "Session not found."
+      session_not_active: "This session is no longer active."
+      action_failed: "Could not apply the sanction. Try again."
+    session:
+      page_title: "Corner time — %{nickname}"
+      heading: "Corner time"
+      lead: "Stay still in front of the camera. Unauthorized movement triggers your configured sanctions."
+      start: "Start session"
+      stop: "Stop session"
+      status_idle: "Ready"
+      status_requesting_camera: "Requesting camera…"
+      status_calibrating: "Hold still — calibrating…"
+      status_active: "Stay still — monitoring"
+      status_paused: "Paused — keep this tab open"
+      status_stopped: "Session ended"
+      status_error: "Something went wrong"
+      camera_denied: "Camera access is required to start a session."
+      tab_hidden_hint: "Keep this tab visible while the session is running."
+      violations: "Movements detected: %{count}"
+      elapsed: "Elapsed: %{time}"
+      no_sanctions: "Movement detected, but no sanction is configured yet."
+      source_disabled: "Corner time is not enabled. Enable it from Sources first."

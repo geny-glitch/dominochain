@@ -113,6 +113,9 @@ class MainActivity : AppCompatActivity() {
         binding.cigarettesCard.setOnClickListener {
             startActivity(Intent(this, CigaretteHistoryActivity::class.java))
         }
+        binding.cornertimeCard.setOnClickListener {
+            startActivity(Intent(this, CornertimeActivity::class.java))
+        }
 
         WallpaperWorker.schedule(this)
         AppUpdateCheckWorker.schedule(this)

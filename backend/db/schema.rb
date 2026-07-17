@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_07_17_140000) do
+ActiveRecord::Schema[7.2].define(version: 2026_07_17_170000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -121,6 +121,47 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_17_140000) do
     t.datetime "updated_at", null: false
     t.index ["beta_id"], name: "index_controls_on_beta_id", unique: true
     t.index ["boss_id"], name: "index_controls_on_boss_id"
+  end
+
+  create_table "cornertime_configs", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.jsonb "movement_sanction", default: {"items"=>[]}, null: false
+    t.string "sensitivity", default: "medium", null: false
+    t.integer "violation_cooldown_seconds", default: 30, null: false
+    t.integer "calibration_seconds", default: 5, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_cornertime_configs_on_user_id", unique: true
+  end
+
+  create_table "cornertime_sessions", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "device_id"
+    t.string "status", default: "calibrating", null: false
+    t.string "client", null: false
+    t.datetime "started_at", null: false
+    t.datetime "ended_at"
+    t.integer "violation_count", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["device_id"], name: "index_cornertime_sessions_on_device_id"
+    t.index ["user_id", "started_at"], name: "index_cornertime_sessions_on_user_id_and_started_at"
+    t.index ["user_id", "status"], name: "index_cornertime_sessions_on_user_id_and_status"
+    t.index ["user_id"], name: "index_cornertime_sessions_on_user_id"
+  end
+
+  create_table "cornertime_violations", force: :cascade do |t|
+    t.bigint "cornertime_session_id", null: false
+    t.datetime "detected_at", null: false
+    t.float "motion_score"
+    t.string "client_violation_id"
+    t.jsonb "actions_executed", default: [], null: false
+    t.string "status", default: "applied", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["cornertime_session_id", "client_violation_id"], name: "index_cornertime_violations_on_session_and_client_id", unique: true, where: "(client_violation_id IS NOT NULL)"
+    t.index ["cornertime_session_id", "detected_at"], name: "idx_on_cornertime_session_id_detected_at_3daddce453"
+    t.index ["cornertime_session_id"], name: "index_cornertime_violations_on_cornertime_session_id"
   end
 
   create_table "device_screenshots", force: :cascade do |t|
@@ -621,6 +662,10 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_17_140000) do
   add_foreign_key "control_requests", "users", column: "boss_id"
   add_foreign_key "controls", "users", column: "beta_id"
   add_foreign_key "controls", "users", column: "boss_id"
+  add_foreign_key "cornertime_configs", "users"
+  add_foreign_key "cornertime_sessions", "devices"
+  add_foreign_key "cornertime_sessions", "users"
+  add_foreign_key "cornertime_violations", "cornertime_sessions"
   add_foreign_key "device_screenshots", "devices"
   add_foreign_key "device_screenshots", "wallpapers"
   add_foreign_key "devices", "users"

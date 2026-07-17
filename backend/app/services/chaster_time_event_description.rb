@@ -72,6 +72,8 @@ class ChasterTimeEventDescription
       I18n.t("chaster.time_events.summaries.puryfi")
     when :api, :api_chaster
       I18n.t("chaster.time_events.summaries.api")
+    when :cornertime
+      I18n.t("chaster.time_events.summaries.cornertime")
     else
       nil
     end

@@ -22,6 +22,10 @@ en:
           label: "Wallpaper"
           subtitle: "Android app · wallpaper compliance"
           events: "Events: mismatch, permissions, offline"
+        cornertime:
+          label: "Corner time"
+          subtitle: "Camera · stay still or face sanctions"
+          events: "Event: movement.detected"
       actions:
         chaster:
           label: "Chaster"
@@ -337,3 +341,36 @@ en:
         compare_timeout: "Comparison timed out"
         compare_error: "Comparison error"
         ambiguous_match: "Ambiguous match"
+    cornertime_source:
+      page_title: "Sources · Corner time — %{nickname}"
+      heading: "Corner time"
+      lead: "Stay still in front of the camera. Each unauthorized movement can trigger the sanctions you configure."
+      install_lead: "Start a session from the Android app or from your browser. Keep the camera pointed at you and stay still."
+      open_session: "Open browser session"
+      android_hint: "On Android, open Corner time from the home screen after enabling this source."
+      sensitivity: "Sensitivity"
+      sensitivities:
+        low: "Low — ignores small movements"
+        medium: "Medium"
+        high: "High — reacts to small movements"
+      cooldown: "Cooldown between sanctions (seconds)"
+      calibration: "Calibration delay (seconds)"
+      sanctions_title: "Sanctions on movement"
+      save: "Save settings"
+      logs_title: "Recent sessions"
+      no_sessions: "No sessions yet."
+      session_started: "Started %{time}"
+      session_ended: "Ended %{time}"
+      session_client: "Client: %{client}"
+      session_violations: "%{count} movements"
+      session_status:
+        calibrating: "Calibrating"
+        active: "Active"
+        stopped: "Stopped"
+        completed: "Completed"
+      violation_status:
+        applied: "Sanction applied"
+        cooldown_skipped: "Ignored (cooldown)"
+        source_disabled: "Source disabled"
+        no_sanctions: "No sanction configured"
+        error: "Failed"

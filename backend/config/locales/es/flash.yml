@@ -83,6 +83,8 @@ es:
         uploaded: "Fondo de pantalla actualizado."
         no_device: "Registra primero un dispositivo en la app Android."
         boss_controls_wallpaper: "Tu boss controla el fondo. No puedes cambiarlo aquí."
+      cornertime:
+        config_saved: "Ajustes de Corner time guardados."
       leverage_photo:
         images_required: "Se requieren las imágenes original y teaser."
         censor_required: "Se requiere la imagen censurada."

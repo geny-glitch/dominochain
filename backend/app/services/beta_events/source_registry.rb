@@ -8,6 +8,7 @@ module BetaEvents
     # Action catalogs accepted on configurable sanction forms (not possibility ids).
     WALLPAPER_CATALOGS = %w[chaster pishock leverage_photo].freeze
     STRAVA_CATALOGS = %w[leverage_photo].freeze
+    CORNERTIME_CATALOGS = %w[chaster pishock leverage_photo].freeze
 
     EventDef = Struct.new(
       :kind,
@@ -180,6 +181,18 @@ module BetaEvents
               mode: :payload,
               accepted_catalogs: WALLPAPER_CATALOGS
             )
+          ),
+          cornertime: SourceDef.new(
+            catalog_id: "cornertime",
+            event_source: :cornertime,
+            events: {
+              movement_detected: EventDef.new(
+                kind: :movement_detected,
+                mode: :payload,
+                accepted_catalogs: CORNERTIME_CATALOGS
+              )
+            },
+            default_event: nil
           )
         }.freeze
       end

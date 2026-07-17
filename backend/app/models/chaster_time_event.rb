@@ -9,6 +9,7 @@ class ChasterTimeEvent < ApplicationRecord
     showcase_game
     strava_goal
     wallpaper
+    cornertime
   ].freeze
 
   belongs_to :user

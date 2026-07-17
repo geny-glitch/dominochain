@@ -36,4 +36,18 @@ RSpec.describe BetaEvents::SourceRegistry do
       "leverage_photo.delete"
     )
   end
+
+  it "binds cornertime movement events to payload sanctions" do
+    source = described_class.for_event_source(:cornertime)
+    event_def = source.event(:movement_detected)
+
+    expect(event_def.mode).to eq(:payload)
+    expect(event_def.accepted_catalogs).to eq(described_class::CORNERTIME_CATALOGS)
+    expect(described_class.allowed_for(:cornertime, :movement_detected)).to include(
+      "chaster.add_time",
+      "pishock.shock",
+      "leverage_photo.lock",
+      "leverage_photo.delete"
+    )
+  end
 end

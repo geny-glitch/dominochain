@@ -1,0 +1,62 @@
+<% content_for :title, t("cornertime.session.page_title", nickname: current_user.nickname) %>
+
+<header class="ds-beta-page-head">
+  <div class="ds-beta-page-head-row">
+    <h1 class="ds-beta-page-title"><%= t("cornertime.session.heading") %></h1>
+  </div>
+  <p class="ds-beta-page-lead"><%= t("cornertime.session.lead") %></p>
+</header>
+
+<section class="ds-beta-section ds-beta-section--first">
+  <div class="ds-beta-control-card" id="cornertime-monitor"
+       data-source-enabled="<%= @source_enabled %>"
+       data-config='<%= @config_payload.to_json %>'
+       data-start-url="<%= cornertime_session_path %>"
+       data-stop-url-template="<%= cornertime_session_stop_path(id: ":id") %>"
+       data-violation-url-template="<%= cornertime_session_violations_path(id: ":id") %>"
+       data-i18n='<%= {
+         idle: t("cornertime.session.status_idle"),
+         requesting_camera: t("cornertime.session.status_requesting_camera"),
+         calibrating: t("cornertime.session.status_calibrating"),
+         active: t("cornertime.session.status_active"),
+         paused: t("cornertime.session.status_paused"),
+         stopped: t("cornertime.session.status_stopped"),
+         error: t("cornertime.session.status_error"),
+         camera_denied: t("cornertime.session.camera_denied"),
+         tab_hidden: t("cornertime.session.tab_hidden_hint"),
+         violations: t("cornertime.session.violations", count: "%{count}"),
+         elapsed: t("cornertime.session.elapsed", time: "%{time}"),
+         source_disabled: t("cornertime.session.source_disabled"),
+         no_sanctions: t("cornertime.session.no_sanctions"),
+         start: t("cornertime.session.start"),
+         stop: t("cornertime.session.stop")
+       }.to_json %>'>
+    <% unless @source_enabled %>
+      <p class="ds-beta-control-hint" id="cornertime-disabled-hint"><%= t("cornertime.session.source_disabled") %></p>
+      <p class="ds-beta-control-hint">
+        <%= link_to t("beta.catalog.sources.cornertime.label"), beta_sources_cornertime_path, class: "ds-inline-link" %>
+      </p>
+    <% end %>
+
+    <div class="ds-form-group">
+      <video id="cornertime-video" autoplay playsinline muted style="width:100%;max-width:480px;border-radius:12px;background:#111;aspect-ratio:3/4;object-fit:cover;"></video>
+      <canvas id="cornertime-canvas" width="160" height="120" hidden aria-hidden="true"></canvas>
+    </div>
+
+    <p class="ds-beta-control-text" id="cornertime-status" role="status"><%= t("cornertime.session.status_idle") %></p>
+    <p class="ds-beta-control-hint" id="cornertime-violations"><%= t("cornertime.session.violations", count: 0) %></p>
+    <p class="ds-beta-control-hint" id="cornertime-elapsed"><%= t("cornertime.session.elapsed", time: "00:00") %></p>
+    <p class="ds-beta-control-hint" id="cornertime-hint" hidden></p>
+
+    <div class="ds-beta-control-actions">
+      <button type="button" class="ds-btn ds-btn--primary" id="cornertime-start" <%= "disabled" unless @source_enabled %>>
+        <%= t("cornertime.session.start") %>
+      </button>
+      <button type="button" class="ds-btn ds-btn--secondary" id="cornertime-stop" disabled>
+        <%= t("cornertime.session.stop") %>
+      </button>
+    </div>
+  </div>
+</section>
+
+<%= render "cornertime_sessions/monitor_script" %>

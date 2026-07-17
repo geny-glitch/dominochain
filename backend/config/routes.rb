@@ -25,6 +25,12 @@ Rails.application.routes.draw do
 get "beta/sources/strava", to: "beta_dashboard#sources_strava", as: :beta_sources_strava
 get "beta/sources/vitrine", to: "beta_dashboard#sources_showcase", as: :beta_sources_showcase
   get "beta/sources/wallpaper", to: "beta_dashboard#sources_wallpaper", as: :beta_sources_wallpaper
+  get "beta/sources/cornertime", to: "beta_dashboard#sources_cornertime", as: :beta_sources_cornertime
+  patch "beta/cornertime/config", to: "beta_dashboard#update_cornertime_config", as: :beta_cornertime_config
+  get "cornertime/session", to: "cornertime_sessions#show", as: :cornertime_session
+  post "cornertime/session", to: "cornertime_sessions#create"
+  patch "cornertime/session/:id/stop", to: "cornertime_sessions#stop", as: :cornertime_session_stop
+  post "cornertime/session/:id/violations", to: "cornertime_sessions#create_violation", as: :cornertime_session_violations
   get "beta/leverage_photos", to: "beta_leverage_photo#index", as: :beta_leverage_photos
   get "beta/leverage_photos/upload", to: "beta_leverage_photo#upload_new", as: :beta_leverage_photo_upload
   post "beta/leverage_photos/upload", to: "beta_leverage_photo#upload", as: :beta_leverage_photo_upload_submit
@@ -169,6 +175,11 @@ get "beta/sources/vitrine", to: "beta_dashboard#sources_showcase", as: :beta_sou
 
     get "cigarettes", to: "cigarette_entries#index"
     post "cigarettes", to: "cigarette_entries#create"
+
+    get "cornertime/config", to: "cornertime/configs#show"
+    post "cornertime/sessions", to: "cornertime/sessions#create"
+    patch "cornertime/sessions/:id/stop", to: "cornertime/sessions#stop"
+    post "cornertime/sessions/:id/violations", to: "cornertime/violations#create"
 
     get "showcase_settings", to: "showcase_settings#show"
     patch "showcase_settings", to: "showcase_settings#update"

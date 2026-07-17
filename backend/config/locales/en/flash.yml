@@ -83,6 +83,8 @@ en:
         uploaded: "Wallpaper updated."
         no_device: "Register a device in the Android app first."
         boss_controls_wallpaper: "Your boss controls the wallpaper. You cannot change it here."
+      cornertime:
+        config_saved: "Corner time settings saved."
       leverage_photo:
         images_required: "Original and teaser images are required."
         censor_required: "Censored image is required."

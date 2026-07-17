@@ -96,4 +96,23 @@
     <string name="update_up_to_date">L\'application est à jour.</string>
     <string name="update_check_failed">Impossible de vérifier les mises à jour.</string>
     <string name="build_number">Build %1$d</string>
+    <string name="cornertime_title">Corner time</string>
+    <string name="cornertime_lead">Reste immobile devant la caméra. Chaque mouvement non autorisé peut déclencher une sanction.</string>
+    <string name="cornertime_start">Démarrer</string>
+    <string name="cornertime_stop">Arrêter</string>
+    <string name="cornertime_status_idle">Prêt</string>
+    <string name="cornertime_status_starting">Démarrage…</string>
+    <string name="cornertime_status_calibrating">Ne bouge pas — calibration…</string>
+    <string name="cornertime_status_active">Reste immobile — surveillance</string>
+    <string name="cornertime_status_stopped">Session terminée</string>
+    <string name="cornertime_status_error">Une erreur est survenue</string>
+    <string name="cornertime_violations">Mouvements détectés : %1$d</string>
+    <string name="cornertime_camera_denied">L\'accès à la caméra est nécessaire.</string>
+    <string name="cornertime_source_disabled">Corner time n\'est pas activé sur ton compte.</string>
+    <string name="cornertime_open">Corner time</string>
+    <string name="cornertime_card_hint">Caméra · reste immobile</string>
+    <string name="cornertime_notification_channel">Corner time</string>
+    <string name="cornertime_notification_title">Corner time actif</string>
+    <string name="cornertime_notification_body">Reste immobile. Touche pour revenir à la session.</string>
+    <string name="permission_camera">Caméra (corner time)</string>
 </resources>

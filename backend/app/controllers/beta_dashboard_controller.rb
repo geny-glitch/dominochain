@@ -8,7 +8,8 @@ class BetaDashboardController < ApplicationController
     "sources_cigarettes" => "cigarettes",
     "sources_strava" => "strava",
     "sources_showcase" => "showcase",
-    "sources_wallpaper" => "wallpaper"
+    "sources_wallpaper" => "wallpaper",
+    "sources_cornertime" => "cornertime"
   }.freeze
   CATALOG_ACTION_ACTIONS = {
     "actions_chaster" => "chaster",
@@ -65,6 +66,22 @@ class BetaDashboardController < ApplicationController
     @chaster_lock = fetch_chaster_lock
     @leverage_photos = current_user.leverage_photos.not_deleted.newest_first
     @leverage_action_enabled = BetaCatalog.new(current_user).action_platform_enabled?("leverage_photo")
+  end
+
+  def sources_cornertime
+    @config = current_user.ensure_cornertime_config!
+    @sessions = current_user.cornertime_sessions.recent.includes(:cornertime_violations).limit(20)
+    @leverage_photos = current_user.leverage_photos.not_deleted.newest_first
+  end
+
+  def update_cornertime_config
+    config = current_user.ensure_cornertime_config!
+    config.assign_attributes(cornertime_config_params)
+    config.save!
+    PosthogProductAnalytics.configured_source(current_user, name: "cornertime")
+    redirect_to beta_sources_cornertime_path, notice: t("flash.beta.cornertime.config_saved")
+  rescue ActiveRecord::RecordInvalid => e
+    redirect_to beta_sources_cornertime_path, alert: e.record.errors.full_messages.join(", ")
   end
 
   def actions_leverage_photo
@@ -436,6 +453,21 @@ class BetaDashboardController < ApplicationController
     return nil unless raw.is_a?(ActionController::Parameters) || raw.is_a?(Hash)
 
     SanctionSet.from_params(raw, allowed: BetaEvents::SourceRegistry.allowed_for(:wallpaper, :default)).to_h
+  end
+
+  def cornertime_config_params
+    attrs = {
+      sensitivity: params[:sensitivity],
+      violation_cooldown_seconds: params[:violation_cooldown_seconds],
+      calibration_seconds: params[:calibration_seconds]
+    }
+    if params[:movement_sanction].present?
+      attrs[:movement_sanction] = SanctionSet.from_params(
+        params[:movement_sanction],
+        allowed: BetaEvents::SourceRegistry.allowed_for(:cornertime, :movement_detected)
+      ).to_h
+    end
+    attrs.compact
   end
 
   def wallpaper_history_scope

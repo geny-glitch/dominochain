@@ -83,6 +83,8 @@ fr:
         uploaded: "Fond d'écran mis à jour."
         no_device: "Enregistre d'abord un appareil dans l'app Android."
         boss_controls_wallpaper: "Ton boss contrôle le fond d'écran. Tu ne peux pas le modifier ici."
+      cornertime:
+        config_saved: "Paramètres Corner time enregistrés."
       leverage_photo:
         images_required: "Les images originale et teaser sont requises."
         censor_required: "L'image censurée est requise."

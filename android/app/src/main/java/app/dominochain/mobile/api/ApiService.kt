@@ -112,6 +112,56 @@ data class NameRequest(val name: String?)
 data class PermissionsRequest(val permissions_ok: Boolean, val permissions_missing: List<String>? = null)
 data class CigaretteEntryRequest(val count: Int = 1)
 
+data class CornertimeConfigResponse(
+    val sensitivity: String? = null,
+    val motion_threshold: Double? = null,
+    val pixel_change_delta: Double? = null,
+    val violation_cooldown_seconds: Int? = null,
+    val calibration_seconds: Int? = null,
+    val source_enabled: Boolean? = null
+)
+
+data class CornertimeSessionRequest(val client: String = "android")
+
+data class CornertimeSessionPayload(
+    val id: Long,
+    val status: String? = null,
+    val client: String? = null,
+    val started_at: String? = null,
+    val ended_at: String? = null,
+    val violation_count: Int? = null
+)
+
+data class CornertimeSessionStartResponse(
+    val session: CornertimeSessionPayload,
+    val config: CornertimeConfigResponse? = null
+)
+
+data class CornertimeSessionStopResponse(
+    val session: CornertimeSessionPayload
+)
+
+data class CornertimeViolationRequest(
+    val motion_score: Double? = null,
+    val detected_at: String? = null,
+    val client_violation_id: String? = null
+)
+
+data class CornertimeViolationPayload(
+    val id: Long? = null,
+    val status: String? = null,
+    val detected_at: String? = null,
+    val motion_score: Double? = null
+)
+
+data class CornertimeViolationResponse(
+    val status: String? = null,
+    val cooldown_remaining_seconds: Int? = null,
+    val violation: CornertimeViolationPayload? = null,
+    val session: CornertimeSessionPayload? = null,
+    val error: String? = null
+)
+
 interface ApiService {
     @POST("api/auth/login")
     suspend fun login(@Body request: LoginRequest): Response<AuthResponse>
@@ -178,6 +228,21 @@ interface ApiService {
 
     @POST("api/cigarettes")
     suspend fun createCigaretteEntry(@Body request: CigaretteEntryRequest): Response<CigaretteTrackerResponse>
+
+    @GET("api/cornertime/config")
+    suspend fun getCornertimeConfig(): Response<CornertimeConfigResponse>
+
+    @POST("api/cornertime/sessions")
+    suspend fun startCornertimeSession(@Body request: CornertimeSessionRequest): Response<CornertimeSessionStartResponse>
+
+    @PATCH("api/cornertime/sessions/{id}/stop")
+    suspend fun stopCornertimeSession(@Path("id") id: Long): Response<CornertimeSessionStopResponse>
+
+    @POST("api/cornertime/sessions/{id}/violations")
+    suspend fun reportCornertimeViolation(
+        @Path("id") id: Long,
+        @Body request: CornertimeViolationRequest
+    ): Response<CornertimeViolationResponse>
 
     @GET("api/devices/{deviceId}/tasks")
     suspend fun getTasks(@Path("deviceId") deviceId: String): Response<List<TaskResponse>>

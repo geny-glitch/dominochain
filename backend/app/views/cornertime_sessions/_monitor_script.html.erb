@@ -1,0 +1,306 @@
+<script>
+(function () {
+  var root = document.getElementById("cornertime-monitor");
+  if (!root) return;
+
+  var video = document.getElementById("cornertime-video");
+  var canvas = document.getElementById("cornertime-canvas");
+  var ctx = canvas.getContext("2d", { willReadFrequently: true });
+  var statusEl = document.getElementById("cornertime-status");
+  var violationsEl = document.getElementById("cornertime-violations");
+  var elapsedEl = document.getElementById("cornertime-elapsed");
+  var hintEl = document.getElementById("cornertime-hint");
+  var startBtn = document.getElementById("cornertime-start");
+  var stopBtn = document.getElementById("cornertime-stop");
+
+  var i18n = JSON.parse(root.dataset.i18n || "{}");
+  var config = JSON.parse(root.dataset.config || "{}");
+  var sourceEnabled = root.dataset.sourceEnabled === "true";
+  var csrf = document.querySelector('meta[name="csrf-token"]');
+  var csrfToken = csrf ? csrf.getAttribute("content") : "";
+
+  var stream = null;
+  var sessionId = null;
+  var baseline = null;
+  var baselineSamples = 0;
+  var rafId = null;
+  var lastSampleAt = 0;
+  var lastViolationAt = 0;
+  var violationCount = 0;
+  var startedAt = null;
+  var elapsedTimer = null;
+  var monitoring = false;
+  var calibrating = false;
+  var cooldownMs = (config.violation_cooldown_seconds || 30) * 1000;
+  var calibrationMs = (config.calibration_seconds || 5) * 1000;
+  var threshold = config.motion_threshold || 0.04;
+  var pixelDelta = config.pixel_change_delta || 0.10;
+  var sampleIntervalMs = 150;
+  var analysisWidth = 96;
+  var analysisHeight = 72;
+  var reporting = false;
+
+  function setStatus(key) {
+    statusEl.textContent = i18n[key] || key;
+  }
+
+  function setHint(text) {
+    if (!text) {
+      hintEl.hidden = true;
+      hintEl.textContent = "";
+      return;
+    }
+    hintEl.hidden = false;
+    hintEl.textContent = text;
+  }
+
+  function formatElapsed(ms) {
+    var total = Math.floor(ms / 1000);
+    var m = Math.floor(total / 60);
+    var s = total % 60;
+    return String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+  }
+
+  function updateElapsed() {
+    if (!startedAt) return;
+    elapsedEl.textContent = (i18n.elapsed || "Elapsed: %{time}").replace("%{time}", formatElapsed(Date.now() - startedAt));
+  }
+
+  function updateViolations() {
+    violationsEl.textContent = (i18n.violations || "Movements: %{count}").replace("%{count}", String(violationCount));
+  }
+
+  function grayscaleFrame() {
+    if (!video.videoWidth || !video.videoHeight) return null;
+    canvas.width = analysisWidth;
+    canvas.height = analysisHeight;
+    ctx.drawImage(video, 0, 0, analysisWidth, analysisHeight);
+    var image = ctx.getImageData(0, 0, analysisWidth, analysisHeight);
+    var data = image.data;
+    var gray = new Float32Array(analysisWidth * analysisHeight);
+    var sum = 0;
+    for (var i = 0, p = 0; i < data.length; i += 4, p++) {
+      var v = (0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]) / 255;
+      gray[p] = v;
+      sum += v;
+    }
+    // Skip black / empty frames during camera warm-up.
+    if (sum / gray.length < 0.02) return null;
+    return gray;
+  }
+
+  function accumulateBaseline(frame) {
+    if (!baseline || baseline.length !== frame.length) {
+      baseline = new Float32Array(frame.length);
+      baselineSamples = 0;
+    }
+    baselineSamples += 1;
+    var n = baselineSamples;
+    for (var i = 0; i < frame.length; i++) {
+      baseline[i] += (frame[i] - baseline[i]) / n;
+    }
+  }
+
+  // Fraction of pixels that moved beyond pixelDelta vs calibration baseline.
+  function motionScore(frame) {
+    if (!baseline || baseline.length !== frame.length) return 0;
+    var changed = 0;
+    for (var i = 0; i < frame.length; i++) {
+      if (Math.abs(frame[i] - baseline[i]) > pixelDelta) changed += 1;
+    }
+    return changed / frame.length;
+  }
+
+  function uuid() {
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    return "v-" + Date.now() + "-" + Math.floor(Math.random() * 1e9);
+  }
+
+  async function api(url, method, body) {
+    var res = await fetch(url, {
+      method: method,
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "X-CSRF-Token": csrfToken
+      },
+      body: body ? JSON.stringify(body) : undefined,
+      credentials: "same-origin"
+    });
+    var data = {};
+    try { data = await res.json(); } catch (e) { data = {}; }
+    if (!res.ok) {
+      var err = new Error(data.error || i18n.error || "Error");
+      err.status = res.status;
+      err.data = data;
+      throw err;
+    }
+    return data;
+  }
+
+  async function reportViolation(score) {
+    if (!sessionId || reporting) return;
+    var now = Date.now();
+    if (now - lastViolationAt < cooldownMs) return;
+    lastViolationAt = now;
+    reporting = true;
+    // Count locally as soon as movement is detected (not only when a sanction applies).
+    violationCount += 1;
+    updateViolations();
+    try {
+      var data = await api(
+        root.dataset.violationUrlTemplate.replace(":id", sessionId),
+        "POST",
+        {
+          motion_score: score,
+          detected_at: new Date().toISOString(),
+          client_violation_id: uuid()
+        }
+      );
+      if (data.session && typeof data.session.violation_count === "number") {
+        violationCount = Math.max(violationCount, data.session.violation_count);
+        updateViolations();
+      }
+      if (typeof data.cooldown_remaining_seconds === "number" && data.cooldown_remaining_seconds > 0) {
+        cooldownMs = Math.max(1000, data.cooldown_remaining_seconds * 1000);
+      }
+      if (data.status === "no_sanctions") {
+        setHint(i18n.no_sanctions || "");
+      }
+    } catch (e) {
+      setHint(e.message);
+    } finally {
+      reporting = false;
+    }
+  }
+
+  function tick(ts) {
+    if (!monitoring) return;
+    rafId = requestAnimationFrame(tick);
+    if (document.hidden) return;
+    if (ts - lastSampleAt < sampleIntervalMs) return;
+    lastSampleAt = ts;
+
+    var frame = grayscaleFrame();
+    if (!frame) return;
+    if (calibrating) {
+      accumulateBaseline(frame);
+      return;
+    }
+    if (!baseline || baselineSamples < 3) return;
+    var score = motionScore(frame);
+    if (score > threshold) {
+      reportViolation(score);
+    }
+  }
+
+  async function startCamera() {
+    setStatus("requesting_camera");
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio: false,
+      video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } }
+    });
+    video.srcObject = stream;
+    await video.play();
+  }
+
+  function stopCamera() {
+    if (stream) {
+      stream.getTracks().forEach(function (t) { t.stop(); });
+      stream = null;
+    }
+    video.srcObject = null;
+  }
+
+  async function startSession() {
+    if (!sourceEnabled) {
+      setHint(i18n.source_disabled);
+      return;
+    }
+    startBtn.disabled = true;
+    setHint("");
+    try {
+      await startCamera();
+      var data = await api(root.dataset.startUrl, "POST", {});
+      sessionId = data.session.id;
+      config = data.config || config;
+      cooldownMs = (config.violation_cooldown_seconds || 30) * 1000;
+      calibrationMs = (config.calibration_seconds || 5) * 1000;
+      threshold = config.motion_threshold || 0.04;
+      pixelDelta = config.pixel_change_delta || 0.10;
+      violationCount = 0;
+      updateViolations();
+      startedAt = Date.now();
+      updateElapsed();
+      elapsedTimer = setInterval(updateElapsed, 1000);
+      baseline = null;
+      baselineSamples = 0;
+      calibrating = true;
+      monitoring = true;
+      stopBtn.disabled = false;
+      setStatus("calibrating");
+      lastSampleAt = 0;
+      lastViolationAt = 0;
+      rafId = requestAnimationFrame(tick);
+      setTimeout(function () {
+        if (!monitoring) return;
+        calibrating = false;
+        setStatus("active");
+      }, calibrationMs);
+    } catch (e) {
+      stopCamera();
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+      if (e.name === "NotAllowedError" || e.name === "PermissionDeniedError") {
+        setStatus("error");
+        setHint(i18n.camera_denied);
+      } else {
+        setStatus("error");
+        setHint(e.message || i18n.error);
+      }
+    }
+  }
+
+  async function stopSession() {
+    monitoring = false;
+    calibrating = false;
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = null;
+    if (elapsedTimer) clearInterval(elapsedTimer);
+    elapsedTimer = null;
+    stopCamera();
+    stopBtn.disabled = true;
+    startBtn.disabled = !sourceEnabled;
+    setStatus("stopped");
+    setHint("");
+    if (sessionId) {
+      try {
+        await api(root.dataset.stopUrlTemplate.replace(":id", sessionId), "PATCH");
+      } catch (e) {
+        setHint(e.message);
+      }
+      sessionId = null;
+    }
+  }
+
+  document.addEventListener("visibilitychange", function () {
+    if (!monitoring) return;
+    if (document.hidden) {
+      setStatus("paused");
+      setHint(i18n.tab_hidden);
+    } else if (calibrating) {
+      setStatus("calibrating");
+      setHint("");
+    } else {
+      setStatus("active");
+      setHint("");
+    }
+  });
+
+  startBtn.addEventListener("click", startSession);
+  stopBtn.addEventListener("click", stopSession);
+  window.addEventListener("beforeunload", function () {
+    stopCamera();
+  });
+})();
+</script>

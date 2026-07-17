@@ -5,14 +5,15 @@ class BetaCatalog
   SOURCES_KEY = "sources"
   ACTIONS_KEY = "actions"
   CACHE_NAMESPACE_KEY = "beta_catalog:feature_flags:namespace:v1"
-  FLAGS_CACHE_VERSION = 4
+  FLAGS_CACHE_VERSION = 5
   FLAGS_CACHE_TTL = 1.minute
   SOURCE_FEATURE_FLAGS = {
     "puryfi" => "beta_source_puryfi",
     "cigarettes" => "beta_source_cigarettes",
     "strava" => "beta_source_strava",
     "showcase" => "beta_source_showcase",
-    "wallpaper" => "beta_source_wallpaper"
+    "wallpaper" => "beta_source_wallpaper",
+    "cornertime" => "beta_source_cornertime"
   }.freeze
   ACTION_FEATURE_FLAGS = {
     "chaster" => "beta_action_chaster",
@@ -45,6 +46,11 @@ class BetaCatalog
       id: "wallpaper",
       path_helper: :beta_sources_wallpaper_path,
       action_name: "sources_wallpaper"
+    },
+    {
+      id: "cornertime",
+      path_helper: :beta_sources_cornertime_path,
+      action_name: "sources_cornertime"
     }
   ].freeze
 
@@ -72,7 +78,8 @@ class BetaCatalog
     "strava_goal" => "strava",
     "cigarette" => "cigarettes",
     "puryfi" => "puryfi",
-    "wallpaper" => "wallpaper"
+    "wallpaper" => "wallpaper",
+    "cornertime" => "cornertime"
   }.freeze
 
   ACTION_CLASS_TO_CATALOG_ACTION_ID = {

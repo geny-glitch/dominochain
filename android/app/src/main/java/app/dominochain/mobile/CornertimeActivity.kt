@@ -407,7 +407,7 @@ class CornertimeActivity : AppCompatActivity() {
         cameraProviderFuture.addListener({
             val cameraProvider = cameraProviderFuture.get()
             val preview = Preview.Builder().build().also {
-                it.surfaceProvider = binding.cornertimePreview.surfaceProvider
+                it.setSurfaceProvider(binding.cornertimePreview.surfaceProvider)
             }
             val analysis = ImageAnalysis.Builder()
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)

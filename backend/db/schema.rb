@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_07_17_210000) do
+ActiveRecord::Schema[7.2].define(version: 2026_07_17_230000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -132,6 +132,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_17_210000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.jsonb "early_stop_sanction", default: {"items"=>[]}, null: false
+    t.jsonb "scenarios", default: {"scenarios"=>[]}, null: false
     t.index ["user_id"], name: "index_cornertime_configs_on_user_id", unique: true
   end
 
@@ -432,6 +433,14 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_17_210000) do
     t.index ["key"], name: "index_solid_queue_semaphores_on_key", unique: true
   end
 
+  create_table "strava_configs", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.jsonb "scenarios", default: {"scenarios"=>[]}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_strava_configs_on_user_id", unique: true
+  end
+
   create_table "strava_goal_checks", force: :cascade do |t|
     t.bigint "strava_goal_id", null: false
     t.bigint "user_id", null: false
@@ -484,6 +493,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_17_210000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.jsonb "failure_sanction", default: {}, null: false
+    t.jsonb "scenarios", default: {"scenarios"=>[]}, null: false
     t.index ["user_id", "enabled"], name: "index_strava_goals_on_user_id_and_enabled"
     t.index ["user_id"], name: "index_strava_goals_on_user_id"
   end
@@ -687,6 +697,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_17_210000) do
   add_foreign_key "solid_queue_ready_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_recurring_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_scheduled_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
+  add_foreign_key "strava_configs", "users"
   add_foreign_key "strava_goal_checks", "strava_goals"
   add_foreign_key "strava_goal_checks", "users"
   add_foreign_key "strava_goals", "users"

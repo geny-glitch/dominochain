@@ -30,7 +30,7 @@ module BetaDashboardHelper
     I18n.exists?(key) ? t(key) : reason.to_s.humanize
   end
 
-  def wallpaper_scenario_trigger_summary(scenario)
+  def scenario_trigger_summary(scenario)
     parts = [ t("beta.scenarios.events.#{scenario.event}.label") ]
     case scenario.event
     when "mismatch"
@@ -46,11 +46,18 @@ module BetaDashboardHelper
     when "app_unreachable"
       parts << t("beta.scenarios.summary.threshold_minutes", count: scenario.threshold_minutes)
       parts << t("beta.scenarios.summary.delay_minutes", count: scenario.delay_minutes)
+    when "movement_detected", "early_stop", "any_goal_failed"
+      # No trigger fields — event label is enough.
+    when "goal_failed"
+      goal_id = (scenario.trigger[:goal_id] || scenario.trigger["goal_id"]).to_i
+      goal = current_user.strava_goals.find_by(id: goal_id)
+      parts << (goal&.name || t("beta.scenarios.summary.unknown_goal"))
     end
     parts.join(" · ")
   end
+  alias wallpaper_scenario_trigger_summary scenario_trigger_summary
 
-  def wallpaper_scenario_action_summary(possibility_id, config)
+  def scenario_action_summary(possibility_id, config)
     cfg = (config || {}).deep_symbolize_keys
     case possibility_id.to_s
     when "chaster.add_time"
@@ -67,8 +74,9 @@ module BetaDashboardHelper
       ""
     end
   end
+  alias wallpaper_scenario_action_summary scenario_action_summary
 
-  def wallpaper_icon_svg(name)
+  def scenario_icon_svg(name)
     case name.to_sym
     when :pencil
       <<~SVG.html_safe
@@ -82,6 +90,7 @@ module BetaDashboardHelper
       "".html_safe
     end
   end
+  alias wallpaper_icon_svg scenario_icon_svg
 
   def beta_nav_link(text, path, active: false)
     classes = [ "ds-beta-nav-link" ]

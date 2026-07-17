@@ -34,6 +34,49 @@ class BetaDashboardController < ApplicationController
     @leverage_photo = featured_leverage_photo(@leverage_photos)
   end
 
+  def scenarios
+    @hub_entries = scenario_hub_entries
+    @hub_sources = scenario_hub_enabled_sources
+    @strava_goals = current_user.strava_goals.recent
+    @leverage_photos = current_user.leverage_photos.not_deleted.newest_first
+    @leverage_action_enabled = BetaCatalog.new(current_user).action_platform_enabled?("leverage_photo")
+  end
+
+  def create_scenario
+    source = params[:source].to_s
+    unless scenario_hub_enabled_sources.include?(source)
+      redirect_to beta_scenarios_path, alert: t("flash.beta.scenarios.invalid_source")
+      return
+    end
+
+    incoming = ScenarioSet.from_params(params[:scenarios], source: source)
+    if incoming.empty?
+      redirect_to beta_scenarios_path, alert: t("flash.beta.scenarios.empty_create")
+      return
+    end
+
+    case source
+    when "wallpaper"
+      config = current_user.ensure_wallpaper_enforcement_config!
+      config.assign_scenarios!(merge_scenario_sets(config.scenario_set, incoming))
+      config.save!
+    when "cornertime"
+      config = current_user.ensure_cornertime_config!
+      config.assign_scenarios!(merge_scenario_sets(config.scenario_set, incoming))
+      config.save!
+    when "strava"
+      config = current_user.ensure_strava_config!
+      config.assign_scenarios!(merge_scenario_sets(config.scenario_set, incoming))
+      config.save!
+    end
+
+    redirect_to beta_scenarios_path, notice: t("flash.beta.scenarios.created")
+  rescue ActiveRecord::RecordNotFound
+    redirect_to beta_scenarios_path, alert: t("flash.beta.scenarios.goal_not_found")
+  rescue ActiveRecord::RecordInvalid => e
+    redirect_to beta_scenarios_path, alert: e.record.errors.full_messages.join(", ")
+  end
+
   def sources_puryfi
     current_user.ensure_puryfi_plugin_token!
     @puryfi_ws_url = current_user.puryfi_ws_url
@@ -48,8 +91,21 @@ class BetaDashboardController < ApplicationController
 
   def sources_strava
     @strava_goals = current_user.strava_goals.recent.includes(:strava_goal_checks)
+    @strava_config = current_user.ensure_strava_config!
     @leverage_photos = current_user.leverage_photos.not_deleted.newest_first
     @leverage_action_enabled = BetaCatalog.new(current_user).action_platform_enabled?("leverage_photo")
+  end
+
+  def update_strava_config
+    config = current_user.ensure_strava_config!
+    if params.key?(:scenarios)
+      assign_host_scenarios!(config, source: :strava)
+    end
+    config.save!
+    PosthogProductAnalytics.configured_source(current_user, name: "strava")
+    redirect_to beta_sources_strava_path, notice: t("flash.beta.strava.consequences_saved")
+  rescue ActiveRecord::RecordInvalid => e
+    redirect_to beta_sources_strava_path, alert: e.record.errors.full_messages.join(", ")
   end
 
   def sources_showcase
@@ -72,11 +128,15 @@ class BetaDashboardController < ApplicationController
     @config = current_user.ensure_cornertime_config!
     @sessions = current_user.cornertime_sessions.recent.includes(:cornertime_violations).limit(20)
     @leverage_photos = current_user.leverage_photos.not_deleted.newest_first
+    @leverage_action_enabled = BetaCatalog.new(current_user).action_platform_enabled?("leverage_photo")
   end
 
   def update_cornertime_config
     config = current_user.ensure_cornertime_config!
     config.assign_attributes(cornertime_config_params)
+    if params.key?(:scenarios)
+      assign_host_scenarios!(config, source: :cornertime)
+    end
     config.save!
     PosthogProductAnalytics.configured_source(current_user, name: "cornertime")
     redirect_to beta_sources_cornertime_path, notice: t("flash.beta.cornertime.config_saved")
@@ -104,7 +164,7 @@ class BetaDashboardController < ApplicationController
     config.assign_attributes(enforcement_config_params)
     config.enabled = checkbox_param_bool(:enabled) if params.key?(:enabled)
     if params.key?(:scenarios)
-      config.assign_scenarios!(ScenarioSet.from_params(params[:scenarios]))
+      assign_host_scenarios!(config, source: :wallpaper)
     end
     config.save!
     PosthogProductAnalytics.configured_source(current_user, name: "wallpaper")
@@ -443,24 +503,32 @@ class BetaDashboardController < ApplicationController
   end
 
   def cornertime_config_params
-    attrs = {
+    {
       sensitivity: params[:sensitivity],
       violation_cooldown_seconds: params[:violation_cooldown_seconds],
       calibration_seconds: params[:calibration_seconds]
-    }
-    if params[:movement_sanction].present?
-      attrs[:movement_sanction] = SanctionSet.from_params(
-        params[:movement_sanction],
-        allowed: BetaEvents::SourceRegistry.allowed_for(:cornertime, :movement_detected)
-      ).to_h
+    }.compact
+  end
+
+  def assign_host_scenarios!(host, source:)
+    incoming = ScenarioSet.from_params(params[:scenarios], source: source)
+    raw = params[:scenarios]
+    raw_hash = raw.is_a?(ActionController::Parameters) ? raw.to_unsafe_h : raw
+    raw_hash = raw_hash.is_a?(Hash) ? raw_hash.deep_stringify_keys : {}
+    raw_list = raw_hash["scenarios"]
+    had_raw = case raw_list
+    when Array then raw_list.any?
+    when Hash then raw_list.any?
+    else false
     end
-    if params[:early_stop_sanction].present?
-      attrs[:early_stop_sanction] = SanctionSet.from_params(
-        params[:early_stop_sanction],
-        allowed: BetaEvents::SourceRegistry.allowed_for(:cornertime, :early_stop)
-      ).to_h
+
+    if incoming.any? || !had_raw
+      host.assign_scenarios!(incoming)
+      return
     end
-    attrs.compact
+
+    host.errors.add(:scenarios, :invalid)
+    raise ActiveRecord::RecordInvalid, host
   end
 
   def wallpaper_history_scope
@@ -520,5 +588,97 @@ class BetaDashboardController < ApplicationController
     end
 
     (wallpaper + strava).sort_by { |row| row["checked_at"] || Time.zone.at(0) }.reverse.first(12)
+  end
+
+  def scenario_hub_enabled_sources
+    catalog = BetaCatalog.new(current_user)
+    BetaEvents::ScenarioRegistry.source_ids.select do |source_id|
+      catalog_id = case source_id
+      when "wallpaper" then "wallpaper"
+      when "cornertime" then "cornertime"
+      when "strava" then "strava"
+      end
+      catalog_id.present? && catalog.source_platform_enabled?(catalog_id) && catalog.source_enabled?(catalog_id)
+    end
+  end
+
+  def scenario_hub_entries
+    entries = []
+    sources = scenario_hub_enabled_sources
+
+    if sources.include?("wallpaper")
+      config = current_user.ensure_wallpaper_enforcement_config!
+      config.scenario_set.scenarios.each do |scenario|
+        entries << {
+          source: "wallpaper",
+          source_label: t("beta.scenarios.hub.sources.wallpaper"),
+          scenario: scenario,
+          open_path: beta_sources_wallpaper_path,
+          context_label: nil
+        }
+      end
+    end
+
+    if sources.include?("cornertime")
+      config = current_user.ensure_cornertime_config!
+      config.scenario_set.scenarios.each do |scenario|
+        entries << {
+          source: "cornertime",
+          source_label: t("beta.scenarios.hub.sources.cornertime"),
+          scenario: scenario,
+          open_path: beta_sources_cornertime_path,
+          context_label: nil
+        }
+      end
+    end
+
+    if sources.include?("strava")
+      config = current_user.ensure_strava_config!
+      config.scenario_set.scenarios.each do |scenario|
+        context_label = strava_scenario_context_label(scenario)
+        entries << {
+          source: "strava",
+          source_label: t("beta.scenarios.hub.sources.strava"),
+          scenario: scenario,
+          open_path: beta_sources_strava_path,
+          context_label: context_label
+        }
+      end
+    end
+
+    entries
+  end
+
+  def merge_scenario_sets(existing, incoming)
+    scenarios = existing.scenarios.map(&:dup)
+    incoming.scenarios.each do |new_scenario|
+      identity = BetaEvents::ScenarioRegistry.scenario_identity_key(new_scenario.event, new_scenario.trigger)
+      match = scenarios.find do |s|
+        BetaEvents::ScenarioRegistry.scenario_identity_key(s.event, s.trigger) == identity
+      end
+      if match
+        existing_pids = match.actions.map { |a| (a[:possibility_id] || a["possibility_id"]).to_s }
+        new_scenario.actions.each do |action|
+          pid = (action[:possibility_id] || action["possibility_id"]).to_s
+          next if existing_pids.include?(pid)
+
+          match.actions << action
+          existing_pids << pid
+        end
+        match.trigger = new_scenario.trigger if new_scenario.trigger.present?
+      else
+        scenarios << new_scenario
+      end
+    end
+    ScenarioSet.new(scenarios: scenarios)
+  end
+
+  def strava_scenario_context_label(scenario)
+    case scenario.event
+    when "goal_failed"
+      goal_id = (scenario.trigger[:goal_id] || scenario.trigger["goal_id"]).to_i
+      goal = current_user.strava_goals.find_by(id: goal_id)
+      goal&.name
+    end
   end
 end

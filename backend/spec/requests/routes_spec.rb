@@ -174,8 +174,7 @@ RSpec.describe "Routes", type: :request do
         time_zone: "Paris",
         min_duration_minutes: "30",
         activity_types: "Run, Ride",
-        device_names: "Garmin",
-        chaster_penalty_minutes: "90"
+        device_names: "Garmin"
       }
 
       expect(response).to redirect_to(beta_sources_strava_path)
@@ -188,7 +187,8 @@ RSpec.describe "Routes", type: :request do
       expect(goal.min_duration_seconds).to eq(1_800)
       expect(goal.activity_types).to eq(%w[Run Ride])
       expect(goal.device_names).to eq([ "Garmin" ])
-      expect(goal.chaster_penalty_seconds).to eq(5_400)
+      expect(goal.chaster_penalty_seconds).to eq(0)
+      expect(goal.scenario_set).to be_empty
     end
 
     it "merges strava_sport_type into activity_types" do
@@ -204,8 +204,7 @@ RSpec.describe "Routes", type: :request do
         time_zone: "Paris",
         strava_sport_type: "TrailRun",
         activity_types: "Ride",
-        min_duration_minutes: "20",
-        chaster_penalty_minutes: "30"
+        min_duration_minutes: "20"
       }
 
       expect(response).to redirect_to(beta_sources_strava_path)

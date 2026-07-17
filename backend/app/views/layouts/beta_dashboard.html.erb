@@ -39,6 +39,7 @@
           <p class="ds-beta-nav-heading"><%= t("layouts.beta_dashboard.nav.view") %></p>
           <%= beta_nav_link t("layouts.beta_dashboard.nav.home"), beta_dashboard_path, active: controller.action_name == "home" %>
           <%= beta_nav_link t("layouts.beta_dashboard.nav.catalog"), beta_settings_path, active: controller.action_name == "settings" %>
+          <%= beta_nav_link t("layouts.beta_dashboard.nav.scenarios"), beta_scenarios_path, active: %w[scenarios create_scenario].include?(controller.action_name) %>
 
           <% if beta_visible_sidebar_source_items.any? %>
             <p class="ds-beta-nav-heading"><%= t("layouts.beta_dashboard.nav.sources") %></p>

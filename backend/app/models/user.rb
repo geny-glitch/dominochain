@@ -23,6 +23,7 @@ class User < ApplicationRecord
   has_many :cigarette_entries, dependent: :destroy
   has_many :strava_goals, dependent: :destroy
   has_many :strava_goal_checks, dependent: :destroy
+  has_one :strava_config, dependent: :destroy
   has_one :wallpaper_enforcement_config, dependent: :destroy
   has_many :wallpaper_compliance_checks, dependent: :destroy
   has_one :cornertime_config, dependent: :destroy
@@ -110,6 +111,10 @@ class User < ApplicationRecord
 
   def ensure_cornertime_config!
     cornertime_config || create_cornertime_config!
+  end
+
+  def ensure_strava_config!
+    strava_config || create_strava_config!
   end
 
   def controlled_by_boss?

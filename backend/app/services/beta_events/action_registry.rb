@@ -135,7 +135,7 @@ module BetaEvents
             executor: Actions::ChasterAddTimeFromEvent,
             user_configurable: true,
             config_schema: {
-              seconds: { type: :integer, min: 1, max: 86_400 * 365, required: true, ui: :number },
+              seconds: { type: :integer, min: 1, max: 86_400 * 365, required: true, default: 3600, ui: :number },
               rate_limit: { type: :object, optional: true, ui: :hidden }
             }
           },

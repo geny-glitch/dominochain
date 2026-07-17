@@ -20,6 +20,8 @@ Rails.application.routes.draw do
 
   get "dashboard", to: "dashboard#show", as: :dashboard
   get "beta", to: "beta_dashboard#home", as: :beta_dashboard
+  get "beta/scenarios", to: "beta_dashboard#scenarios", as: :beta_scenarios
+  post "beta/scenarios", to: "beta_dashboard#create_scenario", as: :beta_scenarios_create
   get "beta/sources/puryfi", to: "beta_dashboard#sources_puryfi", as: :beta_sources_puryfi
   get "beta/sources/cigarettes", to: "beta_dashboard#sources_cigarettes", as: :beta_sources_cigarettes
 get "beta/sources/strava", to: "beta_dashboard#sources_strava", as: :beta_sources_strava
@@ -27,6 +29,7 @@ get "beta/sources/vitrine", to: "beta_dashboard#sources_showcase", as: :beta_sou
   get "beta/sources/wallpaper", to: "beta_dashboard#sources_wallpaper", as: :beta_sources_wallpaper
   get "beta/sources/cornertime", to: "beta_dashboard#sources_cornertime", as: :beta_sources_cornertime
   patch "beta/cornertime/config", to: "beta_dashboard#update_cornertime_config", as: :beta_cornertime_config
+  patch "beta/strava/config", to: "beta_dashboard#update_strava_config", as: :beta_strava_config
   get "cornertime/session", to: "cornertime_sessions#show", as: :cornertime_session
   post "cornertime/session", to: "cornertime_sessions#create"
   patch "cornertime/session/:id/stop", to: "cornertime_sessions#stop", as: :cornertime_session_stop

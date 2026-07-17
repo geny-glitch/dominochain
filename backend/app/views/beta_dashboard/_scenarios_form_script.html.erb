@@ -1,0 +1,867 @@
+<script>
+(function () {
+  function syncSanctionRow(row) {
+    if (!row) return;
+
+    row.querySelectorAll("[data-sanction-toggle]").forEach(function (toggle) {
+      var key = toggle.getAttribute("data-sanction-toggle");
+      var enabled = toggle.checked;
+      row.querySelectorAll('[data-sanction-field="' + key + '"]').forEach(function (input) {
+        input.disabled = !enabled;
+      });
+    });
+  }
+
+  function syncEnforcementOptions(card, enabled) {
+    if (!card) return;
+
+    card.querySelectorAll("[data-wallpaper-enforcement-options]").forEach(function (options) {
+      options.hidden = !enabled;
+    });
+  }
+
+  function setSaveVisible(el, visible) {
+    if (!el) return;
+    el.hidden = !visible;
+    el.setAttribute("aria-hidden", visible ? "false" : "true");
+  }
+
+  function markScenarioDirty(card) {
+    if (!card) return;
+    setSaveVisible(card.querySelector("[data-scenario-dirty-save]"), true);
+  }
+
+  function markOptionsDirty(form) {
+    setSaveVisible(
+      form.querySelector('[data-wallpaper-options-dirty-save], [data-wallpaper-dirty-save="options"]'),
+      true
+    );
+  }
+
+  function markListDirty(form) {
+    setSaveVisible(form.querySelector('[data-scenario-dirty-save="list"]'), true);
+  }
+
+  function markFormDirty(form, scopeEl) {
+    var card = scopeEl && scopeEl.closest ? scopeEl.closest("[data-scenario-card]") : null;
+    if (card) {
+      markScenarioDirty(card);
+      return;
+    }
+    if (scopeEl && scopeEl.matches && scopeEl.matches("[data-scenario-card]")) {
+      markScenarioDirty(scopeEl);
+      return;
+    }
+    markOptionsDirty(form);
+  }
+
+  function initDirtySaveBar(form) {
+    function onDirty(event) {
+      var target = event.target;
+      if (!target || target.closest("[data-consequence-composer]")) return;
+
+      var card = target.closest("[data-scenario-card]");
+      if (card) {
+        markScenarioDirty(card);
+        return;
+      }
+
+      if (target.closest("[data-wallpaper-options-fields]")) {
+        markOptionsDirty(form);
+      }
+    }
+
+    form.addEventListener("input", onDirty);
+    form.addEventListener("change", onDirty);
+  }
+
+  var ICON_PENCIL = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
+  var ICON_TRASH = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>';
+
+  function csrfToken() {
+    var meta = document.querySelector('meta[name="csrf-token"]');
+    return meta ? meta.content : "";
+  }
+
+  function persistEnforcementEnabled(toggleForm, checkbox) {
+    var card = toggleForm.closest(".ds-beta-control-card");
+    var previousChecked = !checkbox.checked;
+    var body = new URLSearchParams();
+    body.set("enabled", checkbox.checked ? "1" : "0");
+
+    checkbox.disabled = true;
+
+    fetch(toggleForm.action, {
+      method: "PATCH",
+      credentials: "same-origin",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        Accept: "application/json",
+        "X-CSRF-Token": csrfToken()
+      },
+      body: body.toString()
+    })
+      .then(function (response) {
+        if (!response.ok) {
+          return response.json().then(function (payload) {
+            throw new Error(payload.error || "save failed");
+          });
+        }
+        return response.json();
+      })
+      .then(function (payload) {
+        checkbox.checked = payload.enabled;
+        syncEnforcementOptions(card, payload.enabled);
+      })
+      .catch(function () {
+        checkbox.checked = previousChecked;
+        syncEnforcementOptions(card, checkbox.checked);
+      })
+      .finally(function () {
+        checkbox.disabled = false;
+      });
+  }
+
+  function initWallpaperEnforcementToggleForm(toggleForm) {
+    if (toggleForm.getAttribute("data-wallpaper-enforcement-toggle-ready") === "true") return;
+    toggleForm.setAttribute("data-wallpaper-enforcement-toggle-ready", "true");
+
+    var checkbox = toggleForm.querySelector("[data-wallpaper-enforcement-master]");
+    if (!checkbox) return;
+
+    var card = toggleForm.closest(".ds-beta-control-card");
+    syncEnforcementOptions(card, checkbox.checked);
+
+    toggleForm.addEventListener("change", function (event) {
+      if (!event.target.matches("[data-wallpaper-enforcement-master]")) return;
+      syncEnforcementOptions(card, event.target.checked);
+      persistEnforcementEnabled(toggleForm, event.target);
+    });
+  }
+
+  function uuid() {
+    if (window.crypto && window.crypto.randomUUID) return window.crypto.randomUUID();
+    return "sc-" + Date.now() + "-" + Math.floor(Math.random() * 1e6);
+  }
+
+  function escapeHtml(value) {
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function readBootstrap(root) {
+    var node = root.querySelector("[data-composer-bootstrap]");
+    if (!node) return null;
+    try {
+      return JSON.parse(node.textContent);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function scenarioPrefix(index) {
+    return "scenarios[scenarios][" + index + "]";
+  }
+
+  function findScenarioCard(root, eventId, triggerValues) {
+    var cards = root.querySelectorAll('[data-scenario-card][data-scenario-event="' + eventId + '"]');
+    if (eventId !== "goal_failed" || !triggerValues || !triggerValues.goal_id) {
+      return cards[0] || null;
+    }
+    var goalId = String(triggerValues.goal_id);
+    for (var i = 0; i < cards.length; i++) {
+      var input = cards[i].querySelector('[data-scenario-trigger-key="goal_id"], [name*="[trigger][goal_id]"]');
+      if (input && String(input.value) === goalId) return cards[i];
+    }
+    return null;
+  }
+
+  function nextScenarioIndex(list) {
+    var max = -1;
+    list.querySelectorAll("[data-scenario-card]").forEach(function (card) {
+      var idx = parseInt(card.getAttribute("data-scenario-index"), 10);
+      if (!isNaN(idx) && idx > max) max = idx;
+    });
+    return max + 1;
+  }
+
+  function syncScenarioModeFields(card) {
+    var modeInput = card.querySelector('[data-scenario-mode-control] input:checked, input[name*="[mode]"]:checked');
+    var mode = modeInput ? modeInput.value : null;
+    if (!mode) {
+      var anyMode = card.querySelector('input[name*="[trigger][mode]"]');
+      if (anyMode && anyMode.checked) mode = anyMode.value;
+    }
+    if (!mode) {
+      var checked = card.querySelector('input[type="radio"][name*="[mode]"]:checked');
+      mode = checked ? checked.value : "strict";
+    }
+
+    card.querySelectorAll("[data-scenario-mode-field]").forEach(function (el) {
+      el.hidden = el.getAttribute("data-scenario-mode-field") !== mode;
+    });
+    card.querySelectorAll("[data-scenario-mode-field-hide]").forEach(function (el) {
+      el.hidden = el.getAttribute("data-scenario-mode-field-hide") === mode;
+    });
+  }
+
+  function updateEmptyState(root) {
+    var list = root.querySelector("[data-scenarios-list]");
+    var empty = root.querySelector("[data-scenarios-empty]");
+    if (!list || !empty) return;
+    var hasCards = list.querySelectorAll("[data-scenario-card]").length > 0;
+    empty.hidden = hasCards;
+  }
+
+  function reindexScenarioCards(root) {
+    var list = root.querySelector("[data-scenarios-list]");
+    if (!list) return;
+    list.querySelectorAll("[data-scenario-card]").forEach(function (card, index) {
+      card.setAttribute("data-scenario-index", String(index));
+      var oldPrefix = null;
+      var idField = card.querySelector('input[name*="[id]"]');
+      if (idField) {
+        var match = idField.name.match(/^(scenarios\[scenarios\]\[\d+\])/);
+        if (match) oldPrefix = match[1];
+      }
+      var newPrefix = scenarioPrefix(index);
+      if (oldPrefix && oldPrefix !== newPrefix) {
+        card.querySelectorAll("[name]").forEach(function (input) {
+          if (input.name.indexOf(oldPrefix) === 0) {
+            input.name = newPrefix + input.name.slice(oldPrefix.length);
+          }
+        });
+      }
+    });
+  }
+
+  function reindexActions(card) {
+    var index = card.getAttribute("data-scenario-index");
+    var prefix = scenarioPrefix(index);
+    card.querySelectorAll("[data-scenario-action]").forEach(function (li, actionIndex) {
+      li.querySelectorAll("[name]").forEach(function (input) {
+        input.name = input.name.replace(
+          /scenarios\[scenarios\]\[\d+\]\[actions\]\[\d+\]/,
+          prefix + "[actions][" + actionIndex + "]"
+        );
+      });
+    });
+  }
+
+  function actionSummary(bootstrap, possibilityId, config) {
+    config = config || {};
+    if (possibilityId === "chaster.add_time") return String(config.seconds || 0) + "s";
+    if (possibilityId === "chaster.freeze") return bootstrap.i18n.actions[possibilityId] ? "freeze" : "freeze";
+    if (possibilityId === "pishock.shock") {
+      return "i" + (config.intensity || "") + " · " + (config.duration || "") + "s";
+    }
+    if (possibilityId === "leverage_photo.lock") {
+      return (config.seconds || "") + "s · " + (config.target_mode || "");
+    }
+    if (possibilityId === "leverage_photo.delete") return String(config.target_mode || "");
+    return "";
+  }
+
+  function buildActionRow(bootstrap, prefix, actionIndex, possibilityId, config) {
+    var schema = (bootstrap.actionSchemas && bootstrap.actionSchemas[possibilityId]) || {};
+    var label = (bootstrap.i18n.actions[possibilityId] && bootstrap.i18n.actions[possibilityId].label) || possibilityId;
+    var summary = actionSummary(bootstrap, possibilityId, config);
+    var editableKeys = Object.keys(schema).filter(function (key) { return schema[key].ui !== "hidden"; });
+    var html = '<li class="ds-wallpaper-scenario-action" data-scenario-action data-possibility-id="' + escapeHtml(possibilityId) + '">';
+    html += '<input type="hidden" name="' + prefix + "[actions][" + actionIndex + '][possibility_id]" value="' + escapeHtml(possibilityId) + '">';
+    editableKeys.forEach(function (key) {
+      var value = config[key] != null ? config[key] : (schema[key].default != null ? schema[key].default : "");
+      html += '<input type="hidden" name="' + prefix + "[actions][" + actionIndex + "][config][" + key + ']" value="' + escapeHtml(value) + '" data-action-config-key="' + escapeHtml(key) + '">';
+    });
+    html += '<div class="ds-wallpaper-scenario-action-main">';
+    html += '<span class="ds-wallpaper-scenario-action-label" data-scenario-action-label">' + escapeHtml(label);
+    if (summary) html += " · " + escapeHtml(summary);
+    html += "</span>";
+    html += '<div class="ds-wallpaper-scenario-action-buttons">';
+    if (editableKeys.length > 0) {
+      html += '<button type="button" class="ds-btn ds-btn--secondary ds-btn--icon ds-btn--sm" data-scenario-edit-action title="' +
+        escapeHtml(bootstrap.i18n.editAction) + '" aria-label="' + escapeHtml(bootstrap.i18n.editAction) + '">' +
+        ICON_PENCIL + "</button>";
+    }
+    html += '<button type="button" class="ds-btn ds-btn--secondary ds-btn--icon ds-btn--sm" data-scenario-remove-action title="' +
+      escapeHtml(bootstrap.i18n.removeAction) + '" aria-label="' + escapeHtml(bootstrap.i18n.removeAction) + '">' +
+      ICON_TRASH + "</button>";
+    html += "</div></div>";
+    html += '<div class="ds-wallpaper-scenario-action-editor" data-scenario-action-editor hidden></div>';
+    html += "</li>";
+    return html;
+  }
+
+  function readActionConfig(actionLi) {
+    var config = {};
+    actionLi.querySelectorAll("[data-action-config-key]").forEach(function (input) {
+      config[input.getAttribute("data-action-config-key")] = input.value;
+    });
+    return config;
+  }
+
+  function writeActionConfig(actionLi, config) {
+    Object.keys(config).forEach(function (key) {
+      var input = actionLi.querySelector('[data-action-config-key="' + key + '"]');
+      if (input) input.value = config[key] == null ? "" : config[key];
+    });
+  }
+
+  function refreshActionLabel(bootstrap, actionLi) {
+    var possibilityId = actionLi.getAttribute("data-possibility-id");
+    var label = (bootstrap.i18n.actions[possibilityId] && bootstrap.i18n.actions[possibilityId].label) || possibilityId;
+    var summary = actionSummary(bootstrap, possibilityId, readActionConfig(actionLi));
+    var labelEl = actionLi.querySelector("[data-scenario-action-label]");
+    if (!labelEl) return;
+    labelEl.textContent = summary ? (label + " · " + summary) : label;
+  }
+
+  function buildActionEditorHtml(bootstrap, possibilityId, config) {
+    var schema = (bootstrap.actionSchemas && bootstrap.actionSchemas[possibilityId]) || {};
+    var labels = (bootstrap.i18n.actions[possibilityId] && bootstrap.i18n.actions[possibilityId].fields) || {};
+    var html = "";
+    Object.keys(schema).forEach(function (key) {
+      var field = schema[key];
+      if (field.ui === "hidden") return;
+      var label = labels[key] || key;
+      var value = config[key] != null ? config[key] : (field.default != null ? field.default : "");
+      html += '<div class="ds-form-group">';
+      if (field.ui === "number" || field.type === "integer") {
+        html += '<label class="ds-form-label">' + escapeHtml(label) + "</label>";
+        html += '<input type="number" class="ds-input" data-action-edit-key="' + escapeHtml(key) + '"';
+        if (field.min != null) html += ' min="' + field.min + '"';
+        if (field.max != null) html += ' max="' + field.max + '"';
+        html += ' value="' + escapeHtml(value) + '">';
+      } else if (field.ui === "leverage_target") {
+        html += '<label class="ds-form-label">' + escapeHtml(label) + "</label>";
+        html += '<select class="ds-input" data-action-edit-key="target_mode">';
+        html += '<option value="random"' + (value === "random" ? " selected" : "") + ">" + escapeHtml(bootstrap.i18n.targetRandom) + "</option>";
+        html += '<option value="specific"' + (value === "specific" ? " selected" : "") + ">" + escapeHtml(bootstrap.i18n.targetSpecific) + "</option>";
+        html += "</select>";
+      } else if (field.ui === "leverage_photo_id") {
+        html += '<label class="ds-form-label">' + escapeHtml(label) + "</label>";
+        html += '<select class="ds-input" data-action-edit-key="photo_id">';
+        html += '<option value=""></option>';
+        (bootstrap.photos || []).forEach(function (photo) {
+          html += '<option value="' + escapeHtml(photo.id) + '"' + (String(value) === String(photo.id) ? " selected" : "") + ">" +
+            escapeHtml(photo.label) + "</option>";
+        });
+        html += "</select>";
+      }
+      html += "</div>";
+    });
+    html += '<div class="ds-beta-control-actions">';
+    html += '<button type="button" class="ds-btn ds-btn--primary ds-btn--sm" data-scenario-done-edit-action>' +
+      escapeHtml(bootstrap.i18n.doneEditing) + "</button>";
+    html += "</div>";
+    return html;
+  }
+
+  function openActionEditor(bootstrap, actionLi) {
+    var editor = actionLi.querySelector("[data-scenario-action-editor]");
+    var editBtn = actionLi.querySelector("[data-scenario-edit-action]");
+    if (!editor) return;
+    var possibilityId = actionLi.getAttribute("data-possibility-id");
+    editor.innerHTML = buildActionEditorHtml(bootstrap, possibilityId, readActionConfig(actionLi));
+    editor.hidden = false;
+    if (editBtn) editBtn.hidden = true;
+  }
+
+  function closeActionEditor(bootstrap, actionLi) {
+    var editor = actionLi.querySelector("[data-scenario-action-editor]");
+    var editBtn = actionLi.querySelector("[data-scenario-edit-action]");
+    if (!editor) return;
+    var config = {};
+    editor.querySelectorAll("[data-action-edit-key]").forEach(function (input) {
+      config[input.getAttribute("data-action-edit-key")] = input.value;
+    });
+    writeActionConfig(actionLi, config);
+    refreshActionLabel(bootstrap, actionLi);
+    editor.innerHTML = "";
+    editor.hidden = true;
+    if (editBtn) editBtn.hidden = false;
+  }
+
+  function buildTriggerFieldsHtml(bootstrap, eventId, prefix, values) {
+    var eventSchema = bootstrap.triggerSchemas[eventId];
+    if (!eventSchema) return "";
+    var fields = eventSchema.trigger_fields || {};
+    var html = "";
+    values = values || {};
+
+    Object.keys(fields).forEach(function (key) {
+      var schema = fields[key];
+      var value = values[key] != null ? values[key] : schema.default;
+      var showWhen = schema.show_when_mode;
+      var hideWhen = schema.hide_when_mode;
+      var attrs = 'class="ds-form-group"';
+      if (showWhen) attrs += ' data-scenario-mode-field="' + escapeHtml(showWhen) + '"';
+      if (hideWhen) attrs += ' data-scenario-mode-field-hide="' + escapeHtml(hideWhen) + '"';
+      html += "<div " + attrs + ">";
+
+      var label = (bootstrap.i18n.triggers[eventId] && bootstrap.i18n.triggers[eventId][key]) || key;
+      if (schema.type === "enum" && key === "mode") {
+        html += '<fieldset class="ds-radio-group" data-scenario-mode-control>';
+        html += '<legend class="ds-radio-group__legend">' + escapeHtml(label) + "</legend>";
+        (schema.values || []).forEach(function (mode, i) {
+          var id = "composer_mode_" + eventId + "_" + mode + "_" + Date.now() + "_" + i;
+          var checked = mode === value ? " checked" : "";
+          html += '<label class="ds-radio-option" for="' + id + '">';
+          html += '<input class="ds-radio-option__input" type="radio" name="' + prefix + '[trigger][mode]" id="' + id + '" value="' + escapeHtml(mode) + '"' + checked + ">";
+          html += '<span class="ds-radio-option__content"><span class="ds-radio-option__label">' +
+            escapeHtml((bootstrap.i18n.modes && bootstrap.i18n.modes[mode]) || mode) + "</span>";
+          if (bootstrap.i18n.modeHints && bootstrap.i18n.modeHints[mode]) {
+            html += '<span class="ds-radio-option__hint">' + escapeHtml(bootstrap.i18n.modeHints[mode]) + "</span>";
+          }
+          html += "</span></label>";
+        });
+        html += "</fieldset>";
+      } else if (schema.type === "reference" && schema.ref === "strava_goal") {
+        var options = (bootstrap.references && bootstrap.references.strava_goals) || [];
+        html += '<select class="ds-input" name="' + prefix + "[trigger][" + key + ']" data-scenario-trigger-key="' + escapeHtml(key) + '" required>';
+        html += '<option value="">' + escapeHtml((bootstrap.i18n && bootstrap.i18n.referenceBlank) || "Choose…") + "</option>";
+        options.forEach(function (opt) {
+          var selected = String(opt.id) === String(value) ? " selected" : "";
+          html += '<option value="' + escapeHtml(opt.id) + '"' + selected + ">" + escapeHtml(opt.label) + "</option>";
+        });
+        html += "</select>";
+        if (!options.length && bootstrap.i18n && bootstrap.i18n.noStravaGoals) {
+          html += '<p class="ds-beta-control-hint">' + escapeHtml(bootstrap.i18n.noStravaGoals) + "</p>";
+        }
+      } else {
+        html += '<label class="ds-form-label">' + escapeHtml(label) + "</label>";
+        html += '<input type="number" class="ds-input" name="' + prefix + "[trigger][" + key + ']" value="' + escapeHtml(value) + '"';
+        if (schema.min != null) html += ' min="' + schema.min + '"';
+        if (schema.max != null) html += ' max="' + schema.max + '"';
+        html += ' data-scenario-trigger-key="' + escapeHtml(key) + '">';
+      }
+      html += "</div>";
+    });
+    return html;
+  }
+
+  function buildScenarioCard(bootstrap, index, eventId, triggerValues, action, options) {
+    options = options || {};
+    var prefix = scenarioPrefix(index);
+    var title = (bootstrap.i18n.events && bootstrap.i18n.events[eventId]) || eventId;
+    var eventSchema = (bootstrap.triggerSchemas && bootstrap.triggerSchemas[eventId]) || {};
+    var triggerFields = eventSchema.trigger_fields || {};
+    var hasTrigger = Object.keys(triggerFields).length > 0 && !options.hubMode;
+    var html = '<article class="ds-wallpaper-scenario-card" data-scenario-card data-scenario-event="' +
+      escapeHtml(eventId) + '" data-scenario-index="' + index + '">';
+    html += '<input type="hidden" name="' + prefix + '[id]" value="' + uuid() + '">';
+    html += '<input type="hidden" name="' + prefix + '[event]" value="' + escapeHtml(eventId) + '">';
+    html += '<header class="ds-wallpaper-scenario-card-header"><div>';
+    html += '<p class="ds-wallpaper-scenario-card-title">' + escapeHtml(title) + "</p>";
+    html += '<p class="ds-beta-control-hint" data-scenario-trigger-summary">' + escapeHtml(title) + "</p>";
+    html += "</div>";
+    if (hasTrigger) {
+      html += '<button type="button" class="ds-btn ds-btn--secondary ds-btn--icon ds-btn--sm" data-scenario-edit-trigger title="' +
+        escapeHtml(bootstrap.i18n.editTrigger) + '" aria-label="' + escapeHtml(bootstrap.i18n.editTrigger) + '">' +
+        ICON_PENCIL + "</button>";
+    }
+    html += "</header>";
+    if (hasTrigger) {
+      html += '<div class="ds-wallpaper-scenario-trigger" data-scenario-trigger-fields hidden>';
+      html += buildTriggerFieldsHtml(bootstrap, eventId, prefix, triggerValues);
+      html += "</div>";
+    }
+    html += '<ul class="ds-wallpaper-scenario-actions" data-scenario-actions>';
+    html += buildActionRow(bootstrap, prefix, 0, action.possibility_id, action.config);
+    html += "</ul>";
+    if (!options.hubMode) {
+      html += '<div class="ds-wallpaper-scenario-card-footer" data-scenario-dirty-save hidden>';
+      html += '<button type="submit" class="ds-btn ds-btn--primary ds-btn--sm" data-scenario-save>' +
+        escapeHtml(bootstrap.i18n.saveScenario) + "</button>";
+      html += "</div>";
+    }
+    html += "</article>";
+    return html;
+  }
+
+  function collectTriggerDraft(composer) {
+    var values = {};
+    composer.querySelectorAll("[data-composer-trigger-fields] input, [data-composer-trigger-fields] select").forEach(function (input) {
+      if (input.type === "radio" && !input.checked) return;
+      var key = input.getAttribute("data-composer-trigger-key") || input.getAttribute("data-scenario-trigger-key");
+      if (!key && input.name) {
+        var m = String(input.name).match(/\[([^\]]+)\]$/) || String(input.name).match(/_([a-z0-9_]+)$/i);
+        if (m) key = m[1];
+      }
+      if (key) values[key] = input.value;
+    });
+    return values;
+  }
+
+  function collectConfigDraft(composer, bootstrap, possibilityId) {
+    var values = {};
+    var schema = (bootstrap && bootstrap.actionSchemas && possibilityId && bootstrap.actionSchemas[possibilityId]) || {};
+    Object.keys(schema).forEach(function (key) {
+      if (schema[key].ui === "hidden") return;
+      if (schema[key].default != null) values[key] = schema[key].default;
+    });
+    composer.querySelectorAll("[data-composer-config-fields] [data-composer-config-key]").forEach(function (input) {
+      if (input.type === "radio" && !input.checked) return;
+      var key = input.getAttribute("data-composer-config-key");
+      if (!key) return;
+      if (input.value !== "") values[key] = input.value;
+    });
+    return values;
+  }
+
+  function applyActionDefaults(bootstrap, possibilityId, config) {
+    var schema = (bootstrap.actionSchemas && bootstrap.actionSchemas[possibilityId]) || {};
+    var merged = Object.assign({}, config || {});
+    Object.keys(schema).forEach(function (key) {
+      if (schema[key].ui === "hidden") return;
+      if (merged[key] == null || merged[key] === "") {
+        if (schema[key].default != null) merged[key] = schema[key].default;
+      }
+    });
+    return merged;
+  }
+
+  function commitComposerDraft(form, root, composer, bootstrap) {
+    if (!composer || !bootstrap) return null;
+    var selectedEvent = composer.querySelector("[data-composer-event]");
+    var selectedAction = composer.querySelector("[data-composer-action]");
+    if (!selectedEvent || !selectedAction || !selectedEvent.value || !selectedAction.value) return null;
+
+    var list = root.querySelector("[data-scenarios-list]");
+    if (!list) return null;
+    var eventId = selectedEvent.value;
+    var actionId = selectedAction.value;
+    var triggerValues = collectTriggerDraft(composer);
+    if (eventId === "goal_failed" && !triggerValues.goal_id) return null;
+    var card = findScenarioCard(root, eventId, triggerValues);
+    var config = applyActionDefaults(bootstrap, actionId, collectConfigDraft(composer, bootstrap, actionId));
+
+    if (card) {
+      var actions = card.querySelector("[data-scenario-actions]");
+      var actionIndex = actions.querySelectorAll("[data-scenario-action]").length;
+      var prefix = scenarioPrefix(card.getAttribute("data-scenario-index"));
+      actions.insertAdjacentHTML("beforeend", buildActionRow(bootstrap, prefix, actionIndex, actionId, config));
+    } else {
+      var index = nextScenarioIndex(list);
+      list.insertAdjacentHTML("beforeend", buildScenarioCard(bootstrap, index, eventId, triggerValues, {
+        possibility_id: actionId,
+        config: config
+      }, { hubMode: !!form.closest("[data-scenarios-hub-form]") }));
+      card = findScenarioCard(root, eventId, triggerValues);
+      if (card) syncScenarioModeFields(card);
+    }
+
+    updateEmptyState(root);
+    resetComposer(composer);
+    markScenarioDirty(card);
+    return card;
+  }
+
+  function renderComposerTriggerFields(composer, bootstrap, eventId, existingCard) {
+    var container = composer.querySelector("[data-composer-trigger-fields]");
+    var reuseHint = composer.querySelector("[data-composer-reuse-hint]");
+    var triggerHint = composer.querySelector("[data-composer-trigger-hint]");
+    if (!container) return;
+
+    if (existingCard) {
+      container.innerHTML = "";
+      container.hidden = true;
+      if (reuseHint) reuseHint.hidden = false;
+      if (triggerHint) triggerHint.hidden = true;
+      return;
+    }
+
+    container.hidden = false;
+    if (reuseHint) reuseHint.hidden = true;
+    if (triggerHint) triggerHint.hidden = false;
+    container.innerHTML = buildTriggerFieldsHtml(bootstrap, eventId, "composer_draft", {});
+    container.querySelectorAll("[name]").forEach(function (input) {
+      var keyMatch = input.name.match(/\[trigger\]\[([^\]]+)\]/) || input.name.match(/\[([^\]]+)\]$/);
+      if (keyMatch) {
+        input.setAttribute("data-composer-trigger-key", keyMatch[1]);
+        input.name = "composer_draft_trigger_" + keyMatch[1] + (input.type === "radio" ? "_" + input.value : "");
+      }
+    });
+    syncComposerModeFields(container);
+  }
+
+  function syncComposerModeFields(container) {
+    var checked = container.querySelector('input[type="radio"]:checked');
+    var mode = checked ? checked.value : "strict";
+    container.querySelectorAll("[data-scenario-mode-field]").forEach(function (el) {
+      el.hidden = el.getAttribute("data-scenario-mode-field") !== mode;
+    });
+    container.querySelectorAll("[data-scenario-mode-field-hide]").forEach(function (el) {
+      el.hidden = el.getAttribute("data-scenario-mode-field-hide") === mode;
+    });
+  }
+
+  function renderComposerConfigFields(composer, bootstrap, possibilityId) {
+    var container = composer.querySelector("[data-composer-config-fields]");
+    if (!container) return;
+    var schema = (bootstrap.actionSchemas && bootstrap.actionSchemas[possibilityId]) || {};
+    var labels = (bootstrap.i18n.actions[possibilityId] && bootstrap.i18n.actions[possibilityId].fields) || {};
+    var html = "";
+    var keys = Object.keys(schema);
+    if (keys.length === 0) {
+      container.innerHTML = '<p class="ds-beta-control-hint">—</p>';
+      return;
+    }
+
+    keys.forEach(function (key) {
+      var field = schema[key];
+      if (field.ui === "hidden") return;
+      var label = labels[key] || key;
+      html += '<div class="ds-form-group">';
+      if (field.ui === "number" || field.type === "integer") {
+        html += '<label class="ds-form-label">' + escapeHtml(label) + "</label>";
+        html += '<input type="number" class="ds-input" data-composer-config-key="' + escapeHtml(key) + '"';
+        if (field.min != null) html += ' min="' + field.min + '"';
+        if (field.max != null) html += ' max="' + field.max + '"';
+        if (field.default != null) html += ' value="' + escapeHtml(field.default) + '"';
+        else if (field.min != null && field.min > 0) html += ' value="' + escapeHtml(field.min) + '"';
+        html += ">";
+      } else if (field.ui === "leverage_target") {
+        html += '<label class="ds-form-label">' + escapeHtml(bootstrap.i18n.targetRandom ? label : label) + "</label>";
+        html += '<select class="ds-input" data-composer-config-key="target_mode">';
+        html += '<option value="random">' + escapeHtml(bootstrap.i18n.targetRandom) + "</option>";
+        html += '<option value="specific">' + escapeHtml(bootstrap.i18n.targetSpecific) + "</option>";
+        html += "</select>";
+      } else if (field.ui === "leverage_photo_id") {
+        html += '<label class="ds-form-label">' + escapeHtml(label) + "</label>";
+        html += '<select class="ds-input" data-composer-config-key="photo_id">';
+        html += '<option value=""></option>';
+        (bootstrap.photos || []).forEach(function (photo) {
+          html += '<option value="' + escapeHtml(photo.id) + '">' + escapeHtml(photo.label) + "</option>";
+        });
+        html += "</select>";
+      }
+      html += "</div>";
+    });
+    container.innerHTML = html || '<p class="ds-beta-control-hint">—</p>';
+  }
+
+  function showComposerStep(composer, step) {
+    composer.querySelectorAll("[data-composer-step]").forEach(function (el) {
+      el.hidden = el.getAttribute("data-composer-step") !== step;
+    });
+  }
+
+  function resetComposer(composer) {
+    var eventSelect = composer.querySelector("[data-composer-event]");
+    var actionSelect = composer.querySelector("[data-composer-action]");
+    if (eventSelect) eventSelect.value = "";
+    if (actionSelect) actionSelect.value = "";
+    var nextEvent = composer.querySelector('[data-composer-next="trigger"]');
+    var nextAction = composer.querySelector('[data-composer-next="config"]');
+    if (nextEvent) nextEvent.disabled = true;
+    if (nextAction) nextAction.disabled = true;
+    showComposerStep(composer, "event");
+  }
+
+  function initScenarioComposer(form) {
+    form.querySelectorAll("[data-scenarios]").forEach(function (root) {
+      initOneScenarioRoot(form, root);
+    });
+  }
+
+  function initOneScenarioRoot(form, root) {
+    if (!root || root.getAttribute("data-scenarios-ready") === "true") return;
+    root.setAttribute("data-scenarios-ready", "true");
+
+    var composer = root.querySelector("[data-consequence-composer]");
+    var bootstrap = composer ? readBootstrap(composer) : null;
+    if (!composer || !bootstrap) return;
+
+    root.querySelectorAll("[data-scenario-card]").forEach(syncScenarioModeFields);
+    updateEmptyState(root);
+
+    composer.addEventListener("click", function (event) {
+      var backBtn = event.target.closest("[data-composer-back]");
+      if (backBtn && composer.contains(backBtn)) {
+        showComposerStep(composer, backBtn.getAttribute("data-composer-back"));
+        return;
+      }
+
+      var nextBtn = event.target.closest("[data-composer-next]");
+      if (nextBtn && composer.contains(nextBtn) && !nextBtn.disabled) {
+        var nextStep = nextBtn.getAttribute("data-composer-next");
+        if (nextStep === "trigger") {
+          var eventId = composer.querySelector("[data-composer-event]").value;
+          var eventSchema = (bootstrap.triggerSchemas && bootstrap.triggerSchemas[eventId]) || {};
+          var triggerFields = eventSchema.trigger_fields || {};
+          if (Object.keys(triggerFields).length === 0) {
+            var existing = findScenarioCard(root, eventId);
+            renderComposerTriggerFields(composer, bootstrap, eventId, existing);
+            showComposerStep(composer, "action");
+            return;
+          }
+          renderComposerTriggerFields(composer, bootstrap, eventId, null);
+        }
+        if (nextStep === "action") {
+          var eventIdForTrigger = composer.querySelector("[data-composer-event]").value;
+          var draftTrigger = collectTriggerDraft(composer);
+          if (eventIdForTrigger === "goal_failed" && !draftTrigger.goal_id) return;
+          var existingForTrigger = findScenarioCard(root, eventIdForTrigger, draftTrigger);
+          if (existingForTrigger) {
+            renderComposerTriggerFields(composer, bootstrap, eventIdForTrigger, existingForTrigger);
+          }
+        }
+        if (nextStep === "config") {
+          var actionId = composer.querySelector("[data-composer-action]").value;
+          renderComposerConfigFields(composer, bootstrap, actionId);
+        }
+        showComposerStep(composer, nextStep);
+        return;
+      }
+
+      var confirmBtn = event.target.closest("[data-composer-confirm]");
+      if (confirmBtn && composer.contains(confirmBtn)) {
+        var card = commitComposerDraft(form, root, composer, bootstrap);
+        if (!card) return;
+        // Source pages with a shared options+scenarios form (cornertime/strava): persist on Add.
+        // Wallpaper keeps per-card dirty save via data-wallpaper-enforcement-form.
+        var autoPersist = form.matches("[data-scenarios-form]") &&
+          !form.matches("[data-wallpaper-enforcement-form]") &&
+          !form.closest("[data-scenarios-hub-form]");
+        if (autoPersist && typeof form.requestSubmit === "function") {
+          form.requestSubmit();
+        }
+      }
+    });
+    composer.addEventListener("change", function (event) {
+      if (event.target.matches("[data-composer-event]")) {
+        var next = composer.querySelector('[data-composer-next="trigger"]');
+        if (next) next.disabled = !event.target.value;
+      }
+      if (event.target.matches("[data-composer-action]")) {
+        var nextCfg = composer.querySelector('[data-composer-next="config"]');
+        if (nextCfg) nextCfg.disabled = !event.target.value;
+      }
+      if (event.target.closest("[data-composer-trigger-fields]") && event.target.type === "radio") {
+        syncComposerModeFields(composer.querySelector("[data-composer-trigger-fields]"));
+      }
+    });
+
+    root.addEventListener("click", function (event) {
+      var editBtn = event.target.closest("[data-scenario-edit-trigger]");
+      if (editBtn) {
+        var card = editBtn.closest("[data-scenario-card]");
+        if (!card) return;
+        var fields = card.querySelector("[data-scenario-trigger-fields]");
+        if (fields) {
+          fields.hidden = !fields.hidden;
+          if (!fields.hidden) syncScenarioModeFields(card);
+        }
+        return;
+      }
+
+      var editActionBtn = event.target.closest("[data-scenario-edit-action]");
+      if (editActionBtn) {
+        var actionToEdit = editActionBtn.closest("[data-scenario-action]");
+        if (actionToEdit) openActionEditor(bootstrap, actionToEdit);
+        return;
+      }
+
+      var doneEditBtn = event.target.closest("[data-scenario-done-edit-action]");
+      if (doneEditBtn) {
+        var actionEdited = doneEditBtn.closest("[data-scenario-action]");
+        if (actionEdited) closeActionEditor(bootstrap, actionEdited);
+        return;
+      }
+
+      var removeBtn = event.target.closest("[data-scenario-remove-action]");
+      if (removeBtn) {
+        var actionLi = removeBtn.closest("[data-scenario-action]");
+        var scenarioCard = removeBtn.closest("[data-scenario-card]");
+        if (!actionLi || !scenarioCard) return;
+        actionLi.remove();
+        var remaining = scenarioCard.querySelectorAll("[data-scenario-action]");
+        if (remaining.length === 0) {
+          scenarioCard.remove();
+          reindexScenarioCards(root);
+          updateEmptyState(root);
+          markListDirty(form);
+        } else {
+          reindexActions(scenarioCard);
+          markScenarioDirty(scenarioCard);
+        }
+      }
+    });
+
+    root.addEventListener("change", function (event) {
+      var card = event.target.closest("[data-scenario-card]");
+      if (!card) return;
+      if (event.target.matches('input[type="radio"]') && event.target.name.indexOf("[mode]") !== -1) {
+        syncScenarioModeFields(card);
+      }
+    });
+
+    root.addEventListener("input", syncOpenActionEditor);
+    root.addEventListener("change", syncOpenActionEditor);
+
+    function syncOpenActionEditor(event) {
+      var editInput = event.target.closest("[data-action-edit-key]");
+      if (!editInput) return;
+      var actionLi = editInput.closest("[data-scenario-action]");
+      if (!actionLi) return;
+      var key = editInput.getAttribute("data-action-edit-key");
+      var hidden = actionLi.querySelector('[data-action-config-key="' + key + '"]');
+      if (hidden) hidden.value = editInput.value;
+      refreshActionLabel(bootstrap, actionLi);
+    }
+  }
+
+  function initScenariosForm(form) {
+    if (form.getAttribute("data-scenarios-form-ready") === "true") return;
+    form.setAttribute("data-scenarios-form-ready", "true");
+
+    form.querySelectorAll("[data-sanction-row]").forEach(syncSanctionRow);
+
+    form.addEventListener("change", function (event) {
+      var target = event.target;
+      if (target.matches("[data-sanction-toggle]")) {
+        syncSanctionRow(target.closest("[data-sanction-row]"));
+      }
+    });
+
+    form.addEventListener("input", function (event) {
+      var toggle = event.target.closest("[data-sanction-toggle]");
+      if (!toggle || !form.contains(toggle)) return;
+      syncSanctionRow(toggle.closest("[data-sanction-row]"));
+    });
+
+    form.addEventListener("submit", function () {
+      form.querySelectorAll("[data-scenarios]").forEach(function (root) {
+        var composer = root.querySelector("[data-consequence-composer]");
+        var bootstrap = composer ? readBootstrap(composer) : null;
+        if (!composer || !bootstrap) return;
+        var eventSelect = composer.querySelector("[data-composer-event]");
+        var actionSelect = composer.querySelector("[data-composer-action]");
+        if (eventSelect && actionSelect && eventSelect.value && actionSelect.value) {
+          commitComposerDraft(form, root, composer, bootstrap);
+        }
+      });
+    });
+
+    initDirtySaveBar(form);
+    initScenarioComposer(form);
+  }
+
+  function boot() {
+    document.querySelectorAll("[data-wallpaper-enforcement-toggle-form]").forEach(initWallpaperEnforcementToggleForm);
+    document.querySelectorAll("[data-scenarios-form], [data-wallpaper-enforcement-form], [data-scenarios-hub-form]").forEach(initScenariosForm);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot);
+  } else {
+    boot();
+  }
+  document.addEventListener("turbo:load", boot);
+  document.addEventListener("turbo:render", boot);
+})();
+</script>

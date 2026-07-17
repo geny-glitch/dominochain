@@ -60,21 +60,51 @@ class CornertimeConfig < ApplicationRecord
       greater_than_or_equal_to: MIN_CALIBRATION_SECONDS,
       less_than_or_equal_to: MAX_CALIBRATION_SECONDS
     }
-  validate :movement_sanction_is_valid
-  validate :early_stop_sanction_is_valid
+  validate :scenarios_are_valid
 
+  def reload(*)
+    @scenario_set = nil
+    @stored_scenario_set = nil
+    super
+  end
+
+  def scenario_set
+    @scenario_set ||= begin
+      stored = stored_scenario_set
+      stored.any? ? stored : ScenarioSet.from_legacy_cornertime(self)
+    end
+  end
+
+  def scenario_for(event)
+    scenario_set.for_event(event)
+  end
+
+  # Compat readers: stored scenarios win; empty → legacy sanction JSONB.
   def movement_sanction_object
-    SanctionSet.from_hash(
-      movement_sanction,
-      allowed: BetaEvents::SourceRegistry.allowed_for(:cornertime, :movement_detected)
-    )
+    if stored_scenario_set.any?
+      scenario_for("movement_detected")&.to_sanction_set ||
+        SanctionSet.from_hash({}, allowed: movement_allowed)
+    else
+      SanctionSet.from_hash(movement_sanction, allowed: movement_allowed)
+    end
   end
 
   def early_stop_sanction_object
-    SanctionSet.from_hash(
-      early_stop_sanction,
-      allowed: BetaEvents::SourceRegistry.allowed_for(:cornertime, :early_stop)
-    )
+    if stored_scenario_set.any?
+      scenario_for("early_stop")&.to_sanction_set ||
+        SanctionSet.from_hash({}, allowed: early_stop_allowed)
+    else
+      SanctionSet.from_hash(early_stop_sanction, allowed: early_stop_allowed)
+    end
+  end
+
+  def assign_scenarios!(scenario_set)
+    self.scenarios = scenario_set.to_h
+    blank = { "items" => [] }
+    self.movement_sanction = blank
+    self.early_stop_sanction = blank
+    @scenario_set = scenario_set
+    @stored_scenario_set = scenario_set
   end
 
   def detector_preset
@@ -120,20 +150,31 @@ class CornertimeConfig < ApplicationRecord
 
   private
 
-  def movement_sanction_is_valid
-    validate_sanction_active_targets!(movement_sanction_object, :movement_sanction)
+  def movement_allowed
+    BetaEvents::SourceRegistry.allowed_for(:cornertime, :movement_detected)
   end
 
-  def early_stop_sanction_is_valid
-    validate_sanction_active_targets!(early_stop_sanction_object, :early_stop_sanction)
+  def early_stop_allowed
+    BetaEvents::SourceRegistry.allowed_for(:cornertime, :early_stop)
   end
 
-  def validate_sanction_active_targets!(sanction, attr)
-    if sanction.enabled?("chaster.add_time") && !sanction.item_for("chaster.add_time")&.active?
-      errors.add(attr, :invalid)
-    end
-    if sanction.enabled?("leverage_photo.lock") && !sanction.item_for("leverage_photo.lock")&.active?
-      errors.add(attr, :invalid)
+  def stored_scenario_set
+    @stored_scenario_set ||= ScenarioSet.from_hash(self[:scenarios], source: :cornertime)
+  end
+
+  def scenarios_are_valid
+    scenario_set.scenarios.each do |scenario|
+      allowed = case scenario.event
+      when "early_stop" then early_stop_allowed
+      else movement_allowed
+      end
+      sanction = scenario.to_sanction_set(allowed: allowed)
+      if sanction.enabled?("chaster.add_time") && !sanction.item_for("chaster.add_time")&.active?
+        errors.add(:scenarios, :invalid)
+      end
+      if sanction.enabled?("leverage_photo.lock") && !sanction.item_for("leverage_photo.lock")&.active?
+        errors.add(:scenarios, :invalid)
+      end
     end
   end
 end

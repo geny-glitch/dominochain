@@ -38,16 +38,22 @@ class StravaGoal < ApplicationRecord
   validates :min_calories, allow_nil: true,
     numericality: { only_integer: true, greater_than: 0, less_than_or_equal_to: 1_000_000 }
   validates :chaster_penalty_seconds,
-    numericality: { only_integer: true, greater_than: 0, less_than_or_equal_to: MAX_SECONDS }
+    numericality: { only_integer: true, greater_than_or_equal_to: 0, less_than_or_equal_to: MAX_SECONDS }
   validate :criteria_present
   validate :activity_types_are_strings
   validate :device_names_are_strings
   validate :time_zone_known
-  validate :failure_sanction_is_valid
+  validate :scenarios_are_valid
 
   scope :enabled, -> { where(enabled: true) }
   scope :due_for_check, ->(_reference_time = Time.current) { enabled }
   scope :recent, -> { order(created_at: :desc) }
+
+  def reload(*)
+    @scenario_set = nil
+    @stored_scenario_set = nil
+    super
+  end
 
   def activity_types=(value)
     super(normalize_list(value))
@@ -154,19 +160,76 @@ class StravaGoal < ApplicationRecord
     due_at - window_days.days
   end
 
+  def scenario_set
+    @scenario_set ||= begin
+      stored = stored_scenario_set
+      stored.any? ? stored : ScenarioSet.from_legacy_strava_goal(self)
+    end
+  end
+
+  def scenario_for(event)
+    scenario_set.for_event(event)
+  end
+
   def failure_sanction_object
-    SanctionSet.from_hash(failure_sanction, allowed: BetaEvents::SourceRegistry.allowed_for(:strava_goal, :failed_penalty))
+    scenario_for("goal_failed")&.to_sanction_set ||
+      SanctionSet.from_hash({}, allowed: strava_allowed)
   end
 
   def failure_sanction=(value)
     sanction = SanctionSet.from_hash(
       value.is_a?(Hash) ? value : {},
-      allowed: BetaEvents::SourceRegistry.allowed_for(:strava_goal, :failed_penalty)
+      allowed: strava_form_allowed
     )
     super(sanction.to_h)
   end
 
+  def assign_scenarios!(scenario_set)
+    self.scenarios = scenario_set.to_h
+    self[:failure_sanction] = { "items" => [] }
+    self.chaster_penalty_seconds = chaster_seconds_from_scenario_set(scenario_set)
+    @scenario_set = scenario_set
+    @stored_scenario_set = scenario_set
+  end
+
   private
+
+  def strava_allowed
+    BetaEvents::ScenarioRegistry.allowed_actions_for(:strava)
+  end
+
+  def strava_form_allowed
+    BetaEvents::SourceRegistry.allowed_for(:strava_goal, :failed_penalty)
+  end
+
+  def stored_scenario_set
+    @stored_scenario_set ||= ScenarioSet.from_hash(self[:scenarios], source: :strava)
+  end
+
+  def chaster_seconds_from_scenario_set(set)
+    scenario = set.for_event("goal_failed")
+    return 0 unless scenario
+
+    action = scenario.actions.find do |item|
+      (item[:possibility_id] || item["possibility_id"]).to_s == "chaster.add_time"
+    end
+    return 0 unless action
+
+    cfg = action[:config] || action["config"] || {}
+    (cfg[:seconds] || cfg["seconds"]).to_i
+  end
+
+  def scenarios_are_valid
+    scenario_set.scenarios.each do |scenario|
+      sanction = scenario.to_sanction_set(allowed: strava_allowed)
+      if sanction.enabled?("chaster.add_time") && !sanction.item_for("chaster.add_time")&.active?
+        errors.add(:scenarios, :invalid)
+      end
+      if sanction.enabled?("leverage_photo.lock") && !sanction.item_for("leverage_photo.lock")&.active?
+        errors.add(:scenarios, I18n.t("beta.strava.errors.leverage_lock_seconds"))
+      end
+    end
+  end
 
   def normalize_list(value)
     list = case value
@@ -203,12 +266,5 @@ class StravaGoal < ApplicationRecord
     return if time_zone.blank? || ActiveSupport::TimeZone[time_zone].present?
 
     errors.add(:time_zone, I18n.t("beta.strava.errors.invalid_time_zone"))
-  end
-
-  def failure_sanction_is_valid
-    sanction = failure_sanction_object
-    if sanction.enabled?("leverage_photo.lock") && !sanction.item_for("leverage_photo.lock")&.active?
-      errors.add(:failure_sanction, I18n.t("beta.strava.errors.leverage_lock_seconds"))
-    end
   end
 end

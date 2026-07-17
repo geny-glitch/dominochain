@@ -29,8 +29,8 @@ RSpec.describe "Beta sources wallpaper page", type: :request do
       expect(response.body).to include('data-wallpaper-enforcement-toggle-form="true"')
       expect(response.body).to include('data-wallpaper-enforcement-form="true"')
       expect(response.body).not_to include('actions_hint_html')
-      expect(response.body).to include('data-wallpaper-scenarios')
-      expect(response.body).to include('data-wallpaper-consequence-composer')
+      expect(response.body).to include('data-scenarios')
+      expect(response.body).to include('data-consequence-composer')
       expect(response.body).to include("requestSubmit()")
       expect(response.body).to include(beta_public_boss_path)
       expect(response.body).to include(beta_catalog_visibility_path)
@@ -42,7 +42,7 @@ RSpec.describe "Beta sources wallpaper page", type: :request do
 
       get beta_sources_wallpaper_path
 
-      expect(response.body).to include('data-wallpaper-scenarios-empty')
+      expect(response.body).to include('data-scenarios-empty')
       expect(response.body).to include('data-composer-panel')
       expect(response.body).not_to include('data-composer-open')
     end

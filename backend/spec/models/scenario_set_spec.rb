@@ -32,15 +32,17 @@ RSpec.describe ScenarioSet do
   describe ".from_params" do
     it "coerces indexed hashes into scenario arrays" do
       set = described_class.from_params(
-        "scenarios" => {
-          "0" => {
-            "id" => "abc",
-            "event" => "mismatch",
-            "trigger" => { "delay_minutes" => "15", "mode" => "strict" },
-            "actions" => {
-              "0" => {
-                "possibility_id" => "chaster.add_time",
-                "config" => { "seconds" => "120" }
+        {
+          "scenarios" => {
+            "0" => {
+              "id" => "abc",
+              "event" => "mismatch",
+              "trigger" => { "delay_minutes" => "15", "mode" => "strict" },
+              "actions" => {
+                "0" => {
+                  "possibility_id" => "chaster.add_time",
+                  "config" => { "seconds" => "120" }
+                }
               }
             }
           }
@@ -62,16 +64,18 @@ RSpec.describe ScenarioSet do
   describe "#to_sanction_set" do
     it "marks actions as enabled" do
       set = described_class.from_hash(
-        "scenarios" => [
-          {
-            "id" => "1",
-            "event" => "permissions_lost",
-            "trigger" => { "delay_minutes" => 0 },
-            "actions" => [
-              { "possibility_id" => "pishock.shock", "config" => { "intensity" => 40, "duration" => 2 } }
-            ]
-          }
-        ]
+        {
+          "scenarios" => [
+            {
+              "id" => "1",
+              "event" => "permissions_lost",
+              "trigger" => { "delay_minutes" => 0 },
+              "actions" => [
+                { "possibility_id" => "pishock.shock", "config" => { "intensity" => 40, "duration" => 2 } }
+              ]
+            }
+          ]
+        }
       )
 
       sanction = set.for_event("permissions_lost").to_sanction_set

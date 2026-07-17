@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 module BetaEvents
-  # Declares wallpaper scenario events and their trigger field schemas (UI + validation).
+  # Declares scenario events and trigger field schemas per catalog source (UI + validation).
   class ScenarioRegistry
-    EVENTS = {
+    WALLPAPER_EVENTS = {
       "mismatch" => {
         trigger_fields: {
           delay_minutes: {
@@ -55,21 +55,92 @@ module BetaEvents
       }
     }.freeze
 
+    CORNERTIME_EVENTS = {
+      "movement_detected" => { trigger_fields: {} },
+      "early_stop" => { trigger_fields: {} }
+    }.freeze
+
+    STRAVA_EVENTS = {
+      "any_goal_failed" => { trigger_fields: {} },
+      "goal_failed" => {
+        trigger_fields: {
+          goal_id: { type: :reference, ref: :strava_goal, required: true }
+        }
+      }
+    }.freeze
+
+    SOURCES = {
+      "wallpaper" => {
+        event_source: :wallpaper,
+        action_kind: :default,
+        events: WALLPAPER_EVENTS
+      },
+      "cornertime" => {
+        event_source: :cornertime,
+        action_kind: :movement_detected,
+        events: CORNERTIME_EVENTS
+      },
+      "strava" => {
+        event_source: :strava_goal,
+        action_kind: :failed_penalty,
+        events: STRAVA_EVENTS
+      }
+    }.freeze
+
+    # Backward-compat alias used by older wallpaper-only callers / bootstrap.
+    EVENTS = WALLPAPER_EVENTS
+
     class << self
-      def event_ids
-        EVENTS.keys
+      def source_ids
+        SOURCES.keys
       end
 
-      def find(event)
-        EVENTS[event.to_s]
+      def source_def(source)
+        SOURCES[source.to_s]
       end
 
-      def trigger_fields_for(event)
-        find(event)&.dig(:trigger_fields) || {}
+      def events_for(source)
+        source_def(source)&.dig(:events) || {}
       end
 
-      def normalize_trigger(event, raw)
-        fields = trigger_fields_for(event)
+      def event_ids(source = :wallpaper)
+        events_for(source).keys
+      end
+
+      def find(event, source: nil)
+        event = event.to_s
+        if source
+          return events_for(source)[event]
+        end
+
+        SOURCES.each_value do |defn|
+          found = defn[:events][event]
+          return found if found
+        end
+        nil
+      end
+
+      def source_for_event(event)
+        event = event.to_s
+        SOURCES.each do |source_id, defn|
+          return source_id if defn[:events].key?(event)
+        end
+        nil
+      end
+
+      def trigger_fields_for(event, source: nil)
+        find(event, source: source)&.dig(:trigger_fields) || {}
+      end
+
+      def allowed_actions_for(source)
+        defn = source_def(source)
+        return [] unless defn
+
+        SourceRegistry.allowed_for(defn[:event_source], defn[:action_kind])
+      end
+
+      def normalize_trigger(event, raw, source: nil)
+        fields = trigger_fields_for(event, source: source)
         hash = raw.is_a?(Hash) ? raw.deep_stringify_keys : {}
         result = {}
 
@@ -87,10 +158,23 @@ module BetaEvents
         result
       end
 
+      def scenario_identity_key(event, trigger)
+        event = event.to_s
+        case event
+        when "goal_failed"
+          goal_id = (trigger[:goal_id] || trigger["goal_id"]).to_i
+          "#{event}:#{goal_id}"
+        else
+          event
+        end
+      end
+
       private
 
       def normalize_field(value, schema)
         case schema[:type]
+        when :reference
+          value.to_i.positive? ? value.to_i : nil
         when :integer
           n = value.to_i
           n = [ n, schema[:min] ].max if schema[:min]

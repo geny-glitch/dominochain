@@ -71,7 +71,7 @@ es:
           label: "Eliminar definitivamente una foto leverage"
     scenarios:
       section_title: "Consecuencias"
-      empty: "Aún no hay consecuencias. Añade una para reaccionar cuando falle una comprobación."
+      empty: "Aún no hay consecuencias. Añade una para reaccionar cuando algo falle."
       add_consequence: "Añadir una consecuencia"
       edit_trigger: "Editar disparador"
       edit_action: "Editar"
@@ -85,6 +85,14 @@ es:
           label: "Permisos perdidos"
         app_unreachable:
           label: "App inalcanzable"
+        movement_detected:
+          label: "Movimiento detectado"
+        early_stop:
+          label: "Sesión cortada antes de tiempo"
+        any_goal_failed:
+          label: "Objetivo fallido"
+        goal_failed:
+          label: "Objetivo concreto fallido"
       triggers:
         mismatch:
           delay_minutes: "Retraso antes de aplicar (minutos)"
@@ -95,6 +103,8 @@ es:
         app_unreachable:
           threshold_minutes: "Tiempo sin contacto (minutos)"
           delay_minutes: "Retraso antes de aplicar (minutos)"
+        goal_failed:
+          goal_id: "Objetivo"
       composer:
         title: "Nueva consecuencia"
         pick_event: "Elige cuándo aplicar"
@@ -108,6 +118,7 @@ es:
         back: "Atrás"
         next: "Siguiente"
         confirm: "Añadir"
+        reference_blank: "Elegir…"
       summary:
         delay_minutes:
           one: "retraso %{count} min"
@@ -125,6 +136,26 @@ es:
         pishock: "Intensidad %{intensity} · %{duration}s"
         leverage_lock: "%{seconds}s · %{mode}"
         leverage_delete: "%{mode}"
+        unknown_goal: "objetivo desconocido"
+      hub:
+        page_title: "Consecuencias — Beta"
+        title: "Consecuencias"
+        lead: "Todo lo que se dispara cuando algo falla, en tus fuentes activas."
+        list_title: "Configurado"
+        empty: "Aún no hay consecuencias. Crea una abajo, o abre una fuente."
+        create_title: "Añadir una consecuencia"
+        pick_source: "Fuente"
+        source_blank: "Elige una fuente"
+        pick_goal: "Objetivo Strava"
+        goal_blank: "Elige un objetivo"
+        no_strava_goals: "Crea primero un objetivo Strava y vuelve aquí."
+        composer_section: "Cuándo y qué"
+        create_submit: "Guardar consecuencia"
+        open_source: "Abrir fuente"
+        sources:
+          wallpaper: "Fondo de pantalla"
+          cornertime: "Corner time"
+          strava: "Strava"
     events:
       sources:
         puryfi: "Purify"

@@ -56,7 +56,9 @@ class StravaController < ApplicationController
   end
 
   def create_goal
-    goal = current_user.strava_goals.create!(goal_params)
+    goal = current_user.strava_goals.new(goal_params)
+    goal.chaster_penalty_seconds = 0
+    goal.save!
     PostHog.capture(
       distinct_id: current_user.posthog_distinct_id,
       event: 'strava_goal_created',
@@ -69,7 +71,8 @@ class StravaController < ApplicationController
   end
 
   def update_goal
-    @goal.update!(goal_params)
+    @goal.assign_attributes(goal_params)
+    @goal.save!
     PosthogProductAnalytics.configured_source(current_user, name: "strava")
     redirect_to beta_sources_strava_path, notice: t("flash.strava.goal_updated", name: @goal.name)
   rescue ActiveRecord::RecordInvalid => e
@@ -78,7 +81,9 @@ class StravaController < ApplicationController
 
   def destroy_goal
     name = @goal.name
+    goal_id = @goal.id
     @goal.destroy!
+    current_user.strava_config&.remove_scenarios_for_goal!(goal_id)
     PostHog.capture(
       distinct_id: current_user.posthog_distinct_id,
       event: 'strava_goal_destroyed',
@@ -140,9 +145,7 @@ class StravaController < ApplicationController
       :min_calories,
       :strava_sport_type,
       :activity_types,
-      :device_names,
-      :chaster_penalty_minutes,
-      failure_sanction: {}
+      :device_names
     )
 
     {
@@ -155,16 +158,8 @@ class StravaController < ApplicationController
       min_duration_seconds: positive_integer_or_nil(p[:min_duration_minutes])&.*(60),
       min_calories: positive_integer_or_nil(p[:min_calories]),
       activity_types: merged_activity_types_param(p),
-      device_names: p[:device_names].to_s,
-      chaster_penalty_seconds: positive_integer_or_nil(p[:chaster_penalty_minutes]).to_i * 60,
-      failure_sanction: parse_failure_sanction_params(params[:failure_sanction])
+      device_names: p[:device_names].to_s
     }
-  end
-
-  def parse_failure_sanction_params(raw)
-    return {} if raw.blank?
-
-    SanctionSet.from_params(raw, allowed: BetaEvents::SourceRegistry.allowed_for(:strava_goal, :failed_penalty)).to_h
   end
 
   def merged_activity_types_param(permitted)

@@ -198,7 +198,7 @@ class WallpaperEnforcementConfig < ApplicationRecord
   end
 
   def stored_scenario_set
-    @stored_scenario_set ||= ScenarioSet.from_hash(self[:scenarios])
+    @stored_scenario_set ||= ScenarioSet.from_hash(self[:scenarios], source: :wallpaper)
   end
 
   def scenarios_are_valid

@@ -71,7 +71,7 @@ en:
           label: "Permanently delete a leverage photo"
     scenarios:
       section_title: "Consequences"
-      empty: "No consequences yet. Add one to react when a wallpaper check fails."
+      empty: "No consequences yet. Add one to react when something goes wrong."
       add_consequence: "Add a consequence"
       edit_trigger: "Edit trigger"
       edit_action: "Edit"
@@ -85,6 +85,14 @@ en:
           label: "Permissions lost"
         app_unreachable:
           label: "App unreachable"
+        movement_detected:
+          label: "Movement detected"
+        early_stop:
+          label: "Session stopped early"
+        any_goal_failed:
+          label: "Goal missed"
+        goal_failed:
+          label: "Specific goal missed"
       triggers:
         mismatch:
           delay_minutes: "Delay before applying (minutes)"
@@ -95,6 +103,8 @@ en:
         app_unreachable:
           threshold_minutes: "Time without contact (minutes)"
           delay_minutes: "Delay before applying (minutes)"
+        goal_failed:
+          goal_id: "Goal"
       composer:
         title: "New consequence"
         pick_event: "Choose when this should apply"
@@ -108,6 +118,7 @@ en:
         back: "Back"
         next: "Next"
         confirm: "Add"
+        reference_blank: "Choose…"
       summary:
         delay_minutes:
           one: "%{count} min delay"
@@ -125,6 +136,26 @@ en:
         pishock: "Intensity %{intensity} · %{duration}s"
         leverage_lock: "%{seconds}s · %{mode}"
         leverage_delete: "%{mode}"
+        unknown_goal: "unknown goal"
+      hub:
+        page_title: "Consequences — Beta"
+        title: "Consequences"
+        lead: "Everything that fires when a check fails, across your active sources."
+        list_title: "Configured"
+        empty: "No consequences configured yet. Create one below, or open a source page."
+        create_title: "Add a consequence"
+        pick_source: "Source"
+        source_blank: "Choose a source"
+        pick_goal: "Strava goal"
+        goal_blank: "Choose a goal"
+        no_strava_goals: "Create a Strava goal first, then come back here."
+        composer_section: "When and what"
+        create_submit: "Save consequence"
+        open_source: "Open source"
+        sources:
+          wallpaper: "Wallpaper"
+          cornertime: "Corner time"
+          strava: "Strava"
     events:
       sources:
         puryfi: "Purify"

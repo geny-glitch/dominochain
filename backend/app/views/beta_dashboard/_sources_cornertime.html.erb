@@ -12,7 +12,7 @@
 <section class="ds-beta-section ds-beta-section--tight-top">
   <h2 class="ds-section-title"><%= t("beta.integration_sections.configuration") %></h2>
   <div class="ds-beta-control-card">
-    <%= form_with url: beta_cornertime_config_path, method: :patch, local: true, class: "ds-form", data: { turbo: false } do %>
+    <%= form_with url: beta_cornertime_config_path, method: :patch, local: true, class: "ds-form", data: { turbo: false, scenarios_form: true } do %>
       <div class="ds-form-group">
         <%= label_tag :sensitivity, t("beta.cornertime_source.sensitivity"), class: "ds-form-label" %>
         <%= select_tag :sensitivity,
@@ -44,25 +44,18 @@
               required: true %>
       </div>
 
-      <h3 class="ds-section-subtitle"><%= t("beta.cornertime_source.sanctions_title") %></h3>
-      <%= render "sanction_set_fields",
-            field_prefix: "movement_sanction",
-            sanction_set: @config.movement_sanction_object,
-            allowed_possibility_ids: BetaEvents::SourceRegistry.allowed_for(:cornertime, :movement_detected),
-            photos: @leverage_photos %>
-
-      <h3 class="ds-section-subtitle"><%= t("beta.cornertime_source.early_stop_sanctions_title") %></h3>
-      <p class="ds-beta-control-hint"><%= t("beta.cornertime_source.early_stop_sanctions_hint") %></p>
-      <%= render "sanction_set_fields",
-            field_prefix: "early_stop_sanction",
-            sanction_set: @config.early_stop_sanction_object,
-            allowed_possibility_ids: BetaEvents::SourceRegistry.allowed_for(:cornertime, :early_stop),
-            photos: @leverage_photos %>
+      <%= render "scenarios_list",
+            source: :cornertime,
+            scenario_set: @config.scenario_set,
+            photos: @leverage_photos,
+            section_title: t("beta.cornertime_source.sanctions_title") %>
 
       <div class="ds-beta-control-actions">
         <%= submit_tag t("beta.cornertime_source.save"), class: "ds-btn ds-btn--primary" %>
       </div>
     <% end %>
+
+    <%= render "scenarios_form_script" %>
   </div>
 </section>
 

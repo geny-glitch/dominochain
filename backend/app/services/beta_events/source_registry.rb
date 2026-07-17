@@ -7,7 +7,7 @@ module BetaEvents
 
     # Action catalogs accepted on configurable sanction forms (not possibility ids).
     WALLPAPER_CATALOGS = %w[chaster pishock leverage_photo].freeze
-    STRAVA_CATALOGS = %w[leverage_photo].freeze
+    STRAVA_CATALOGS = %w[chaster leverage_photo].freeze
     CORNERTIME_CATALOGS = %w[chaster pishock leverage_photo].freeze
 
     EventDef = Struct.new(
@@ -117,9 +117,7 @@ module BetaEvents
               failed_penalty: EventDef.new(
                 kind: :failed_penalty,
                 mode: :payload,
-                accepted_catalogs: STRAVA_CATALOGS,
-                # Dedicated chaster_penalty_minutes field — not shown on leverage sanction form.
-                extra_allowed: %w[chaster.add_time]
+                accepted_catalogs: STRAVA_CATALOGS
               )
             },
             default_event: nil

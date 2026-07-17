@@ -27,7 +27,7 @@
     <% if @strava_goals.any? %>
       <% @strava_goals.each do |goal| %>
         <div class="ds-beta-control-card">
-          <%= form_with url: beta_strava_goal_path(goal), method: :patch, local: true, class: "ds-form" do %>
+          <%= form_with url: beta_strava_goal_path(goal), method: :patch, local: true, class: "ds-form", data: { turbo: false } do %>
             <%= hidden_field_tag :enabled, "0" %>
             <div class="ds-form-group">
               <label class="ds-form-label">
@@ -80,17 +80,6 @@
               <%= label_tag "strava_goal_#{goal.id}_device_names", t("beta.strava.device_names"), class: "ds-form-label" %>
               <%= text_field_tag :device_names, goal.device_names.join(", "), id: "strava_goal_#{goal.id}_device_names", class: "ds-input", placeholder: t("beta.strava.placeholders.device_names") %>
             </div>
-            <div class="ds-form-group">
-              <%= label_tag "strava_goal_#{goal.id}_chaster_penalty_minutes", t("beta.strava.chaster_penalty_minutes"), class: "ds-form-label" %>
-              <%= number_field_tag :chaster_penalty_minutes, goal.chaster_penalty_seconds / 60, id: "strava_goal_#{goal.id}_chaster_penalty_minutes", min: 1, max: 525_600, class: "ds-input", required: true %>
-            </div>
-            <% if @leverage_action_enabled %>
-              <%= render "strava_leverage_sanctions",
-                    field_prefix: "failure_sanction",
-                    row_id: "strava_goal_#{goal.id}",
-                    sanction: goal.failure_sanction_object,
-                    photos: @leverage_photos %>
-            <% end %>
             <p class="ds-beta-control-hint"><%= t("beta.strava.criteria_prefix") %> <%= goal.criteria_summary.presence || t("beta.strava.criteria_none") %></p>
             <%= submit_tag t("beta.strava.save_goal"), class: "ds-btn ds-btn--primary ds-btn--sm ds-strava-inline-action-lg" %>
           <% end %>
@@ -106,7 +95,7 @@
     <% end %>
 
     <div class="ds-beta-control-card">
-      <%= form_with url: beta_strava_goals_path, method: :post, local: true, class: "ds-form" do %>
+      <%= form_with url: beta_strava_goals_path, method: :post, local: true, class: "ds-form", data: { turbo: false } do %>
         <p class="ds-beta-control-text"><%= t("beta.strava.new_goal_title") %></p>
         <%= hidden_field_tag :enabled, "0" %>
         <div class="ds-form-group">
@@ -159,20 +148,26 @@
           <%= label_tag :device_names, t("beta.strava.device_names"), class: "ds-form-label" %>
           <%= text_field_tag :device_names, nil, class: "ds-input", placeholder: t("beta.strava.placeholders.device_names") %>
         </div>
-        <div class="ds-form-group">
-          <%= label_tag :chaster_penalty_minutes, t("beta.strava.chaster_penalty_minutes"), class: "ds-form-label" %>
-          <%= number_field_tag :chaster_penalty_minutes, 60, min: 1, max: 525_600, class: "ds-input", required: true %>
-        </div>
-        <% if @leverage_action_enabled %>
-          <%= render "strava_leverage_sanctions",
-                field_prefix: "failure_sanction",
-                row_id: "new_strava_goal",
-                sanction: SanctionSet.from_hash({}, allowed: BetaEvents::SourceRegistry.allowed_for(:strava_goal, :failed_penalty)),
-                photos: @leverage_photos %>
-        <% end %>
         <p class="ds-beta-control-hint"><%= t("beta.strava.new_goal_criteria_hint") %></p>
         <%= submit_tag t("beta.strava.create_goal"), class: "ds-btn ds-btn--primary ds-btn--sm ds-strava-inline-action-lg" %>
       <% end %>
+    </div>
+
+    <div class="ds-beta-control-card">
+      <p class="ds-beta-control-text"><%= t("beta.strava.consequences_lead") %></p>
+      <%= form_with url: beta_strava_config_path, method: :patch, local: true, class: "ds-form", data: { turbo: false, scenarios_form: true } do %>
+        <%= render "scenarios_list",
+              source: :strava,
+              scenario_set: @strava_config.scenario_set,
+              photos: @leverage_photos,
+              strava_goals: @strava_goals,
+              uid: "strava_config",
+              section_title: t("beta.strava.consequences_title") %>
+        <div class="ds-beta-control-actions">
+          <%= submit_tag t("beta.strava.save_consequences"), class: "ds-btn ds-btn--primary ds-btn--sm" %>
+        </div>
+      <% end %>
+      <%= render "scenarios_form_script" %>
     </div>
   </section>
 

@@ -85,6 +85,13 @@ en:
         boss_controls_wallpaper: "Your boss controls the wallpaper. You cannot change it here."
       cornertime:
         config_saved: "Corner time settings saved."
+      strava:
+        consequences_saved: "Strava consequences saved."
+      scenarios:
+        created: "Consequence saved."
+        empty_create: "Add at least one consequence before saving."
+        invalid_source: "That source is not available."
+        goal_not_found: "Strava goal not found."
       leverage_photo:
         images_required: "Original and teaser images are required."
         censor_required: "Censored image is required."

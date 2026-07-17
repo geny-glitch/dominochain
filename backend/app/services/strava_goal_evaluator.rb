@@ -23,7 +23,7 @@ class StravaGoalEvaluator
     sanctions_applied = []
 
     if status == "failed"
-      apply_chaster_penalty!(
+      result = apply_failure_consequences!(
         goal: goal,
         due_at: due_at,
         status_holder: ->(value) { status = value },
@@ -31,7 +31,7 @@ class StravaGoalEvaluator
         error_holder: ->(value) { chaster_error = value },
         lock_holder: ->(value) { chaster_lock_id = value }
       )
-      sanctions_applied.concat(apply_leverage_sanctions!(goal: goal, due_at: due_at))
+      sanctions_applied.concat(result)
     end
   rescue ChasterService::Unauthorized
     status = "chaster_error"
@@ -88,35 +88,93 @@ class StravaGoalEvaluator
 
   private
 
-  def apply_chaster_penalty!(goal:, due_at:, status_holder:, applied_holder:, error_holder:, lock_holder:)
-    event = BetaEvents::DomainEvent.new(
+  def apply_failure_consequences!(goal:, due_at:, status_holder:, applied_holder:, error_holder:, lock_holder:)
+    config = @user.strava_config
+    scenarios = if config
+      config.scenario_set.scenarios_for_goal_failure(goal)
+    else
+      goal.scenario_set.scenarios_for_goal_failure(goal)
+    end
+
+    all_rows = []
+    scenarios.each do |scenario|
+      sanction = scenario.to_sanction_set
+      next unless sanction.any_active?
+
+      rows = apply_sanction_set!(
+        sanction: sanction,
+        goal: goal,
+        due_at: due_at,
+        status_holder: status_holder,
+        applied_holder: applied_holder,
+        error_holder: error_holder,
+        lock_holder: lock_holder
+      )
+      all_rows.concat(rows)
+    end
+    all_rows
+  end
+
+  def apply_sanction_set!(sanction:, goal:, due_at:, status_holder:, applied_holder:, error_holder:, lock_holder:)
+    kind_map = {
+      "chaster.add_time" => :failed_penalty,
+      "leverage_photo.lock" => :failed_penalty,
+      "leverage_photo.delete" => :failed_penalty
+    }
+
+    rows = BetaEvents::SanctionApplier.new(
       beta: @user,
       source: :strava_goal,
-      kind: :failed_penalty,
-      payload: {
-        possibility_id: "chaster.add_time",
-        seconds: goal.chaster_penalty_seconds,
-        goal_id: goal.id,
-        goal_title: goal.name,
-        due_at: due_at.iso8601
+      kind_map: kind_map,
+      execute: lambda { |event, _context|
+        enriched = BetaEvents::DomainEvent.new(
+          beta: @user,
+          source: event.source,
+          kind: event.kind,
+          payload: event.payload.merge(
+            goal_id: goal.id,
+            goal_title: goal.name,
+            due_at: due_at.iso8601
+          )
+        )
+        begin
+          status = BetaEvents::ActionExecutor.new(beta: @user, event: enriched).call
+          status.to_s
+        rescue BetaEvents::ActionExecutionStopped => e
+          if enriched[:possibility_id].to_s == "chaster.add_time"
+            status_holder.call("chaster_error")
+            applied_holder.call(false)
+            lock_holder.call(nil)
+            error_holder.call(chaster_stop_message(e))
+          end
+          "stopped:#{e.reason}"
+        end
       }
-    )
-    begin
-      execution_status = BetaEvents::ActionExecutor.new(beta: @user, event: event).call
-      if execution_status == :ok
+    ).apply!(sanction)
+
+    chaster_row = rows.find { |row| row["possibility_id"].to_s == "chaster.add_time" }
+    if chaster_row
+      result = chaster_row["result"].to_s
+      if result == "ok" || result == "applied"
         applied_holder.call(true)
         lock = @chaster_service.current_lock
         lock_holder.call(lock&.dig(:id))
-      else
+      elsif !result.start_with?("stopped:")
         applied_holder.call(false)
         lock_holder.call(nil)
         error_holder.call("Source ou action désactivée.")
       end
-    rescue BetaEvents::ActionExecutionStopped => e
-      status_holder.call("chaster_error")
-      applied_holder.call(false)
-      lock_holder.call(nil)
-      error_holder.call(chaster_stop_message(e))
+    end
+
+    rows.map do |row|
+      {
+        "action" => row["action"],
+        "possibility_id" => row["possibility_id"],
+        "status" => row["result"].to_s,
+        "target_mode" => row["target_mode"],
+        "photo_id" => row["leverage_photo_id"],
+        "seconds" => row["seconds"]
+      }.compact
     end
   end
 
@@ -126,53 +184,6 @@ class StravaGoalEvaluator
     when :chaster_unauthorized then "Chaster non connecté"
     when :chaster_error, :missing_seconds then (error.detail.presence || "Erreur Chaster")
     else (error.detail.presence || "Erreur Chaster")
-    end
-  end
-
-  def apply_leverage_sanctions!(goal:, due_at:)
-    sanction = goal.failure_sanction_object
-    return [] unless sanction.any_active?
-
-    kind_map = {
-      "leverage_photo.lock" => :failed_penalty,
-      "leverage_photo.delete" => :failed_penalty
-    }
-
-    applier = BetaEvents::SanctionApplier.new(
-      beta: @user,
-      source: :strava_goal,
-      kind_map: kind_map,
-      execute: lambda { |event, context|
-        # Enrich payload with goal metadata for audit/descriptions.
-        enriched = BetaEvents::DomainEvent.new(
-          beta: @user,
-          source: event.source,
-          kind: event.kind,
-          payload: event.payload.merge(
-            goal_id: goal.id,
-            goal_title: goal.name,
-            due_at: due_at.iso8601,
-            source: "strava"
-          )
-        )
-        begin
-          status = BetaEvents::ActionExecutor.new(beta: @user, event: enriched, context: context).call
-          status.to_s
-        rescue BetaEvents::ActionExecutionStopped => e
-          "stopped:#{e.reason}"
-        end
-      }
-    )
-
-    applier.apply!(sanction).map do |row|
-      {
-        "action" => row["action"],
-        "possibility_id" => row["possibility_id"],
-        "status" => row["result"].to_s,
-        "target_mode" => row["target_mode"],
-        "photo_id" => row["leverage_photo_id"],
-        "seconds" => row["seconds"]
-      }.compact
     end
   end
 

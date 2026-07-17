@@ -11,6 +11,7 @@ fr:
         view: "Vue"
         home: "Home"
         catalog: "Catalogue"
+        scenarios: "Conséquences"
         sources: "Sources"
         actions: "Actions"
         personal: "Espace perso"

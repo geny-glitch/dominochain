@@ -1,0 +1,110 @@
+<%# locals: (source:, allowed_actions:, photos: [], uid: nil, strava_goals: []) %>
+<% photos ||= [] %>
+<% strava_goals = local_assigns.fetch(:strava_goals) { @strava_goals || [] } %>
+<% source = source.to_s %>
+<% uid ||= source %>
+<% event_ids = BetaEvents::ScenarioRegistry.event_ids(source) %>
+
+<div class="ds-wallpaper-consequence-composer" data-consequence-composer>
+  <div class="ds-wallpaper-composer-panel" data-composer-panel>
+    <p class="ds-form-label"><%= t("beta.scenarios.composer.title") %></p>
+
+    <div data-composer-step="event">
+      <p class="ds-beta-control-hint"><%= t("beta.scenarios.composer.pick_event") %></p>
+      <div class="ds-form-group">
+        <%= select_tag "composer_event_#{uid}",
+              options_for_select(
+                event_ids.map { |id| [t("beta.scenarios.events.#{id}.label"), id] }
+              ),
+              include_blank: t("beta.scenarios.composer.event_blank"),
+              class: "ds-input",
+              data: { composer_event: true } %>
+      </div>
+      <div class="ds-beta-control-actions">
+        <button type="button" class="ds-btn ds-btn--primary ds-btn--sm" data-composer-next="trigger" disabled><%= t("beta.scenarios.composer.next") %></button>
+      </div>
+    </div>
+
+    <div data-composer-step="trigger" hidden>
+      <p class="ds-beta-control-hint" data-composer-trigger-hint><%= t("beta.scenarios.composer.configure_trigger") %></p>
+      <p class="ds-beta-control-hint" data-composer-reuse-hint hidden><%= t("beta.scenarios.composer.reuse_scenario") %></p>
+      <div data-composer-trigger-fields></div>
+      <div class="ds-beta-control-actions">
+        <button type="button" class="ds-btn ds-btn--secondary ds-btn--sm" data-composer-back="event"><%= t("beta.scenarios.composer.back") %></button>
+        <button type="button" class="ds-btn ds-btn--primary ds-btn--sm" data-composer-next="action"><%= t("beta.scenarios.composer.next") %></button>
+      </div>
+    </div>
+
+    <div data-composer-step="action" hidden>
+      <p class="ds-beta-control-hint"><%= t("beta.scenarios.composer.pick_action") %></p>
+      <div class="ds-form-group">
+        <%= select_tag "composer_action_#{uid}",
+              options_for_select(
+                allowed_actions.map { |pid| [t("beta.sanctions.#{pid}.label"), pid] }
+              ),
+              include_blank: t("beta.scenarios.composer.action_blank"),
+              class: "ds-input",
+              data: { composer_action: true } %>
+      </div>
+      <div class="ds-beta-control-actions">
+        <button type="button" class="ds-btn ds-btn--secondary ds-btn--sm" data-composer-back="trigger"><%= t("beta.scenarios.composer.back") %></button>
+        <button type="button" class="ds-btn ds-btn--primary ds-btn--sm" data-composer-next="config" disabled><%= t("beta.scenarios.composer.next") %></button>
+      </div>
+    </div>
+
+    <div data-composer-step="config" hidden>
+      <p class="ds-beta-control-hint"><%= t("beta.scenarios.composer.configure_action") %></p>
+      <div data-composer-config-fields></div>
+      <div class="ds-beta-control-actions">
+        <button type="button" class="ds-btn ds-btn--secondary ds-btn--sm" data-composer-back="action"><%= t("beta.scenarios.composer.back") %></button>
+        <button type="button" class="ds-btn ds-btn--primary ds-btn--sm" data-composer-confirm><%= t("beta.scenarios.composer.confirm") %></button>
+      </div>
+    </div>
+  </div>
+
+  <script type="application/json" data-composer-bootstrap>
+    <%= raw({
+      source: source,
+      triggerSchemas: BetaEvents::ScenarioRegistry.events_for(source),
+      actionSchemas: allowed_actions.index_with { |pid|
+        (BetaEvents::ActionRegistry.find(pid)&.config_fields || {}).transform_values { |s|
+          s.merge(ui: s[:ui])
+        }
+      },
+      i18n: {
+        events: event_ids.index_with { |id| I18n.t("beta.scenarios.events.#{id}.label") },
+        triggers: event_ids.index_with { |eid|
+          BetaEvents::ScenarioRegistry.trigger_fields_for(eid, source: source).keys.index_with { |key|
+            I18n.t("beta.scenarios.triggers.#{eid}.#{key}", default: key.to_s.humanize)
+          }
+        },
+        actions: allowed_actions.index_with { |pid|
+          {
+            label: I18n.t("beta.sanctions.#{pid}.label"),
+            fields: (BetaEvents::ActionRegistry.find(pid)&.config_fields || {}).reject { |_k, s| s[:ui] == :hidden }.keys.index_with { |key|
+              I18n.t("beta.sanctions.#{pid}.fields.#{key}", default: key.to_s.humanize)
+            }
+          }
+        },
+        modes: WallpaperEnforcementConfig::SANCTION_MODES.index_with { |mode|
+          I18n.t("beta.wallpaper_source.mismatch_sanction_modes.#{mode}")
+        },
+        modeHints: WallpaperEnforcementConfig::SANCTION_MODES.index_with { |mode|
+          I18n.t("beta.wallpaper_source.mismatch_sanction_mode_hints.#{mode}")
+        },
+        targetRandom: I18n.t("beta.sanctions.shared.target_random"),
+        targetSpecific: I18n.t("beta.sanctions.shared.target_specific"),
+        removeAction: I18n.t("beta.scenarios.remove_action"),
+        editAction: I18n.t("beta.scenarios.edit_action"),
+        doneEditing: I18n.t("beta.scenarios.done_editing"),
+        editTrigger: I18n.t("beta.scenarios.edit_trigger"),
+        referenceBlank: I18n.t("beta.scenarios.composer.reference_blank"),
+        noStravaGoals: I18n.t("beta.scenarios.hub.no_strava_goals")
+      },
+      references: {
+        strava_goals: Array(strava_goals).map { |g| { id: g.id, label: g.name } }
+      },
+      photos: Array(photos).map { |p| { id: p.id, label: "#{p.download_filename} (#{I18n.t("leverage_photo.status.#{p.status}")})" } }
+    }.to_json) %>
+  </script>
+</div>

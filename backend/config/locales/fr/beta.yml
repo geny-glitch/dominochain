@@ -71,7 +71,7 @@ fr:
           label: "Supprimer définitivement une photo leverage"
     scenarios:
       section_title: "Conséquences"
-      empty: "Aucune conséquence pour l'instant. Ajoutez-en une pour réagir quand un contrôle échoue."
+      empty: "Aucune conséquence pour l'instant. Ajoutez-en une pour réagir quand quelque chose échoue."
       add_consequence: "Ajouter une conséquence"
       edit_trigger: "Modifier le déclencheur"
       edit_action: "Modifier"
@@ -85,6 +85,14 @@ fr:
           label: "Permissions perdues"
         app_unreachable:
           label: "App injoignable"
+        movement_detected:
+          label: "Mouvement détecté"
+        early_stop:
+          label: "Session arrêtée trop tôt"
+        any_goal_failed:
+          label: "Objectif manqué"
+        goal_failed:
+          label: "Tel objectif manqué"
       triggers:
         mismatch:
           delay_minutes: "Délai avant application (minutes)"
@@ -95,6 +103,8 @@ fr:
         app_unreachable:
           threshold_minutes: "Temps sans contact (minutes)"
           delay_minutes: "Délai avant application (minutes)"
+        goal_failed:
+          goal_id: "Objectif concerné"
       composer:
         title: "Nouvelle conséquence"
         pick_event: "Choisir quand l'appliquer"
@@ -108,6 +118,7 @@ fr:
         back: "Retour"
         next: "Suivant"
         confirm: "Ajouter"
+        reference_blank: "Choisir…"
       summary:
         delay_minutes:
           one: "délai %{count} min"
@@ -125,6 +136,26 @@ fr:
         pishock: "Intensité %{intensity} · %{duration}s"
         leverage_lock: "%{seconds}s · %{mode}"
         leverage_delete: "%{mode}"
+        unknown_goal: "objectif inconnu"
+      hub:
+        page_title: "Conséquences — Beta"
+        title: "Conséquences"
+        lead: "Tout ce qui se déclenche en cas d'échec, sur vos sources actives."
+        list_title: "Configuré"
+        empty: "Aucune conséquence pour l'instant. Créez-en une ci-dessous, ou ouvrez une source."
+        create_title: "Ajouter une conséquence"
+        pick_source: "Source"
+        source_blank: "Choisir une source"
+        pick_goal: "Objectif Strava"
+        goal_blank: "Choisir un objectif"
+        no_strava_goals: "Créez d'abord un objectif Strava, puis revenez ici."
+        composer_section: "Quand et quoi"
+        create_submit: "Enregistrer la conséquence"
+        open_source: "Ouvrir la source"
+        sources:
+          wallpaper: "Fond d'écran"
+          cornertime: "Corner time"
+          strava: "Strava"
     events:
       sources:
         puryfi: "Purify"

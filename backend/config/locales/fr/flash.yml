@@ -85,6 +85,13 @@ fr:
         boss_controls_wallpaper: "Ton boss contrôle le fond d'écran. Tu ne peux pas le modifier ici."
       cornertime:
         config_saved: "Paramètres Corner time enregistrés."
+      strava:
+        consequences_saved: "Conséquences Strava enregistrées."
+      scenarios:
+        created: "Conséquence enregistrée."
+        empty_create: "Ajoute au moins une conséquence avant d'enregistrer."
+        invalid_source: "Cette source n'est pas disponible."
+        goal_not_found: "Objectif Strava introuvable."
       leverage_photo:
         images_required: "Les images originale et teaser sont requises."
         censor_required: "L'image censurée est requise."

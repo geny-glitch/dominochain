@@ -1158,6 +1158,7 @@
   gap: $ds-space-md;
   margin-bottom: $ds-space-lg;
 
+  [data-scenarios-list],
   [data-wallpaper-scenarios-list] {
     display: flex;
     flex-direction: column;

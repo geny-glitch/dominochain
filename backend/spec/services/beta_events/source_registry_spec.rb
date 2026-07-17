@@ -25,8 +25,9 @@ RSpec.describe BetaEvents::SourceRegistry do
     expect(source.event(:enforcement_unfreeze).mode).to eq(:fixed)
   end
 
-  it "lists strava form possibilities as leverage only, with chaster at runtime" do
-    expect(described_class.allowed_for(:strava_goal, :failed_penalty)).to contain_exactly(
+  it "lists strava form possibilities including chaster and leverage" do
+    expect(described_class.allowed_for(:strava_goal, :failed_penalty)).to include(
+      "chaster.add_time",
       "leverage_photo.lock",
       "leverage_photo.delete"
     )

@@ -1,0 +1,129 @@
+<%# locals: (source:, scenario:, index:, photos: [], hub_mode: false, strava_goals: []) %>
+<% photos ||= [] %>
+<% strava_goals = local_assigns.fetch(:strava_goals) { @strava_goals || [] } %>
+<% source = source.to_s %>
+<% hub_mode = !!hub_mode %>
+<% event = scenario.event %>
+<% trigger_fields = BetaEvents::ScenarioRegistry.trigger_fields_for(event, source: source) %>
+<% prefix = "scenarios[scenarios][#{index}]" %>
+<% show_trigger_edit = trigger_fields.any? && !hub_mode %>
+
+<article class="ds-wallpaper-scenario-card" data-scenario-card data-scenario-event="<%= event %>" data-scenario-index="<%= index %>">
+  <%= hidden_field_tag "#{prefix}[id]", scenario.id, id: nil %>
+  <%= hidden_field_tag "#{prefix}[event]", event, id: nil %>
+
+  <header class="ds-wallpaper-scenario-card-header">
+    <div>
+      <p class="ds-wallpaper-scenario-card-title"><%= t("beta.scenarios.events.#{event}.label") %></p>
+      <p class="ds-beta-control-hint" data-scenario-trigger-summary>
+        <%= scenario_trigger_summary(scenario) %>
+      </p>
+    </div>
+    <% if show_trigger_edit %>
+      <button type="button"
+              class="ds-btn ds-btn--secondary ds-btn--icon ds-btn--sm"
+              data-scenario-edit-trigger
+              title="<%= t("beta.scenarios.edit_trigger") %>"
+              aria-label="<%= t("beta.scenarios.edit_trigger") %>">
+        <%= scenario_icon_svg(:pencil) %>
+      </button>
+    <% end %>
+  </header>
+
+  <% if show_trigger_edit %>
+    <div class="ds-wallpaper-scenario-trigger" data-scenario-trigger-fields hidden>
+      <% trigger_fields.each do |key, schema| %>
+        <% field_name = "#{prefix}[trigger][#{key}]" %>
+        <% value = scenario.trigger[key] || scenario.trigger[key.to_s] || schema[:default] %>
+        <% show_when = schema[:show_when_mode] %>
+        <% hide_when = schema[:hide_when_mode] %>
+        <div class="ds-form-group"
+             <% if show_when %>data-scenario-mode-field="<%= show_when %>"<% end %>
+             <% if hide_when %>data-scenario-mode-field-hide="<%= hide_when %>"<% end %>>
+          <% if schema[:type] == :enum && key.to_s == "mode" %>
+            <%= render "radio_group",
+                  name: field_name,
+                  legend: t("beta.scenarios.triggers.#{event}.#{key}"),
+                  selected: value,
+                  options: schema[:values].index_with { |mode| t("beta.wallpaper_source.mismatch_sanction_modes.#{mode}") },
+                  option_hints: schema[:values].index_with { |mode| t("beta.wallpaper_source.mismatch_sanction_mode_hints.#{mode}") },
+                  group_data: { "data-scenario-mode-control" => true } %>
+          <% elsif schema[:type] == :reference && schema[:ref] == :strava_goal %>
+            <%= label_tag nil, t("beta.scenarios.triggers.#{event}.#{key}"), class: "ds-form-label" %>
+            <%= select_tag field_name,
+                  options_from_collection_for_select(strava_goals, :id, :name, value),
+                  include_blank: t("beta.scenarios.hub.goal_blank"),
+                  class: "ds-input",
+                  id: nil,
+                  required: true,
+                  data: { scenario_trigger_key: key } %>
+            <% if strava_goals.empty? %>
+              <p class="ds-beta-control-hint"><%= t("beta.scenarios.hub.no_strava_goals") %></p>
+            <% end %>
+          <% else %>
+            <label class="ds-form-label"><%= t("beta.scenarios.triggers.#{event}.#{key}") %></label>
+            <%= number_field_tag field_name, value,
+                  min: schema[:min],
+                  max: schema[:max],
+                  class: "ds-input",
+                  id: nil,
+                  data: { scenario_trigger_key: key } %>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <ul class="ds-wallpaper-scenario-actions" data-scenario-actions>
+    <% scenario.actions.each_with_index do |action, action_index| %>
+      <% pid = action[:possibility_id] || action["possibility_id"] %>
+      <% config = action[:config] || action["config"] || {} %>
+      <% possibility = BetaEvents::ActionRegistry.find(pid) %>
+      <% editable_fields = (possibility&.config_fields || {}).reject { |_k, s| s[:ui] == :hidden } %>
+      <li class="ds-wallpaper-scenario-action" data-scenario-action data-possibility-id="<%= pid %>">
+        <%= hidden_field_tag "#{prefix}[actions][#{action_index}][possibility_id]", pid, id: nil %>
+        <% (possibility&.config_fields || {}).each do |key, schema| %>
+          <% next if schema[:ui] == :hidden %>
+          <%= hidden_field_tag "#{prefix}[actions][#{action_index}][config][#{key}]",
+                config[key] || config[key.to_s] || schema[:default],
+                id: nil,
+                data: { action_config_key: key } %>
+        <% end %>
+        <div class="ds-wallpaper-scenario-action-main">
+          <span class="ds-wallpaper-scenario-action-label" data-scenario-action-label>
+            <%= t("beta.sanctions.#{pid}.label") %>
+            · <%= scenario_action_summary(pid, config) %>
+          </span>
+          <div class="ds-wallpaper-scenario-action-buttons">
+            <% if editable_fields.any? %>
+              <button type="button"
+                      class="ds-btn ds-btn--secondary ds-btn--icon ds-btn--sm"
+                      data-scenario-edit-action
+                      title="<%= t("beta.scenarios.edit_action") %>"
+                      aria-label="<%= t("beta.scenarios.edit_action") %>">
+                <%= scenario_icon_svg(:pencil) %>
+              </button>
+            <% end %>
+            <button type="button"
+                    class="ds-btn ds-btn--secondary ds-btn--icon ds-btn--sm"
+                    data-scenario-remove-action
+                    title="<%= t("beta.scenarios.remove_action") %>"
+                    aria-label="<%= t("beta.scenarios.remove_action") %>">
+              <%= scenario_icon_svg(:trash) %>
+            </button>
+          </div>
+        </div>
+        <div class="ds-wallpaper-scenario-action-editor" data-scenario-action-editor hidden></div>
+      </li>
+    <% end %>
+  </ul>
+
+  <% unless hub_mode %>
+    <div class="ds-wallpaper-scenario-card-footer" data-scenario-dirty-save hidden>
+      <%= submit_tag t("beta.scenarios.save"),
+            class: "ds-btn ds-btn--primary ds-btn--sm",
+            name: nil,
+            data: { scenario_save: true } %>
+    </div>
+  <% end %>
+</article>

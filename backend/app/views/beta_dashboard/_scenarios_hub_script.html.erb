@@ -1,0 +1,50 @@
+<script>
+(function () {
+  var form = document.querySelector("[data-scenarios-hub-form]");
+  if (!form) return;
+
+  var sourceSelect = form.querySelector("[data-hub-source]");
+  var submit = form.querySelector("[data-hub-create-submit]");
+  var composers = form.querySelectorAll("[data-hub-composer-for]");
+
+  function activeComposer() {
+    var source = sourceSelect && sourceSelect.value;
+    if (!source) return null;
+    return form.querySelector('[data-hub-composer-for="' + source + '"]');
+  }
+
+  function hasScenarioCards() {
+    var composer = activeComposer();
+    if (!composer) return false;
+    return composer.querySelectorAll("[data-scenario-card]").length > 0;
+  }
+
+  function sync() {
+    var source = sourceSelect ? sourceSelect.value : "";
+    composers.forEach(function (el) {
+      var match = el.getAttribute("data-hub-composer-for") === source;
+      el.hidden = !match;
+      el.querySelectorAll("input, select, textarea, button").forEach(function (field) {
+        field.disabled = !match;
+      });
+    });
+
+    if (submit) submit.disabled = !source || !hasScenarioCards();
+  }
+
+  if (sourceSelect) sourceSelect.addEventListener("change", sync);
+
+  form.addEventListener("click", function (event) {
+    if (event.target.closest("[data-composer-confirm], [data-scenario-remove-action]")) {
+      setTimeout(sync, 0);
+    }
+  });
+
+  var listRoot = form.querySelector("[data-hub-composers]");
+  if (listRoot && window.MutationObserver) {
+    new MutationObserver(sync).observe(listRoot, { childList: true, subtree: true });
+  }
+
+  sync();
+})();
+</script>

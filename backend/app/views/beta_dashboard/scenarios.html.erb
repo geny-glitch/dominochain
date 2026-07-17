@@ -1,0 +1,88 @@
+<% content_for :title, t("beta.scenarios.hub.page_title") %>
+
+<section class="ds-beta-section ds-beta-section--first">
+  <h1 class="ds-section-title"><%= t("beta.scenarios.hub.title") %></h1>
+  <p class="ds-beta-control-hint"><%= t("beta.scenarios.hub.lead") %></p>
+</section>
+
+<section class="ds-beta-section ds-beta-section--tight-top">
+  <h2 class="ds-section-title"><%= t("beta.scenarios.hub.list_title") %></h2>
+  <% if @hub_entries.empty? %>
+    <div class="ds-beta-control-card">
+      <p class="ds-beta-control-hint"><%= t("beta.scenarios.hub.empty") %></p>
+    </div>
+  <% else %>
+    <% @hub_entries.each do |entry| %>
+      <% scenario = entry[:scenario] %>
+      <article class="ds-beta-control-card ds-wallpaper-scenario-card">
+        <header class="ds-wallpaper-scenario-card-header">
+          <div>
+            <p class="ds-wallpaper-scenario-card-title">
+              <span class="ds-beta-home-pill"><%= entry[:source_label] %></span>
+              <% if entry[:context_label].present? %>
+                · <%= entry[:context_label] %>
+              <% end %>
+            </p>
+            <p class="ds-beta-control-hint"><%= scenario_trigger_summary(scenario) %></p>
+          </div>
+          <%= link_to t("beta.scenarios.hub.open_source"), entry[:open_path], class: "ds-btn ds-btn--secondary ds-btn--sm" %>
+        </header>
+        <ul class="ds-wallpaper-scenario-actions">
+          <% scenario.actions.each do |action| %>
+            <% pid = action[:possibility_id] || action["possibility_id"] %>
+            <% config = action[:config] || action["config"] || {} %>
+            <li class="ds-wallpaper-scenario-action">
+              <span class="ds-wallpaper-scenario-action-label">
+                <%= t("beta.sanctions.#{pid}.label") %>
+                · <%= scenario_action_summary(pid, config) %>
+              </span>
+            </li>
+          <% end %>
+        </ul>
+      </article>
+    <% end %>
+  <% end %>
+</section>
+
+<% if @hub_sources.any? %>
+  <section class="ds-beta-section ds-beta-section--tight-top">
+    <h2 class="ds-section-title"><%= t("beta.scenarios.hub.create_title") %></h2>
+    <div class="ds-beta-control-card">
+      <%= form_with url: beta_scenarios_create_path, method: :post, local: true, class: "ds-form", data: { turbo: false, scenarios_hub_form: true } do %>
+        <div class="ds-form-group" data-hub-source-step>
+          <%= label_tag :source, t("beta.scenarios.hub.pick_source"), class: "ds-form-label" %>
+          <%= select_tag :source,
+                options_for_select(
+                  @hub_sources.map { |id| [t("beta.scenarios.hub.sources.#{id}"), id] }
+                ),
+                include_blank: t("beta.scenarios.hub.source_blank"),
+                class: "ds-input",
+                data: { hub_source: true },
+                required: true %>
+        </div>
+
+        <div data-hub-composers>
+          <% @hub_sources.each do |source| %>
+            <div data-hub-composer-for="<%= source %>" hidden>
+              <%= render "scenarios_list",
+                    source: source,
+                    scenario_set: ScenarioSet.new(scenarios: []),
+                    photos: @leverage_photos,
+                    strava_goals: (source == "strava" ? @strava_goals : []),
+                    uid: "hub_#{source}",
+                    hub_mode: true,
+                    section_title: t("beta.scenarios.hub.composer_section") %>
+            </div>
+          <% end %>
+        </div>
+
+        <div class="ds-beta-control-actions">
+          <%= submit_tag t("beta.scenarios.hub.create_submit"), class: "ds-btn ds-btn--primary", data: { hub_create_submit: true }, disabled: true %>
+        </div>
+      <% end %>
+
+      <%= render "scenarios_form_script" %>
+      <%= render "scenarios_hub_script" %>
+    </div>
+  </section>
+<% end %>

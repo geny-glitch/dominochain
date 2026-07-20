@@ -1,10 +1,11 @@
-<%# locals: (source:, scenario_set:, photos: [], allowed_actions: nil, leverage_action_enabled: nil, section_title: nil, uid: nil, hub_mode: false, strava_goals: []) %>
+<%# locals: (source:, scenario_set:, photos: [], allowed_actions: nil, leverage_action_enabled: nil, section_title: nil, uid: nil, hub_mode: false, strava_goals: [], readonly: false) %>
 <% source = source.to_s %>
 <% scenario_set ||= ScenarioSet.new(scenarios: []) %>
 <% photos = local_assigns.fetch(:photos) { @leverage_photos || [] } %>
 <% strava_goals = local_assigns.fetch(:strava_goals) { @strava_goals || [] } %>
 <% leverage_on = local_assigns.key?(:leverage_action_enabled) ? leverage_action_enabled : @leverage_action_enabled %>
 <% allowed_actions ||= BetaEvents::ScenarioRegistry.allowed_actions_for(source) %>
+<% readonly = !!local_assigns.fetch(:readonly, false) %>
 <% unless leverage_on %>
   <% allowed_actions = allowed_actions.reject { |pid| BetaEvents::ActionRegistry.find(pid)&.catalog_id == "leverage_photo" } %>
 <% end %>
@@ -32,16 +33,18 @@
     <% end %>
   </div>
 
-  <% unless hub_mode %>
+  <% unless hub_mode || readonly %>
     <div class="ds-beta-control-actions" data-scenario-dirty-save="list" hidden>
       <%= submit_tag t("beta.scenarios.save"), class: "ds-btn ds-btn--primary ds-btn--sm" %>
     </div>
   <% end %>
 
-  <%= render "consequence_composer",
-        source: source,
-        allowed_actions: allowed_actions,
-        photos: photos,
-        strava_goals: strava_goals,
-        uid: uid %>
+  <% unless readonly %>
+    <%= render "consequence_composer",
+          source: source,
+          allowed_actions: allowed_actions,
+          photos: photos,
+          strava_goals: strava_goals,
+          uid: uid %>
+  <% end %>
 </div>

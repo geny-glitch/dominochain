@@ -171,6 +171,8 @@ class BetaLeveragePhotoController < ApplicationController
       case e.message
       when "boss controls wallpaper"
         t("flash.beta.wallpaper.boss_controls_wallpaper")
+      when "verification session locked"
+        t("flash.beta.wallpaper.verification_session_locked")
       when "no device"
         t("flash.beta.wallpaper.no_device")
       when "no displayable image"

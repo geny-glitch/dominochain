@@ -6,6 +6,8 @@ module WallpaperBossOperations
   private
 
   def apply_wallpaper_upload!(image_param)
+    WallpaperVerificationSessionGuard.ensure_change_allowed!(@beta)
+
     other_devices = @beta.devices.where.not(id: @device.id).to_a
 
     first_wallpaper = nil
@@ -31,6 +33,8 @@ module WallpaperBossOperations
   end
 
   def apply_wallpaper_as_current!(wallpaper_id)
+    WallpaperVerificationSessionGuard.ensure_change_allowed!(@beta)
+
     wallpaper = @device.wallpapers.find(wallpaper_id)
     other_devices = @beta.devices.where.not(id: @device.id).to_a
 

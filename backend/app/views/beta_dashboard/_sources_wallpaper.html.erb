@@ -41,12 +41,14 @@
       <p class="ds-beta-control-hint"><%= t("beta.wallpaper_source.no_device") %></p>
     <% end %>
 
-    <% unless current_user.controlled_by_boss? %>
+    <% if current_user.controlled_by_boss? %>
+      <p class="ds-beta-control-hint"><%= t("beta.wallpaper_source.boss_sets_wallpaper") %></p>
+    <% elsif @verification_session.present? %>
+      <p class="ds-beta-control-hint"><%= t("beta.wallpaper_source.verification_session_wallpaper_locked") %></p>
+    <% else %>
       <div class="ds-beta-control-actions">
         <%= link_to t("beta.wallpaper_source.choose_wallpaper"), beta_wallpaper_upload_path, class: "ds-btn ds-btn--secondary ds-btn--sm" %>
       </div>
-    <% else %>
-      <p class="ds-beta-control-hint"><%= t("beta.wallpaper_source.boss_sets_wallpaper") %></p>
     <% end %>
   </div>
 </section>
@@ -74,48 +76,59 @@
   </div>
 </section>
 
+<%= render "wallpaper_verification_session", verification_session: @verification_session, device: @device %>
+
 <section class="ds-beta-section ds-beta-section--tight-top">
   <h2 class="ds-section-title"><%= t("beta.integration_sections.configuration") %></h2>
   <div class="ds-beta-control-card">
-    <%= form_with url: beta_wallpaper_enforcement_path, method: :patch, local: true, class: "ds-wallpaper-enforcement-toggle-form", data: { turbo: false, wallpaper_enforcement_toggle_form: true } do %>
-      <div class="ds-form-group ds-wallpaper-enforcement-master">
-        <label class="ds-beta-catalog-toggle ds-beta-catalog-toggle--lg" for="wallpaper_enforcement_enabled">
-          <%= hidden_field_tag :enabled, "0" %>
-          <%= check_box_tag :enabled, "1", @config.enabled, id: "wallpaper_enforcement_enabled", class: "ds-beta-catalog-toggle-input", data: { wallpaper_enforcement_master: true } %>
-          <span class="ds-beta-catalog-toggle-switch" aria-hidden="true"></span>
-          <span class="ds-wallpaper-enforcement-master-label"><%= t("beta.wallpaper_source.enabled") %></span>
-        </label>
-      </div>
+    <% verification_locked = @verification_session.present? %>
+    <% display_scenario_set = verification_locked ? @verification_session.enforcement_snapshot.scenario_set : @config.scenario_set %>
+
+    <% unless verification_locked %>
+      <%= form_with url: beta_wallpaper_enforcement_path, method: :patch, local: true, class: "ds-wallpaper-enforcement-toggle-form", data: { turbo: false, wallpaper_enforcement_toggle_form: true } do %>
+        <div class="ds-form-group ds-wallpaper-enforcement-master">
+          <label class="ds-beta-catalog-toggle ds-beta-catalog-toggle--lg" for="wallpaper_enforcement_enabled">
+            <%= hidden_field_tag :enabled, "0" %>
+            <%= check_box_tag :enabled, "1", @config.enabled, id: "wallpaper_enforcement_enabled", class: "ds-beta-catalog-toggle-input", data: { wallpaper_enforcement_master: true } %>
+            <span class="ds-beta-catalog-toggle-switch" aria-hidden="true"></span>
+            <span class="ds-wallpaper-enforcement-master-label"><%= t("beta.wallpaper_source.enabled") %></span>
+          </label>
+        </div>
+      <% end %>
+    <% else %>
+      <p class="ds-beta-control-hint"><%= t("beta.wallpaper_source.verification_session_config_locked") %></p>
     <% end %>
 
     <%= form_with url: beta_wallpaper_enforcement_path, method: :patch, local: true, class: "ds-form", data: { turbo: false, wallpaper_enforcement_form: true } do %>
-      <div data-wallpaper-enforcement-options<%= " hidden" unless @config.enabled %>>
-        <div data-wallpaper-options-fields>
-        <div class="ds-form-group">
-        <%= label_tag :check_interval_minutes, t("beta.wallpaper_source.check_interval"), class: "ds-form-label" %>
-        <%= number_field_tag :check_interval_minutes, @config.check_interval_minutes, min: WallpaperEnforcementConfig::MIN_INTERVAL_MINUTES, max: WallpaperEnforcementConfig::MAX_INTERVAL_MINUTES, class: "ds-input" %>
-      </div>
+      <div data-wallpaper-enforcement-options<%= " hidden" unless @config.enabled || verification_locked %>>
+        <% unless verification_locked %>
+          <div data-wallpaper-options-fields>
+            <div class="ds-form-group">
+              <%= label_tag :check_interval_minutes, t("beta.wallpaper_source.check_interval"), class: "ds-form-label" %>
+              <%= number_field_tag :check_interval_minutes, @config.check_interval_minutes, min: WallpaperEnforcementConfig::MIN_INTERVAL_MINUTES, max: WallpaperEnforcementConfig::MAX_INTERVAL_MINUTES, class: "ds-input" %>
+            </div>
 
-      <div class="ds-form-group">
-        <label class="ds-form-label ds-beta-catalog-toggle" for="wallpaper_dismiss_apps_before_capture">
-          <%= hidden_field_tag :dismiss_apps_before_capture, "0" %>
-          <%= check_box_tag :dismiss_apps_before_capture, "1", @config.dismiss_apps_before_capture, id: "wallpaper_dismiss_apps_before_capture", class: "ds-beta-catalog-toggle-input" %>
-          <span class="ds-beta-catalog-toggle-switch" aria-hidden="true"></span>
-          <span><%= t("beta.wallpaper_source.dismiss_apps") %></span>
-        </label>
-      </div>
+            <div class="ds-form-group">
+              <label class="ds-form-label ds-beta-catalog-toggle" for="wallpaper_dismiss_apps_before_capture">
+                <%= hidden_field_tag :dismiss_apps_before_capture, "0" %>
+                <%= check_box_tag :dismiss_apps_before_capture, "1", @config.dismiss_apps_before_capture, id: "wallpaper_dismiss_apps_before_capture", class: "ds-beta-catalog-toggle-input" %>
+                <span class="ds-beta-catalog-toggle-switch" aria-hidden="true"></span>
+                <span><%= t("beta.wallpaper_source.dismiss_apps") %></span>
+              </label>
+            </div>
 
-      <div class="ds-beta-control-actions" data-wallpaper-dirty-save="options" hidden>
-        <%= submit_tag t("beta.wallpaper_source.save_options"),
-              class: "ds-btn ds-btn--secondary ds-btn--sm" %>
-      </div>
-      </div>
+            <div class="ds-beta-control-actions" data-wallpaper-dirty-save="options" hidden>
+              <%= submit_tag t("beta.wallpaper_source.save_options"),
+                    class: "ds-btn ds-btn--secondary ds-btn--sm" %>
+            </div>
+          </div>
+        <% end %>
 
-      <%= render "wallpaper_scenarios_list", scenario_set: @config.scenario_set, leverage_photos: @leverage_photos %>
+        <%= render "wallpaper_scenarios_list", scenario_set: display_scenario_set, leverage_photos: @leverage_photos, readonly: verification_locked %>
       </div>
     <% end %>
 
-    <%= render "wallpaper_enforcement_form_script" %>
+    <%= render "wallpaper_enforcement_form_script" unless verification_locked %>
 
     <% if bg_env_staging? %>
       <div class="ds-beta-control-actions ds-beta-control-actions--spaced" data-wallpaper-enforcement-options<%= " hidden" unless @config.enabled %>>

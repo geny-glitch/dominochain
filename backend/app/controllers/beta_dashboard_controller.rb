@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class BetaDashboardController < ApplicationController
+  include WallpaperVerificationSessionGuard
+
   layout "beta_dashboard"
 
   CATALOG_SOURCE_ACTIONS = {
@@ -59,6 +61,8 @@ class BetaDashboardController < ApplicationController
 
     case source
     when "wallpaper"
+      return if block_wallpaper_config_change_during_verification_session!
+
       config = current_user.ensure_wallpaper_enforcement_config!
       config.assign_scenarios!(merge_scenario_sets(config.scenario_set, incoming))
       config.save!
@@ -122,6 +126,8 @@ class BetaDashboardController < ApplicationController
 
   def sources_wallpaper
     @config = current_user.ensure_wallpaper_enforcement_config!
+    @verification_session = current_user.active_wallpaper_verification_session
+    @verification_sessions = current_user.wallpaper_verification_sessions.recent.limit(12)
     @device = current_user.primary_device
     @apk_url = android_app_apk_url
     @status_filter = params[:status].presence
@@ -160,6 +166,17 @@ class BetaDashboardController < ApplicationController
   end
 
   def update_wallpaper_enforcement
+    if wallpaper_verification_session_locked?
+      message = t("flash.beta.wallpaper.verification_session_config_locked")
+      if request.format.json?
+        render json: { error: message }, status: :conflict
+        return
+      end
+
+      redirect_to beta_sources_wallpaper_path, alert: message
+      return
+    end
+
     config = current_user.ensure_wallpaper_enforcement_config!
 
     if request.format.json?
@@ -215,6 +232,16 @@ class BetaDashboardController < ApplicationController
       reference_time: Time.current
     )
     redirect_to beta_sources_wallpaper_path, notice: t("flash.beta.wallpaper.test_triggered")
+  end
+
+  def start_wallpaper_verification_session
+    duration_hours = params[:duration_hours].to_i
+    session = WallpaperVerificationSessionStarter.new(current_user).start!(duration_hours: duration_hours)
+    redirect_to beta_sources_wallpaper_path,
+      notice: t("flash.beta.wallpaper.verification_session_started", hours: session.duration_hours)
+  rescue WallpaperVerificationSessionStarter::Error => e
+    redirect_to beta_sources_wallpaper_path,
+      alert: t("flash.beta.wallpaper.verification_session_start_errors.#{e.message}", default: e.message)
   end
 
   def actions_chaster

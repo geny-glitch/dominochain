@@ -51,6 +51,7 @@ get "beta/sources/vitrine", to: "beta_dashboard#sources_showcase", as: :beta_sou
   get "beta/leverage_photo", to: redirect("/beta/leverage_photos")
   patch "beta/wallpaper/enforcement", to: "beta_dashboard#update_wallpaper_enforcement", as: :beta_wallpaper_enforcement
   post "beta/wallpaper/enforcement/test", to: "beta_dashboard#test_wallpaper_enforcement_check", as: :beta_wallpaper_enforcement_test
+  post "beta/wallpaper/verification_sessions", to: "beta_dashboard#start_wallpaper_verification_session", as: :beta_wallpaper_verification_sessions
   get "beta/wallpaper/upload", to: "beta_wallpaper#upload", as: :beta_wallpaper_upload
   post "beta/wallpaper/upload", to: "beta_wallpaper#create", as: :beta_wallpaper_create
   get "beta/actions/chaster", to: "beta_dashboard#actions_chaster", as: :beta_actions_chaster

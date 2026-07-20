@@ -87,6 +87,14 @@ fr:
         uploaded: "Fond d'écran mis à jour."
         no_device: "Enregistre d'abord un appareil dans l'app Android."
         boss_controls_wallpaper: "Ton boss contrôle le fond d'écran. Tu ne peux pas le modifier ici."
+        verification_session_locked: "Les changements de fond d'écran sont bloqués pendant une session de vérification active."
+        verification_session_config_locked: "Les réglages de contrôle du fond d'écran sont bloqués pendant une session de vérification active."
+        verification_session_started: "Session de vérification démarrée pour %{hours} h. Le fond d'écran et les conséquences restent verrouillés jusqu'à la fin."
+        verification_session_start_errors:
+          active_session: "Une session de vérification est déjà en cours."
+          no_device: "Enregistre d'abord un appareil dans l'app Android."
+          no_wallpaper: "Définis d'abord un fond d'écran sur ton appareil."
+          invalid_duration: "Choisis une durée de session valide."
       cornertime:
         config_saved: "Paramètres Corner time enregistrés."
       strava:

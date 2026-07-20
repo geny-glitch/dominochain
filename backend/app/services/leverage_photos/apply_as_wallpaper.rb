@@ -11,6 +11,7 @@ class LeveragePhotos::ApplyAsWallpaper
   def call!
     raise Error, "photo missing" if @photo.blank? || @photo.deleted?
     raise Error, "boss controls wallpaper" if @user.controlled_by_boss?
+    raise Error, "verification session locked" if @user.wallpaper_verification_session_locked?
 
     devices = @user.devices.to_a
     raise Error, "no device" if devices.empty?

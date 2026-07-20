@@ -3,6 +3,7 @@
 module Api
   class DevicesController < ApplicationController
     include ApiAuthenticatable
+    include WallpaperVerificationSessionGuard
 
     def create
       device_id = params.require(:device_id)
@@ -42,6 +43,8 @@ module Api
     end
 
     def upload_wallpaper
+      return if block_wallpaper_change_during_verification_session!(json: true)
+
       device = Device.find_by!(device_id: params[:id])
       wallpaper = device.wallpapers.create!(image: params[:image])
       device.wallpaper_applications.create!(wallpaper: wallpaper, applied_at: Time.current)

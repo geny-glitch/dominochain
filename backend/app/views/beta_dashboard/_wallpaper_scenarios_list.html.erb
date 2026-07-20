@@ -1,5 +1,6 @@
-<%# locals: (scenario_set:, leverage_photos: []) %>
+<%# locals: (scenario_set:, leverage_photos: [], readonly: false) %>
 <%= render "scenarios_list",
       source: :wallpaper,
       scenario_set: scenario_set,
-      photos: leverage_photos.presence || @leverage_photos || [] %>
+      photos: leverage_photos.presence || @leverage_photos || [],
+      readonly: readonly %>

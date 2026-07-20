@@ -25,6 +25,7 @@ class User < ApplicationRecord
   has_many :strava_goal_checks, dependent: :destroy
   has_one :strava_config, dependent: :destroy
   has_one :wallpaper_enforcement_config, dependent: :destroy
+  has_many :wallpaper_verification_sessions, dependent: :destroy
   has_many :wallpaper_compliance_checks, dependent: :destroy
   has_one :cornertime_config, dependent: :destroy
   has_many :cornertime_sessions, dependent: :destroy
@@ -123,6 +124,14 @@ class User < ApplicationRecord
 
   def primary_device
     devices.order(Arel.sql("last_seen_at DESC NULLS LAST"), updated_at: :desc).first
+  end
+
+  def active_wallpaper_verification_session
+    wallpaper_verification_sessions.active.first
+  end
+
+  def wallpaper_verification_session_locked?
+    active_wallpaper_verification_session.present?
   end
 
   private

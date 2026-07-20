@@ -87,6 +87,14 @@ es:
         uploaded: "Fondo de pantalla actualizado."
         no_device: "Registra primero un dispositivo en la app Android."
         boss_controls_wallpaper: "Tu boss controla el fondo. No puedes cambiarlo aquí."
+        verification_session_locked: "Los cambios de fondo están bloqueados durante una sesión de verificación activa."
+        verification_session_config_locked: "La configuración de control del fondo está bloqueada durante una sesión de verificación activa."
+        verification_session_started: "Sesión de verificación iniciada durante %{hours} h. El fondo y las consecuencias permanecen bloqueados hasta el final."
+        verification_session_start_errors:
+          active_session: "Ya hay una sesión de verificación en curso."
+          no_device: "Registra primero un dispositivo en la app Android."
+          no_wallpaper: "Define un fondo en tu dispositivo antes de iniciar una sesión."
+          invalid_duration: "Elige una duración de sesión válida."
       cornertime:
         config_saved: "Ajustes de Corner time guardados."
       strava:

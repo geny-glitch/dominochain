@@ -50,7 +50,9 @@ class WallpaperVerificationJob < ApplicationJob
     return unless screenshot&.image&.attached?
 
     device = screenshot.device
-    wallpaper = device.current_wallpaper
+    user = device.user
+    snapshot = user ? WallpaperEnforcementSnapshot.for(user) : nil
+    wallpaper = snapshot&.locked_wallpaper || device.current_wallpaper
     unless wallpaper&.image&.attached?
       timer.measure(:persist) do
         update_screenshot!(screenshot, wallpaper_id: nil, verification_status: "skipped")

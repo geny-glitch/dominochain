@@ -87,6 +87,14 @@ en:
         uploaded: "Wallpaper updated."
         no_device: "Register a device in the Android app first."
         boss_controls_wallpaper: "Your boss controls the wallpaper. You cannot change it here."
+        verification_session_locked: "Wallpaper changes are locked during an active verification session."
+        verification_session_config_locked: "Wallpaper check settings are locked during an active verification session."
+        verification_session_started: "Verification session started for %{hours} hours. The wallpaper and consequences are locked until it ends."
+        verification_session_start_errors:
+          active_session: "A verification session is already running."
+          no_device: "Register a device in the Android app first."
+          no_wallpaper: "Set a wallpaper on your device before starting a verification session."
+          invalid_duration: "Choose a valid session duration."
       cornertime:
         config_saved: "Corner time settings saved."
       strava:

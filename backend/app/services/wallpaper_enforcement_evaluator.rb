@@ -7,8 +7,9 @@ class WallpaperEnforcementEvaluator
   end
 
   def evaluate_scheduled_check!(device:, reference_time: Time.current)
+    snapshot = enforcement_snapshot
     config = @user.wallpaper_enforcement_config
-    return unless config&.enabled?
+    return unless snapshot.enabled?
 
     sanctions = []
     status = nil
@@ -16,15 +17,15 @@ class WallpaperEnforcementEvaluator
 
     unless device.permissions_granted_for_enforcement?(reference_time: reference_time)
       status = "permissions_missing"
-      sanctions.concat(handle_permissions_lost!(config, device, reference_time))
+      sanctions.concat(handle_permissions_lost!(config, snapshot, device, reference_time))
     else
       config.reset_permissions_lost_state! if config.permissions_lost_since.present?
     end
 
-    unless device.reachable?(threshold_minutes: config.app_unreachable_threshold_minutes, reference_time: reference_time)
+    unless device.reachable?(threshold_minutes: snapshot.app_unreachable_threshold_minutes, reference_time: reference_time)
       if status.blank?
         status = "app_unreachable"
-        sanctions.concat(handle_app_unreachable!(config, device, reference_time))
+        sanctions.concat(handle_app_unreachable!(config, snapshot, device, reference_time))
       end
       details["last_seen_at"] = device.last_seen_at&.iso8601
     else
@@ -43,12 +44,13 @@ class WallpaperEnforcementEvaluator
     end
 
     config.update!(last_scheduled_check_at: reference_time)
-    request_screenshot_if_due!(device, config, reference_time)
+    request_screenshot_if_due!(device, snapshot, reference_time)
   end
 
   def evaluate_verification!(screenshot:, reference_time: Time.current)
+    snapshot = enforcement_snapshot
     config = @user.wallpaper_enforcement_config
-    return unless config&.enabled?
+    return unless snapshot.enabled?
 
     device = screenshot.device
     verification_status = screenshot.verification_status
@@ -61,7 +63,7 @@ class WallpaperEnforcementEvaluator
     when "verified"
       sanctions.concat(handle_verified!(config, reference_time))
     when "mismatch"
-      sanctions.concat(handle_mismatch!(config, device, reference_time))
+      sanctions.concat(handle_mismatch!(config, snapshot, device, reference_time))
     when "inconclusive", "skipped", "pending"
       status = verification_status == "pending" ? "pending_screenshot" : verification_status
     end
@@ -81,6 +83,7 @@ class WallpaperEnforcementEvaluator
   def reset_mismatch_on_wallpaper_change!
     config = @user.wallpaper_enforcement_config
     return unless config
+    return if enforcement_snapshot.active_session?
 
     config.reset_mismatch_state!
     unfreeze_if_needed!(config)
@@ -88,12 +91,16 @@ class WallpaperEnforcementEvaluator
 
   private
 
-  def request_screenshot_if_due!(device, config, reference_time)
+  def enforcement_snapshot
+    WallpaperEnforcementSnapshot.for(@user)
+  end
+
+  def request_screenshot_if_due!(device, snapshot, reference_time)
     return unless device.fcm_token.present?
 
     FcmService.send_take_screenshot_notification(
       device: device,
-      dismiss_apps: config.dismiss_apps_before_capture
+      dismiss_apps: snapshot.dismiss_apps_before_capture
     )
   end
 
@@ -106,40 +113,40 @@ class WallpaperEnforcementEvaluator
     sanctions
   end
 
-  def handle_mismatch!(config, device, reference_time)
-    case config.mismatch_sanction_mode
+  def handle_mismatch!(config, snapshot, device, reference_time)
+    case snapshot.mismatch_sanction_mode
     when WallpaperEnforcementConfig::SANCTION_MODE_DOUBLE_CHECK
-      handle_mismatch_double_check!(config, device, reference_time)
+      handle_mismatch_double_check!(config, snapshot, device, reference_time)
     when WallpaperEnforcementConfig::SANCTION_MODE_CONSECUTIVE_FAILURES
-      handle_mismatch_consecutive_failures!(config, reference_time)
+      handle_mismatch_consecutive_failures!(config, snapshot, reference_time)
     else
-      handle_mismatch_strict!(config, reference_time)
+      handle_mismatch_strict!(config, snapshot, reference_time)
     end
   end
 
-  def handle_mismatch_double_check!(config, device, reference_time)
+  def handle_mismatch_double_check!(config, snapshot, device, reference_time)
     if config.mismatch_recheck_count < WallpaperEnforcementConfig::MAX_DOUBLE_CHECK_RECHECKS
       config.increment!(:mismatch_recheck_count)
       WallpaperMismatchRecheckJob.set(wait: WallpaperMismatchRecheckJob::DOUBLE_CHECK_WAIT).perform_later(device.id)
       return []
     end
 
-    handle_mismatch_strict!(config, reference_time)
+    handle_mismatch_strict!(config, snapshot, reference_time)
   end
 
-  def handle_mismatch_consecutive_failures!(config, reference_time)
+  def handle_mismatch_consecutive_failures!(config, snapshot, reference_time)
     sanctions = []
     config.mismatch_since ||= reference_time
     config.mismatch_consecutive_count += 1
     config.save! if config.changed?
 
-    threshold = config.mismatch_consecutive_threshold
+    threshold = snapshot.mismatch_consecutive_threshold
     return sanctions if config.mismatch_consecutive_count < threshold
 
     chaster_multiplier = threshold
     sanctions.concat(apply_scenario_sanctions!(
       config: config,
-      sanction: config.mismatch_sanction_object,
+      sanction: snapshot.mismatch_sanction_object,
       reference_time: reference_time,
       details: {},
       kinds: {
@@ -157,17 +164,17 @@ class WallpaperEnforcementEvaluator
     sanctions
   end
 
-  def handle_mismatch_strict!(config, reference_time)
+  def handle_mismatch_strict!(config, snapshot, reference_time)
     sanctions = []
     config.mismatch_since ||= reference_time
     config.save! if config.changed?
 
     mismatch_duration = reference_time - config.mismatch_since
-    return sanctions unless should_apply_mismatch_sanctions?(config, mismatch_duration)
+    return sanctions unless should_apply_mismatch_sanctions?(snapshot, mismatch_duration)
 
     sanctions.concat(apply_scenario_sanctions!(
       config: config,
-      sanction: config.mismatch_sanction_object,
+      sanction: snapshot.mismatch_sanction_object,
       reference_time: reference_time,
       details: {},
       kinds: {
@@ -181,21 +188,21 @@ class WallpaperEnforcementEvaluator
     sanctions
   end
 
-  def handle_permissions_lost!(config, device, reference_time)
+  def handle_permissions_lost!(config, snapshot, device, reference_time)
     config.permissions_lost_since ||= reference_time
     config.save! if config.changed?
 
     duration = reference_time - config.permissions_lost_since
     return [] unless should_apply_scenario_sanctions?(
-      config.permissions_lost_sanction_object,
+      snapshot.permissions_lost_sanction_object,
       duration,
-      config.permissions_lost_delay_minutes,
+      snapshot.permissions_lost_delay_minutes,
       config.permissions_lost_sanction_applied_at
     )
 
     sanctions = apply_scenario_sanctions!(
       config: config,
-      sanction: config.permissions_lost_sanction_object,
+      sanction: snapshot.permissions_lost_sanction_object,
       reference_time: reference_time,
       details: { "permissions_missing" => device.permissions_missing_list },
       kinds: {
@@ -209,21 +216,21 @@ class WallpaperEnforcementEvaluator
     sanctions
   end
 
-  def handle_app_unreachable!(config, device, reference_time)
+  def handle_app_unreachable!(config, snapshot, device, reference_time)
     config.app_unreachable_since ||= reference_time
     config.save! if config.changed?
 
     duration = reference_time - config.app_unreachable_since
     return [] unless should_apply_scenario_sanctions?(
-      config.app_unreachable_sanction_object,
+      snapshot.app_unreachable_sanction_object,
       duration,
-      config.app_unreachable_delay_minutes,
+      snapshot.app_unreachable_delay_minutes,
       config.app_unreachable_sanction_applied_at
     )
 
     sanctions = apply_scenario_sanctions!(
       config: config,
-      sanction: config.app_unreachable_sanction_object,
+      sanction: snapshot.app_unreachable_sanction_object,
       reference_time: reference_time,
       details: { "last_seen_at" => device.last_seen_at&.iso8601 },
       kinds: {
@@ -237,11 +244,11 @@ class WallpaperEnforcementEvaluator
     sanctions
   end
 
-  def should_apply_mismatch_sanctions?(config, mismatch_duration)
-    sanction = config.mismatch_sanction_object
+  def should_apply_mismatch_sanctions?(snapshot, mismatch_duration)
+    sanction = snapshot.mismatch_sanction_object
     return false unless sanction.any_active?
 
-    mismatch_duration >= config.mismatch_delay_minutes.minutes
+    mismatch_duration >= snapshot.mismatch_delay_minutes.minutes
   end
 
   def should_apply_scenario_sanctions?(sanction, duration, delay_minutes, applied_at)

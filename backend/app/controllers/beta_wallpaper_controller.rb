@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class BetaWallpaperController < ApplicationController
+  include WallpaperVerificationSessionGuard
+
   layout "beta_dashboard"
 
   before_action :authenticate_user!
@@ -12,6 +14,8 @@ class BetaWallpaperController < ApplicationController
   end
 
   def create
+    return if block_wallpaper_change_during_verification_session!
+
     device = current_user.primary_device
     unless device
       redirect_to beta_sources_wallpaper_path, alert: t("flash.beta.wallpaper.no_device")

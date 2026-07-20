@@ -23,6 +23,8 @@ class PublicBossController < ApplicationController
   def upload
     apply_wallpaper_upload!(params.require(:image))
     redirect_to public_boss_path(@nickname, device_id: @device_id), notice: t("flash.wallpaper.uploaded")
+  rescue WallpaperVerificationSessionGuard::LockedError
+    redirect_to public_boss_path(@nickname, device_id: @device_id), alert: t("flash.beta.wallpaper.verification_session_locked")
   rescue ActionController::ParameterMissing
     redirect_to public_boss_upload_new_path(@nickname, device_id: @device_id), alert: t("flash.wallpaper.select_image")
   rescue ActiveRecord::ConnectionNotEstablished, ActiveRecord::ConnectionFailed, PG::ConnectionBad
@@ -33,6 +35,8 @@ class PublicBossController < ApplicationController
   def set_current
     apply_wallpaper_as_current!(params[:wallpaper_id])
     redirect_to public_boss_path(@nickname, device_id: @device_id), notice: t("flash.wallpaper.wallpaper_set_current")
+  rescue WallpaperVerificationSessionGuard::LockedError
+    redirect_to public_boss_path(@nickname, device_id: @device_id), alert: t("flash.beta.wallpaper.verification_session_locked")
   rescue ActiveRecord::RecordNotFound
     redirect_to public_boss_path(@nickname, device_id: @device_id), alert: t("flash.wallpaper.wallpaper_not_found")
   rescue ActiveRecord::ConnectionNotEstablished, ActiveRecord::ConnectionFailed, PG::ConnectionBad

@@ -12,7 +12,9 @@ class PuryfiConfig
 
   class << self
     def shock_level_for_label(user, label_id)
-      raw = user.puryfi_shock_level_per_label[label_id.to_s]
+      levels = user.puryfi_shock_level_per_label
+      levels = {} unless levels.is_a?(Hash)
+      raw = levels[label_id.to_s]
       raw.to_i.clamp(0, 3)
     end
 

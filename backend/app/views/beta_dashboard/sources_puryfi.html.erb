@@ -3,7 +3,7 @@
 <header class="ds-beta-page-head">
   <div class="ds-beta-page-head-row">
     <h1 class="ds-beta-page-title"><%= t("beta.puryfi.heading") %></h1>
-    <%= form_with url: beta_catalog_visibility_path, method: :patch, local: true, class: "ds-beta-catalog-toggle-form" do %>
+    <%= form_with url: beta_catalog_visibility_path, method: :patch, local: true, class: "ds-beta-catalog-toggle-form", data: { turbo: false } do %>
       <%= hidden_field_tag :kind, "source" %>
       <%= hidden_field_tag :item_id, "puryfi" %>
       <%= hidden_field_tag :enabled, "0" %>

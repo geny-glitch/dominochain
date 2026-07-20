@@ -141,6 +141,24 @@
   var toast = document.querySelector("[data-puryfi-save-toast]");
   var toastTimer = null;
   var pendingRequests = 0;
+  var loginPath = "<%= j new_user_session_path %>";
+
+  function rememberInitialValue(input) {
+    if (!input || input.getAttribute("data-puryfi-initial-value") != null) return;
+    input.setAttribute("data-puryfi-initial-value", input.value);
+  }
+
+  function valueChanged(input) {
+    rememberInitialValue(input);
+    return input.value !== input.getAttribute("data-puryfi-initial-value");
+  }
+
+  function markSaved(input) {
+    if (!input) return;
+    input.setAttribute("data-puryfi-initial-value", input.value);
+  }
+
+  form.querySelectorAll("input").forEach(rememberInitialValue);
 
   function debounce(fn, delay) {
     var timer = null;
@@ -173,15 +191,19 @@
 
     return fetch(form.action, {
       method: "PATCH",
+      credentials: "same-origin",
       headers: {
         "X-CSRF-Token": csrfToken,
-        "X-Requested-With": "XMLHttpRequest",
         "Accept": "application/json",
         "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
       },
       body: params.toString()
     })
       .then(function (response) {
+        if (response.status === 401) {
+          window.location.href = loginPath + "?return_to=" + encodeURIComponent(window.location.pathname);
+          return Promise.reject(new Error("session_expired"));
+        }
         return response.json().catch(function () { return {}; }).then(function (payload) {
           if (!response.ok) throw new Error(payload.error || "request_failed");
           return payload;
@@ -191,6 +213,7 @@
         setToast(payload.message || "<%= j t("flash.beta.puryfi_saved") %>", false);
       })
       .catch(function (error) {
+        if (error.message === "session_expired") return;
         setToast(error.message || "<%= j t("flash.beta.puryfi_save_failed") %>", true);
         throw error;
       })
@@ -201,16 +224,18 @@
   }
 
   function saveMinScore(input) {
+    if (!valueChanged(input)) return;
     var value = parseInt(input.value, 10);
     if (!Number.isFinite(value)) return;
     value = Math.max(0, Math.min(100, value));
     input.value = String(value);
     var params = new URLSearchParams();
     params.set("puryfi_min_score", String(value));
-    return savePuryfi(params);
+    return savePuryfi(params).then(function () { markSaved(input); });
   }
 
   function saveSeconds(input) {
+    if (!valueChanged(input)) return;
     var labelId = input.getAttribute("data-puryfi-autosave-seconds");
     if (!labelId) return;
     var value = parseInt(input.value, 10);
@@ -219,7 +244,7 @@
     input.value = String(value);
     var params = new URLSearchParams();
     params.set("puryfi_seconds_per_label[" + labelId + "]", String(value));
-    return savePuryfi(params);
+    return savePuryfi(params).then(function () { markSaved(input); });
   }
 
   function saveShockLevel(rating) {
@@ -237,6 +262,7 @@
     var intensityInput = form.querySelector('[data-puryfi-autosave-pishock-level="' + level + '"][data-puryfi-autosave-pishock-field="intensity"]');
     var durationInput = form.querySelector('[data-puryfi-autosave-pishock-level="' + level + '"][data-puryfi-autosave-pishock-field="duration"]');
     if (!intensityInput || !durationInput) return;
+    if (!valueChanged(intensityInput) && !valueChanged(durationInput)) return;
 
     var intensity = parseInt(intensityInput.value, 10);
     var duration = parseInt(durationInput.value, 10);
@@ -250,7 +276,10 @@
     var params = new URLSearchParams();
     params.set("puryfi_pishock_level_settings[" + level + "][intensity]", String(intensity));
     params.set("puryfi_pishock_level_settings[" + level + "][duration]", String(duration));
-    return savePuryfi(params);
+    return savePuryfi(params).then(function () {
+      markSaved(intensityInput);
+      markSaved(durationInput);
+    });
   }
 
   function syncShockRating(rating) {

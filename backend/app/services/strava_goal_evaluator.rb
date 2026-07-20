@@ -82,8 +82,40 @@ class StravaGoalEvaluator
       valid_count: matching.count,
       total_count: activities.count,
       activity_ids: activities.map { |activity| activity[:id] },
-      matching_activity_ids: matching.map { |activity| activity[:id] }
+      matching_activity_ids: matching.map { |activity| activity[:id] },
+      status: matching.count >= goal.required_count ? "passed" : "failed"
     }
+  end
+
+  def activity_eligibility(activity, goal)
+    reasons = []
+    if goal.min_duration_seconds.present? && activity[:duration_seconds].to_i < goal.min_duration_seconds
+      reasons << :min_duration
+    end
+    if goal.min_calories.present? && activity[:calories].to_i < goal.min_calories
+      reasons << :min_calories
+    end
+    if goal.activity_types.present? && (goal.activity_types & activity_types_for(activity)).empty?
+      reasons << :activity_type
+    end
+    if goal.device_names.present? && !device_matches?(activity[:device_name], goal.device_names)
+      reasons << :device_name
+    end
+
+    { eligible: reasons.empty?, reasons: reasons }
+  end
+
+  def activities_for_goal_window(goal, due_at: nil)
+    due_at ||= goal.next_due_at
+    due_at = normalize_due_at(goal, due_at)
+    period_start_at = goal.period_start_for(due_at)
+    period_end_at = [ Time.current, due_at ].min
+    activities = activities_for_period(
+      period_start_at,
+      period_end_at,
+      include_details: detailed_activities_required?([ goal ])
+    )
+    { due_at: due_at, period_start_at: period_start_at, period_end_at: period_end_at, activities: activities }
   end
 
   private
@@ -201,12 +233,7 @@ class StravaGoalEvaluator
   end
 
   def activity_matches_goal?(activity, goal)
-    return false if goal.min_duration_seconds.present? && activity[:duration_seconds].to_i < goal.min_duration_seconds
-    return false if goal.min_calories.present? && activity[:calories].to_i < goal.min_calories
-    return false if goal.activity_types.present? && (goal.activity_types & activity_types_for(activity)).empty?
-    return false if goal.device_names.present? && !device_matches?(activity[:device_name], goal.device_names)
-
-    true
+    activity_eligibility(activity, goal)[:eligible]
   end
 
   def activity_types_for(activity)

@@ -177,7 +177,7 @@ RSpec.describe "Routes", type: :request do
         device_names: "Garmin"
       }
 
-      expect(response).to redirect_to(beta_sources_strava_path)
+      expect(response).to redirect_to(beta_strava_goal_show_path(beta.strava_goals.last))
       goal = beta.strava_goals.last
       expect(goal.name).to eq("Cardio")
       expect(goal.required_count).to eq(2)
@@ -207,7 +207,7 @@ RSpec.describe "Routes", type: :request do
         min_duration_minutes: "20"
       }
 
-      expect(response).to redirect_to(beta_sources_strava_path)
+      expect(response).to redirect_to(beta_strava_goal_show_path(beta.strava_goals.last))
       goal = beta.strava_goals.last
       expect(goal.activity_types).to eq(%w[TrailRun Ride])
     end

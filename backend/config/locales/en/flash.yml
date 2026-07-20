@@ -49,6 +49,10 @@ en:
       not_configured: "Strava is not configured on this server. Contact the administrator."
       connect_first: "Connect Strava before managing goals."
       goal_not_found: "Strava goal not found."
+      activities_refreshed: "Strava activities refreshed."
+      activities_fetch_failed: "Could not fetch Strava activities: %{message}"
+      preview_check_passed: "Preview: goal met (%{valid}/%{required} valid activities, %{total} total) · %{period_start} → %{period_end}"
+      preview_check_failed: "Preview: goal not met (%{valid}/%{required} valid activities, %{total} total) · %{period_start} → %{period_end}"
     beta:
       catalog_unknown: "Unknown source/action."
       catalog_unavailable: "This source or action is not available on your account."

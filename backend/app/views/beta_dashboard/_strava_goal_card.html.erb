@@ -1,0 +1,29 @@
+<%# locals: (goal:) %>
+
+<article class="ds-strava-goal-card ds-beta-control-card" data-strava-goal-card data-goal-id="<%= goal.id %>">
+  <header class="ds-strava-goal-card-header">
+    <div class="ds-strava-goal-card-heading">
+      <h3 class="ds-strava-goal-card-title"><%= goal.name %></h3>
+      <div class="ds-strava-goal-card-pills">
+        <span class="ds-beta-home-pill <%= "ds-beta-home-pill--on" if goal.enabled? %>">
+          <%= goal.enabled? ? t("beta.strava.goal_status.active") : t("beta.strava.goal_status.paused") %>
+        </span>
+        <span class="ds-beta-home-pill"><%= goal.window_label %></span>
+      </div>
+    </div>
+    <div class="ds-strava-goal-card-actions">
+      <%= link_to beta_strava_goal_show_path(goal),
+            class: "ds-btn ds-btn--icon ds-btn--ghost ds-btn--sm",
+            title: t("beta.strava.view_goal"),
+            "aria-label": t("beta.strava.view_goal_aria", name: goal.name) do %>
+        <%= scenario_icon_svg(:eye) %>
+      <% end %>
+    </div>
+  </header>
+
+  <p class="ds-strava-goal-card-target"><%= strava_goal_target_line(goal) %></p>
+  <p class="ds-beta-control-hint ds-strava-goal-card-schedule"><%= strava_goal_schedule_line(goal) %></p>
+  <% if goal.criteria_summary.present? %>
+    <p class="ds-beta-control-hint ds-strava-goal-card-criteria"><%= goal.criteria_summary %></p>
+  <% end %>
+</article>

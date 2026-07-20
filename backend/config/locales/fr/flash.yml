@@ -49,6 +49,10 @@ fr:
       not_configured: "Strava n'est pas configuré sur ce serveur. Contacte l'administrateur."
       connect_first: "Connecte Strava avant de gérer des objectifs."
       goal_not_found: "Objectif Strava introuvable."
+      activities_refreshed: "Activités Strava actualisées."
+      activities_fetch_failed: "Impossible de récupérer les activités Strava : %{message}"
+      preview_check_passed: "Aperçu : objectif atteint (%{valid}/%{required} activités valides, %{total} au total) · %{period_start} → %{period_end}"
+      preview_check_failed: "Aperçu : objectif non atteint (%{valid}/%{required} activités valides, %{total} au total) · %{period_start} → %{period_end}"
     beta:
       catalog_unknown: "Source/action inconnue."
       catalog_unavailable: "Cette source ou action n'est pas disponible sur ton compte."

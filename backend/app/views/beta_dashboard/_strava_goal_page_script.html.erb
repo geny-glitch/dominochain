@@ -1,0 +1,25 @@
+<script>
+(function () {
+  var root = document.querySelector("[data-strava-goal-page]");
+  if (!root) return;
+
+  root.addEventListener("click", function (event) {
+    var editBtn = event.target.closest("[data-strava-goal-edit]");
+    if (editBtn && root.contains(editBtn)) {
+      var recap = root.querySelector("[data-strava-goal-recap]");
+      var form = root.querySelector("[data-strava-goal-form]");
+      if (recap) recap.hidden = true;
+      if (form) form.hidden = false;
+      return;
+    }
+
+    var cancelBtn = event.target.closest("[data-strava-goal-cancel-edit]");
+    if (cancelBtn && root.contains(cancelBtn)) {
+      var recap = root.querySelector("[data-strava-goal-recap]");
+      var form = root.querySelector("[data-strava-goal-form]");
+      if (recap) recap.hidden = false;
+      if (form) form.hidden = true;
+    }
+  });
+})();
+</script>

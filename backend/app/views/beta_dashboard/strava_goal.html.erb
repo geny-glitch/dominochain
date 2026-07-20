@@ -1,0 +1,72 @@
+<% content_for :title, t("beta.strava.goal_page.title", name: @goal.name) %>
+
+<header class="ds-beta-page-head">
+  <p class="ds-beta-page-lead" style="margin-bottom:0.35rem;">
+    <%= link_to t("beta.strava.goal_page.back"), beta_sources_strava_path, class: "ds-beta-home-muted" %>
+  </p>
+  <h1 class="ds-beta-page-title"><%= @goal.name %></h1>
+  <p class="ds-beta-page-lead"><%= t("beta.strava.goal_page.lead") %></p>
+</header>
+
+<% if @preview_result.present? %>
+  <section class="ds-beta-section ds-beta-section--first">
+    <div class="ds-beta-control-card ds-strava-preview-result">
+      <p class="ds-beta-control-text"><%= strava_preview_result_notice(@preview_result, goal: @goal) %></p>
+      <p class="ds-beta-control-hint"><%= t("beta.strava.goal_page.preview_hint") %></p>
+    </div>
+  </section>
+<% end %>
+
+<section class="ds-beta-section <%= @preview_result.present? ? "ds-beta-section--tight-top" : "ds-beta-section--first" %>">
+  <h2 class="ds-section-title"><%= t("beta.strava.goal_page.recap_title") %></h2>
+  <%= render "strava_goal_recap_panel", goal: @goal %>
+</section>
+
+<section class="ds-beta-section ds-beta-section--tight-top">
+  <h2 class="ds-section-title"><%= t("beta.strava.goal_page.checks_title") %></h2>
+  <div class="ds-beta-control-card">
+    <div class="ds-strava-goal-check-actions">
+      <%= button_to t("beta.strava.goal_page.preview_check"),
+            beta_strava_goal_preview_check_path(@goal),
+            method: :post,
+            class: "ds-btn ds-btn--secondary ds-btn--sm",
+            form: { data: { turbo: false } } %>
+      <%= button_to t("beta.strava.check_last_window"),
+            beta_strava_goal_check_path(@goal),
+            method: :post,
+            class: "ds-btn ds-btn--primary ds-btn--sm",
+            form: { data: { turbo: false, turbo_confirm: t("beta.strava.goal_page.check_confirm") } } %>
+    </div>
+    <p class="ds-beta-control-hint"><%= t("beta.strava.goal_page.preview_check_hint") %></p>
+    <p class="ds-beta-control-hint">
+      <%= t("beta.strava.next_evaluation", datetime: @goal.next_due_at.in_time_zone(@goal.time_zone_object).strftime("%d/%m/%Y %H:%M"), tz: @goal.time_zone) %>
+    </p>
+  </div>
+  <%= render "strava_goal_checks_list", checks: @checks, goal: @goal %>
+</section>
+
+<section class="ds-beta-section ds-beta-section--tight-top">
+  <div class="ds-section-header">
+    <h2 class="ds-section-title"><%= t("beta.strava.goal_page.activities_title") %></h2>
+    <%= button_to t("beta.strava.goal_page.refresh_activities"),
+          beta_strava_goal_refresh_activities_path(@goal, show_all: params[:show_all], page: params[:page]),
+          method: :post,
+          class: "ds-btn ds-btn--secondary ds-btn--sm",
+          form: { data: { turbo: false } } %>
+  </div>
+  <%= render "strava_goal_activities_list",
+        goal: @goal,
+        rows: @activities_rows,
+        activity_window: @activity_window,
+        fetched_at: @activities_fetched_at,
+        show_all: @show_all_activities,
+        eligible_count: @eligible_activity_count,
+        all_count: @all_activity_count,
+        page: @activities_page,
+        total_pages: @activities_total_pages,
+        total_count: @activities_total_count,
+        error: @activities_error,
+        error_message: @activities_error_message %>
+</section>
+
+<%= render "strava_goal_page_script" %>

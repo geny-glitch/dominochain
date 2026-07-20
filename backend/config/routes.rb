@@ -24,7 +24,8 @@ Rails.application.routes.draw do
   post "beta/scenarios", to: "beta_dashboard#create_scenario", as: :beta_scenarios_create
   get "beta/sources/puryfi", to: "beta_dashboard#sources_puryfi", as: :beta_sources_puryfi
   get "beta/sources/cigarettes", to: "beta_dashboard#sources_cigarettes", as: :beta_sources_cigarettes
-get "beta/sources/strava", to: "beta_dashboard#sources_strava", as: :beta_sources_strava
+  get "beta/sources/strava", to: "beta_dashboard#sources_strava", as: :beta_sources_strava
+  get "beta/strava/goals/:id", to: "beta_dashboard#strava_goal", as: :beta_strava_goal_show
 get "beta/sources/vitrine", to: "beta_dashboard#sources_showcase", as: :beta_sources_showcase
   get "beta/sources/wallpaper", to: "beta_dashboard#sources_wallpaper", as: :beta_sources_wallpaper
   get "beta/sources/cornertime", to: "beta_dashboard#sources_cornertime", as: :beta_sources_cornertime
@@ -108,6 +109,8 @@ get "beta/sources/vitrine", to: "beta_dashboard#sources_showcase", as: :beta_sou
   patch "beta/strava/goals/:id", to: "strava#update_goal", as: :beta_strava_goal
   delete "beta/strava/goals/:id", to: "strava#destroy_goal", as: :beta_strava_goal_destroy
   post "beta/strava/goals/:id/check", to: "strava#check_goal", as: :beta_strava_goal_check
+  post "beta/strava/goals/:id/preview_check", to: "strava#preview_check", as: :beta_strava_goal_preview_check
+  post "beta/strava/goals/:id/refresh_activities", to: "strava#refresh_activities", as: :beta_strava_goal_refresh_activities
   get "beta/tasks/:id", to: "beta_dashboard#task", as: :beta_task
   post "beta/tasks/:id/proof", to: "beta_dashboard#submit_proof", as: :beta_task_proof
   post "control/release", to: "controls#release", as: :control_release

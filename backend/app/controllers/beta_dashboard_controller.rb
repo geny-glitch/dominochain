@@ -22,6 +22,8 @@ class BetaDashboardController < ApplicationController
   before_action :require_catalog_source_platform_enabled!
   before_action :require_catalog_action_platform_enabled!
   before_action :set_task, only: [ :task, :submit_proof ]
+  before_action :set_strava_goal, only: [ :strava_goal ]
+  before_action :require_strava_connected!, only: [ :strava_goal ]
 
   def home
     @chaster_lock = fetch_chaster_lock
@@ -94,6 +96,12 @@ class BetaDashboardController < ApplicationController
     @strava_config = current_user.ensure_strava_config!
     @leverage_photos = current_user.leverage_photos.not_deleted.newest_first
     @leverage_action_enabled = BetaCatalog.new(current_user).action_platform_enabled?("leverage_photo")
+  end
+
+  def strava_goal
+    @checks = @goal.strava_goal_checks.recent
+    @preview_result = flash[:strava_preview]&.symbolize_keys
+    load_strava_goal_activities!
   end
 
   def update_strava_config
@@ -680,5 +688,79 @@ class BetaDashboardController < ApplicationController
       goal = current_user.strava_goals.find_by(id: goal_id)
       goal&.name
     end
+  end
+
+  STRAVA_GOAL_ACTIVITIES_PER_PAGE = 15
+
+  def set_strava_goal
+    @goal = current_user.strava_goals.find(params[:id])
+  rescue ActiveRecord::RecordNotFound
+    redirect_to beta_sources_strava_path, alert: t("flash.strava.goal_not_found")
+  end
+
+  def require_strava_connected!
+    return if current_user.reload.strava_access_token.present?
+
+    redirect_to beta_sources_strava_path, alert: t("flash.strava.connect_first")
+  end
+
+  def load_strava_goal_activities!
+    @activities_error = nil
+    @activities_error_message = nil
+
+    evaluator = StravaGoalEvaluator.new(current_user)
+    window = evaluator.activities_for_goal_window(@goal)
+    @activity_window = window.slice(:due_at, :period_start_at, :period_end_at)
+    @activities_fetched_at = Time.current
+
+    annotated = window[:activities].map do |activity|
+      eligibility = evaluator.activity_eligibility(activity, @goal)
+      { activity: activity, eligibility: eligibility }
+    end
+    annotated.sort_by! { |row| row[:activity][:started_at] || Time.zone.at(0) }.reverse!
+
+    @show_all_activities = params[:show_all] == "1"
+    listed = @show_all_activities ? annotated : annotated.select { |row| row[:eligibility][:eligible] }
+
+    @activities_total_count = listed.size
+    @activities_page = [ params[:page].to_i, 1 ].max
+    offset = (@activities_page - 1) * STRAVA_GOAL_ACTIVITIES_PER_PAGE
+    @activities_rows = listed.slice(offset, STRAVA_GOAL_ACTIVITIES_PER_PAGE) || []
+    @activities_total_pages = [ (@activities_total_count.to_f / STRAVA_GOAL_ACTIVITIES_PER_PAGE).ceil, 1 ].max
+    @eligible_activity_count = annotated.count { |row| row[:eligibility][:eligible] }
+    @all_activity_count = annotated.size
+  rescue StravaService::IntegrationUnavailable
+    @activities_error = :integration_unavailable
+    @activities_error_message = if Rails.env.development?
+      t("beta.strava.goal_page.activities_integration_inactive_dev")
+    else
+      t("beta.strava.goal_page.activities_integration_unavailable")
+    end
+    assign_empty_strava_goal_activities!
+  rescue StravaService::Unauthorized
+    @activities_error = :unauthorized
+    @activities_error_message = t("beta.strava.goal_page.activities_unauthorized")
+    assign_empty_strava_goal_activities!
+  rescue StravaService::Error => e
+    @activities_error = :error
+    @activities_error_message = t("beta.strava.goal_page.activities_load_failed", message: e.message)
+    assign_empty_strava_goal_activities!
+  end
+
+  def assign_empty_strava_goal_activities!
+    due_at = @goal.next_due_at
+    @activity_window = {
+      due_at: due_at,
+      period_start_at: @goal.period_start_for(due_at),
+      period_end_at: [ Time.current, due_at ].min
+    }
+    @activities_fetched_at = Time.current
+    @show_all_activities = params[:show_all] == "1"
+    @activities_rows = []
+    @activities_total_count = 0
+    @activities_page = 1
+    @activities_total_pages = 1
+    @eligible_activity_count = 0
+    @all_activity_count = 0
   end
 end

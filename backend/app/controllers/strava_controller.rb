@@ -4,8 +4,8 @@ class StravaController < ApplicationController
   before_action :authenticate_user!
   before_action :require_beta_role!
   before_action :require_strava_configured!, only: [ :connect, :callback ]
-  before_action :require_strava_connected!, only: [ :create_goal, :update_goal, :check_goal ]
-  before_action :set_goal, only: [ :update_goal, :destroy_goal, :check_goal ]
+  before_action :require_strava_connected!, only: [ :create_goal, :update_goal, :check_goal, :preview_check, :refresh_activities ]
+  before_action :set_goal, only: [ :update_goal, :destroy_goal, :check_goal, :preview_check, :refresh_activities ]
 
   def connect
     state = SecureRandom.hex(24)
@@ -65,7 +65,7 @@ class StravaController < ApplicationController
       properties: { goal_name: goal.name, window_days: goal.window_days }
     )
     PosthogProductAnalytics.configured_source(current_user, name: "strava")
-    redirect_to beta_sources_strava_path, notice: t("flash.strava.goal_created", name: goal.name)
+    redirect_to beta_strava_goal_show_path(goal), notice: t("flash.strava.goal_created", name: goal.name)
   rescue ActiveRecord::RecordInvalid => e
     redirect_to beta_sources_strava_path, alert: e.record.errors.full_messages.join(", ")
   end
@@ -74,9 +74,9 @@ class StravaController < ApplicationController
     @goal.assign_attributes(goal_params)
     @goal.save!
     PosthogProductAnalytics.configured_source(current_user, name: "strava")
-    redirect_to beta_sources_strava_path, notice: t("flash.strava.goal_updated", name: @goal.name)
+    redirect_to beta_strava_goal_show_path(@goal), notice: t("flash.strava.goal_updated", name: @goal.name)
   rescue ActiveRecord::RecordInvalid => e
-    redirect_to beta_sources_strava_path, alert: e.record.errors.full_messages.join(", ")
+    redirect_to beta_strava_goal_show_path(@goal), alert: e.record.errors.full_messages.join(", ")
   end
 
   def destroy_goal
@@ -99,11 +99,34 @@ class StravaController < ApplicationController
       event: 'strava_goal_checked',
       properties: { goal_name: @goal.name, status: check.status, valid_count: check.valid_count, required_count: check.required_count }
     )
-    redirect_to beta_sources_strava_path, notice: strava_check_notice(check)
+    redirect_to beta_strava_goal_show_path(@goal), notice: strava_check_notice(check)
   rescue StravaService::Unauthorized
-    redirect_to beta_sources_strava_path, alert: t("flash.strava.not_connected")
+    redirect_to beta_strava_goal_show_path(@goal), alert: t("flash.strava.not_connected")
   rescue StravaService::Error, ChasterService::Error => e
-    redirect_to beta_sources_strava_path, alert: t("flash.strava.check_impossible", message: e.message)
+    redirect_to beta_strava_goal_show_path(@goal), alert: t("flash.strava.check_impossible", message: e.message)
+  end
+
+  def preview_check
+    preview = StravaGoalEvaluator.new(current_user).preview_goal(@goal, due_at: check_due_at)
+    flash[:strava_preview] = {
+      status: preview[:status],
+      valid_count: preview[:valid_count],
+      required_count: preview[:required_count],
+      total_count: preview[:total_count],
+      period_start_at: preview[:period_start_at].iso8601,
+      period_end_at: preview[:period_end_at].iso8601,
+      due_at: preview[:due_at].iso8601
+    }
+    redirect_to beta_strava_goal_show_path(@goal, due: preview_due_param)
+  rescue StravaService::Unauthorized
+    redirect_to beta_strava_goal_show_path(@goal), alert: t("flash.strava.not_connected")
+  rescue StravaService::Error => e
+    redirect_to beta_strava_goal_show_path(@goal), alert: t("flash.strava.check_impossible", message: e.message)
+  end
+
+  def refresh_activities
+    redirect_to beta_strava_goal_show_path(@goal, show_all: params[:show_all], page: params[:page]),
+      notice: t("flash.strava.activities_refreshed")
   end
 
   private
@@ -121,7 +144,7 @@ class StravaController < ApplicationController
   end
 
   def require_strava_connected!
-    return if current_user.strava_access_token.present?
+    return if current_user.reload.strava_access_token.present?
 
     redirect_to beta_sources_strava_path, alert: t("flash.strava.connect_first")
   end
@@ -197,6 +220,10 @@ class StravaController < ApplicationController
 
   def check_due_at
     params[:due].to_s == "next" ? @goal.next_due_at : @goal.previous_due_at
+  end
+
+  def preview_due_param
+    params[:due].to_s == "next" ? "next" : nil
   end
 
   def strava_check_notice(check)

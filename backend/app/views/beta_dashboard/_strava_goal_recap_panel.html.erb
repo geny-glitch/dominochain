@@ -1,0 +1,53 @@
+<%# locals: (goal:) %>
+
+<div class="ds-beta-control-card ds-strava-goal-page-recap" data-strava-goal-page>
+  <div data-strava-goal-recap>
+    <header class="ds-strava-goal-card-header">
+      <div class="ds-strava-goal-card-heading">
+        <div class="ds-strava-goal-card-pills">
+          <span class="ds-beta-home-pill <%= "ds-beta-home-pill--on" if goal.enabled? %>">
+            <%= goal.enabled? ? t("beta.strava.goal_status.active") : t("beta.strava.goal_status.paused") %>
+          </span>
+          <span class="ds-beta-home-pill"><%= goal.window_label %></span>
+        </div>
+      </div>
+      <div class="ds-strava-goal-card-actions">
+        <button type="button"
+                class="ds-btn ds-btn--icon ds-btn--ghost ds-btn--sm"
+                data-strava-goal-edit
+                title="<%= t("beta.strava.edit_goal") %>"
+                aria-label="<%= t("beta.strava.edit_goal_aria", name: goal.name) %>">
+          <%= scenario_icon_svg(:pencil) %>
+        </button>
+        <%= button_to beta_strava_goal_destroy_path(goal),
+              method: :delete,
+              form: { data: { turbo_confirm: t("beta.strava.delete_confirm") } },
+              class: "ds-btn ds-btn--icon ds-btn--ghost ds-btn--sm",
+              title: t("beta.strava.delete_goal"),
+              "aria-label": t("beta.strava.delete_goal_aria", name: goal.name) do %>
+          <%= scenario_icon_svg(:trash) %>
+        <% end %>
+      </div>
+    </header>
+
+    <p class="ds-strava-goal-card-target"><%= strava_goal_target_line(goal) %></p>
+    <p class="ds-beta-control-hint ds-strava-goal-card-schedule"><%= strava_goal_schedule_line(goal) %></p>
+    <% if goal.criteria_summary.present? %>
+      <p class="ds-beta-control-hint ds-strava-goal-card-criteria"><%= goal.criteria_summary %></p>
+    <% end %>
+  </div>
+
+  <div class="ds-strava-goal-edit-panel" data-strava-goal-form hidden>
+    <p class="ds-form-label ds-strava-goal-edit-label"><%= t("beta.strava.edit_goal_title", name: goal.name) %></p>
+    <%= render "strava_goal_form",
+          goal: goal,
+          form_url: beta_strava_goal_path(goal),
+          form_method: :patch,
+          id_prefix: "strava_goal_#{goal.id}" %>
+    <div class="ds-beta-control-actions">
+      <button type="button" class="ds-btn ds-btn--ghost ds-btn--sm" data-strava-goal-cancel-edit>
+        <%= t("beta.strava.cancel") %>
+      </button>
+    </div>
+  </div>
+</div>

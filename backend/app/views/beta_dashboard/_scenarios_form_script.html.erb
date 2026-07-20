@@ -329,13 +329,8 @@
       var label = labels[key] || key;
       var value = config[key] != null ? config[key] : (field.default != null ? field.default : "");
       html += '<div class="ds-form-group">';
-      if (field.ui === "number" || field.type === "integer") {
-        html += '<label class="ds-form-label">' + escapeHtml(label) + "</label>";
-        html += '<input type="number" class="ds-input" data-action-edit-key="' + escapeHtml(key) + '"';
-        if (field.min != null) html += ' min="' + field.min + '"';
-        if (field.max != null) html += ' max="' + field.max + '"';
-        html += ' value="' + escapeHtml(value) + '">';
-      } else if (field.ui === "leverage_target") {
+      // Specialized UIs must be checked before type === "integer" (e.g. photo_id).
+      if (field.ui === "leverage_target") {
         html += '<label class="ds-form-label">' + escapeHtml(label) + "</label>";
         html += '<select class="ds-input" data-action-edit-key="target_mode">';
         html += '<option value="random"' + (value === "random" ? " selected" : "") + ">" + escapeHtml(bootstrap.i18n.targetRandom) + "</option>";
@@ -350,6 +345,12 @@
             escapeHtml(photo.label) + "</option>";
         });
         html += "</select>";
+      } else if (field.ui === "number" || field.type === "integer") {
+        html += '<label class="ds-form-label">' + escapeHtml(label) + "</label>";
+        html += '<input type="number" class="ds-input" data-action-edit-key="' + escapeHtml(key) + '"';
+        if (field.min != null) html += ' min="' + field.min + '"';
+        if (field.max != null) html += ' max="' + field.max + '"';
+        html += ' value="' + escapeHtml(value) + '">';
       }
       html += "</div>";
     });
@@ -616,15 +617,8 @@
       if (field.ui === "hidden") return;
       var label = labels[key] || key;
       html += '<div class="ds-form-group">';
-      if (field.ui === "number" || field.type === "integer") {
-        html += '<label class="ds-form-label">' + escapeHtml(label) + "</label>";
-        html += '<input type="number" class="ds-input" data-composer-config-key="' + escapeHtml(key) + '"';
-        if (field.min != null) html += ' min="' + field.min + '"';
-        if (field.max != null) html += ' max="' + field.max + '"';
-        if (field.default != null) html += ' value="' + escapeHtml(field.default) + '"';
-        else if (field.min != null && field.min > 0) html += ' value="' + escapeHtml(field.min) + '"';
-        html += ">";
-      } else if (field.ui === "leverage_target") {
+      // Specialized UIs must be checked before type === "integer" (e.g. photo_id).
+      if (field.ui === "leverage_target") {
         html += '<label class="ds-form-label">' + escapeHtml(bootstrap.i18n.targetRandom ? label : label) + "</label>";
         html += '<select class="ds-input" data-composer-config-key="target_mode">';
         html += '<option value="random">' + escapeHtml(bootstrap.i18n.targetRandom) + "</option>";
@@ -638,6 +632,14 @@
           html += '<option value="' + escapeHtml(photo.id) + '">' + escapeHtml(photo.label) + "</option>";
         });
         html += "</select>";
+      } else if (field.ui === "number" || field.type === "integer") {
+        html += '<label class="ds-form-label">' + escapeHtml(label) + "</label>";
+        html += '<input type="number" class="ds-input" data-composer-config-key="' + escapeHtml(key) + '"';
+        if (field.min != null) html += ' min="' + field.min + '"';
+        if (field.max != null) html += ' max="' + field.max + '"';
+        if (field.default != null) html += ' value="' + escapeHtml(field.default) + '"';
+        else if (field.min != null && field.min > 0) html += ' value="' + escapeHtml(field.min) + '"';
+        html += ">";
       }
       html += "</div>";
     });

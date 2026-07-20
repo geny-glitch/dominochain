@@ -61,5 +61,41 @@ RSpec.describe StravaService do
       expect(activities).to eq([])
       expect(user.reload.strava_access_token).to eq("new")
     end
+
+    it "raises IntegrationUnavailable when the Strava application is inactive" do
+      user = create(:user, strava_access_token: "access")
+      queue << resp(
+        403,
+        body: {
+          "message" => "Forbidden",
+          "errors" => [ { "resource" => "Application", "field" => "Status", "code" => "Inactive" } ]
+        }.to_json,
+        success: false
+      )
+
+      expect {
+        described_class.new(user).activities_between(
+          start_time: Time.zone.parse("2026-04-27"),
+          end_time: Time.zone.parse("2026-05-04")
+        )
+      }.to raise_error(StravaService::IntegrationUnavailable, "Forbidden")
+    end
+
+    it "raises Unauthorized when Strava keeps returning 401 after refresh" do
+      user = create(:user, strava_access_token: "old", strava_refresh_token: "refresh")
+      allow(described_class).to receive(:configured?).and_return(true)
+      allow(described_class).to receive(:client_id).and_return("client")
+      allow(described_class).to receive(:client_secret).and_return("secret")
+      queue << resp(401, body: { "message" => "Authorization Error" }.to_json, success: false)
+      queue << resp(200, body: { "access_token" => "new", "refresh_token" => "refresh", "expires_at" => 1.hour.from_now.to_i }.to_json)
+      queue << resp(401, body: { "message" => "Authorization Error" }.to_json, success: false)
+
+      expect {
+        described_class.new(user).activities_between(
+          start_time: Time.zone.parse("2026-04-27"),
+          end_time: Time.zone.parse("2026-05-04")
+        )
+      }.to raise_error(StravaService::Unauthorized, "Authorization Error")
+    end
   end
 end

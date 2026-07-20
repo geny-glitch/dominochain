@@ -159,4 +159,15 @@ RSpec.describe StravaGoalEvaluator do
       end
     end
   end
+
+  describe "#activity_eligibility" do
+    it "returns reasons when activity does not match" do
+      goal = create(:strava_goal, user: user, min_duration_seconds: 30.minutes.to_i, activity_types: [ "Run" ])
+      activity = { id: 1, type: "Ride", sport_type: "Ride", duration_seconds: 10.minutes.to_i, calories: nil, device_name: "" }
+      result = evaluator.activity_eligibility(activity, goal)
+
+      expect(result[:eligible]).to be false
+      expect(result[:reasons]).to include(:min_duration, :activity_type)
+    end
+  end
 end

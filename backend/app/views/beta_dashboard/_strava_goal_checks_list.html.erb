@@ -1,0 +1,33 @@
+<%# locals: (checks:, goal:) %>
+
+<% if checks.any? %>
+  <ul class="ds-strava-checks-list">
+    <% checks.each do |check| %>
+      <li class="ds-beta-control-card ds-strava-check-row">
+        <div class="ds-strava-check-row-header">
+          <p class="ds-beta-control-text">
+            <%= check.period_start_at.in_time_zone(goal.time_zone_object).strftime("%d/%m/%Y %H:%M") %>
+            →
+            <%= check.period_end_at.in_time_zone(goal.time_zone_object).strftime("%d/%m/%Y %H:%M") %>
+          </p>
+          <span class="ds-beta-home-pill <%= check.status == "passed" ? "ds-beta-home-pill--on" : "" %>">
+            <%= strava_check_status_label(check.status) %>
+          </span>
+        </div>
+        <p class="ds-beta-control-hint">
+          <%= check.valid_count %>/<%= check.required_count %> <%= t("beta.strava.goal_page.valid_activities") %>
+          · <%= t("beta.strava.goal_page.checked_at", datetime: l(check.checked_at.in_time_zone(goal.time_zone_object), format: :short)) %>
+        </p>
+        <% if check.chaster_applied? %>
+          <p class="ds-beta-control-hint"><%= t("beta.strava.chaster_min_added", minutes: check.chaster_penalty_seconds / 60) %></p>
+        <% elsif check.chaster_error.present? %>
+          <p class="ds-beta-control-hint"><%= t("beta.strava.chaster_error_prefix") %> <%= check.chaster_error %></p>
+        <% end %>
+      </li>
+    <% end %>
+  </ul>
+<% else %>
+  <div class="ds-beta-control-card">
+    <p class="ds-beta-control-hint"><%= t("beta.strava.goal_page.no_checks") %></p>
+  </div>
+<% end %>

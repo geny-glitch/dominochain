@@ -9,6 +9,7 @@ class StravaService
 
   class Error < StandardError; end
   class Unauthorized < Error; end
+  class IntegrationUnavailable < Error; end
 
   def initialize(user)
     @user = user
@@ -175,25 +176,40 @@ class StravaService
     nil
   end
 
-  def get_json(path, query = {})
+  def get_json(path, **query)
+    retried_auth = query.delete(:retried_auth) || false
     uri = URI("#{API_BASE}#{path}")
     uri.query = URI.encode_www_form(query.compact) if query.present?
 
     req = Net::HTTP::Get.new(uri)
-    req["Authorization"] = "Bearer #{@user.strava_access_token}"
+    req["Authorization"] = "Bearer #{@user.reload.strava_access_token}"
     req["Content-Type"] = "application/json"
 
     res = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) { |http| http.request(req) }
 
-    if res.code == "401"
+    if res.code == "401" && !retried_auth
       refresh_tokens!
-      return get_json(path, query)
+      return get_json(path, **query, retried_auth: true)
     end
 
     body = JSON.parse(res.body.presence || "{}")
-    raise Unauthorized, "Strava non autorisé" if res.code == "403" || res.code == "401"
+    raise api_error_for(body, res.code) if res.code == "403" || res.code == "401"
     raise Error, body["message"] || "Erreur Strava #{res.code}" unless res.is_a?(Net::HTTPSuccess)
 
     body
+  end
+
+  def api_error_for(body, status_code)
+    if inactive_application?(body)
+      raise IntegrationUnavailable, body["message"].presence || "Strava integration unavailable"
+    end
+
+    raise Unauthorized, body["message"].presence || "Strava non autorisé" if status_code == "403" || status_code == "401"
+  end
+
+  def inactive_application?(body)
+    Array(body["errors"]).any? do |error|
+      error["resource"].to_s == "Application" && error["code"].to_s == "Inactive"
+    end
   end
 end

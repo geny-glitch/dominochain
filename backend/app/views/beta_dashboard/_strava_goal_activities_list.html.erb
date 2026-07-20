@@ -1,0 +1,85 @@
+<%# locals: (goal:, rows:, activity_window:, fetched_at:, show_all:, eligible_count:, all_count:, page:, total_pages:, total_count:, error: nil, error_message: nil) %>
+
+<div class="ds-beta-control-card ds-strava-activities-panel">
+  <% if error_message.present? %>
+    <p class="ds-beta-control-text ds-strava-activities-error"><%= error_message %></p>
+    <% if error == :unauthorized %>
+      <p class="ds-beta-control-hint">
+        <%= link_to t("beta.strava.goal_page.reconnect_strava"), beta_sources_strava_path %>
+      </p>
+    <% end %>
+  <% end %>
+  <p class="ds-beta-control-hint">
+    <%= t(
+          "beta.strava.goal_page.activity_window",
+          start: activity_window[:period_start_at].in_time_zone(goal.time_zone_object).strftime("%d/%m/%Y %H:%M"),
+          end: activity_window[:period_end_at].in_time_zone(goal.time_zone_object).strftime("%d/%m/%Y %H:%M")
+        ) %>
+  </p>
+  <p class="ds-beta-control-hint">
+    <%= t("beta.strava.goal_page.activity_counts", eligible: eligible_count, total: all_count) %>
+    · <%= t("beta.strava.goal_page.fetched_at", datetime: l(fetched_at.in_time_zone(goal.time_zone_object), format: :short)) %>
+  </p>
+
+  <%= form_with url: beta_strava_goal_show_path(goal), method: :get, local: true, class: "ds-form ds-strava-activities-filter", data: { turbo: false } do %>
+    <label class="ds-checkbox-label ds-strava-activities-filter-toggle">
+      <%= check_box_tag :show_all, "1", show_all, id: "strava_show_all_activities", onchange: "this.form.requestSubmit();" %>
+      <%= t("beta.strava.goal_page.show_all_activities") %>
+    </label>
+  <% end %>
+
+  <% if rows.any? %>
+    <ul class="ds-strava-activities-list">
+      <% rows.each do |row| %>
+        <% activity = row[:activity] %>
+        <% eligibility = row[:eligibility] %>
+        <li class="ds-strava-activity-row <%= eligibility[:eligible] ? "ds-strava-activity-row--eligible" : "ds-strava-activity-row--ineligible" %>">
+          <div class="ds-strava-activity-row-main">
+            <p class="ds-strava-activity-row-title"><%= activity[:name].presence || t("beta.strava.activity.unnamed") %></p>
+            <p class="ds-beta-control-hint">
+              <%= activity[:started_at] ? l(activity[:started_at].in_time_zone(goal.time_zone_object), format: :short) : "—" %>
+              · <%= strava_activity_type_label(activity) %>
+              · <%= strava_activity_duration_label(activity[:duration_seconds]) %>
+            </p>
+            <% if activity[:device_name].present? %>
+              <p class="ds-beta-control-hint"><%= activity[:device_name] %></p>
+            <% end %>
+          </div>
+          <div class="ds-strava-activity-row-status">
+            <span class="ds-beta-home-pill <%= "ds-beta-home-pill--on" if eligibility[:eligible] %>">
+              <%= strava_activity_eligibility_label(eligibility) %>
+            </span>
+            <% reasons = strava_activity_ineligibility_reasons(activity, goal, eligibility) %>
+            <% if reasons.any? %>
+              <ul class="ds-strava-activity-reasons">
+                <% reasons.each do |reason| %>
+                  <li class="ds-beta-control-hint"><%= reason %></li>
+                <% end %>
+              </ul>
+            <% end %>
+          </div>
+        </li>
+      <% end %>
+    </ul>
+
+    <% if total_pages > 1 %>
+      <nav class="ds-strava-activities-pagination" aria-label="<%= t("beta.strava.goal_page.pagination_label") %>">
+        <% if page > 1 %>
+          <%= link_to t("beta.strava.goal_page.pagination_prev"),
+                beta_strava_goal_show_path(goal, show_all: (show_all ? "1" : nil), page: page - 1),
+                class: "ds-btn ds-btn--ghost ds-btn--sm" %>
+        <% end %>
+        <span class="ds-beta-control-hint">
+          <%= t("beta.strava.goal_page.pagination_status", page: page, total: total_pages, count: total_count) %>
+        </span>
+        <% if page < total_pages %>
+          <%= link_to t("beta.strava.goal_page.pagination_next"),
+                beta_strava_goal_show_path(goal, show_all: (show_all ? "1" : nil), page: page + 1),
+                class: "ds-btn ds-btn--ghost ds-btn--sm" %>
+        <% end %>
+      </nav>
+    <% end %>
+  <% elsif error_message.blank? %>
+    <p class="ds-beta-control-hint"><%= t("beta.strava.goal_page.no_activities") %></p>
+  <% end %>
+</div>

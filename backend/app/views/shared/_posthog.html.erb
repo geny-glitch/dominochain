@@ -5,6 +5,7 @@
       api_host: '<%= ENV.fetch("POSTHOG_HOST", "https://us.i.posthog.com") %>',
       person_profiles: 'identified_only'
     });
+    posthog.setPersonPropertiesForFlags({ bg_env: <%= raw BgEnv.posthog_value.to_json %> });
     <% if user_signed_in? && current_user.posthog_distinct_id.present? %>
     posthog.identify('<%= current_user.posthog_distinct_id %>', <%= raw current_user.posthog_properties.to_json %>);
     <% end %>

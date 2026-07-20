@@ -235,7 +235,7 @@ class BetaCatalog
 
   def feature_flags_cache_key
     namespace = self.class.feature_flags_cache_namespace
-    "beta_catalog:feature_flags:v#{FLAGS_CACHE_VERSION}:#{namespace}:#{@user.posthog_distinct_id}"
+    "beta_catalog:feature_flags:v#{FLAGS_CACHE_VERSION}:#{namespace}:#{BgEnv.posthog_value}:#{@user.posthog_distinct_id}"
   end
 
   def decorate_source(definition)

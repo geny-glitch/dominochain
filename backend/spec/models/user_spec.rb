@@ -18,4 +18,13 @@ RSpec.describe User do
       expect(user.errors.full_messages).to include("Time zone est invalide")
     end
   end
+
+  describe "#posthog_properties" do
+    it "includes bg_env for PostHog feature flag targeting" do
+      user = build(:user, :beta)
+      allow(BgEnv).to receive(:posthog_value).and_return("staging")
+
+      expect(user.posthog_properties[:bg_env]).to eq("staging")
+    end
+  end
 end

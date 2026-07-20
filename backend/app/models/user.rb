@@ -86,7 +86,13 @@ class User < ApplicationRecord
   end
 
   def posthog_properties
-    { email: email, role: role, nickname: nickname, date_joined: created_at&.iso8601 }
+    {
+      email: email,
+      role: role,
+      nickname: nickname,
+      date_joined: created_at&.iso8601,
+      bg_env: BgEnv.posthog_value
+    }
   end
 
   def puryfi_ws_url

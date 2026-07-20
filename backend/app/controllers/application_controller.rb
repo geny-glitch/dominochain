@@ -16,7 +16,7 @@ class ApplicationController < ActionController::Base
   protected
 
   def bg_env_staging?
-    ENV["BG_ENV"] == "staging"
+    BgEnv.staging?
   end
   helper_method :bg_env_staging?
 

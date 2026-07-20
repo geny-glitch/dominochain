@@ -260,6 +260,15 @@ fr:
       min_score_label: "Score minimum de détection (0–100 %)"
       min_score_hint: "PuryFi envoie un score en pourcentage. Exemple : 70 = moins strict, 90 = plus strict."
       seconds_hint: "Secondes ajoutées au lock par étiquette détectée (0 = ignorée)."
+      shock_hint: "Les éclairs définissent un niveau PiShock par étiquette (0 = pas de choc). Si plusieurs étiquettes correspondent, le niveau le plus élevé est utilisé."
+      shock_aria: "Niveau PiShock pour %{label}"
+      shock_level_label:
+        one: "1 éclair"
+        other: "%{count} éclairs"
+      pishock_levels_title: "Réglages des niveaux PiShock"
+      pishock_levels_hint: "Intensité et durée pour chaque niveau d'éclair (avant ton facteur d'intensité global)."
+      pishock_intensity_label: "Intensité"
+      pishock_duration_label: "Durée"
       submit: "Enregistrer PuryFi"
       seconds_unit: "sec"
       labels:

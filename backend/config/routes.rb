@@ -180,6 +180,7 @@ get "beta/sources/vitrine", to: "beta_dashboard#sources_showcase", as: :beta_sou
     get "chaster/locks", to: "chaster#locks", as: :chaster_locks
     get "chaster/time_events", to: "chaster#time_events", as: :chaster_time_events
     post "chaster/add_time", to: "chaster#add_time", as: :chaster_add_time
+    post "pishock/shock", to: "pishock#shock", as: :pishock_shock
 
     get "cigarettes", to: "cigarette_entries#index"
     post "cigarettes", to: "cigarette_entries#create"

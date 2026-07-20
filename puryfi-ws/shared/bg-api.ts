@@ -30,9 +30,16 @@ export async function bgLogin(
   return { token: data.token, device_id: data.device_id };
 }
 
+export type PishockLevelSetting = {
+  intensity: number;
+  duration: number;
+};
+
 export type BgShowcaseSettings = {
   puryfi_min_score?: number;
   puryfi_seconds_per_label?: Record<string, number>;
+  puryfi_shock_level_per_label?: Record<string, number>;
+  puryfi_pishock_level_settings?: Record<string, PishockLevelSetting>;
 };
 
 export async function bgGetShowcaseSettings(
@@ -57,6 +64,8 @@ export async function bgGetShowcaseSettings(
     settings: {
       puryfi_min_score: data.puryfi_min_score,
       puryfi_seconds_per_label: data.puryfi_seconds_per_label,
+      puryfi_shock_level_per_label: data.puryfi_shock_level_per_label,
+      puryfi_pishock_level_settings: data.puryfi_pishock_level_settings,
     },
   };
 }
@@ -85,4 +94,27 @@ export async function bgAddTime(
   };
   if (!res.ok) return { ok: false, error: data.error || res.statusText };
   return { ok: true, added_seconds: data.added_seconds };
+}
+
+export async function bgPishockShock(
+  baseUrl: string,
+  token: string,
+  intensity: number,
+  duration: number,
+): Promise<{ ok: boolean; error?: string }> {
+  const url = `${normalizeBase(baseUrl)}/api/pishock/shock`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ intensity, duration }),
+  });
+  const data = (await res.json().catch(() => ({}))) as {
+    ok?: boolean;
+    error?: string;
+  };
+  if (!res.ok) return { ok: false, error: data.error || res.statusText };
+  return { ok: true };
 }

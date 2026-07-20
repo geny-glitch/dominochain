@@ -7,8 +7,13 @@ import {
   type PluginConfiguration,
   type WebSocketConnection as WebSocketConnectionType,
 } from "@pury-fi/plugin-sdk/websocket";
-import { bgAddTime, bgGetShowcaseSettings } from "../shared/bg-api.js";
-import { analyzeScan, defaultSecondsPerLabel } from "../shared/puryfi-detect.js";
+import { bgAddTime, bgGetShowcaseSettings, bgPishockShock } from "../shared/bg-api.js";
+import {
+  analyzeScan,
+  defaultPishockLevelSettings,
+  defaultSecondsPerLabel,
+  defaultShockLevelPerLabel,
+} from "../shared/puryfi-detect.js";
 import type { PluginConfigShape } from "../shared/puryfi-detect.js";
 import {
   logStaticMediaScanDebug,
@@ -75,6 +80,8 @@ async function pushPluginUiConfiguration(
 function mergeRemoteConfig(remote: {
   puryfi_min_score?: number;
   puryfi_seconds_per_label?: Record<string, number>;
+  puryfi_shock_level_per_label?: Record<string, number>;
+  puryfi_pishock_level_settings?: Record<string, { intensity: number; duration: number }>;
 }): PluginConfigShape {
   const secondsPerLabel = defaultSecondsPerLabel();
   const raw = remote.puryfi_seconds_per_label ?? {};
@@ -83,12 +90,36 @@ function mergeRemoteConfig(remote: {
       secondsPerLabel[k] = Math.max(0, Math.floor(v));
     }
   }
+
+  const shockLevelPerLabel = defaultShockLevelPerLabel();
+  const shockRaw = remote.puryfi_shock_level_per_label ?? {};
+  for (const [k, v] of Object.entries(shockRaw)) {
+    if (k in shockLevelPerLabel && typeof v === "number") {
+      shockLevelPerLabel[k] = Math.max(0, Math.min(3, Math.floor(v)));
+    }
+  }
+
+  const pishockLevelSettings = defaultPishockLevelSettings();
+  const levelRaw = remote.puryfi_pishock_level_settings ?? {};
+  for (const level of ["1", "2", "3"] as const) {
+    const entry = levelRaw[level];
+    if (!entry || typeof entry !== "object") continue;
+    if (typeof entry.intensity === "number") {
+      pishockLevelSettings[level].intensity = Math.max(1, Math.min(100, Math.floor(entry.intensity)));
+    }
+    if (typeof entry.duration === "number") {
+      pishockLevelSettings[level].duration = Math.max(1, Math.min(15, Math.floor(entry.duration)));
+    }
+  }
+
   return {
     minScore:
       typeof remote.puryfi_min_score === "number"
         ? remote.puryfi_min_score
         : 0.5,
     secondsPerLabel,
+    shockLevelPerLabel,
+    pishockLevelSettings,
   };
 }
 
@@ -321,20 +352,41 @@ async function runPuryFiConnection(
       config,
     );
 
-    if (result.totalSeconds < 1) return;
+    if (result.totalSeconds < 1 && !result.shock) return;
 
     const ts = new Date().toISOString();
+    const shockLine = result.shock
+      ? ` | PiShock L${result.shock.level} ${result.shock.intensity}/${result.shock.duration}s`
+      : "";
     console.log(
-      `[${ts}] staticMediaScan → total ${result.totalSeconds}s | ${result.summaryLine}`,
+      `[${ts}] staticMediaScan → total ${result.totalSeconds}s | ${result.summaryLine}${shockLine}`,
     );
 
-    const api = await bgAddTime(baseUrl, pluginToken, result.totalSeconds);
-    if (!api.ok) {
-      console.error(`[${ts}] API add_time échec:`, api.error);
-    } else {
-      console.log(
-        `[${ts}] API OK added_seconds=${api.added_seconds ?? result.totalSeconds}`,
+    if (result.totalSeconds >= 1) {
+      const api = await bgAddTime(baseUrl, pluginToken, result.totalSeconds);
+      if (!api.ok) {
+        console.error(`[${ts}] API add_time échec:`, api.error);
+      } else {
+        console.log(
+          `[${ts}] API OK added_seconds=${api.added_seconds ?? result.totalSeconds}`,
+        );
+      }
+    }
+
+    if (result.shock) {
+      const shockApi = await bgPishockShock(
+        baseUrl,
+        pluginToken,
+        result.shock.intensity,
+        result.shock.duration,
       );
+      if (!shockApi.ok) {
+        console.error(`[${ts}] API pishock échec:`, shockApi.error);
+      } else {
+        console.log(
+          `[${ts}] PiShock OK level=${result.shock.level} intensity=${result.shock.intensity} duration=${result.shock.duration}`,
+        );
+      }
     }
   });
 

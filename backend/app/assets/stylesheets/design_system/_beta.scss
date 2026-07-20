@@ -878,6 +878,41 @@
   padding: $ds-space-sm 0;
 }
 
+.ds-puryfi-config-card {
+  position: relative;
+}
+
+.ds-puryfi-save-toast {
+  position: absolute;
+  top: $ds-space-sm;
+  right: $ds-space-sm;
+  z-index: 2;
+  padding: $ds-space-xs $ds-space-sm;
+  border-radius: $ds-radius-sm;
+  font-size: $ds-tiny-size;
+  font-weight: 600;
+  color: $ds-bg;
+  background: $ds-blue;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  opacity: 0;
+  transform: translateY(-0.25rem);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  pointer-events: none;
+
+  &.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  &--error {
+    background: $ds-error;
+  }
+}
+
+#puryfi-config-form.is-saving {
+  opacity: 0.92;
+}
+
 .ds-puryfi-config-hint {
   margin-bottom: $ds-space-sm;
 }
@@ -939,6 +974,120 @@
   display: inline-flex;
   align-items: center;
   gap: $ds-space-xs;
+}
+
+.ds-puryfi-seconds-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $ds-space-sm;
+}
+
+.ds-puryfi-shock-rating {
+  display: inline-flex;
+  align-items: center;
+}
+
+.ds-puryfi-shock-bolts {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1rem;
+}
+
+.ds-puryfi-shock-bolt {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.15rem;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  color: rgba($ds-text-muted, 0.55);
+  line-height: 0;
+  border-radius: $ds-radius-sm;
+
+  &:hover,
+  &:focus-visible {
+    color: #f5c518;
+  }
+
+  &.is-hover,
+  &.is-active {
+    color: #f5c518;
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgba($ds-blue, 0.85);
+    outline-offset: 2px;
+  }
+}
+
+.ds-puryfi-shock-bolt-icon {
+  display: block;
+  width: 1rem;
+  height: 1rem;
+
+  &--active {
+    color: #f5c518;
+  }
+}
+
+.ds-puryfi-pishock-levels {
+  margin-top: $ds-space-lg;
+  padding-top: $ds-space-md;
+  border-top: 1px solid rgba($ds-border, 0.75);
+}
+
+.ds-puryfi-pishock-levels-title {
+  margin: 0 0 $ds-space-xs;
+  font-size: $ds-small-size;
+  font-weight: 600;
+}
+
+.ds-puryfi-pishock-levels-hint {
+  margin-bottom: $ds-space-sm;
+}
+
+.ds-puryfi-pishock-levels-grid {
+  display: grid;
+  gap: $ds-space-sm;
+}
+
+.ds-puryfi-pishock-level-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $ds-space-md;
+  padding: $ds-space-sm;
+  border: 1px solid rgba($ds-border, 0.65);
+  border-radius: $ds-radius-md;
+  background: rgba($ds-surface-elevated, 0.25);
+}
+
+.ds-puryfi-pishock-level-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.05rem;
+  min-width: 3.5rem;
+}
+
+.ds-puryfi-pishock-level-fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: $ds-space-md;
+}
+
+.ds-puryfi-pishock-level-field {
+  display: inline-flex;
+  align-items: center;
+  gap: $ds-space-xs;
+  margin: 0;
+}
+
+.ds-puryfi-pishock-level-input {
+  width: 5rem;
+  min-width: 0;
 }
 
 .ds-puryfi-seconds-input {

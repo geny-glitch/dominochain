@@ -583,7 +583,7 @@
       var keyMatch = input.name.match(/\[trigger\]\[([^\]]+)\]/) || input.name.match(/\[([^\]]+)\]$/);
       if (keyMatch) {
         input.setAttribute("data-composer-trigger-key", keyMatch[1]);
-        input.name = "composer_draft_trigger_" + keyMatch[1] + (input.type === "radio" ? "_" + input.value : "");
+        input.name = "composer_draft_trigger_" + keyMatch[1];
       }
     });
     syncComposerModeFields(container);

@@ -260,6 +260,15 @@ es:
       min_score_label: "Puntuación mínima de detección (0–100 %)"
       min_score_hint: "PuryFi envía un porcentaje. Ejemplo: 70 = más laxo, 90 = más estricto."
       seconds_hint: "Segundos añadidos al candado por etiqueta detectada (0 = ignorada)."
+      shock_hint: "Los rayos definen un nivel PiShock por etiqueta (0 = sin shock). Si coinciden varias etiquetas, se usa el nivel más alto."
+      shock_aria: "Nivel PiShock para %{label}"
+      shock_level_label:
+        one: "1 rayo"
+        other: "%{count} rayos"
+      pishock_levels_title: "Ajustes de niveles PiShock"
+      pishock_levels_hint: "Intensidad y duración para cada nivel de rayo (antes de tu factor de intensidad global)."
+      pishock_intensity_label: "Intensidad"
+      pishock_duration_label: "Duración"
       submit: "Guardar PuryFi"
       seconds_unit: "s"
       labels:

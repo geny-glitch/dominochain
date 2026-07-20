@@ -73,6 +73,8 @@ fr:
       pishock_save_first: "Enregistre d'abord ton username, share code et clé API PiShock."
       puryfi_regenerated: "Nouvelle URL WebSocket PuryFi générée. Mets à jour le plugin avec la nouvelle adresse."
       puryfi_saved: "Réglages PuryFi enregistrés."
+      puryfi_nothing_to_save: "Rien à enregistrer."
+      puryfi_save_failed: "Enregistrement impossible. Réessaie."
       proof_deadline: "Impossible de soumettre une preuve (deadline dépassée ou déjà acceptée)."
       proof_required: "La preuve doit contenir du texte ou une image/vidéo."
       proof_submitted: "Preuve soumise. En attente de validation."

@@ -260,6 +260,15 @@ en:
       min_score_label: "Minimum detection score (0–100 %)"
       min_score_hint: "PuryFi sends a percentage score. Example: 70 = looser, 90 = stricter."
       seconds_hint: "Seconds added to the lock per detected label (0 = ignored)."
+      shock_hint: "Lightning bolts set a PiShock level per label (0 = no shock). When several labels match, the highest level is used."
+      shock_aria: "PiShock level for %{label}"
+      shock_level_label:
+        one: "1 bolt"
+        other: "%{count} bolts"
+      pishock_levels_title: "PiShock level settings"
+      pishock_levels_hint: "Intensity and duration used for each lightning level (before your global intensity factor)."
+      pishock_intensity_label: "Intensity"
+      pishock_duration_label: "Duration"
       submit: "Save PuryFi"
       seconds_unit: "s"
       labels:

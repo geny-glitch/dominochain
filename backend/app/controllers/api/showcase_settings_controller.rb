@@ -20,6 +20,7 @@ module Api
         showcase_tetris_seconds_per_line: current_user.showcase_tetris_seconds_per_line,
         puryfi_min_score: current_user.puryfi_min_score,
         puryfi_seconds_per_label: current_user.puryfi_seconds_per_label,
+        **PuryfiConfig.pishock_payload_for_user(current_user),
         capabilities: caps.as_json
       }
     end
@@ -57,6 +58,18 @@ module Api
       if params.key?(:puryfi_seconds_per_label)
         attrs[:puryfi_seconds_per_label] = sanitize_puryfi_seconds_per_label(params[:puryfi_seconds_per_label])
       end
+      if params.key?(:puryfi_shock_level_per_label)
+        attrs[:puryfi_shock_level_per_label] = PuryfiConfig.sanitize_shock_level_per_label(
+          params[:puryfi_shock_level_per_label],
+          existing: current_user.puryfi_shock_level_per_label
+        )
+      end
+      if params.key?(:puryfi_pishock_level_settings)
+        attrs[:puryfi_pishock_level_settings] = PuryfiConfig.sanitize_pishock_level_settings(
+          params[:puryfi_pishock_level_settings],
+          existing: current_user.puryfi_pishock_level_settings
+        )
+      end
       current_user.update!(attrs)
       caps = BetaCapabilities.for(current_user)
       render json: {
@@ -71,6 +84,7 @@ module Api
         showcase_tetris_seconds_per_line: current_user.showcase_tetris_seconds_per_line,
         puryfi_min_score: current_user.puryfi_min_score,
         puryfi_seconds_per_label: current_user.puryfi_seconds_per_label,
+        **PuryfiConfig.pishock_payload_for_user(current_user),
         capabilities: caps.as_json
       }
     rescue ActiveRecord::RecordInvalid => e

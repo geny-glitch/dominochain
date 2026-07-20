@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_07_20_114156) do
+ActiveRecord::Schema[7.2].define(version: 2026_07_20_194337) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -557,6 +557,8 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_20_114156) do
     t.jsonb "beta_ui_prefs", default: {}, null: false
     t.string "uuid", null: false
     t.boolean "public_boss_enabled", default: false, null: false
+    t.jsonb "puryfi_shock_level_per_label", default: {}, null: false
+    t.jsonb "puryfi_pishock_level_settings", default: {"1"=>{"duration"=>1, "intensity"=>10}, "2"=>{"duration"=>1, "intensity"=>30}, "3"=>{"duration"=>1, "intensity"=>60}}, null: false
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["nickname"], name: "index_users_on_nickname", unique: true
     t.index ["provider", "uid"], name: "index_users_on_provider_and_uid"

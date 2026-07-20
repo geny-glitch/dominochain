@@ -90,6 +90,8 @@ class BetaDashboardController < ApplicationController
     @puryfi_events_count = current_user.chaster_time_events.where(source: "puryfi").count
     @puryfi_last_event_at = current_user.chaster_time_events.where(source: "puryfi").maximum(:occurred_at)
     @puryfi_installation_collapsed = @puryfi_events_count.positive?
+    @puryfi_pishock_enabled = BetaCatalog.new(current_user).action_enabled?("pishock")
+    @puryfi_pishock_level_settings = PuryfiConfig.pishock_level_settings_for(current_user)
   end
 
   def sources_cigarettes
@@ -413,8 +415,11 @@ class BetaDashboardController < ApplicationController
   end
 
   def update_puryfi
-    min_score_percent = params[:puryfi_min_score].to_f.clamp(0.0, 100.0)
-    attrs = { puryfi_min_score: (min_score_percent / 100.0).round(4) }
+    attrs = {}
+    if params.key?(:puryfi_min_score)
+      min_score_percent = params[:puryfi_min_score].to_f.clamp(0.0, 100.0)
+      attrs[:puryfi_min_score] = (min_score_percent / 100.0).round(4)
+    end
     raw = params[:puryfi_seconds_per_label]
     if raw.is_a?(ActionController::Parameters) || raw.is_a?(Hash)
       h = raw.is_a?(ActionController::Parameters) ? raw.to_unsafe_h : raw
@@ -427,11 +432,40 @@ class BetaDashboardController < ApplicationController
       end
       attrs[:puryfi_seconds_per_label] = merged
     end
+    if params.key?(:puryfi_shock_level_per_label)
+      attrs[:puryfi_shock_level_per_label] = PuryfiConfig.sanitize_shock_level_per_label(
+        params[:puryfi_shock_level_per_label],
+        existing: current_user.puryfi_shock_level_per_label
+      )
+    end
+    if params.key?(:puryfi_pishock_level_settings)
+      attrs[:puryfi_pishock_level_settings] = PuryfiConfig.sanitize_pishock_level_settings(
+        params[:puryfi_pishock_level_settings],
+        existing: current_user.puryfi_pishock_level_settings
+      )
+    end
+
+    if attrs.empty?
+      respond_to do |format|
+        format.html { redirect_to beta_sources_puryfi_path, alert: t("flash.beta.puryfi_nothing_to_save") }
+        format.json { render json: { ok: false, error: t("flash.beta.puryfi_nothing_to_save") }, status: :unprocessable_entity }
+      end
+      return
+    end
+
     current_user.update!(attrs)
     PosthogProductAnalytics.configured_source(current_user, name: "puryfi")
-    redirect_to beta_sources_puryfi_path, notice: t("flash.beta.puryfi_saved")
+    message = t("flash.beta.puryfi_saved")
+    respond_to do |format|
+      format.html { redirect_to beta_sources_puryfi_path, notice: message }
+      format.json { render json: { ok: true, message: message } }
+    end
   rescue ActiveRecord::RecordInvalid => e
-    redirect_to beta_sources_puryfi_path, alert: e.record.errors.full_messages.join(", ")
+    error_message = e.record.errors.full_messages.join(", ")
+    respond_to do |format|
+      format.html { redirect_to beta_sources_puryfi_path, alert: error_message }
+      format.json { render json: { ok: false, error: error_message }, status: :unprocessable_entity }
+    end
   end
 
   def task

@@ -3,7 +3,7 @@
 class SessionsController < Devise::SessionsController
   layout :layout_for_devise
 
-  prepend_before_action :clear_legacy_host_only_auth_cookies, only: [:new, :create, :destroy]
+  before_action :clear_legacy_shared_domain_auth_cookies, only: [:new, :destroy]
   before_action :prevent_auth_page_caching, only: [:new, :create]
 
   def create
@@ -15,16 +15,17 @@ class SessionsController < Devise::SessionsController
     end
   end
 
-  def destroy
-    super
-  ensure
-    SessionCookieDomain.clear_all_auth_cookies(cookies)
-  end
-
   private
 
-  def clear_legacy_host_only_auth_cookies
-    SessionCookieDomain.clear_host_only_auth_cookies(cookies)
+  LEGACY_SHARED_COOKIE_DOMAIN = ".dominochain.app"
+  LEGACY_AUTH_COOKIE_KEYS = %w[_backend_session remember_user_token].freeze
+
+  def clear_legacy_shared_domain_auth_cookies
+    return unless Rails.env.production?
+
+    LEGACY_AUTH_COOKIE_KEYS.each do |key|
+      cookies.delete(key, domain: LEGACY_SHARED_COOKIE_DOMAIN, secure: true, same_site: :lax)
+    end
   end
 
   def prevent_auth_page_caching

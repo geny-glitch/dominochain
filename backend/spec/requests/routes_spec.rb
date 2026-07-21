@@ -85,6 +85,20 @@ RSpec.describe "Routes", type: :request do
       delete destroy_user_session_path
       expect(response).to have_http_status(:redirect)
     end
+
+    it "allows signing in again after logout" do
+      sign_in user
+      delete destroy_user_session_path
+      follow_redirect!
+
+      get new_user_session_path
+      expect(response).to have_http_status(:ok)
+
+      post user_session_path, params: { user: { email: user.email, password: "password123" } }
+      expect(response).to have_http_status(:redirect)
+      follow_redirect!
+      expect(response).to have_http_status(:ok)
+    end
   end
 
   describe "Dashboard (boss only)" do

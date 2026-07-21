@@ -7,6 +7,7 @@ class PishockShockJob < ApplicationJob
     user = User.find_by(id: user_id)
     return unless user
 
-    PishockService.shock!(user: user, intensity: intensity, duration: duration)
+    result = PishockService.shock!(user: user, intensity: intensity, duration: duration)
+    PosthogProductAnalytics.pishock_zap(user, intensity: intensity, duration: duration) if result == :ok
   end
 end

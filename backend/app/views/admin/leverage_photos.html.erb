@@ -1,0 +1,42 @@
+<% content_for :title, t("admin_leverage_photos.page_title") %>
+
+<div class="ds-review ds-admin-leverage-photos-page">
+  <div class="ds-review__bg" aria-hidden="true"></div>
+
+  <div class="ds-review__content">
+    <header class="ds-review__header">
+      <%= link_to t("admin_leverage_photos.back_admin"), admin_path, class: "ds-btn ds-btn--ghost ds-btn--sm" %>
+      <div>
+        <h1 class="ds-review__title"><%= t("admin_leverage_photos.title") %></h1>
+        <p class="ds-review__subtitle"><%= t("admin_leverage_photos.subtitle", count: @total_count) %></p>
+      </div>
+      <div class="ds-header-trailing">
+        <%= render "shared/discord_link", variant: :icon %>
+      </div>
+    </header>
+
+    <% if @photos.any? %>
+      <div class="ds-admin-leverage-grid">
+        <%= render partial: "admin/leverage_photo_card", collection: @photos, as: :photo %>
+      </div>
+
+      <% if @total_pages > 1 %>
+        <nav class="ds-wallpaper-pairs__pagination" aria-label="<%= t("admin_leverage_photos.pagination", page: @page, total: @total_pages) %>">
+          <span class="ds-wallpaper-pairs__pagination-label">
+            <%= t("admin_leverage_photos.pagination", page: @page, total: @total_pages) %>
+          </span>
+          <div class="ds-wallpaper-pairs__pagination-actions">
+            <% if @page > 1 %>
+              <%= link_to t("admin_leverage_photos.previous_page"), admin_leverage_photos_path(page: @page - 1), class: "ds-btn ds-btn--ghost ds-btn--sm" %>
+            <% end %>
+            <% if @page < @total_pages %>
+              <%= link_to t("admin_leverage_photos.next_page"), admin_leverage_photos_path(page: @page + 1), class: "ds-btn ds-btn--ghost ds-btn--sm" %>
+            <% end %>
+          </div>
+        </nav>
+      <% end %>
+    <% else %>
+      <p class="ds-review__empty"><%= t("admin_leverage_photos.empty") %></p>
+    <% end %>
+  </div>
+</div>

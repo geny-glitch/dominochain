@@ -45,5 +45,15 @@ RSpec.describe PosthogProductAnalytics do
         properties: { seconds: 120, reason: "puryfi", source: "puryfi" }
       )
     end
+
+    it "sends pishock_zap with intensity and duration" do
+      described_class.pishock_zap(user, intensity: 30, duration: 2, source: "showcase_game")
+
+      expect(PostHog).to have_received(:capture).with(
+        distinct_id: user.posthog_distinct_id,
+        event: "pishock_zap",
+        properties: { intensity: 30, duration: 2, source: "showcase_game" }
+      )
+    end
   end
 end

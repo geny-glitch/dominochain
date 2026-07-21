@@ -128,6 +128,8 @@ get "beta/sources/vitrine", to: "beta_dashboard#sources_showcase", as: :beta_sou
 
   # Admin
   get "admin", to: "admin#index", as: :admin
+  get "admin/stats", to: "admin#stats", as: :admin_stats
+  get "admin/leverage_photos", to: "admin#leverage_photos", as: :admin_leverage_photos
   get "admin/settings", to: "admin#settings", as: :admin_settings
   patch "admin/settings", to: "admin#update_settings", as: :admin_update_settings
   post "admin/controls/:control_id/release", to: "admin#release_control", as: :admin_release_control

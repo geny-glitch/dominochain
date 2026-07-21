@@ -4,6 +4,149 @@
 
 .ds-admin-container {
   max-width: 480px;
+
+  &--wide {
+    max-width: 720px;
+  }
+}
+
+.ds-admin-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: $ds-space-md;
+  margin-top: $ds-space-xl;
+}
+
+.ds-admin-stat-card {
+  padding: $ds-space-lg;
+  background: $ds-surface;
+  border: 1px solid $ds-border;
+  border-radius: $ds-radius-md;
+}
+
+.ds-admin-stat-label {
+  margin: 0 0 $ds-space-xs;
+  color: $ds-text-muted;
+  font-size: $ds-small-size;
+}
+
+.ds-admin-stat-value {
+  margin: 0;
+  color: $ds-text;
+  font-size: 2rem;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.ds-admin-stat-hint {
+  margin: $ds-space-sm 0 0;
+  color: $ds-text-muted;
+  font-size: $ds-small-size;
+}
+
+.ds-admin-stats-table-wrap {
+  margin-top: $ds-space-md;
+  overflow-x: auto;
+}
+
+.ds-admin-stats-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: $ds-small-size;
+
+  th,
+  td {
+    padding: $ds-space-sm $ds-space-md;
+    border-bottom: 1px solid $ds-border;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  th {
+    color: $ds-text-muted;
+    font-weight: 500;
+  }
+
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+}
+
+.ds-admin-stats-table-count {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.ds-admin-leverage-photos-page {
+  .ds-review__header {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: $ds-space-md;
+    align-items: start;
+  }
+}
+
+.ds-admin-leverage-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: $ds-space-md;
+}
+
+.ds-admin-leverage-card {
+  background: $ds-surface;
+  border: 1px solid $ds-border;
+  border-radius: $ds-radius-md;
+  overflow: hidden;
+}
+
+.ds-admin-leverage-card__img {
+  aspect-ratio: 3 / 4;
+  background: rgba(0, 0, 0, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  &--teaser img {
+    image-rendering: pixelated;
+    object-fit: contain;
+  }
+}
+
+.ds-admin-leverage-card__missing {
+  margin: 0;
+  padding: $ds-space-md;
+  color: $ds-text-muted;
+  font-size: $ds-small-size;
+  text-align: center;
+}
+
+.ds-admin-leverage-card__meta {
+  padding: $ds-space-md;
+}
+
+.ds-admin-leverage-card__user {
+  margin: 0 0 $ds-space-xs;
+  color: $ds-text;
+  font-weight: 500;
+}
+
+.ds-admin-leverage-card__status,
+.ds-admin-leverage-card__date {
+  margin: 0 0 $ds-space-xs;
+  color: $ds-text-muted;
+  font-size: $ds-small-size;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
 }
 
 .ds-header-actions {

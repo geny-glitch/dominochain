@@ -1,0 +1,59 @@
+<% content_for :title, t("admin_stats.page_title") %>
+
+<div class="ds-page">
+  <div class="ds-container ds-admin-container ds-admin-container--wide">
+    <header class="ds-header">
+      <%= image_tag "domino-chain-logo.png", alt: t("layouts.application.logo_alt"), class: "ds-header-logo", width: 48, height: 48 %>
+      <div>
+        <h1 class="ds-title"><%= t("admin_stats.heading") %></h1>
+        <p class="ds-subtitle"><%= t("admin_stats.subtitle") %></p>
+      </div>
+      <div class="ds-header-actions">
+        <%= render "shared/discord_link", variant: :icon %>
+        <%= link_to t("admin_stats.back_admin"), admin_path, class: "ds-btn ds-btn--ghost ds-btn--sm" %>
+      </div>
+    </header>
+
+    <section class="ds-admin-stats-grid">
+      <article class="ds-admin-stat-card">
+        <p class="ds-admin-stat-label"><%= t("admin_stats.total_users") %></p>
+        <p class="ds-admin-stat-value"><%= number_with_delimiter(@stats.total_users) %></p>
+      </article>
+      <article class="ds-admin-stat-card">
+        <p class="ds-admin-stat-label"><%= t("admin_stats.users_active_today") %></p>
+        <p class="ds-admin-stat-value"><%= number_with_delimiter(@stats.users_active_today) %></p>
+        <p class="ds-admin-stat-hint"><%= t("admin_stats.users_active_today_hint") %></p>
+      </article>
+    </section>
+
+    <section class="ds-admin-list">
+      <h2><%= t("admin_stats.consequences_title") %></h2>
+      <p class="ds-admin-hint"><%= t("admin_stats.consequences_hint") %></p>
+
+      <% if @stats.consequence_counts.any? %>
+        <div class="ds-admin-stats-table-wrap">
+          <table class="ds-admin-stats-table">
+            <thead>
+              <tr>
+                <th scope="col"><%= t("admin_stats.column_source") %></th>
+                <th scope="col"><%= t("admin_stats.column_action") %></th>
+                <th scope="col" class="ds-admin-stats-table-count"><%= t("admin_stats.column_active_count") %></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @stats.consequence_counts.each do |row| %>
+                <tr>
+                  <td><%= admin_stats_source_label(row.source) %></td>
+                  <td><%= admin_stats_action_label(row.possibility_id) %></td>
+                  <td class="ds-admin-stats-table-count"><%= number_with_delimiter(row.count) %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% else %>
+        <p class="ds-admin-empty"><%= t("admin_stats.consequences_empty") %></p>
+      <% end %>
+    </section>
+  </div>
+</div>

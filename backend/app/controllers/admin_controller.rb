@@ -2,6 +2,7 @@
 
 class AdminController < ApplicationController
   WALLPAPER_PAIRS_PER_PAGE = 30
+  LEVERAGE_PHOTOS_PER_PAGE = 24
 
   before_action :authenticate_user!
   before_action :require_admin!
@@ -9,6 +10,26 @@ class AdminController < ApplicationController
   def index
     @users = User.includes(controls: :beta).order(:nickname)
     @controls = Control.where(status: :accepted).includes(:boss, :beta)
+  end
+
+  def stats
+    @stats = AdminStatsQuery.call
+  end
+
+  def leverage_photos
+    @page = [(params[:page] || 1).to_i, 1].max
+
+    scope = LeveragePhoto.includes(
+      :user,
+      censored_image_attachment: :blob,
+      teaser_image_attachment: :blob
+    ).order(created_at: :desc)
+    @total_count = scope.count
+    @total_pages = [(@total_count / LEVERAGE_PHOTOS_PER_PAGE.to_f).ceil, 1].max
+    @page = [@page, @total_pages].min
+
+    offset = (@page - 1) * LEVERAGE_PHOTOS_PER_PAGE
+    @photos = scope.offset(offset).limit(LEVERAGE_PHOTOS_PER_PAGE)
   end
 
   def release_control

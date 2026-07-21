@@ -350,6 +350,39 @@ RSpec.describe "Routes", type: :request do
         expect(response).to have_http_status(:ok)
       end
 
+      it "GET /admin/stats returns 200" do
+        get admin_stats_path, headers: modern_headers
+        expect(response).to have_http_status(:ok)
+      end
+
+      it "GET /admin/leverage_photos returns 200" do
+        get admin_leverage_photos_path, headers: modern_headers
+        expect(response).to have_http_status(:ok)
+      end
+
+      it "GET /admin/leverage_photos lists censored leverage photos" do
+        beta = create(:user, :beta, nickname: "levbeta")
+        create(:leverage_photo, :with_images, user: beta)
+
+        get admin_leverage_photos_path, headers: modern_headers
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include("levbeta")
+        expect(response.body).to include("censored.jpg")
+      end
+
+      it "GET /admin/leverage_photos falls back to teaser when censored is missing" do
+        beta = create(:user, :beta, nickname: "teaserbeta")
+        create(:leverage_photo, :without_censor, user: beta)
+
+        get admin_leverage_photos_path, headers: modern_headers
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include("teaserbeta")
+        expect(response.body).to include("teaser.jpg")
+        expect(response.body).to include("ds-admin-leverage-card__img--teaser")
+      end
+
       it "GET /admin/settings returns 200" do
         AppSetting.instance
         get admin_settings_path, headers: modern_headers

@@ -1,0 +1,31 @@
+<article class="ds-admin-leverage-card">
+  <div class="ds-admin-leverage-card__img <%= "ds-admin-leverage-card__img--teaser" unless photo.censored_image.attached? %>">
+    <% if photo.censored_image.attached? %>
+      <%= image_tag url_for(photo.censored_image),
+        alt: t("admin_leverage_photos.censored_alt", id: photo.id),
+        loading: "lazy" %>
+    <% elsif photo.teaser_image.attached? %>
+      <%= image_tag url_for(photo.teaser_image),
+        alt: t("admin_leverage_photos.teaser_alt", id: photo.id),
+        loading: "lazy" %>
+    <% else %>
+      <p class="ds-admin-leverage-card__missing"><%= t("admin_leverage_photos.no_preview") %></p>
+    <% end %>
+  </div>
+  <div class="ds-admin-leverage-card__meta">
+    <p class="ds-admin-leverage-card__user"><%= photo.user.nickname %></p>
+    <p class="ds-admin-leverage-card__status">
+      <%= t("leverage_photo.status.#{photo.status}") %>
+      <span class="ds-sep">·</span>
+      #<%= photo.id %>
+    </p>
+    <p class="ds-admin-leverage-card__date">
+      <%= t("admin_leverage_photos.created_at", datetime: l(photo.created_at, format: :short)) %>
+    </p>
+    <% if photo.active? && photo.locked_until.present? %>
+      <p class="ds-admin-leverage-card__date">
+        <%= t("admin_leverage_photos.locked_until", datetime: l(photo.locked_until, format: :short)) %>
+      </p>
+    <% end %>
+  </div>
+</article>

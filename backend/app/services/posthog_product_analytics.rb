@@ -24,6 +24,12 @@ class PosthogProductAnalytics
       capture(user, "time_added", properties)
     end
 
+    def pishock_zap(user, intensity:, duration:, source: nil)
+      properties = { intensity: intensity.to_i, duration: duration.to_i }
+      properties[:source] = source.to_s if source.present?
+      capture(user, "pishock_zap", properties)
+    end
+
     def time_added_reason(source:, metadata: {})
       metadata = (metadata || {}).stringify_keys
       source_key = source.to_s

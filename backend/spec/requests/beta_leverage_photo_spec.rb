@@ -102,7 +102,7 @@ RSpec.describe BetaLeveragePhotoController, type: :request do
   end
 
   describe "GET /beta/leverage_photos/:id/original" do
-    it "serves original in draft and forbids after start" do
+    it "serves original in draft and unlocked with stored original" do
       photo = create(:leverage_photo, :with_images, user: user)
 
       get beta_leverage_photo_original_path(photo)
@@ -123,6 +123,55 @@ RSpec.describe BetaLeveragePhotoController, type: :request do
 
       get beta_leverage_photo_original_path(photo)
       expect(response).to have_http_status(:forbidden)
+
+      photo.update!(status: "unlocked", locked_until: 1.minute.ago)
+      photo.original_image.attach(
+        io: StringIO.new("stored"),
+        filename: "stored.jpg",
+        content_type: "image/jpeg"
+      )
+
+      get beta_leverage_photo_original_path(photo)
+      expect(response).to have_http_status(:ok)
+    end
+  end
+
+  describe "POST /beta/leverage_photos/:id/restore_original" do
+    it "persists decrypted original on unlocked photo" do
+      photo = create(:leverage_photo, :unlocked, user: user)
+
+      post beta_leverage_photo_restore_original_path(photo), params: {
+        original_image: jpeg_upload("restored")
+      }
+
+      expect(response).to redirect_to(beta_leverage_photo_path(photo))
+      photo.reload
+      expect(photo.original_image).to be_attached
+      expect(photo.tlock_blob).not_to be_attached
+    end
+  end
+
+  describe "DELETE /beta/leverage_photos/:id/original" do
+    it "sanctions photo by removing original only" do
+      photo = create(:leverage_photo, :with_images, user: user)
+
+      delete beta_leverage_photo_delete_original_path(photo)
+
+      expect(response).to redirect_to(beta_leverage_photo_path(photo))
+      photo.reload
+      expect(photo).to be_sanctioned
+      expect(photo.original_image).not_to be_attached
+      expect(photo.censored_image).to be_attached
+    end
+
+    it "rejects when no censored reminder exists" do
+      photo = create(:leverage_photo, :without_censor, user: user)
+
+      delete beta_leverage_photo_delete_original_path(photo)
+
+      expect(response).to redirect_to(beta_leverage_photo_path(photo))
+      expect(flash[:alert]).to be_present
+      expect(photo.reload).to be_draft
     end
   end
 
@@ -237,7 +286,7 @@ RSpec.describe BetaLeveragePhotoController, type: :request do
     it "permanently deletes the photo" do
       photo = create(:leverage_photo, :with_images, user: user)
       delete beta_leverage_photo_destroy_path(photo)
-      expect(response).to redirect_to(beta_leverage_photos_path)
+      expect(response).to redirect_to(beta_actions_leverage_photo_path)
       expect(photo.reload).to be_deleted
     end
   end

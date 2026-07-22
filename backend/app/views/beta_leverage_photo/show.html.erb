@@ -2,7 +2,7 @@
 
 <header class="ds-beta-page-head">
   <p class="ds-beta-page-lead" style="margin-bottom:0.35rem;">
-    <%= link_to t("leverage_photo.show.back_to_list"), beta_leverage_photos_path, class: "ds-beta-home-muted" %>
+    <%= link_to t("leverage_photo.show.back_to_list"), beta_actions_leverage_photo_path, class: "ds-beta-home-muted" %>
   </p>
   <h1 class="ds-beta-page-title"><%= @photo.download_filename %></h1>
   <p class="ds-beta-page-lead"><%= t("leverage_photo.show.lead") %></p>
@@ -10,7 +10,7 @@
 
 <section class="ds-beta-section ds-beta-section--first">
   <%= render "beta_leverage_photo/photo_card", photo: @photo, compact: false %>
-  <%= render "beta_leverage_photo/crypto_script" %>
+  <%= render "beta_leverage_photo/crypto_script" unless @photo.sanctioned? %>
 </section>
 
 <%= render "beta_leverage_photo/wallpaper_panel", photo: @photo %>

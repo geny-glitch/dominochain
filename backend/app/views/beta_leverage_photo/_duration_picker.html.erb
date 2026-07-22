@@ -1,35 +1,33 @@
 <%# locals: label, input_name, default_minutes, shortcuts ([[minutes, label], ...]), field_id (optional unique id) %>
 <% field_id = local_assigns.fetch(:field_id, input_name) %>
-<div class="ds-beta-leverage-duration" style="margin:0.75rem 0;">
-  <label class="ds-form-label" for="<%= field_id %>">
-    <%= label %>
-    <span style="display:inline-flex;align-items:center;gap:0.35rem;margin-top:0.35rem;">
-      <input
-        type="number"
-        id="<%= field_id %>"
-        class="ds-input"
-        style="width:7rem;cursor:text;"
-        data-<%= input_name %>
-        min="1"
-        max="<%= LeveragePhoto::MAX_DURATION_SECONDS / 60 %>"
-        step="1"
-        value="<%= default_minutes %>"
-        inputmode="numeric"
-        required
-        aria-describedby="<%= field_id %>-unit"
-      >
-      <span id="<%= field_id %>-unit" class="ds-beta-home-muted"><%= t("leverage_photo.show.minutes_unit") %></span>
-    </span>
-  </label>
-  <div class="ds-beta-leverage-duration-shortcuts" role="group" aria-label="<%= t("leverage_photo.show.duration_shortcuts") %>" style="display:flex;flex-wrap:wrap;gap:0.35rem;margin-top:0.5rem;">
+<div class="ds-beta-leverage-duration">
+  <label class="ds-beta-leverage-duration__label" for="<%= field_id %>"><%= label %></label>
+  <div class="ds-beta-leverage-duration__row">
+    <input
+      type="number"
+      id="<%= field_id %>"
+      class="ds-input ds-beta-leverage-duration__input"
+      data-<%= input_name %>
+      min="1"
+      max="<%= LeveragePhoto::MAX_DURATION_SECONDS / 60 %>"
+      step="1"
+      value="<%= default_minutes %>"
+      inputmode="numeric"
+      required
+      aria-describedby="<%= field_id %>-unit"
+    >
+    <span id="<%= field_id %>-unit" class="ds-beta-leverage-duration__unit"><%= t("leverage_photo.show.minutes_unit") %></span>
+  </div>
+  <div class="ds-beta-leverage-duration-shortcuts" role="group" aria-label="<%= t("leverage_photo.show.duration_shortcuts") %>">
     <% shortcuts.each do |minutes, shortcut_label| %>
       <button
         type="button"
-        class="ds-btn ds-btn--ghost ds-btn--sm"
+        class="ds-beta-leverage-duration-shortcuts__btn"
         data-duration-shortcut
         data-target="<%= input_name %>"
-        data-minutes="<%= minutes %>"
-      ><%= shortcut_label %></button>
+        data-minutes="<%= minutes %>">
+        <%= shortcut_label %>
+      </button>
     <% end %>
   </div>
 </div>

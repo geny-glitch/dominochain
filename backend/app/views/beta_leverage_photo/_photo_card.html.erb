@@ -4,15 +4,17 @@
   <%= render "beta_leverage_photo/photo_row", photo: photo %>
 <% else %>
   <% id_prefix = "lp-#{photo.id}" %>
-  <div class="ds-beta-control-card"
+  <div class="ds-beta-control-card ds-beta-leverage-show-card"
        data-leverage-photo
        data-original-url="<%= beta_leverage_photo_original_path(photo) %>"
        data-start-url="<%= beta_leverage_photo_start_path(photo) %>"
        data-tlock-url="<%= beta_leverage_photo_tlock_blob_path(photo) %>"
        data-add-time-url="<%= beta_leverage_photo_add_time_path(photo) %>"
        data-decrypt-url="<%= beta_leverage_photo_decrypt_payload_path(photo) %>"
+       data-restore-url="<%= beta_leverage_photo_restore_original_path(photo) %>"
        data-original-filename="<%= photo.download_filename %>"
        data-photo-status="<%= photo.status %>"
+       data-has-original="<%= photo.original_image.attached? ? "true" : "false" %>"
        data-locked-until="<%= photo.locked_until&.iso8601 %>"
        data-layer-count="<%= photo.tlock_layer_count %>"
        data-invalid-minutes="<%= t("leverage_photo.show.invalid_minutes") %>"
@@ -24,91 +26,66 @@
       </span>
     </div>
 
-    <div class="ds-beta-leverage-reminders" style="display:flex;gap:1rem;align-items:flex-start;flex-wrap:wrap;margin:1rem 0;">
+    <div class="ds-beta-leverage-reminders">
+      <% if photo.original_image.attached? && !photo.active? %>
+        <div class="ds-beta-leverage-reminders__item">
+          <p class="ds-beta-home-muted"><%= t("leverage_photo.show.original_label") %></p>
+          <%= image_tag url_for(photo.original_image), alt: t("leverage_photo.show.original_alt"), class: "ds-beta-leverage-reminders__img ds-beta-leverage-reminders__img--original" %>
+        </div>
+      <% end %>
       <% if photo.censored_image.attached? %>
-        <div>
+        <div class="ds-beta-leverage-reminders__item">
           <p class="ds-beta-home-muted"><%= t("leverage_photo.show.censored_label") %></p>
-          <%= image_tag url_for(photo.censored_image), alt: t("leverage_photo.show.censored_alt"), style: "max-width:220px;border-radius:8px;" %>
+          <%= image_tag url_for(photo.censored_image), alt: t("leverage_photo.show.censored_alt"), class: "ds-beta-leverage-reminders__img" %>
         </div>
       <% end %>
       <% if photo.teaser_image.attached? %>
-        <div>
+        <div class="ds-beta-leverage-reminders__item">
           <p class="ds-beta-home-muted"><%= t("leverage_photo.show.teaser_label") %></p>
-          <%= image_tag url_for(photo.teaser_image), alt: t("leverage_photo.show.teaser_alt"), style: "image-rendering:pixelated;border-radius:4px;" %>
+          <%= image_tag url_for(photo.teaser_image), alt: t("leverage_photo.show.teaser_alt"), class: "ds-beta-leverage-reminders__img ds-beta-leverage-reminders__img--pixel" %>
         </div>
       <% end %>
     </div>
 
-    <% if photo.draft? %>
+    <% if photo.draft? || photo.unlocked? %>
       <% if photo.needs_censor? %>
-        <div class="ds-beta-control-actions" style="flex-wrap:wrap;gap:0.5rem;margin-bottom:0.75rem;">
+        <div class="ds-beta-leverage-panel__actions ds-beta-leverage-panel__actions--standalone">
           <%= link_to t("leverage_photo.show.create_censor"), beta_leverage_photo_censor_path(photo), class: "ds-btn ds-btn--secondary ds-btn--sm" %>
         </div>
-      <% elsif photo.can_censor? %>
-        <div class="ds-beta-control-actions" style="flex-wrap:wrap;gap:0.5rem;margin-bottom:0.75rem;">
+      <% elsif photo.censored_image.attached? && photo.can_censor? %>
+        <div class="ds-beta-leverage-panel__actions ds-beta-leverage-panel__actions--standalone">
           <%= link_to t("leverage_photo.show.edit_censor"), beta_leverage_photo_censor_path(photo), class: "ds-btn ds-btn--ghost ds-btn--sm" %>
         </div>
       <% end %>
-      <%= render "beta_leverage_photo/duration_picker",
-            label: t("leverage_photo.show.duration"),
-            input_name: "duration-minutes",
-            field_id: "#{id_prefix}-duration-minutes",
-            default_minutes: 1440,
-            shortcuts: [
-              [60, t("leverage_photo.durations.one_hour")],
-              [360, t("leverage_photo.durations.six_hours")],
-              [1440, t("leverage_photo.durations.one_day")],
-              [4320, t("leverage_photo.durations.three_days")],
-              [10080, t("leverage_photo.durations.one_week")]
-            ] %>
-      <div class="ds-beta-control-actions" style="flex-wrap:wrap;gap:0.5rem;margin-top:0.75rem;">
-        <button type="button" class="ds-btn ds-btn--primary ds-btn--sm" data-action="start-timer"><%= t("leverage_photo.show.start_timer") %></button>
-        <%= button_to t("leverage_photo.show.delete"), beta_leverage_photo_destroy_path(photo), method: :delete, class: "ds-btn ds-btn--ghost ds-btn--sm", form: { data: { turbo_confirm: t("leverage_photo.show.delete_confirm") } } %>
-      </div>
-    <% elsif photo.active? %>
-      <p class="ds-beta-home-metric" data-countdown data-ready="<%= t("leverage_photo.show.ready") %>">—</p>
-      <%= render "beta_leverage_photo/duration_picker",
-            label: t("leverage_photo.show.add_duration"),
-            input_name: "add-minutes",
-            field_id: "#{id_prefix}-add-minutes",
-            default_minutes: 1440,
-            shortcuts: [
-              [60, t("leverage_photo.durations.one_hour")],
-              [360, t("leverage_photo.durations.six_hours")],
-              [1440, t("leverage_photo.durations.one_day")],
-              [4320, t("leverage_photo.durations.three_days")]
-            ] %>
-      <div class="ds-beta-control-actions" style="flex-wrap:wrap;gap:0.5rem;margin-top:0.75rem;">
-        <button type="button" class="ds-btn ds-btn--secondary ds-btn--sm" data-action="add-time"><%= t("leverage_photo.show.add_time") %></button>
-        <%= button_to t("leverage_photo.show.delete"), beta_leverage_photo_destroy_path(photo), method: :delete, class: "ds-btn ds-btn--ghost ds-btn--sm", form: { data: { turbo_confirm: t("leverage_photo.show.delete_confirm") } } %>
-      </div>
-    <% elsif photo.unlocked? %>
-      <div class="ds-beta-control-actions" style="flex-wrap:wrap;gap:0.5rem;">
-        <button type="button" class="ds-btn ds-btn--primary ds-btn--sm" data-action="decrypt"><%= t("leverage_photo.show.view_original") %></button>
-        <%= button_to t("leverage_photo.show.delete"), beta_leverage_photo_destroy_path(photo), method: :delete, class: "ds-btn ds-btn--ghost ds-btn--sm", form: { data: { turbo_confirm: t("leverage_photo.show.delete_confirm") } } %>
-      </div>
-      <img data-decrypted-image hidden alt="<%= t("leverage_photo.show.original_alt") %>" style="max-width:100%;margin-top:1rem;border-radius:8px;" />
-      <p class="ds-beta-control-actions" style="margin-top:0.75rem;">
-        <a data-download-original hidden class="ds-btn ds-btn--secondary ds-btn--sm" download="<%= photo.download_filename %>"><%= t("leverage_photo.show.download_original") %></a>
-      </p>
-      <%= render "beta_leverage_photo/duration_picker",
-            label: t("leverage_photo.show.duration"),
-            input_name: "duration-minutes",
-            field_id: "#{id_prefix}-duration-minutes",
-            default_minutes: 1440,
-            shortcuts: [
-              [60, t("leverage_photo.durations.one_hour")],
-              [360, t("leverage_photo.durations.six_hours")],
-              [1440, t("leverage_photo.durations.one_day")],
-              [4320, t("leverage_photo.durations.three_days")],
-              [10080, t("leverage_photo.durations.one_week")]
-            ] %>
-      <div class="ds-beta-control-actions" style="flex-wrap:wrap;gap:0.5rem;margin-top:0.75rem;">
-        <button type="button" class="ds-btn ds-btn--secondary ds-btn--sm" data-action="start-timer"><%= t("leverage_photo.show.lock_again") %></button>
-      </div>
     <% end %>
 
-    <p class="ds-beta-home-muted" data-crypto-status
+    <% if photo.unlocked? %>
+      <section class="ds-beta-leverage-panel">
+        <% unless photo.original_image.attached? %>
+          <div class="ds-beta-leverage-panel__actions">
+            <button type="button" class="ds-btn ds-btn--secondary ds-btn--sm" data-action="decrypt"><%= t("leverage_photo.show.restore_original") %></button>
+          </div>
+          <img data-decrypted-image hidden alt="<%= t("leverage_photo.show.original_alt") %>" class="ds-beta-leverage-reminders__img ds-beta-leverage-reminders__img--original" />
+        <% else %>
+          <div class="ds-beta-leverage-panel__actions">
+            <%= link_to t("leverage_photo.show.download_original"), beta_leverage_photo_original_path(photo), class: "ds-btn ds-btn--secondary ds-btn--sm", download: photo.download_filename %>
+          </div>
+        <% end %>
+      </section>
+      <%= render "beta_leverage_photo/time_lock_panel", photo: photo, id_prefix: id_prefix, mode: :relock %>
+    <% elsif photo.draft? %>
+      <%= render "beta_leverage_photo/time_lock_panel", photo: photo, id_prefix: id_prefix, mode: :start %>
+    <% elsif photo.active? %>
+      <%= render "beta_leverage_photo/time_lock_panel", photo: photo, id_prefix: id_prefix, mode: :add_time %>
+    <% elsif photo.sanctioned? %>
+      <p class="ds-beta-control-text"><%= t("leverage_photo.show.sanctioned_hint") %></p>
+    <% end %>
+
+    <% unless photo.deleted? %>
+      <%= render "beta_leverage_photo/danger_zone", photo: photo %>
+    <% end %>
+
+    <p class="ds-beta-home-muted ds-beta-leverage-crypto-status" data-crypto-status
        data-starting="<%= t("leverage_photo.show.status_starting") %>"
        data-adding="<%= t("leverage_photo.show.status_adding") %>"
        data-peeling="<%= t("leverage_photo.show.status_peeling") %>"
@@ -118,6 +95,6 @@
        data-fetching-blob="<%= t("leverage_photo.show.status_fetching_blob") %>"
        data-encrypting="<%= t("leverage_photo.show.status_encrypting") %>"
        data-uploading="<%= t("leverage_photo.show.status_uploading") %>"
-       style="min-height:1.25rem;color:#f87171;"></p>
+       aria-live="polite"></p>
   </div>
 <% end %>

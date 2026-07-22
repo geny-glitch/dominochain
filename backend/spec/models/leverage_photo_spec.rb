@@ -37,6 +37,40 @@ RSpec.describe LeveragePhoto, type: :model do
     expect(photo).to be_can_censor
   end
 
+  it "sanctions by deleting original only" do
+    photo = create(:leverage_photo, :with_images, user: user)
+    photo.delete_original_from_sanction!
+    photo.reload
+    expect(photo).to be_sanctioned
+    expect(photo.original_image).not_to be_attached
+    expect(photo.censored_image).to be_attached
+    expect(photo.teaser_image).to be_attached
+  end
+
+  it "persists a restored original on unlocked photos" do
+    photo = create(:leverage_photo, :unlocked, user: user)
+    file = Rack::Test::UploadedFile.new(
+      StringIO.new("restored-bytes"),
+      "image/jpeg",
+      true,
+      original_filename: "restored.jpg"
+    )
+
+    photo.persist_restored_original!(file)
+
+    expect(photo.reload.original_image).to be_attached
+    expect(photo.tlock_blob).not_to be_attached
+    expect(photo.original_image.download).to eq("restored-bytes")
+  end
+
+  it "can_delete_original? requires censored reminder" do
+    photo = create(:leverage_photo, :without_censor, user: user)
+    expect(photo).not_to be_can_delete_original
+
+    photo = create(:leverage_photo, :with_images, user: user)
+    expect(photo).to be_can_delete_original
+  end
+
   it "permanently deletes attachments and marks deleted" do
     photo = create(:leverage_photo, :with_images, user: user, original_filename: "keep.jpg")
     photo.permanently_delete!

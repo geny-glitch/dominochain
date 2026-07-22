@@ -1982,3 +1982,146 @@
   gap: 0.35rem;
 }
 
+.ds-beta-delete-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $ds-space-sm;
+}
+
+.ds-beta-inline-btn-form {
+  display: inline-flex;
+  margin: 0;
+}
+
+.ds-beta-leverage-show-card {
+  display: flex;
+  flex-direction: column;
+  gap: $ds-space-md;
+}
+
+.ds-beta-leverage-reminders {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $ds-space-md;
+  align-items: flex-start;
+}
+
+.ds-beta-leverage-reminders__item {
+  min-width: 0;
+}
+
+.ds-beta-leverage-reminders__img {
+  display: block;
+  max-width: 220px;
+  border-radius: $ds-radius-sm;
+
+  &--original {
+    max-width: 100%;
+    border-radius: $ds-radius-md;
+  }
+
+  &--pixel {
+    image-rendering: pixelated;
+    border-radius: 4px;
+  }
+}
+
+.ds-beta-leverage-panel {
+  padding: $ds-space-md;
+  border: 1px solid var(--md-sys-color-outline, #{$ds-border});
+  border-radius: var(--md-sys-shape-corner-large, #{$ds-radius-lg});
+  background: var(--md-sys-color-surface-container-low, #{$ds-bg});
+}
+
+.ds-beta-leverage-panel--time-lock {
+  border-color: rgba(96, 165, 250, 0.35);
+}
+
+.ds-beta-leverage-panel--danger {
+  border-color: rgba(248, 113, 113, 0.35);
+}
+
+.ds-beta-leverage-panel__title {
+  margin: 0 0 $ds-space-sm;
+  font-size: $ds-body-size;
+  font-weight: 600;
+  color: $ds-text;
+}
+
+.ds-beta-leverage-panel__countdown {
+  margin: 0 0 $ds-space-sm;
+}
+
+.ds-beta-leverage-panel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $ds-space-sm;
+  margin-top: $ds-space-md;
+
+  &--standalone {
+    margin-top: 0;
+  }
+}
+
+.ds-beta-leverage-duration {
+  display: flex;
+  flex-direction: column;
+  gap: $ds-space-sm;
+}
+
+.ds-beta-leverage-duration__label {
+  display: block;
+  margin: 0;
+  font-size: $ds-body-size;
+  font-weight: 500;
+  color: $ds-text-muted;
+}
+
+.ds-beta-leverage-duration__row {
+  display: flex;
+  align-items: center;
+  gap: $ds-space-sm;
+}
+
+.ds-beta-leverage-duration__input {
+  width: 7rem;
+  cursor: text;
+}
+
+.ds-beta-leverage-duration__unit {
+  font-size: $ds-body-size;
+  color: $ds-text-muted;
+}
+
+.ds-beta-leverage-duration-shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $ds-space-xs;
+}
+
+.ds-beta-leverage-duration-shortcuts__btn {
+  padding: 0.25rem 0.55rem;
+  border: 0;
+  border-radius: $ds-radius-sm;
+  background: transparent;
+  color: var(--md-sys-color-primary, #60a5fa);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+
+  &:hover,
+  &:focus-visible {
+    color: $ds-text;
+  }
+}
+
+.ds-beta-leverage-crypto-status {
+  min-height: 1.25rem;
+  margin: 0;
+  color: #f87171;
+}
+

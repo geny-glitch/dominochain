@@ -7,12 +7,14 @@ class BetaLeveragePhotoController < ApplicationController
   before_action :require_beta_role!
   before_action :require_catalog_action!
   before_action :set_photo, only: %i[
-    show original censor_new censor start add_time tlock_blob decrypt_payload destroy set_as_wallpaper
+    show original censor_new censor start add_time tlock_blob decrypt_payload restore_original delete_original destroy set_as_wallpaper
   ]
   before_action :ensure_lockable_for_start!, only: %i[start]
-  before_action :ensure_draft_photo!, only: %i[original]
+  before_action :ensure_original_access!, only: %i[original]
   before_action :ensure_can_censor!, only: %i[censor_new censor]
   before_action :ensure_active_or_unlocked!, only: %i[tlock_blob decrypt_payload]
+  before_action :ensure_restorable!, only: %i[restore_original]
+  before_action :ensure_can_delete_original!, only: %i[delete_original]
   before_action :ensure_active!, only: %i[add_time]
 
   def index
@@ -158,9 +160,36 @@ class BetaLeveragePhotoController < ApplicationController
     send_tlock_blob!
   end
 
+  def restore_original
+    unless params[:original_image].present?
+      respond_to do |format|
+        format.json { render json: { error: t("flash.beta.leverage_photo.images_required") }, status: :unprocessable_entity }
+        format.html { redirect_to beta_leverage_photo_path(@photo), alert: t("flash.beta.leverage_photo.images_required") }
+      end
+      return
+    end
+
+    @photo.persist_restored_original!(params[:original_image])
+
+    respond_to do |format|
+      format.json { render json: { status: "unlocked", restored: true } }
+      format.html { redirect_to beta_leverage_photo_path(@photo), notice: t("flash.beta.leverage_photo.restored") }
+    end
+  rescue ActiveRecord::RecordInvalid => e
+    respond_to do |format|
+      format.json { render json: { error: e.record.errors.full_messages.to_sentence }, status: :unprocessable_entity }
+      format.html { redirect_to beta_leverage_photo_path(@photo), alert: e.record.errors.full_messages.to_sentence }
+    end
+  end
+
+  def delete_original
+    @photo.delete_original_from_sanction!
+    redirect_to beta_leverage_photo_path(@photo), notice: t("flash.beta.leverage_photo.original_deleted")
+  end
+
   def destroy
     @photo.permanently_delete!
-    redirect_to beta_leverage_photos_path, notice: t("flash.beta.leverage_photo.deleted")
+    redirect_to beta_actions_leverage_photo_path, notice: t("flash.beta.leverage_photo.deleted")
   end
 
   def set_as_wallpaper
@@ -205,10 +234,23 @@ class BetaLeveragePhotoController < ApplicationController
     redirect_to beta_leverage_photos_path, alert: t("flash.beta.leverage_photo.not_found")
   end
 
-  def ensure_draft_photo!
-    return if @photo.draft?
+  def ensure_original_access!
+    return if @photo.draft? || (@photo.unlocked? && @photo.original_image.attached?)
 
     head :forbidden
+  end
+
+  def ensure_restorable!
+    maybe_unlock!(@photo)
+    return if @photo.unlocked? && @photo.tlock_blob.attached? && !@photo.original_image.attached?
+
+    head :forbidden
+  end
+
+  def ensure_can_delete_original!
+    return if @photo.can_delete_original?
+
+    redirect_to beta_leverage_photo_path(@photo), alert: t("flash.beta.leverage_photo.original_delete_unavailable")
   end
 
   def ensure_can_censor!

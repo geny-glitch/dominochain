@@ -121,11 +121,38 @@
       }
 
       async function resolveOriginalBytes() {
+        if (root.dataset.hasOriginal === "true") {
+          setStatus(statusEl?.dataset.fetchingOriginal || "Loading photo…");
+          return fetchBytes(root.dataset.originalUrl);
+        }
         if (root.dataset.photoStatus === "unlocked") {
           return peelOriginalBytes();
         }
         setStatus(statusEl?.dataset.fetchingOriginal || "Loading photo…");
         return fetchBytes(root.dataset.originalUrl);
+      }
+
+      async function persistRestoredOriginal(bytes) {
+        if (!root.dataset.restoreUrl) return;
+        const filename = root.dataset.originalFilename || "photo.jpg";
+        const formData = new FormData();
+        formData.append(
+          "original_image",
+          new Blob([bytes], { type: "image/jpeg" }),
+          filename
+        );
+        setStatus(statusEl?.dataset.uploading || "Saving…");
+        const res = await fetch(root.dataset.restoreUrl, {
+          method: "POST",
+          body: formData,
+          credentials: "same-origin",
+          headers: {
+            "X-CSRF-Token": csrfToken(),
+            Accept: "application/json"
+          }
+        });
+        const data = await res.json().catch(function () { return {}; });
+        if (!res.ok) throw new Error(data.error || "Restore failed");
       }
 
       async function startTimer(durationSeconds) {
@@ -201,34 +228,14 @@
 
       async function decryptAndDisplay() {
         requireTlock();
-        const imageEl = root.querySelector("[data-decrypted-image]");
-        const downloadEl = root.querySelector("[data-download-original]");
         setStatus(statusEl?.dataset.peeling || "Unlocking…");
         const armored = await fetchText(root.dataset.decryptUrl);
         const peeled = await peelLayers(
           armored,
           parseInt(root.dataset.layerCount || "1", 10)
         );
-        const filename = root.dataset.originalFilename || "photo.jpg";
-        const blob = new Blob([peeled.bytes], { type: "image/jpeg" });
-        const url = URL.createObjectURL(blob);
-        if (imageEl) {
-          imageEl.src = url;
-          imageEl.hidden = false;
-        }
-        if (downloadEl) {
-          downloadEl.href = url;
-          downloadEl.download = filename;
-          downloadEl.hidden = false;
-        }
-        const autoDownload = document.createElement("a");
-        autoDownload.href = url;
-        autoDownload.download = filename;
-        document.body.appendChild(autoDownload);
-        autoDownload.click();
-        autoDownload.remove();
-        setStatus("");
-        return url;
+        await persistRestoredOriginal(peeled.bytes);
+        window.location.reload();
       }
 
       root.querySelectorAll("[data-duration-shortcut]").forEach(function (btn) {

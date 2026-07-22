@@ -7,7 +7,7 @@ class LeveragePhotos::ResolveTarget
     lock: :eligible_for_lock?,
     start: :eligible_for_start?,
     add_time: :eligible_for_add_time?,
-    delete: :eligible_for_delete?
+    delete: :eligible_for_sanction_delete?
   }.freeze
 
   def self.call(user:, action:, target_mode:, photo_id: nil)

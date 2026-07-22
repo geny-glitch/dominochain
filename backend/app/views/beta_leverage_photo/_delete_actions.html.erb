@@ -1,0 +1,21 @@
+<%# locals: photo %>
+<div class="ds-beta-delete-actions">
+  <% if photo.can_delete_original? %>
+    <%= button_to t("leverage_photo.show.delete_original"),
+          beta_leverage_photo_delete_original_path(photo),
+          method: :delete,
+          class: "ds-btn ds-btn--secondary ds-btn--sm",
+          form: {
+            class: "ds-beta-inline-btn-form",
+            onsubmit: "return confirm('#{j t('leverage_photo.show.delete_original_confirm')}');"
+          } %>
+  <% end %>
+  <%= button_to t("leverage_photo.show.delete_all"),
+        beta_leverage_photo_destroy_path(photo),
+        method: :delete,
+        class: "ds-btn ds-btn--secondary ds-btn--sm",
+        form: {
+          class: "ds-beta-inline-btn-form",
+          onsubmit: "return confirm('#{j t('leverage_photo.show.delete_all_confirm')}');"
+        } %>
+</div>

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class LeveragePhoto < ApplicationRecord
-  STATUSES = %w[draft active unlocked deleted].freeze
+  STATUSES = %w[draft active unlocked sanctioned deleted].freeze
   MAX_TLOCK_LAYERS = 20
   MAX_DURATION_SECONDS = 365.days.to_i
   MIN_DURATION_SECONDS = 1.minute.to_i
@@ -50,6 +50,10 @@ class LeveragePhoto < ApplicationRecord
     status == "unlocked"
   end
 
+  def sanctioned?
+    status == "sanctioned"
+  end
+
   def deleted?
     status == "deleted"
   end
@@ -59,7 +63,7 @@ class LeveragePhoto < ApplicationRecord
   end
 
   def ready_to_relock?
-    unlocked? && teaser_image.attached? && tlock_blob.attached?
+    unlocked? && teaser_image.attached? && (original_image.attached? || tlock_blob.attached?)
   end
 
   def can_start_timer?
@@ -67,7 +71,7 @@ class LeveragePhoto < ApplicationRecord
   end
 
   def can_censor?
-    draft? && original_image.attached?
+    (draft? || unlocked?) && original_image.attached?
   end
 
   def needs_censor?
@@ -94,6 +98,17 @@ class LeveragePhoto < ApplicationRecord
     !deleted?
   end
 
+  def eligible_for_sanction_delete?
+    can_delete_original?
+  end
+
+  def can_delete_original?
+    return false if deleted? || sanctioned?
+    return false unless censored_image.attached?
+
+    original_image.attached? || tlock_blob.attached?
+  end
+
   def unlock_due?(at = Time.current)
     active? && locked_until.present? && locked_until <= at
   end
@@ -101,6 +116,37 @@ class LeveragePhoto < ApplicationRecord
   def mark_unlocked!
     update!(status: "unlocked")
     LeveragePhotos::SyncLinkedWallpapers.on_unlocked!(self)
+  end
+
+  def persist_restored_original!(uploaded_original)
+    filename = download_filename
+    tlock_blob.purge if tlock_blob.attached?
+    original_image.attach(uploaded_original)
+    original_image.blob.update!(filename: filename) if original_image.attached?
+    save!
+    assert_attachments!
+  end
+
+  def delete_original_from_sanction!
+    was_active = active?
+    was_unlocked = unlocked?
+
+    original_image.purge if original_image.attached?
+    tlock_blob.purge if tlock_blob.attached?
+    leverage_photo_extensions.destroy_all
+    update!(
+      status: "sanctioned",
+      locked_until: nil,
+      drand_rounds: [],
+      tlock_layer_count: 0,
+      drand_chain_hash: nil,
+      initial_duration_seconds: nil
+    )
+    assert_attachments!
+
+    if was_active || was_unlocked
+      LeveragePhotos::SyncLinkedWallpapers.on_locking!(self)
+    end
   end
 
   def wallpaper_display_attachment
@@ -148,9 +194,18 @@ class LeveragePhoto < ApplicationRecord
     when "draft"
       errors.add(:original_image, :blank) unless original_image.attached?
       errors.add(:teaser_image, :blank) unless teaser_image.attached?
-    when "active", "unlocked"
-      errors.add(:original_image, "must be purged after timer start") if original_image.attached?
+    when "active"
+      errors.add(:original_image, "must be purged while locked") if original_image.attached?
       errors.add(:tlock_blob, :blank) unless tlock_blob.attached?
+      errors.add(:teaser_image, :blank) unless teaser_image.attached?
+    when "unlocked"
+      errors.add(:teaser_image, :blank) unless teaser_image.attached?
+      unless original_image.attached? || tlock_blob.attached?
+        errors.add(:base, "must have original or locked payload while unlocked")
+      end
+    when "sanctioned"
+      errors.add(:original_image, "must be purged after sanction delete") if original_image.attached?
+      errors.add(:tlock_blob, "must be purged after sanction delete") if tlock_blob.attached?
       errors.add(:teaser_image, :blank) unless teaser_image.attached?
     end
   end

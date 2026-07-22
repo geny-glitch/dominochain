@@ -3,6 +3,9 @@ es:
     locale:
       invalid: "Idioma no válido."
       updated: "Idioma guardado."
+    time_zone:
+      invalid: "Zona horaria desconocida."
+      updated: "Zona horaria guardada (%{zone})."
     admin:
       beta_released: "Beta %{nickname} liberado."
       control_not_found: "Control no encontrado."
@@ -53,6 +56,32 @@ es:
       activities_fetch_failed: "No se pudieron recuperar las actividades Strava: %{message}"
       preview_check_passed: "Vista previa: objetivo cumplido (%{valid}/%{required} actividades válidas, %{total} en total) · %{period_start} → %{period_end}"
       preview_check_failed: "Vista previa: objetivo no cumplido (%{valid}/%{required} actividades válidas, %{total} en total) · %{period_start} → %{period_end}"
+    chess:
+      username_required: "Introduce tu usuario de Chess.com."
+      username_not_found: "Usuario de Chess.com no encontrado."
+      profile_invalid: "El perfil de Chess.com está incompleto."
+      account_already_linked: "Esta cuenta de Chess.com ya está vinculada a otro Beta."
+      link_started: "Usuario guardado — verificación pendiente. Código: %{code}. Pégalo en Location de Chess.com y pulsa Verificar."
+      verification_not_pending: "No hay una verificación de Chess.com pendiente. Empieza vinculando un usuario."
+      verified: "Cuenta de Chess.com @%{username} verificada."
+      verify_failed: "Verificación fallida: %{message}"
+      disconnected: "Chess.com desconectado. Se eliminaron los objetivos de Chess.com."
+      goal_created: "Objetivo de Chess.com « %{name} » creado."
+      goal_updated: "Objetivo de Chess.com « %{name} » guardado."
+      goal_destroyed: "Objetivo de Chess.com « %{name} » eliminado."
+      check_passed: "Objetivo de Chess.com superado: %{rating} / %{target}."
+      check_failed: "Objetivo de Chess.com fallido: %{rating} / %{target}."
+      check_chaster_failed: "Objetivo de Chess.com fallido: %{rating} / %{target}. No se pudo penalizar Chaster: %{chaster_error}"
+      check_impossible: "Comprobación de Chess.com fallida: %{message}"
+      rating_unavailable: "Rating no disponible: %{message}"
+      error: "Error de Chess.com: %{message}"
+      beta_only: "Solo acceso Beta."
+      platform_disabled: "Chess.com no está disponible en este entorno."
+      verify_first: "Verifica tu cuenta de Chess.com antes de gestionar objetivos."
+      goal_not_found: "Objetivo de Chess.com no encontrado."
+      preview_check_passed: "Vista previa: objetivo cumplido (%{rating} / %{target})"
+      preview_check_failed: "Vista previa: objetivo no cumplido (%{rating} / %{target})"
+
     beta:
       catalog_unknown: "Fuente/acción desconocida."
       catalog_unavailable: "Esta fuente o acción no está disponible en tu cuenta."
@@ -101,6 +130,8 @@ es:
         config_saved: "Ajustes de Corner time guardados."
       strava:
         consequences_saved: "Consecuencias Strava guardadas."
+      chess:
+        consequences_saved: "Consecuencias de Chess.com guardadas."
       scenarios:
         created: "Consecuencia guardada."
         empty_create: "Añade al menos una consecuencia antes de guardar."

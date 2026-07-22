@@ -1,0 +1,92 @@
+<script>
+(function () {
+  if (window.__chessGoalFormsInit) return;
+  window.__chessGoalFormsInit = true;
+
+  function formPrefix(form) {
+    return form.getAttribute("data-chess-goal-form");
+  }
+
+  function syncScheduleFields(form) {
+    var prefix = formPrefix(form);
+    if (!prefix) return;
+
+    var selectedSchedule = form.querySelector('input[name="' + prefix + '_schedule_mode"]:checked');
+    var mode = selectedSchedule ? selectedSchedule.value : "deadline";
+    var recurring = mode === "recurring";
+
+    var selectedRecurrence = form.querySelector('input[name="' + prefix + '_recurrence_kind"]:checked');
+    var recurrenceKind = selectedRecurrence ? selectedRecurrence.value : "daily";
+    var intervalMode = recurrenceKind === "interval";
+
+    form.querySelectorAll("[data-chess-schedule-field]").forEach(function (block) {
+      block.hidden = block.getAttribute("data-chess-schedule-field") !== mode;
+    });
+
+    form.querySelectorAll("[data-chess-deadline-label]").forEach(function (labelWrap) {
+      labelWrap.hidden = labelWrap.getAttribute("data-chess-deadline-label") !== mode;
+    });
+
+    form.querySelectorAll("[data-chess-deadline-hint]").forEach(function (hint) {
+      hint.hidden = hint.getAttribute("data-chess-deadline-hint") !== mode;
+    });
+
+    form.querySelectorAll("[data-chess-recurrence-field]").forEach(function (block) {
+      block.hidden = block.getAttribute("data-chess-recurrence-field") !== recurrenceKind;
+    });
+
+    var checkTimeInput = form.querySelector('input[name="' + prefix + '_check_time"]');
+    var intervalInput = form.querySelector('input[name="' + prefix + '_interval_minutes"]');
+    if (checkTimeInput) checkTimeInput.required = recurring && !intervalMode;
+    if (intervalInput) intervalInput.required = recurring && intervalMode;
+  }
+
+  function initChessGoalForms() {
+    document.querySelectorAll("form[data-chess-goal-form]").forEach(syncScheduleFields);
+  }
+
+  document.addEventListener("change", function (event) {
+    var input = event.target;
+    if (!input.matches("input[type='radio'][name$='_schedule_mode'], input[type='radio'][name$='_recurrence_kind']")) {
+      return;
+    }
+    var form = input.closest("form[data-chess-goal-form]");
+    if (form) syncScheduleFields(form);
+  });
+
+  document.addEventListener("toggle", function (event) {
+    if (!event.target.matches(".ds-chess-goal-edit-drawer") || !event.target.open) return;
+    var form = event.target.querySelector("form[data-chess-goal-form]");
+    if (form) syncScheduleFields(form);
+  }, true);
+
+  document.addEventListener("click", function (event) {
+    if (event.target.closest("[data-chess-show-new-goal]")) {
+      var panel = document.querySelector("[data-chess-new-goal-panel]");
+      var showBtn = document.querySelector("[data-chess-show-new-goal]");
+      if (panel) {
+        panel.hidden = false;
+        var form = panel.querySelector("form[data-chess-goal-form]");
+        if (form) syncScheduleFields(form);
+        var nameInput = panel.querySelector("input[name='name']");
+        if (nameInput) nameInput.focus();
+      }
+      if (showBtn) showBtn.hidden = true;
+      return;
+    }
+
+    if (event.target.closest("[data-chess-cancel-new-goal]")) {
+      var hidePanel = document.querySelector("[data-chess-new-goal-panel]");
+      var hideBtn = document.querySelector("[data-chess-show-new-goal]");
+      if (hidePanel) hidePanel.hidden = true;
+      if (hideBtn) hideBtn.hidden = false;
+    }
+  });
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initChessGoalForms);
+  } else {
+    initChessGoalForms();
+  }
+})();
+</script>

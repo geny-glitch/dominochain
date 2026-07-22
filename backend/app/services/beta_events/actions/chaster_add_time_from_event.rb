@@ -62,6 +62,7 @@ module BetaEvents
       def default_source(context)
         case context.event.source
         when :strava_goal then "strava_goal"
+        when :chess_com_goal then "chess_com_goal"
         when :cigarette then "cigarettes"
         when :showcase_game then "showcase_game"
         when :showcase_backdoor then "showcase_backdoor"
@@ -78,6 +79,8 @@ module BetaEvents
           context.addition&.update(chaster_error: msg, chaster_applied: false)
         when :strava_goal
           # StravaGoalEvaluator records check in ensure block — status chaster_error set outside
+        when :chess_com_goal
+          # ChessComGoalEvaluator records check in ensure block — status chaster_error set outside
         end
       end
 

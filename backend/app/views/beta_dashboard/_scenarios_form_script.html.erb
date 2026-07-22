@@ -420,8 +420,10 @@
           html += "</span></label>";
         });
         html += "</fieldset>";
-      } else if (schema.type === "reference" && schema.ref === "strava_goal") {
-        var options = (bootstrap.references && bootstrap.references.strava_goals) || [];
+      } else if (schema.type === "reference" && (schema.ref === "strava_goal" || schema.ref === "chess_com_goal")) {
+        var refKey = schema.ref === "chess_com_goal" ? "chess_com_goals" : "strava_goals";
+        var emptyKey = schema.ref === "chess_com_goal" ? "noChessGoals" : "noStravaGoals";
+        var options = (bootstrap.references && bootstrap.references[refKey]) || [];
         html += '<select class="ds-input" name="' + prefix + "[trigger][" + key + ']" data-scenario-trigger-key="' + escapeHtml(key) + '" required>';
         html += '<option value="">' + escapeHtml((bootstrap.i18n && bootstrap.i18n.referenceBlank) || "Choose…") + "</option>";
         options.forEach(function (opt) {
@@ -429,8 +431,8 @@
           html += '<option value="' + escapeHtml(opt.id) + '"' + selected + ">" + escapeHtml(opt.label) + "</option>";
         });
         html += "</select>";
-        if (!options.length && bootstrap.i18n && bootstrap.i18n.noStravaGoals) {
-          html += '<p class="ds-beta-control-hint">' + escapeHtml(bootstrap.i18n.noStravaGoals) + "</p>";
+        if (!options.length && bootstrap.i18n && bootstrap.i18n[emptyKey]) {
+          html += '<p class="ds-beta-control-hint">' + escapeHtml(bootstrap.i18n[emptyKey]) + "</p>";
         }
       } else {
         html += '<label class="ds-form-label">' + escapeHtml(label) + "</label>";

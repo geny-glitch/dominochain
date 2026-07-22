@@ -1,0 +1,33 @@
+<%# locals: (checks:, goal:) %>
+
+<% if checks.blank? %>
+  <div class="ds-beta-control-card">
+    <p class="ds-beta-control-hint"><%= t("beta.chess.goal_page.no_checks") %></p>
+  </div>
+<% else %>
+  <div class="ds-chess-checks-list">
+    <% checks.each do |check| %>
+      <article class="ds-beta-control-card ds-chess-check-card">
+        <header class="ds-chess-check-card-header">
+          <span class="ds-beta-home-pill <%= "ds-beta-home-pill--on" if check.status == "passed" %>">
+            <%= chess_check_status_label(check.status) %>
+          </span>
+          <span class="ds-beta-control-hint">
+            <%= check.checked_at.in_time_zone(goal.time_zone_object).strftime("%d/%m/%Y %H:%M") %>
+          </span>
+        </header>
+        <p class="ds-beta-control-text">
+          <%= t(
+                "beta.chess.goal_page.check_line",
+                rating: check.rating_at_check || "—",
+                target: check.target_rating,
+                type: t("beta.chess.rating_types.#{check.rating_type}", default: check.rating_type)
+              ) %>
+        </p>
+        <% if check.chaster_error.present? %>
+          <p class="ds-beta-control-hint"><%= check.chaster_error %></p>
+        <% end %>
+      </article>
+    <% end %>
+  </div>
+<% end %>

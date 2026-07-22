@@ -3,6 +3,9 @@ fr:
     locale:
       invalid: "Langue invalide."
       updated: "Langue enregistrée."
+    time_zone:
+      invalid: "Fuseau horaire inconnu."
+      updated: "Fuseau horaire enregistré (%{zone})."
     admin:
       beta_released: "Beta %{nickname} libéré."
       control_not_found: "Contrôle introuvable."
@@ -53,6 +56,32 @@ fr:
       activities_fetch_failed: "Impossible de récupérer les activités Strava : %{message}"
       preview_check_passed: "Aperçu : objectif atteint (%{valid}/%{required} activités valides, %{total} au total) · %{period_start} → %{period_end}"
       preview_check_failed: "Aperçu : objectif non atteint (%{valid}/%{required} activités valides, %{total} au total) · %{period_start} → %{period_end}"
+    chess:
+      username_required: "Indiquez votre pseudo Chess.com."
+      username_not_found: "Pseudo Chess.com introuvable."
+      profile_invalid: "Profil Chess.com incomplet."
+      account_already_linked: "Ce compte Chess.com est déjà lié à un autre Beta."
+      link_started: "Pseudo enregistré — vérification en attente. Code : %{code}. Collez-le dans Location sur Chess.com, puis cliquez sur Vérifier."
+      verification_not_pending: "Aucune vérification Chess.com en cours. Commencez par lier un pseudo."
+      verified: "Compte Chess.com @%{username} vérifié."
+      verify_failed: "Vérification échouée : %{message}"
+      disconnected: "Chess.com déconnecté. Les objectifs Chess.com ont été supprimés."
+      goal_created: "Objectif Chess.com « %{name} » créé."
+      goal_updated: "Objectif Chess.com « %{name} » enregistré."
+      goal_destroyed: "Objectif Chess.com « %{name} » supprimé."
+      check_passed: "Objectif Chess.com réussi : %{rating} / %{target}."
+      check_failed: "Objectif Chess.com échoué : %{rating} / %{target}."
+      check_chaster_failed: "Objectif Chess.com échoué : %{rating} / %{target}. Chaster n'a pas pu être pénalisé : %{chaster_error}"
+      check_impossible: "Vérification Chess.com impossible : %{message}"
+      rating_unavailable: "Rating indisponible : %{message}"
+      error: "Erreur Chess.com : %{message}"
+      beta_only: "Accès Beta uniquement."
+      platform_disabled: "Chess.com n'est pas disponible dans cet environnement."
+      verify_first: "Vérifiez votre compte Chess.com avant de gérer des objectifs."
+      goal_not_found: "Objectif Chess.com introuvable."
+      preview_check_passed: "Prévisualisation : objectif atteint (%{rating} / %{target})"
+      preview_check_failed: "Prévisualisation : objectif non atteint (%{rating} / %{target})"
+
     beta:
       catalog_unknown: "Source/action inconnue."
       catalog_unavailable: "Cette source ou action n'est pas disponible sur ton compte."
@@ -101,6 +130,8 @@ fr:
         config_saved: "Paramètres Corner time enregistrés."
       strava:
         consequences_saved: "Conséquences Strava enregistrées."
+      chess:
+        consequences_saved: "Conséquences Chess.com enregistrées."
       scenarios:
         created: "Conséquence enregistrée."
         empty_create: "Ajoute au moins une conséquence avant d'enregistrer."

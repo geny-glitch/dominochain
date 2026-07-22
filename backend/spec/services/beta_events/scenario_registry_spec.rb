@@ -7,6 +7,7 @@ RSpec.describe BetaEvents::ScenarioRegistry do
     expect(described_class.event_ids(:wallpaper)).to include("mismatch", "permissions_lost", "app_unreachable")
     expect(described_class.event_ids(:cornertime)).to contain_exactly("movement_detected", "early_stop")
     expect(described_class.event_ids(:strava)).to contain_exactly("any_goal_failed", "goal_failed")
+    expect(described_class.event_ids(:chess)).to contain_exactly("any_goal_failed", "goal_failed")
   end
 
   it "resolves source from event id" do
@@ -19,5 +20,6 @@ RSpec.describe BetaEvents::ScenarioRegistry do
   it "returns allowed actions for each source" do
     expect(described_class.allowed_actions_for(:cornertime)).to include("chaster.add_time", "pishock.shock")
     expect(described_class.allowed_actions_for(:strava)).to include("chaster.add_time", "leverage_photo.lock")
+    expect(described_class.allowed_actions_for(:chess)).to include("chaster.add_time", "leverage_photo.lock")
   end
 end

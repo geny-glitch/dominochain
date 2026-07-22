@@ -69,6 +69,15 @@ module BetaEvents
       }
     }.freeze
 
+    CHESS_EVENTS = {
+      "any_goal_failed" => { trigger_fields: {} },
+      "goal_failed" => {
+        trigger_fields: {
+          goal_id: { type: :reference, ref: :chess_com_goal, required: true }
+        }
+      }
+    }.freeze
+
     SOURCES = {
       "wallpaper" => {
         event_source: :wallpaper,
@@ -84,6 +93,11 @@ module BetaEvents
         event_source: :strava_goal,
         action_kind: :failed_penalty,
         events: STRAVA_EVENTS
+      },
+      "chess" => {
+        event_source: :chess_com_goal,
+        action_kind: :failed_penalty,
+        events: CHESS_EVENTS
       }
     }.freeze
 

@@ -1,0 +1,29 @@
+<%# locals: (goal:) %>
+
+<article class="ds-chess-goal-card ds-beta-control-card" data-chess-goal-card data-goal-id="<%= goal.id %>">
+  <header class="ds-chess-goal-card-header">
+    <div class="ds-chess-goal-card-heading">
+      <h3 class="ds-chess-goal-card-title"><%= goal.name %></h3>
+      <div class="ds-chess-goal-card-pills">
+        <span class="ds-beta-home-pill <%= "ds-beta-home-pill--on" if goal.enabled? %>">
+          <%= goal.enabled? ? t("beta.chess.goal_status.active") : t("beta.chess.goal_status.paused") %>
+        </span>
+        <span class="ds-beta-home-pill"><%= goal.rating_type_label %></span>
+      </div>
+    </div>
+    <div class="ds-chess-goal-card-actions">
+      <%= link_to beta_chess_goal_show_path(goal),
+            class: "ds-btn ds-btn--icon ds-btn--ghost ds-btn--sm",
+            title: t("beta.chess.view_goal"),
+            "aria-label": t("beta.chess.view_goal_aria", name: goal.name) do %>
+        <%= scenario_icon_svg(:eye) %>
+      <% end %>
+    </div>
+  </header>
+
+  <p class="ds-chess-goal-card-target"><%= chess_goal_target_line(goal) %></p>
+  <p class="ds-beta-control-hint ds-chess-goal-card-schedule"><%= chess_goal_deadline_line(goal) %></p>
+  <% if goal.criteria_summary.present? %>
+    <p class="ds-beta-control-hint ds-chess-goal-card-criteria"><%= goal.criteria_summary %></p>
+  <% end %>
+</article>

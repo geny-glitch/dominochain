@@ -1,0 +1,111 @@
+<%# locals: (goal:, form_url:, form_method:, id_prefix:) %>
+<% goal ||= nil %>
+<% id_prefix ||= goal ? "chess_goal_#{goal.id}" : "new_chess_goal" %>
+<% default_deadline = (Time.zone.now + 30.days).strftime("%Y-%m-%dT%H:%M") %>
+<% schedule_mode = goal&.schedule_mode || "deadline" %>
+<% recurring = schedule_mode == "recurring" %>
+<% recurrence_kind = goal&.recurrence_kind || "daily" %>
+<% interval_mode = recurrence_kind == "interval" %>
+
+<%= form_with url: form_url, method: form_method, local: true, class: "ds-form ds-chess-goal-form", data: { turbo: false, chess_goal_form: id_prefix } do %>
+  <%= hidden_field_tag :enabled, "0" %>
+  <div class="ds-form-group">
+    <label class="ds-checkbox-label">
+      <%= check_box_tag :enabled, "1", goal ? goal.enabled? : true, id: "#{id_prefix}_enabled" %>
+      <%= t("beta.chess.goal_active") %>
+    </label>
+  </div>
+  <div class="ds-form-group">
+    <%= label_tag "#{id_prefix}_name", t("beta.chess.name"), class: "ds-form-label" %>
+    <%= text_field_tag :name, goal&.name, id: "#{id_prefix}_name", class: "ds-input", placeholder: t("beta.chess.placeholders.name_example"), required: true %>
+  </div>
+  <div class="ds-form-group">
+    <%= label_tag "#{id_prefix}_rating_type", t("beta.chess.rating_type"), class: "ds-form-label" %>
+    <%= select_tag :rating_type,
+          options_for_select(ChessComGoal.rating_type_options_for_select, goal&.rating_type || "blitz"),
+          id: "#{id_prefix}_rating_type",
+          class: "ds-input",
+          required: true %>
+  </div>
+  <div class="ds-form-group">
+    <%= label_tag "#{id_prefix}_target_rating", t("beta.chess.target_rating"), class: "ds-form-label" %>
+    <%= number_field_tag :target_rating,
+          goal&.target_rating || 1200,
+          id: "#{id_prefix}_target_rating",
+          min: ChessComGoal::MIN_RATING,
+          max: ChessComGoal::MAX_RATING,
+          class: "ds-input",
+          required: true %>
+  </div>
+  <fieldset class="ds-form-group">
+    <legend class="ds-form-label"><%= t("beta.chess.schedule_mode") %></legend>
+    <% ChessComGoal::SCHEDULE_MODES.each do |mode| %>
+      <label class="ds-radio-label" for="<%= id_prefix %>_schedule_<%= mode %>">
+        <%= radio_button_tag "#{id_prefix}_schedule_mode", mode, schedule_mode == mode, id: "#{id_prefix}_schedule_#{mode}" %>
+        <%= t("beta.chess.schedule_modes.#{mode}") %>
+      </label>
+      <p class="ds-beta-control-hint"><%= t("beta.chess.schedule_mode_hints.#{mode}") %></p>
+    <% end %>
+  </fieldset>
+  <div data-chess-schedule-field="recurring" <%= "hidden" unless recurring %>>
+    <fieldset class="ds-form-group">
+      <legend class="ds-form-label"><%= t("beta.chess.recurrence_kind") %></legend>
+      <% ChessComGoal::RECURRENCE_KINDS.each do |kind| %>
+        <label class="ds-radio-label" for="<%= id_prefix %>_recurrence_<%= kind %>">
+          <%= radio_button_tag "#{id_prefix}_recurrence_kind", kind, recurrence_kind == kind, id: "#{id_prefix}_recurrence_#{kind}" %>
+          <%= t("beta.chess.recurrence_kinds.#{kind}") %>
+        </label>
+      <% end %>
+    </fieldset>
+    <div class="ds-form-group" data-chess-recurrence-field="daily" <%= "hidden" if interval_mode %>>
+      <%= label_tag "#{id_prefix}_check_time", t("beta.chess.check_time"), class: "ds-form-label" %>
+      <%= time_field_tag "#{id_prefix}_check_time", goal&.check_time_label || "20:00", id: "#{id_prefix}_check_time", class: "ds-input", required: recurring && !interval_mode %>
+      <p class="ds-beta-control-hint"><%= t("beta.chess.check_time_hint") %></p>
+    </div>
+    <div class="ds-form-group" data-chess-recurrence-field="interval" <%= "hidden" unless interval_mode %>>
+      <%= label_tag "#{id_prefix}_interval_minutes", t("beta.chess.interval_minutes_label"), class: "ds-form-label" %>
+      <%= number_field_tag "#{id_prefix}_interval_minutes",
+            goal&.interval_minutes || 60,
+            id: "#{id_prefix}_interval_minutes",
+            min: ChessComGoal::MIN_INTERVAL_MINUTES,
+            max: ChessComGoal::MAX_INTERVAL_MINUTES,
+            class: "ds-input",
+            required: recurring && interval_mode %>
+      <p class="ds-beta-control-hint"><%= t("beta.chess.interval_minutes_hint", min: ChessComGoal::MIN_INTERVAL_MINUTES) %></p>
+    </div>
+  </div>
+  <div class="ds-form-group">
+    <span data-chess-deadline-label="deadline" <%= "hidden" if recurring %>>
+      <%= label_tag "#{id_prefix}_deadline_at", t("beta.chess.deadline_at"), class: "ds-form-label" %>
+    </span>
+    <span data-chess-deadline-label="recurring" <%= "hidden" unless recurring %>>
+      <%= label_tag "#{id_prefix}_deadline_at", t("beta.chess.end_at"), class: "ds-form-label" %>
+    </span>
+    <%= datetime_local_field_tag :deadline_at,
+          goal&.deadline_local&.strftime("%Y-%m-%dT%H:%M") || default_deadline,
+          id: "#{id_prefix}_deadline_at",
+          class: "ds-input",
+          required: true %>
+    <p class="ds-beta-control-hint" data-chess-deadline-hint="deadline" <%= "hidden" if recurring %>>
+      <%= t("beta.chess.deadline_hint") %>
+    </p>
+    <p class="ds-beta-control-hint" data-chess-deadline-hint="recurring" <%= "hidden" unless recurring %>>
+      <%= t("beta.chess.end_at_hint") %>
+    </p>
+  </div>
+  <p class="ds-beta-control-hint">
+    <%= t(
+          "beta.chess.time_zone_reminder_html",
+          zone: current_user.effective_time_zone,
+          account_link: link_to(t("beta.chess.time_zone_account_link"), beta_account_path)
+        ) %>
+  </p>
+  <% if goal&.baseline_rating.present? %>
+    <p class="ds-beta-control-hint"><%= t("beta.chess.baseline_hint", rating: goal.baseline_rating) %></p>
+  <% else %>
+    <p class="ds-beta-control-hint"><%= t("beta.chess.new_goal_baseline_hint") %></p>
+  <% end %>
+  <div class="ds-beta-control-actions">
+    <%= submit_tag goal ? t("beta.chess.save_goal") : t("beta.chess.create_goal"), class: "ds-btn ds-btn--primary ds-btn--sm" %>
+  </div>
+<% end %>

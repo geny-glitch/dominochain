@@ -3,6 +3,9 @@ en:
     locale:
       invalid: "Invalid language."
       updated: "Language saved."
+    time_zone:
+      invalid: "Unknown time zone."
+      updated: "Time zone saved (%{zone})."
     admin:
       beta_released: "Beta %{nickname} released."
       control_not_found: "Control not found."
@@ -53,6 +56,32 @@ en:
       activities_fetch_failed: "Could not fetch Strava activities: %{message}"
       preview_check_passed: "Preview: goal met (%{valid}/%{required} valid activities, %{total} total) · %{period_start} → %{period_end}"
       preview_check_failed: "Preview: goal not met (%{valid}/%{required} valid activities, %{total} total) · %{period_start} → %{period_end}"
+    chess:
+      username_required: "Enter your Chess.com username."
+      username_not_found: "Chess.com username not found."
+      profile_invalid: "Chess.com profile is incomplete."
+      account_already_linked: "This Chess.com account is already linked to another Beta user."
+      link_started: "Username saved — verification pending. Code: %{code}. Paste it in Location on Chess.com, then click Verify."
+      verification_not_pending: "No Chess.com verification is pending. Start by linking a username."
+      verified: "Chess.com account @%{username} verified."
+      verify_failed: "Verification failed: %{message}"
+      disconnected: "Chess.com disconnected. Chess.com goals have been removed."
+      goal_created: "Chess.com goal « %{name} » created."
+      goal_updated: "Chess.com goal « %{name} » saved."
+      goal_destroyed: "Chess.com goal « %{name} » deleted."
+      check_passed: "Chess.com goal passed: %{rating} / %{target}."
+      check_failed: "Chess.com goal failed: %{rating} / %{target}."
+      check_chaster_failed: "Chess.com goal failed: %{rating} / %{target}. Chaster could not be penalized: %{chaster_error}"
+      check_impossible: "Chess.com check failed: %{message}"
+      rating_unavailable: "Rating unavailable: %{message}"
+      error: "Chess.com error: %{message}"
+      beta_only: "Beta access only."
+      platform_disabled: "Chess.com is not available on this environment."
+      verify_first: "Verify your Chess.com account before managing goals."
+      goal_not_found: "Chess.com goal not found."
+      preview_check_passed: "Preview: goal met (%{rating} / %{target})"
+      preview_check_failed: "Preview: goal not met (%{rating} / %{target})"
+
     beta:
       catalog_unknown: "Unknown source/action."
       catalog_unavailable: "This source or action is not available on your account."
@@ -101,6 +130,8 @@ en:
         config_saved: "Corner time settings saved."
       strava:
         consequences_saved: "Strava consequences saved."
+      chess:
+        consequences_saved: "Chess.com consequences saved."
       scenarios:
         created: "Consequence saved."
         empty_create: "Add at least one consequence before saving."

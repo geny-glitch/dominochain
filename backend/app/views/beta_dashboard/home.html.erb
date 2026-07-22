@@ -2,10 +2,11 @@
 <% show_chaster = beta_catalog_action_enabled?("chaster") %>
 <% show_pishock = beta_catalog_action_enabled?("pishock") %>
 <% show_strava = beta_catalog_source_enabled?("strava") %>
+<% show_chess = beta_catalog_source_enabled?("chess") %>
 <% show_cigarettes = beta_catalog_source_enabled?("cigarettes") %>
 <% show_showcase = beta_catalog_source_enabled?("showcase") %>
 <% show_leverage = beta_catalog_action_enabled?("leverage_photo") %>
-<% show_widgets = show_pishock || show_strava || show_cigarettes || show_showcase || show_leverage %>
+<% show_widgets = show_pishock || show_strava || show_chess || show_cigarettes || show_showcase || show_leverage %>
 
 <header class="ds-beta-page-head">
   <h1 class="ds-beta-page-title"><%= t("beta.home.greeting", nickname: current_user.nickname) %></h1>
@@ -80,6 +81,30 @@
             <p class="ds-beta-home-muted"><%= t("beta.home.strava_no_goal") %></p>
           <% end %>
           <%= link_to t("beta.home.configure_strava"), beta_sources_strava_path, class: "ds-btn ds-btn--ghost ds-btn--sm" %>
+        </article>
+      <% end %>
+
+      <% if show_chess %>
+        <article class="ds-beta-home-card">
+          <div class="ds-beta-home-card-head">
+            <h3 class="ds-beta-home-card-title"><%= t("beta.home.chess_title") %></h3>
+            <span class="ds-beta-home-pill <%= @chess_primary_goal.present? ? "ds-beta-home-pill--on" : "" %>">
+              <%= current_user.chess_com_verified? ? t("beta.home.chess_connected") : t("beta.home.pill_off") %>
+            </span>
+          </div>
+          <% if @chess_primary_goal.present? %>
+            <p class="ds-beta-home-muted">
+              <%= t(
+                    "beta.home.chess_goal_line",
+                    name: @chess_primary_goal.name,
+                    rating: @chess_primary_goal.target_rating,
+                    type: @chess_primary_goal.rating_type_label
+                  ) %>
+            </p>
+          <% else %>
+            <p class="ds-beta-home-muted"><%= t("beta.home.chess_no_goal") %></p>
+          <% end %>
+          <%= link_to t("beta.home.configure_chess"), beta_sources_chess_path, class: "ds-btn ds-btn--ghost ds-btn--sm" %>
         </article>
       <% end %>
 

@@ -34,10 +34,13 @@ end %>
   <div class="ds-form-group">
     <%= label_tag "#{id_prefix}_check_time", t("beta.strava.check_time"), class: "ds-form-label" %>
     <%= time_field_tag :check_time, goal&.check_time_label || "00:00", id: "#{id_prefix}_check_time", class: "ds-input", required: true %>
-  </div>
-  <div class="ds-form-group">
-    <%= label_tag "#{id_prefix}_time_zone", t("beta.strava.time_zone"), class: "ds-form-label" %>
-    <%= select_tag :time_zone, options_for_select(ActiveSupport::TimeZone.all.map(&:name), goal&.time_zone || Time.zone.name), id: "#{id_prefix}_time_zone", class: "ds-input" %>
+    <p class="ds-beta-control-hint">
+      <%= t(
+            "beta.strava.time_zone_reminder_html",
+            zone: current_user.effective_time_zone,
+            account_link: link_to(t("beta.strava.time_zone_account_link"), beta_account_path)
+          ) %>
+    </p>
   </div>
   <div class="ds-form-group">
     <%= label_tag "#{id_prefix}_min_duration_minutes", t("beta.strava.min_duration"), class: "ds-form-label" %>

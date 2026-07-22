@@ -66,6 +66,11 @@ class ChasterTimeEventDescription
         "chaster.time_events.summaries.strava_goal",
         goal_title: metadata[:goal_title].presence || "—"
       )
+    when :chess_com_goal
+      I18n.t(
+        "chaster.time_events.summaries.chess_com_goal",
+        goal_title: metadata[:goal_title].presence || "—"
+      )
     when :cigarette
       I18n.t("chaster.time_events.summaries.cigarette")
     when :puryfi
@@ -102,6 +107,15 @@ class ChasterTimeEventDescription
         goal_id: payload[:goal_id],
         goal_title: payload[:goal_title],
         due_at: payload[:due_at]
+      }.compact
+    when :chess_com_goal
+      {
+        goal_id: payload[:goal_id],
+        goal_title: payload[:goal_title],
+        due_at: payload[:due_at],
+        rating_type: payload[:rating_type],
+        target_rating: payload[:target_rating],
+        rating_at_check: payload[:rating_at_check]
       }.compact
     else
       {}

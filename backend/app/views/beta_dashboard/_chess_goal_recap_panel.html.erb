@@ -1,0 +1,45 @@
+<%# locals: (goal:) %>
+
+<div class="ds-beta-control-card">
+  <div class="ds-chess-goal-recap">
+    <div class="ds-chess-goal-card-pills">
+      <span class="ds-beta-home-pill <%= "ds-beta-home-pill--on" if goal.enabled? %>">
+        <%= goal.enabled? ? t("beta.chess.goal_status.active") : t("beta.chess.goal_status.paused") %>
+      </span>
+      <span class="ds-beta-home-pill"><%= goal.rating_type_label %></span>
+    </div>
+    <p class="ds-chess-goal-card-target"><%= chess_goal_target_line(goal) %></p>
+    <p class="ds-beta-control-hint"><%= chess_goal_deadline_line(goal) %></p>
+    <% if goal.baseline_rating.present? %>
+      <p class="ds-beta-control-hint"><%= t("beta.chess.baseline_hint", rating: goal.baseline_rating) %></p>
+    <% end %>
+    <% if goal.last_check_status.present? %>
+      <p class="ds-beta-control-hint">
+        <%= t(
+              "beta.chess.last_check_line",
+              status: chess_check_status_label(goal.last_check_status),
+              rating: goal.last_check_rating || "—",
+              target: goal.last_check_target_rating || goal.target_rating
+            ) %>
+      </p>
+    <% end %>
+  </div>
+
+  <details class="ds-chess-goal-edit-drawer">
+    <summary class="ds-chess-goal-edit-summary"><%= t("beta.chess.edit_goal") %></summary>
+    <div class="ds-chess-goal-edit-body">
+      <%= render "chess_goal_form",
+            goal: goal,
+            form_url: beta_chess_goal_path(goal),
+            form_method: :patch,
+            id_prefix: "chess_goal_#{goal.id}" %>
+      <div class="ds-beta-control-actions">
+        <%= button_to t("beta.chess.delete_goal"),
+              beta_chess_goal_destroy_path(goal),
+              method: :delete,
+              form: { data: { turbo_confirm: t("beta.chess.delete_confirm") } },
+              class: "ds-btn ds-btn--ghost ds-btn--sm" %>
+      </div>
+    </div>
+  </details>
+</div>

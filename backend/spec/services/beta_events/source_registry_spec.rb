@@ -38,6 +38,14 @@ RSpec.describe BetaEvents::SourceRegistry do
     )
   end
 
+  it "lists chess form possibilities including chaster and leverage" do
+    expect(described_class.allowed_for(:chess_com_goal, :failed_penalty)).to include(
+      "chaster.add_time",
+      "leverage_photo.lock",
+      "leverage_photo.delete"
+    )
+  end
+
   it "binds cornertime movement events to payload sanctions" do
     source = described_class.for_event_source(:cornertime)
     event_def = source.event(:movement_detected)

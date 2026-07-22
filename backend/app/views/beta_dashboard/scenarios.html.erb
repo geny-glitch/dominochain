@@ -69,6 +69,7 @@
                     scenario_set: ScenarioSet.new(scenarios: []),
                     photos: @leverage_photos,
                     strava_goals: (source == "strava" ? @strava_goals : []),
+                    chess_com_goals: (source == "chess" ? @chess_com_goals : []),
                     uid: "hub_#{source}",
                     hub_mode: true,
                     section_title: t("beta.scenarios.hub.composer_section") %>

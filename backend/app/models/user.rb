@@ -24,6 +24,9 @@ class User < ApplicationRecord
   has_many :strava_goals, dependent: :destroy
   has_many :strava_goal_checks, dependent: :destroy
   has_one :strava_config, dependent: :destroy
+  has_many :chess_com_goals, dependent: :destroy
+  has_many :chess_com_goal_checks, dependent: :destroy
+  has_one :chess_com_config, dependent: :destroy
   has_one :wallpaper_enforcement_config, dependent: :destroy
   has_many :wallpaper_verification_sessions, dependent: :destroy
   has_many :wallpaper_compliance_checks, dependent: :destroy
@@ -49,8 +52,10 @@ class User < ApplicationRecord
   validates :puryfi_min_score,
     numericality: { greater_than_or_equal_to: 0.0, less_than_or_equal_to: 1.0 },
     if: :beta?
+  validate :time_zone_known
 
   before_validation :normalize_email
+  before_validation :normalize_time_zone
   before_validation :assign_nickname_from_email, on: :create
   before_validation :ensure_uuid, on: :create
   before_save :touch_showcase_quiz_seconds_changed_at, if: :will_save_change_to_showcase_quiz_seconds_per_point?
@@ -58,6 +63,7 @@ class User < ApplicationRecord
   before_save :touch_showcase_dino_seconds_changed_at, if: :will_save_change_to_showcase_dino_seconds_per_obstacle?
   before_save :touch_showcase_tetris_seconds_changed_at, if: :will_save_change_to_showcase_tetris_seconds_per_line?
   before_validation :apply_beta_defaults, on: :create
+  after_update :sync_goal_time_zones!, if: :saved_change_to_time_zone?
 
   def self.generate_unique_nickname_from_email(email, excluding_id: nil)
     base = email.to_s.split("@", 2).first.to_s.downcase.gsub(/[^a-z0-9_]/, "_")
@@ -124,6 +130,47 @@ class User < ApplicationRecord
     strava_config || create_strava_config!
   end
 
+  def ensure_chess_com_config!
+    chess_com_config || create_chess_com_config!
+  end
+
+  def chess_com_verified?
+    chess_com_verified_at.present? && chess_com_username.present?
+  end
+
+  # Pending = username saved with a verification code, not yet verified.
+  # Do not gate on expiry: the code must stay stable until verify / restart.
+  def chess_com_verification_pending?
+    chess_com_username.present? &&
+      chess_com_verification_code.present? &&
+      !chess_com_verified?
+  end
+
+  DEFAULT_TIME_ZONE = "Paris"
+
+  def self.canonical_time_zone_name(value)
+    raw = value.to_s.strip
+    return nil if raw.blank?
+
+    # Keep the exact selectable ActiveSupport name when the user picked it
+    # (e.g. "London" must not collapse to "Edinburgh" — same tzinfo, different label).
+    return raw if ActiveSupport::TimeZone.all.any? { |zone| zone.name == raw }
+
+    zone = ActiveSupport::TimeZone[raw]
+    return nil unless zone
+    return zone.name if ActiveSupport::TimeZone.all.any? { |entry| entry.name == zone.name }
+
+    ActiveSupport::TimeZone.all.find { |entry| entry.tzinfo.name == zone.tzinfo.name }&.name
+  end
+
+  def effective_time_zone
+    self.class.canonical_time_zone_name(time_zone.presence || DEFAULT_TIME_ZONE) || DEFAULT_TIME_ZONE
+  end
+
+  def time_zone_object
+    ActiveSupport::TimeZone[effective_time_zone] || ActiveSupport::TimeZone[DEFAULT_TIME_ZONE] || Time.zone
+  end
+
   def controlled_by_boss?
     control&.accepted?
   end
@@ -144,6 +191,28 @@ class User < ApplicationRecord
 
   def normalize_email
     self.email = email.to_s.strip.downcase if email.present?
+  end
+
+  def normalize_time_zone
+    if time_zone.blank?
+      self.time_zone = DEFAULT_TIME_ZONE
+      return
+    end
+
+    canonical = self.class.canonical_time_zone_name(time_zone)
+    self.time_zone = canonical if canonical
+  end
+
+  def time_zone_known
+    return if ActiveSupport::TimeZone[time_zone].present?
+
+    errors.add(:time_zone, I18n.t("beta.account.errors.invalid_time_zone"))
+  end
+
+  def sync_goal_time_zones!
+    tz = effective_time_zone
+    strava_goals.update_all(time_zone: tz, updated_at: Time.current)
+    chess_com_goals.update_all(time_zone: tz, updated_at: Time.current)
   end
 
   def assign_nickname_from_email
@@ -173,7 +242,8 @@ class User < ApplicationRecord
       "cigarettes" => false,
       "strava" => false,
       "showcase" => false,
-      "wallpaper" => false
+      "wallpaper" => false,
+      "chess" => false
     }
     prefs["catalog_visibility"]["actions"] = {
       "chaster" => false,

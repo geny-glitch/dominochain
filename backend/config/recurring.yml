@@ -20,6 +20,11 @@ production:
     class: StravaGoalCheckJob
     schedule: "5 * * * *"
 
+  # Vérifie les objectifs Chess.com dus (PubAPI publique, vérification location)
+  chess_com_due_goal_checks:
+    class: ChessComGoalCheckJob
+    schedule: "*/5 * * * *"
+
   wallpaper_scheduled_checks:
     class: WallpaperScheduledCheckJob
     schedule: "* * * * *"

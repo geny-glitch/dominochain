@@ -185,7 +185,6 @@ RSpec.describe "Routes", type: :request do
         window_preset: "custom",
         window_days: "10",
         check_time: "06:30",
-        time_zone: "Paris",
         min_duration_minutes: "30",
         activity_types: "Run, Ride",
         device_names: "Garmin"
@@ -197,7 +196,7 @@ RSpec.describe "Routes", type: :request do
       expect(goal.required_count).to eq(2)
       expect(goal.window_days).to eq(10)
       expect(goal.check_time_label).to eq("06:30")
-      expect(goal.time_zone).to eq("Paris")
+      expect(goal.time_zone).to eq(beta.effective_time_zone)
       expect(goal.min_duration_seconds).to eq(1_800)
       expect(goal.activity_types).to eq(%w[Run Ride])
       expect(goal.device_names).to eq([ "Garmin" ])
@@ -215,7 +214,6 @@ RSpec.describe "Routes", type: :request do
         required_count: "1",
         window_preset: "weekly",
         check_time: "08:00",
-        time_zone: "Paris",
         strava_sport_type: "TrailRun",
         activity_types: "Ride",
         min_duration_minutes: "20"
@@ -236,6 +234,40 @@ RSpec.describe "Routes", type: :request do
       expect(response).to redirect_to(beta_sources_strava_path)
       expect(beta.reload.strava_access_token).to be_nil
       expect(beta.strava_goals.first.enabled).to be false
+    end
+  end
+
+  describe "Chess.com beta routes" do
+    before do
+      stub_beta_catalog_feature_flags("beta_source_chess" => true)
+    end
+
+    it "redirects to login when not authenticated" do
+      post beta_chess_goals_path
+      expect(response).to redirect_to(new_user_session_path)
+    end
+
+    it "GET /beta/sources/chess returns 200 for a verified beta" do
+      beta = create(
+        :user,
+        :beta,
+        chess_com_username: "hikaru",
+        chess_com_player_id: "1",
+        chess_com_verified_at: Time.current
+      )
+      beta.update!(
+        beta_ui_prefs: beta.beta_ui_prefs.deep_merge(
+          "catalog_visibility" => { "sources" => { "chess" => true } }
+        )
+      )
+      sign_in beta
+      allow(ChessComService).to receive(:new).and_return(
+        instance_double(ChessComService, fetch_stats: {})
+      )
+      allow(ChessComService).to receive(:ratings_summary).and_return({})
+
+      get beta_sources_chess_path
+      expect(response).to have_http_status(:ok)
     end
   end
 
@@ -576,11 +608,14 @@ RSpec.describe "Routes", type: :request do
           "puryfi" => false,
           "cigarettes" => false,
           "strava" => false,
-          "showcase" => false
+          "showcase" => false,
+          "wallpaper" => false,
+          "chess" => false
         })
         expect(user.beta_ui_prefs.dig("catalog_visibility", "actions")).to eq({
           "chaster" => false,
-          "pishock" => false
+          "pishock" => false,
+          "leverage_photo" => false
         })
       end
 

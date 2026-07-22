@@ -1,8 +1,9 @@
-<%# locals: (source:, scenario_set:, photos: [], allowed_actions: nil, leverage_action_enabled: nil, section_title: nil, uid: nil, hub_mode: false, strava_goals: [], readonly: false) %>
+<%# locals: (source:, scenario_set:, photos: [], allowed_actions: nil, leverage_action_enabled: nil, section_title: nil, uid: nil, hub_mode: false, strava_goals: [], chess_com_goals: [], readonly: false) %>
 <% source = source.to_s %>
 <% scenario_set ||= ScenarioSet.new(scenarios: []) %>
 <% photos = local_assigns.fetch(:photos) { @leverage_photos || [] } %>
 <% strava_goals = local_assigns.fetch(:strava_goals) { @strava_goals || [] } %>
+<% chess_com_goals = local_assigns.fetch(:chess_com_goals) { @chess_com_goals || [] } %>
 <% leverage_on = local_assigns.key?(:leverage_action_enabled) ? leverage_action_enabled : @leverage_action_enabled %>
 <% allowed_actions ||= BetaEvents::ScenarioRegistry.allowed_actions_for(source) %>
 <% readonly = !!local_assigns.fetch(:readonly, false) %>
@@ -28,6 +29,7 @@
               index: index,
               photos: photos,
               strava_goals: strava_goals,
+              chess_com_goals: chess_com_goals,
               hub_mode: hub_mode %>
       <% end %>
     <% end %>
@@ -45,6 +47,7 @@
           allowed_actions: allowed_actions,
           photos: photos,
           strava_goals: strava_goals,
+          chess_com_goals: chess_com_goals,
           uid: uid %>
   <% end %>
 </div>

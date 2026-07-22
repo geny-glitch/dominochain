@@ -1,0 +1,40 @@
+<section class="ds-beta-section ds-beta-section--first">
+  <h2 class="ds-section-title"><%= t("beta.integration_sections.installation") %></h2>
+  <div class="ds-beta-control-card">
+    <p class="ds-beta-control-text">
+      <%= t("beta.chess.verification.title", username: current_user.chess_com_username) %>
+      <span class="ds-chess-verification-status"><%= t("beta.chess.verification.status_pending") %></span>
+    </p>
+    <p class="ds-beta-control-hint"><%= t("beta.chess.verification.pending_hint") %></p>
+    <ol class="ds-chess-verification-steps">
+      <li><%= t("beta.chess.verification.step_1") %></li>
+      <li>
+        <%= t("beta.chess.verification.step_2") %>
+        <code class="ds-chess-verification-code"><%= current_user.chess_com_verification_code %></code>
+      </li>
+      <li><%= t("beta.chess.verification.step_3_html").html_safe %></li>
+      <li><%= t("beta.chess.verification.step_4") %></li>
+      <li><%= t("beta.chess.verification.step_5") %></li>
+    </ol>
+    <% if current_user.chess_com_verification_code_expires_at.present? %>
+      <p class="ds-beta-control-hint">
+        <%= t(
+              "beta.chess.verification.expires",
+              datetime: current_user.chess_com_verification_code_expires_at.in_time_zone.strftime("%d/%m/%Y %H:%M")
+            ) %>
+      </p>
+    <% end %>
+    <div class="ds-beta-control-actions ds-chess-verification-actions">
+      <%= button_to t("beta.chess.verification.verify_button"),
+            chess_verify_path,
+            method: :post,
+            form: { data: { turbo: false } },
+            class: "ds-btn ds-btn--primary" %>
+      <%= button_to t("beta.chess.verification.restart"),
+            chess_disconnect_path,
+            method: :delete,
+            form: { data: { turbo: false }, onsubmit: "return confirm(#{t("beta.chess.verification.restart_confirm").to_json});" },
+            class: "ds-btn ds-btn--ghost ds-btn--sm" %>
+    </div>
+  </div>
+</section>

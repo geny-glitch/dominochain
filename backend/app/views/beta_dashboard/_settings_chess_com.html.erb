@@ -1,0 +1,105 @@
+<% if current_user.chess_com_verified? %>
+  <section class="ds-beta-section ds-beta-section--first">
+    <h2 class="ds-section-title"><%= t("beta.integration_sections.installation") %></h2>
+    <div class="ds-beta-control-card">
+      <details class="ds-chess-install-drawer">
+        <summary class="ds-chess-install-summary">
+          <span class="ds-beta-control-text"><%= t("beta.chess.connected_line", username: current_user.chess_com_username) %></span>
+          <span class="ds-chess-toggle-icon" aria-hidden="true">▾</span>
+        </summary>
+        <div class="ds-chess-install-body">
+          <p class="ds-beta-control-hint"><%= t("beta.chess.installation_connected_hint") %></p>
+          <% if @chess_ratings.present? %>
+            <ul class="ds-chess-ratings-list">
+              <% ChessComGoal::RATING_TYPES.each do |type| %>
+                <% rating = @chess_ratings[type] %>
+                <li>
+                  <%= t("beta.chess.rating_types.#{type}") %>:
+                  <strong><%= rating.present? && rating.positive? ? rating : t("beta.chess.rating_unavailable") %></strong>
+                </li>
+              <% end %>
+            </ul>
+          <% end %>
+          <%= button_to t("beta.chess.disconnect"), chess_disconnect_path, method: :delete, form: { data: { turbo_confirm: t("beta.chess.disconnect_confirm") } }, class: "ds-btn ds-btn--secondary ds-btn--sm ds-chess-inline-action" %>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <section class="ds-beta-section ds-beta-section--tight-top">
+    <h2 class="ds-section-title"><%= t("beta.integration_sections.configuration") %></h2>
+    <div class="ds-beta-control-card ds-chess-goals-intro">
+      <p class="ds-beta-control-hint"><%= t("beta.chess.goals_hint") %></p>
+    </div>
+
+    <div class="ds-chess-goals" data-chess-goals>
+      <% if @chess_com_goals.any? %>
+        <% @chess_com_goals.each do |goal| %>
+          <%= render "chess_goal_card", goal: goal %>
+        <% end %>
+      <% else %>
+        <div class="ds-beta-control-card ds-chess-goals-empty">
+          <p class="ds-beta-control-hint"><%= t("beta.chess.no_goals") %></p>
+        </div>
+      <% end %>
+
+      <div class="ds-chess-goals-toolbar">
+        <button type="button" class="ds-btn ds-btn--secondary ds-btn--sm" data-chess-show-new-goal>
+          <%= t("beta.chess.add_goal") %>
+        </button>
+      </div>
+
+      <div class="ds-beta-control-card ds-chess-new-goal-panel" data-chess-new-goal-panel hidden>
+        <p class="ds-beta-control-text"><%= t("beta.chess.new_goal_title") %></p>
+        <%= render "chess_goal_form",
+              goal: nil,
+              form_url: beta_chess_goals_path,
+              form_method: :post,
+              id_prefix: "new_chess_goal" %>
+        <div class="ds-beta-control-actions">
+          <button type="button" class="ds-btn ds-btn--ghost ds-btn--sm" data-chess-cancel-new-goal>
+            <%= t("beta.chess.cancel") %>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <%= render "chess_goals_script" %>
+
+    <div class="ds-beta-control-card">
+      <p class="ds-beta-control-text"><%= t("beta.chess.consequences_lead") %></p>
+      <%= form_with url: beta_chess_config_path, method: :patch, local: true, class: "ds-form", data: { turbo: false, scenarios_form: true } do %>
+        <%= render "scenarios_list",
+              source: :chess,
+              scenario_set: @chess_com_config.scenario_set,
+              photos: @leverage_photos,
+              chess_com_goals: @chess_com_goals,
+              uid: "chess_config",
+              section_title: t("beta.chess.consequences_title") %>
+        <div class="ds-beta-control-actions">
+          <%= submit_tag t("beta.chess.save_consequences"), class: "ds-btn ds-btn--primary ds-btn--sm" %>
+        </div>
+      <% end %>
+      <%= render "scenarios_form_script" %>
+    </div>
+  </section>
+<% elsif current_user.chess_com_verification_pending? %>
+  <%= render "chess_com_verification_panel" %>
+<% else %>
+  <section class="ds-beta-section ds-beta-section--first">
+    <h2 class="ds-section-title"><%= t("beta.integration_sections.installation") %></h2>
+    <div class="ds-beta-control-card">
+      <p class="ds-beta-control-hint"><%= t("beta.chess.installation_disconnected_hint") %></p>
+      <p class="ds-beta-control-text"><%= t("beta.chess.connect_pitch") %></p>
+      <%= form_with url: chess_link_path, method: :post, local: true, class: "ds-form" do %>
+        <div class="ds-form-group">
+          <%= label_tag :username, t("beta.chess.username"), class: "ds-form-label" %>
+          <%= text_field_tag :username, nil, class: "ds-input", placeholder: t("beta.chess.placeholders.username"), required: true, autocomplete: "off" %>
+        </div>
+        <div class="ds-beta-control-actions">
+          <%= submit_tag t("beta.chess.start_link"), class: "ds-btn ds-btn--primary ds-btn--sm" %>
+        </div>
+      <% end %>
+    </div>
+  </section>
+<% end %>

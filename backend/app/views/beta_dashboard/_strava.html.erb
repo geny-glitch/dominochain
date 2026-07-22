@@ -48,10 +48,13 @@
                     <div class="ds-form-group">
                       <%= label_tag "strava_goal_#{goal.id}_check_time", t("beta.strava.check_time"), class: "ds-form-label" %>
                       <%= time_field_tag :check_time, goal.check_time_label, id: "strava_goal_#{goal.id}_check_time", class: "ds-input", required: true %>
-                    </div>
-                    <div class="ds-form-group">
-                      <%= label_tag "strava_goal_#{goal.id}_time_zone", t("beta.strava.time_zone"), class: "ds-form-label" %>
-                      <%= select_tag :time_zone, options_for_select(ActiveSupport::TimeZone.all.map(&:name), goal.time_zone), id: "strava_goal_#{goal.id}_time_zone", class: "ds-input" %>
+                      <p class="ds-beta-control-hint">
+                        <%= t(
+                              "beta.strava.time_zone_reminder_html",
+                              zone: current_user.effective_time_zone,
+                              account_link: link_to(t("beta.strava.time_zone_account_link"), beta_account_path)
+                            ) %>
+                      </p>
                     </div>
                     <div class="ds-form-group">
                       <%= label_tag "strava_goal_#{goal.id}_min_duration_minutes", t("beta.strava.min_duration"), class: "ds-form-label" %>
@@ -134,10 +137,13 @@
             <div class="ds-form-group">
               <%= label_tag :check_time, t("beta.strava.check_time"), class: "ds-form-label" %>
               <%= time_field_tag :check_time, "00:00", class: "ds-input", required: true %>
-            </div>
-            <div class="ds-form-group">
-              <%= label_tag :time_zone, t("beta.strava.time_zone"), class: "ds-form-label" %>
-              <%= select_tag :time_zone, options_for_select(ActiveSupport::TimeZone.all.map(&:name), Time.zone.name), class: "ds-input" %>
+              <p class="ds-beta-control-hint">
+                <%= t(
+                      "beta.strava.time_zone_reminder_html",
+                      zone: current_user.effective_time_zone,
+                      account_link: link_to(t("beta.strava.time_zone_account_link"), beta_account_path)
+                    ) %>
+              </p>
             </div>
             <div class="ds-form-group">
               <%= label_tag :min_duration_minutes, t("beta.strava.min_duration"), class: "ds-form-label" %>

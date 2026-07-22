@@ -26,6 +26,10 @@ en:
           label: "Corner time"
           subtitle: "Camera · stay still or face sanctions"
           events: "Events: movement.detected, early_stop"
+        chess:
+          label: "Chess.com"
+          subtitle: "ELO goals with deadline or regular checks"
+          events: "Event: goal.failed"
       actions:
         chaster:
           label: "Chaster"
@@ -149,6 +153,7 @@ en:
         pick_goal: "Strava goal"
         goal_blank: "Choose a goal"
         no_strava_goals: "Create a Strava goal first, then come back here."
+        no_chess_goals: "Create a Chess.com goal first, then come back here."
         composer_section: "When and what"
         create_submit: "Save consequence"
         open_source: "Open source"
@@ -156,6 +161,7 @@ en:
           wallpaper: "Wallpaper"
           cornertime: "Corner time"
           strava: "Strava"
+          chess: "Chess.com"
     events:
       sources:
         puryfi: "Purify"
@@ -163,6 +169,7 @@ en:
         showcase_game: "Showcase"
         showcase_backdoor: "Backdoor"
         strava_goal: "Strava"
+        chess_com_goal: "Chess.com"
         api: "API"
     home:
       title: "Home — %{nickname}"
@@ -190,6 +197,11 @@ en:
       strava_goal_line: "Goal %{name} · %{window} · penalty %{minutes} min"
       strava_no_goal: "No active goal right now."
       configure_strava: "Configure Strava"
+      chess_title: "Chess.com"
+      chess_connected: "connected"
+      chess_goal_line: "Goal %{name} · %{rating} %{type}"
+      chess_no_goal: "No active Chess.com goal right now."
+      configure_chess: "Configure Chess.com"
       cigarettes_title: "Cigarettes"
       cigarettes_app: "app linked"
       cigarettes_today: "today · 30d avg: %{avg}/day"
@@ -231,6 +243,13 @@ en:
       locale_submit_en: "English"
       locale_submit_fr: "Français"
       locale_submit_es: "Español"
+      time_zone_title: "Time zone"
+      time_zone_lead: "Used for goal deadlines and check times (Strava, Chess.com, …)."
+      time_zone_current: "Currently saved: %{zone}"
+      time_zone_label: "Your time zone"
+      time_zone_submit: "Save time zone"
+      errors:
+        invalid_time_zone: "is invalid"
     control:
       title: "Control"
       controlled_prefix: "Controlled by"

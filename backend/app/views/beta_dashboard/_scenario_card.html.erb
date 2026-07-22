@@ -1,6 +1,7 @@
-<%# locals: (source:, scenario:, index:, photos: [], hub_mode: false, strava_goals: []) %>
+<%# locals: (source:, scenario:, index:, photos: [], hub_mode: false, strava_goals: [], chess_com_goals: []) %>
 <% photos ||= [] %>
 <% strava_goals = local_assigns.fetch(:strava_goals) { @strava_goals || [] } %>
+<% chess_com_goals = local_assigns.fetch(:chess_com_goals) { @chess_com_goals || [] } %>
 <% source = source.to_s %>
 <% hub_mode = !!hub_mode %>
 <% event = scenario.event %>
@@ -59,6 +60,18 @@
                   data: { scenario_trigger_key: key } %>
             <% if strava_goals.empty? %>
               <p class="ds-beta-control-hint"><%= t("beta.scenarios.hub.no_strava_goals") %></p>
+            <% end %>
+          <% elsif schema[:type] == :reference && schema[:ref] == :chess_com_goal %>
+            <%= label_tag nil, t("beta.scenarios.triggers.#{event}.#{key}"), class: "ds-form-label" %>
+            <%= select_tag field_name,
+                  options_from_collection_for_select(chess_com_goals, :id, :name, value),
+                  include_blank: t("beta.scenarios.hub.goal_blank"),
+                  class: "ds-input",
+                  id: nil,
+                  required: true,
+                  data: { scenario_trigger_key: key } %>
+            <% if chess_com_goals.empty? %>
+              <p class="ds-beta-control-hint"><%= t("beta.scenarios.hub.no_chess_goals") %></p>
             <% end %>
           <% else %>
             <label class="ds-form-label"><%= t("beta.scenarios.triggers.#{event}.#{key}") %></label>

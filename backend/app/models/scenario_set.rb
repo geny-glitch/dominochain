@@ -297,7 +297,11 @@ class ScenarioSet
   end
 
   def scenarios_for_goal_failure(goal)
-    goal_id = goal.is_a?(StravaGoal) ? goal.id : goal.to_i
+    goal_id = if goal.is_a?(StravaGoal) || goal.is_a?(ChessComGoal)
+      goal.id
+    else
+      goal.to_i
+    end
     matching = scenarios.select do |s|
       case s.event
       when "any_goal_failed" then true

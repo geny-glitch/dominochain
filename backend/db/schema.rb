@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_07_20_194337) do
+ActiveRecord::Schema[7.2].define(version: 2026_07_22_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -84,6 +84,62 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_20_194337) do
     t.index ["user_id", "chaster_lock_id"], name: "index_chaster_time_events_on_user_id_and_chaster_lock_id"
     t.index ["user_id", "occurred_at", "id"], name: "index_chaster_time_events_on_user_id_and_occurred_at_and_id"
     t.index ["user_id"], name: "index_chaster_time_events_on_user_id"
+  end
+
+  create_table "chess_com_configs", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.jsonb "scenarios", default: {"scenarios"=>[]}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_chess_com_configs_on_user_id", unique: true
+  end
+
+  create_table "chess_com_goal_checks", force: :cascade do |t|
+    t.bigint "chess_com_goal_id", null: false
+    t.bigint "user_id", null: false
+    t.datetime "due_at", null: false
+    t.string "rating_type", null: false
+    t.integer "target_rating", null: false
+    t.integer "baseline_rating"
+    t.integer "rating_at_check"
+    t.string "status", null: false
+    t.string "chaster_lock_id"
+    t.boolean "chaster_applied", default: false, null: false
+    t.string "chaster_error"
+    t.jsonb "details", default: {}, null: false
+    t.datetime "checked_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["chess_com_goal_id", "due_at"], name: "index_chess_com_goal_checks_on_chess_com_goal_id_and_due_at", unique: true
+    t.index ["chess_com_goal_id"], name: "index_chess_com_goal_checks_on_chess_com_goal_id"
+    t.index ["user_id", "due_at"], name: "index_chess_com_goal_checks_on_user_id_and_due_at"
+    t.index ["user_id"], name: "index_chess_com_goal_checks_on_user_id"
+  end
+
+  create_table "chess_com_goals", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "name", null: false
+    t.boolean "enabled", default: true, null: false
+    t.string "rating_type", default: "blitz", null: false
+    t.integer "target_rating", null: false
+    t.integer "baseline_rating"
+    t.datetime "deadline_at", null: false
+    t.string "time_zone", default: "Europe/Paris", null: false
+    t.datetime "last_check_due_at"
+    t.integer "last_check_rating"
+    t.integer "last_check_target_rating"
+    t.string "last_check_status"
+    t.boolean "last_check_chaster_applied", default: false, null: false
+    t.string "last_check_chaster_error"
+    t.jsonb "last_check_details", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "schedule_mode", default: "deadline", null: false
+    t.integer "check_time_minutes"
+    t.string "recurrence_kind", default: "daily", null: false
+    t.integer "interval_minutes"
+    t.index ["user_id", "enabled"], name: "index_chess_com_goals_on_user_id_and_enabled"
+    t.index ["user_id"], name: "index_chess_com_goals_on_user_id"
   end
 
   create_table "cigarette_entries", force: :cascade do |t|
@@ -559,6 +615,13 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_20_194337) do
     t.boolean "public_boss_enabled", default: false, null: false
     t.jsonb "puryfi_shock_level_per_label", default: {}, null: false
     t.jsonb "puryfi_pishock_level_settings", default: {"1"=>{"duration"=>1, "intensity"=>10}, "2"=>{"duration"=>1, "intensity"=>30}, "3"=>{"duration"=>1, "intensity"=>60}}, null: false
+    t.string "chess_com_username"
+    t.string "chess_com_player_id"
+    t.datetime "chess_com_verified_at"
+    t.string "chess_com_verification_code"
+    t.datetime "chess_com_verification_code_expires_at"
+    t.string "time_zone", default: "Europe/Paris", null: false
+    t.index ["chess_com_player_id"], name: "index_users_on_chess_com_player_id", unique: true, where: "(chess_com_player_id IS NOT NULL)"
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["nickname"], name: "index_users_on_nickname", unique: true
     t.index ["provider", "uid"], name: "index_users_on_provider_and_uid"
@@ -691,6 +754,10 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_20_194337) do
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "chaster_locks", "users"
   add_foreign_key "chaster_time_events", "users"
+  add_foreign_key "chess_com_configs", "users"
+  add_foreign_key "chess_com_goal_checks", "chess_com_goals"
+  add_foreign_key "chess_com_goal_checks", "users"
+  add_foreign_key "chess_com_goals", "users"
   add_foreign_key "cigarette_entries", "users"
   add_foreign_key "control_requests", "users", column: "beta_id"
   add_foreign_key "control_requests", "users", column: "boss_id"

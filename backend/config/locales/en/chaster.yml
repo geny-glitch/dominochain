@@ -12,6 +12,7 @@ en:
         showcase_game_tetris: "Tetris"
         showcase_game_quiz: "Quiz"
         strava_goal: "Strava"
+        chess_com_goal: "Chess.com"
         wallpaper: "Wallpaper check"
         cornertime: "Corner time"
       games:
@@ -28,6 +29,7 @@ en:
         showcase_game_tetris: "%{game} — %{lines} lines"
         showcase_backdoor: "Backdoor by %{player_name}: \"%{message}\""
         strava_goal: "Missed Strava goal: %{goal_title}"
+        chess_com_goal: "Missed Chess.com goal: %{goal_title}"
         cornertime: "Movement during corner time"
         cornertime_early_stop: "Corner time stopped early"
         wallpaper:

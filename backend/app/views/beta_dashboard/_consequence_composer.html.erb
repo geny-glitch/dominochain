@@ -1,6 +1,7 @@
-<%# locals: (source:, allowed_actions:, photos: [], uid: nil, strava_goals: []) %>
+<%# locals: (source:, allowed_actions:, photos: [], uid: nil, strava_goals: [], chess_com_goals: []) %>
 <% photos ||= [] %>
 <% strava_goals = local_assigns.fetch(:strava_goals) { @strava_goals || [] } %>
+<% chess_com_goals = local_assigns.fetch(:chess_com_goals) { @chess_com_goals || [] } %>
 <% source = source.to_s %>
 <% uid ||= source %>
 <% event_ids = BetaEvents::ScenarioRegistry.event_ids(source) %>
@@ -99,10 +100,12 @@
         doneEditing: I18n.t("beta.scenarios.done_editing"),
         editTrigger: I18n.t("beta.scenarios.edit_trigger"),
         referenceBlank: I18n.t("beta.scenarios.composer.reference_blank"),
-        noStravaGoals: I18n.t("beta.scenarios.hub.no_strava_goals")
+        noStravaGoals: I18n.t("beta.scenarios.hub.no_strava_goals"),
+        noChessGoals: I18n.t("beta.scenarios.hub.no_chess_goals")
       },
       references: {
-        strava_goals: Array(strava_goals).map { |g| { id: g.id, label: g.name } }
+        strava_goals: Array(strava_goals).map { |g| { id: g.id, label: g.name } },
+        chess_com_goals: Array(chess_com_goals).map { |g| { id: g.id, label: g.name } }
       },
       photos: Array(photos).map { |p| { id: p.id, label: "#{p.download_filename} (#{I18n.t("leverage_photo.status.#{p.status}")})" } }
     }.to_json) %>

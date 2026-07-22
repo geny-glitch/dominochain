@@ -8,6 +8,7 @@ module BetaEvents
     # Action catalogs accepted on configurable sanction forms (not possibility ids).
     WALLPAPER_CATALOGS = %w[chaster pishock leverage_photo].freeze
     STRAVA_CATALOGS = %w[chaster leverage_photo].freeze
+    CHESS_CATALOGS = %w[chaster leverage_photo].freeze
     CORNERTIME_CATALOGS = %w[chaster pishock leverage_photo].freeze
 
     EventDef = Struct.new(
@@ -118,6 +119,18 @@ module BetaEvents
                 kind: :failed_penalty,
                 mode: :payload,
                 accepted_catalogs: STRAVA_CATALOGS
+              )
+            },
+            default_event: nil
+          ),
+          chess_com_goal: SourceDef.new(
+            catalog_id: "chess",
+            event_source: :chess_com_goal,
+            events: {
+              failed_penalty: EventDef.new(
+                kind: :failed_penalty,
+                mode: :payload,
+                accepted_catalogs: CHESS_CATALOGS
               )
             },
             default_event: nil

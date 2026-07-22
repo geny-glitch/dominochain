@@ -9,6 +9,7 @@ class BetaDashboardController < ApplicationController
     "sources_puryfi" => "puryfi",
     "sources_cigarettes" => "cigarettes",
     "sources_strava" => "strava",
+    "sources_chess" => "chess",
     "sources_showcase" => "showcase",
     "sources_wallpaper" => "wallpaper",
     "sources_cornertime" => "cornertime"
@@ -26,10 +27,13 @@ class BetaDashboardController < ApplicationController
   before_action :set_task, only: [ :task, :submit_proof ]
   before_action :set_strava_goal, only: [ :strava_goal ]
   before_action :require_strava_connected!, only: [ :strava_goal ]
+  before_action :set_chess_goal, only: [ :chess_goal ]
+  before_action :require_chess_com_verified!, only: [ :chess_goal ]
 
   def home
     @chaster_lock = fetch_chaster_lock
     @strava_primary_goal = current_user.strava_goals.enabled.recent.first
+    @chess_primary_goal = current_user.chess_com_goals.enabled.recent.first
     @cigarettes_today = current_user.cigarette_entries.for_day(Date.current).sum(:count)
     @cigarettes_avg_30d = average_cigarettes_last_30_days
     @recent_time_events = current_user.chaster_time_events.recent.limit(6)
@@ -41,6 +45,7 @@ class BetaDashboardController < ApplicationController
     @hub_entries = scenario_hub_entries
     @hub_sources = scenario_hub_enabled_sources
     @strava_goals = current_user.strava_goals.recent
+    @chess_com_goals = current_user.chess_com_goals.recent
     @leverage_photos = current_user.leverage_photos.not_deleted.newest_first
     @leverage_action_enabled = BetaCatalog.new(current_user).action_platform_enabled?("leverage_photo")
   end
@@ -71,6 +76,10 @@ class BetaDashboardController < ApplicationController
       config.save!
     when "strava"
       config = current_user.ensure_strava_config!
+      config.assign_scenarios!(merge_scenario_sets(config.scenario_set, incoming))
+      config.save!
+    when "chess"
+      config = current_user.ensure_chess_com_config!
       config.assign_scenarios!(merge_scenario_sets(config.scenario_set, incoming))
       config.save!
     end
@@ -119,6 +128,40 @@ class BetaDashboardController < ApplicationController
     redirect_to beta_sources_strava_path, notice: t("flash.beta.strava.consequences_saved")
   rescue ActiveRecord::RecordInvalid => e
     redirect_to beta_sources_strava_path, alert: e.record.errors.full_messages.join(", ")
+  end
+
+  def sources_chess
+    current_user.reload
+    @chess_com_goals = current_user.chess_com_goals.recent.includes(:chess_com_goal_checks)
+    @chess_com_config = current_user.ensure_chess_com_config!
+    @leverage_photos = current_user.leverage_photos.not_deleted.newest_first
+    @leverage_action_enabled = BetaCatalog.new(current_user).action_platform_enabled?("leverage_photo")
+    @chess_ratings = nil
+    if current_user.chess_com_verified?
+      begin
+        stats = ChessComService.new.fetch_stats(current_user.chess_com_username)
+        @chess_ratings = ChessComService.ratings_summary(stats)
+      rescue ChessComService::Error
+        @chess_ratings = nil
+      end
+    end
+  end
+
+  def chess_goal
+    @checks = @goal.chess_com_goal_checks.recent
+    @preview_result = flash[:chess_preview]&.symbolize_keys
+  end
+
+  def update_chess_config
+    config = current_user.ensure_chess_com_config!
+    if params.key?(:scenarios)
+      assign_host_scenarios!(config, source: :chess)
+    end
+    config.save!
+    PosthogProductAnalytics.configured_source(current_user, name: "chess")
+    redirect_to beta_sources_chess_path, notice: t("flash.beta.chess.consequences_saved")
+  rescue ActiveRecord::RecordInvalid => e
+    redirect_to beta_sources_chess_path, alert: e.record.errors.full_messages.join(", ")
   end
 
   def sources_showcase
@@ -659,6 +702,7 @@ class BetaDashboardController < ApplicationController
       when "wallpaper" then "wallpaper"
       when "cornertime" then "cornertime"
       when "strava" then "strava"
+      when "chess" then "chess"
       end
       catalog_id.present? && catalog.source_platform_enabled?(catalog_id) && catalog.source_enabled?(catalog_id)
     end
@@ -708,6 +752,20 @@ class BetaDashboardController < ApplicationController
       end
     end
 
+    if sources.include?("chess")
+      config = current_user.ensure_chess_com_config!
+      config.scenario_set.scenarios.each do |scenario|
+        context_label = chess_scenario_context_label(scenario)
+        entries << {
+          source: "chess",
+          source_label: t("beta.scenarios.hub.sources.chess"),
+          scenario: scenario,
+          open_path: beta_sources_chess_path,
+          context_label: context_label
+        }
+      end
+    end
+
     entries
   end
 
@@ -742,6 +800,27 @@ class BetaDashboardController < ApplicationController
       goal = current_user.strava_goals.find_by(id: goal_id)
       goal&.name
     end
+  end
+
+  def chess_scenario_context_label(scenario)
+    case scenario.event
+    when "goal_failed"
+      goal_id = (scenario.trigger[:goal_id] || scenario.trigger["goal_id"]).to_i
+      goal = current_user.chess_com_goals.find_by(id: goal_id)
+      goal&.name
+    end
+  end
+
+  def set_chess_goal
+    @goal = current_user.chess_com_goals.find(params[:id])
+  rescue ActiveRecord::RecordNotFound
+    redirect_to beta_sources_chess_path, alert: t("flash.chess.goal_not_found")
+  end
+
+  def require_chess_com_verified!
+    return if current_user.reload.chess_com_verified?
+
+    redirect_to beta_sources_chess_path, alert: t("flash.chess.verify_first")
   end
 
   STRAVA_GOAL_ACTIVITIES_PER_PAGE = 15

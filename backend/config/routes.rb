@@ -2,6 +2,7 @@ Rails.application.routes.draw do
   get "robots.txt", to: "robots#show"
 
   patch "locale", to: "locales#update", as: :user_locale
+  patch "time_zone", to: "time_zones#update", as: :user_time_zone
 
   devise_for :users, path: "", path_names: {
     sign_in: "login", sign_out: "logout", sign_up: "signup"
@@ -26,11 +27,14 @@ Rails.application.routes.draw do
   get "beta/sources/cigarettes", to: "beta_dashboard#sources_cigarettes", as: :beta_sources_cigarettes
   get "beta/sources/strava", to: "beta_dashboard#sources_strava", as: :beta_sources_strava
   get "beta/strava/goals/:id", to: "beta_dashboard#strava_goal", as: :beta_strava_goal_show
+  get "beta/sources/chess", to: "beta_dashboard#sources_chess", as: :beta_sources_chess
+  get "beta/chess/goals/:id", to: "beta_dashboard#chess_goal", as: :beta_chess_goal_show
 get "beta/sources/vitrine", to: "beta_dashboard#sources_showcase", as: :beta_sources_showcase
   get "beta/sources/wallpaper", to: "beta_dashboard#sources_wallpaper", as: :beta_sources_wallpaper
   get "beta/sources/cornertime", to: "beta_dashboard#sources_cornertime", as: :beta_sources_cornertime
   patch "beta/cornertime/config", to: "beta_dashboard#update_cornertime_config", as: :beta_cornertime_config
   patch "beta/strava/config", to: "beta_dashboard#update_strava_config", as: :beta_strava_config
+  patch "beta/chess/config", to: "beta_dashboard#update_chess_config", as: :beta_chess_config
   get "cornertime/session", to: "cornertime_sessions#show", as: :cornertime_session
   post "cornertime/session", to: "cornertime_sessions#create"
   patch "cornertime/session/:id/stop", to: "cornertime_sessions#stop", as: :cornertime_session_stop
@@ -114,6 +118,14 @@ get "beta/sources/vitrine", to: "beta_dashboard#sources_showcase", as: :beta_sou
   post "beta/strava/goals/:id/check", to: "strava#check_goal", as: :beta_strava_goal_check
   post "beta/strava/goals/:id/preview_check", to: "strava#preview_check", as: :beta_strava_goal_preview_check
   post "beta/strava/goals/:id/refresh_activities", to: "strava#refresh_activities", as: :beta_strava_goal_refresh_activities
+  post "chess/link", to: "chess_com#link", as: :chess_link
+  post "chess/verify", to: "chess_com#verify", as: :chess_verify
+  delete "chess/disconnect", to: "chess_com#disconnect", as: :chess_disconnect
+  post "beta/chess/goals", to: "chess_com#create_goal", as: :beta_chess_goals
+  patch "beta/chess/goals/:id", to: "chess_com#update_goal", as: :beta_chess_goal
+  delete "beta/chess/goals/:id", to: "chess_com#destroy_goal", as: :beta_chess_goal_destroy
+  post "beta/chess/goals/:id/check", to: "chess_com#check_goal", as: :beta_chess_goal_check
+  post "beta/chess/goals/:id/preview_check", to: "chess_com#preview_check", as: :beta_chess_goal_preview_check
   get "beta/tasks/:id", to: "beta_dashboard#task", as: :beta_task
   post "beta/tasks/:id/proof", to: "beta_dashboard#submit_proof", as: :beta_task_proof
   post "control/release", to: "controls#release", as: :control_release

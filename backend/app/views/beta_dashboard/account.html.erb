@@ -19,6 +19,33 @@
   </div>
 </section>
 
+<section class="ds-beta-section">
+  <h2 class="ds-section-title"><%= t("beta.account.time_zone_title") %></h2>
+  <div class="ds-beta-control-card">
+    <p class="ds-beta-control-hint"><%= t("beta.account.time_zone_lead") %></p>
+    <p class="ds-beta-control-text">
+      <%= t("beta.account.time_zone_current", zone: account_time_zone_label(current_user.effective_time_zone)) %>
+    </p>
+    <%= form_with url: user_time_zone_path, method: :patch, class: "ds-form", data: { turbo: false }, html: { autocomplete: "off" } do %>
+      <div class="ds-form-group">
+        <%= label_tag :account_tz, t("beta.account.time_zone_label"), class: "ds-form-label", for: "account_tz" %>
+        <%= select_tag :account_tz,
+              options_for_select(account_time_zone_options, current_user.effective_time_zone),
+              id: "account_tz",
+              class: "ds-input",
+              required: true,
+              autocomplete: "off",
+              "data-1p-ignore": true,
+              "data-lpignore": true,
+              "data-form-type": "other" %>
+      </div>
+      <div class="ds-beta-control-actions">
+        <%= submit_tag t("beta.account.time_zone_submit"), class: "ds-btn ds-btn--primary ds-btn--sm" %>
+      </div>
+    <% end %>
+  </div>
+</section>
+
 <%= render "account_control" %>
 <%= render "account_tasks" %>
 <%= render "account_devices" %>

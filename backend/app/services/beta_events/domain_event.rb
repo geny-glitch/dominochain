@@ -10,6 +10,7 @@ module BetaEvents
       showcase_game
       showcase_backdoor
       strava_goal
+      chess_com_goal
       api_chaster
       puryfi
       cigarette

@@ -25,6 +25,23 @@ module BetaDashboardHelper
     beta_catalog.action_enabled?(item_id)
   end
 
+  # Keep ActiveSupport::TimeZone.all ordering; show location first, then offset.
+  def account_time_zone_label(zone_or_name)
+    zone =
+      if zone_or_name.is_a?(ActiveSupport::TimeZone)
+        zone_or_name
+      else
+        ActiveSupport::TimeZone[zone_or_name.to_s]
+      end
+    return zone_or_name.to_s if zone.blank?
+
+    "#{zone.name} (GMT#{zone.formatted_offset})"
+  end
+
+  def account_time_zone_options
+    ActiveSupport::TimeZone.all.map { |zone| [ account_time_zone_label(zone), zone.name ] }
+  end
+
   def wallpaper_inconclusive_reason_label(reason)
     key = "beta.wallpaper_source.inconclusive_reason.#{reason}"
     I18n.exists?(key) ? t(key) : reason.to_s.humanize
@@ -50,7 +67,8 @@ module BetaDashboardHelper
       # No trigger fields — event label is enough.
     when "goal_failed"
       goal_id = (scenario.trigger[:goal_id] || scenario.trigger["goal_id"]).to_i
-      goal = current_user.strava_goals.find_by(id: goal_id)
+      goal = current_user.strava_goals.find_by(id: goal_id) ||
+        current_user.chess_com_goals.find_by(id: goal_id)
       parts << (goal&.name || t("beta.scenarios.summary.unknown_goal"))
     end
     parts.join(" · ")
@@ -151,6 +169,63 @@ module BetaDashboardHelper
       time: goal.check_time_label,
       tz: goal.time_zone
     )
+  end
+
+  def chess_goal_target_line(goal)
+    t(
+      "beta.chess.recap.target",
+      rating: goal.target_rating,
+      type: goal.rating_type_label
+    )
+  end
+
+  def chess_goal_schedule_line(goal)
+    if goal.interval_recurring?
+      t(
+        "beta.chess.recap.interval_schedule",
+        interval: goal.interval_label,
+        datetime: goal.deadline_local.strftime("%d/%m/%Y %H:%M"),
+        tz: goal.time_zone
+      )
+    elsif goal.recurring?
+      t(
+        "beta.chess.recap.recurring_schedule",
+        time: goal.check_time_label,
+        datetime: goal.deadline_local.strftime("%d/%m/%Y %H:%M"),
+        tz: goal.time_zone
+      )
+    else
+      t(
+        "beta.chess.recap.deadline",
+        datetime: goal.deadline_local.strftime("%d/%m/%Y %H:%M"),
+        tz: goal.time_zone
+      )
+    end
+  end
+
+  def chess_goal_deadline_line(goal)
+    chess_goal_schedule_line(goal)
+  end
+
+  def chess_check_status_label(status)
+    key = "beta.chess.check_status.#{status}"
+    I18n.exists?(key) ? t(key) : status.to_s.humanize
+  end
+
+  def chess_preview_result_notice(preview, goal:)
+    if preview[:status].to_s == "passed"
+      t(
+        "flash.chess.preview_check_passed",
+        rating: preview[:rating_at_check],
+        target: preview[:target_rating]
+      )
+    else
+      t(
+        "flash.chess.preview_check_failed",
+        rating: preview[:rating_at_check],
+        target: preview[:target_rating]
+      )
+    end
   end
 
   def strava_check_status_label(status)

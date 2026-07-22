@@ -2125,3 +2125,125 @@
   color: #f87171;
 }
 
+
+.ds-chess-install-drawer {
+  width: 100%;
+}
+
+.ds-chess-install-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $ds-space-sm;
+  cursor: pointer;
+  list-style: none;
+}
+
+.ds-chess-install-summary::-webkit-details-marker {
+  display: none;
+}
+
+.ds-chess-toggle-icon {
+  transition: transform 0.15s ease;
+}
+
+.ds-chess-install-drawer[open] .ds-chess-toggle-icon {
+  transform: rotate(180deg);
+}
+
+.ds-chess-install-body {
+  margin-top: $ds-space-sm;
+}
+
+.ds-chess-ratings-list {
+  margin: $ds-space-sm 0;
+  padding-left: 1.1rem;
+}
+
+.ds-chess-inline-action {
+  margin-top: $ds-space-sm;
+}
+
+.ds-chess-verification-steps {
+  margin: $ds-space-sm 0 $ds-space-md;
+  padding-left: 1.25rem;
+}
+
+.ds-chess-verification-status {
+  display: inline-block;
+  margin-left: $ds-space-xs;
+  padding: 0.1rem 0.45rem;
+  border-radius: $ds-radius-sm;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  background: rgba(245, 158, 11, 0.18);
+  color: #fbbf24;
+}
+
+.ds-chess-verification-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $ds-space-sm;
+  margin-top: $ds-space-md;
+}
+
+.ds-chess-verification-code {
+  display: inline-block;
+  margin-left: 0.35rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: $ds-radius-sm;
+  background: rgba(255, 255, 255, 0.08);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.ds-chess-goals {
+  display: flex;
+  flex-direction: column;
+  gap: $ds-space-sm;
+}
+
+.ds-chess-goals-toolbar {
+  display: flex;
+  gap: $ds-space-sm;
+}
+
+.ds-chess-goal-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: $ds-space-sm;
+}
+
+.ds-chess-goal-card-title {
+  margin: 0 0 $ds-space-xs;
+  font-size: 1.05rem;
+}
+
+.ds-chess-goal-card-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $ds-space-xs;
+}
+
+.ds-chess-goal-card-target {
+  margin: $ds-space-sm 0 $ds-space-xs;
+  font-weight: 600;
+}
+
+.ds-chess-goal-check-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $ds-space-sm;
+  margin-bottom: $ds-space-sm;
+}
+
+.ds-chess-check-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $ds-space-sm;
+  margin-bottom: $ds-space-xs;
+}

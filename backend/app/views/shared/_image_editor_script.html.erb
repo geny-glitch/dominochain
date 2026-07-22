@@ -106,7 +106,7 @@
       return postLeverageDraft(formData);
     }
 
-    async function uploadBatch(files) {
+    async function uploadImmediate(files) {
       const list = Array.prototype.slice.call(files).filter(function(f) {
         return f && f.type && f.type.startsWith("image/");
       });
@@ -115,15 +115,17 @@
         batchStatus.style.display = "";
         batchStatus.textContent = labelBatchUploading.replace("%{current}", "0").replace("%{total}", String(list.length));
       }
+      let lastUrl = betaPageUrl;
       for (let i = 0; i < list.length; i++) {
         if (batchStatus) {
           batchStatus.textContent = labelBatchUploading
             .replace("%{current}", String(i + 1))
             .replace("%{total}", String(list.length));
         }
-        await uploadDraftFromFile(list[i], null);
+        const data = await uploadDraftFromFile(list[i], null);
+        if (data.url) lastUrl = data.url;
       }
-      window.location.href = betaPageUrl;
+      window.location.href = lastUrl;
     }
 
     function initCropper() {
@@ -163,9 +165,9 @@
       input.addEventListener('change', function(e) {
         const files = e.target.files;
         if (!files || files.length === 0) return;
-        if (allowMulti && submitMode === "leverage_upload" && files.length > 1) {
-          uploadBatch(files).catch(function(err) {
-            console.error("[image_editor] batch upload failed", err);
+        if (submitMode === "leverage_upload") {
+          uploadImmediate(files).catch(function(err) {
+            console.error("[image_editor] upload failed", err);
             if (batchStatus) {
               batchStatus.style.display = "";
               batchStatus.textContent = labelError;

@@ -3,9 +3,10 @@
 class LeveragePhotos::ApplyAsWallpaper
   class Error < StandardError; end
 
-  def initialize(photo:, user:)
+  def initialize(photo:, user:, variant: :display)
     @photo = photo
     @user = user
+    @variant = variant.to_sym
   end
 
   def call!
@@ -16,7 +17,7 @@ class LeveragePhotos::ApplyAsWallpaper
     devices = @user.devices.to_a
     raise Error, "no device" if devices.empty?
 
-    display = @photo.wallpaper_display_attachment
+    display = attachment_for_variant
     raise Error, "no displayable image" if display.blank?
 
     ActiveRecord::Base.transaction do
@@ -37,5 +38,18 @@ class LeveragePhotos::ApplyAsWallpaper
     WallpaperEnforcementEvaluator.new(@user).reset_mismatch_on_wallpaper_change!
     FcmService.send_background_changed_notifications_to_devices(devices: devices)
     true
+  end
+
+  private
+
+  def attachment_for_variant
+    case @variant
+    when :censored
+      @photo.censored_image if @photo.censored_image.attached?
+    when :teaser
+      @photo.teaser_image if @photo.teaser_image.attached?
+    else
+      @photo.wallpaper_display_attachment
+    end
   end
 end

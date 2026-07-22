@@ -35,7 +35,6 @@ class BetaDashboardController < ApplicationController
     @recent_time_events = current_user.chaster_time_events.recent.limit(6)
     @leverage_photos = current_user.leverage_photos.not_deleted.newest_first
     @leverage_photos.each { |photo| photo.mark_unlocked! if photo.unlock_due? }
-    @leverage_photo = featured_leverage_photo(@leverage_photos)
   end
 
   def scenarios
@@ -618,12 +617,6 @@ class BetaDashboardController < ApplicationController
   def android_app_apk_url
     setting = AppSetting.instance
     setting.android_apk_url.presence || "#{request.base_url}/android/app.apk"
-  end
-
-  def featured_leverage_photo(photos)
-    photos.find(&:unlocked?) ||
-      photos.select(&:active?).min_by { |p| p.locked_until || Time.zone.at(0) } ||
-      photos.first
   end
 
   def recent_leverage_sanctions

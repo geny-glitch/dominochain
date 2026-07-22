@@ -47,6 +47,8 @@ get "beta/sources/vitrine", to: "beta_dashboard#sources_showcase", as: :beta_sou
   post "beta/leverage_photos/:id/set_as_wallpaper", to: "beta_leverage_photo#set_as_wallpaper", as: :beta_leverage_photo_set_as_wallpaper
   get "beta/leverage_photos/:id/tlock_blob", to: "beta_leverage_photo#tlock_blob", as: :beta_leverage_photo_tlock_blob
   get "beta/leverage_photos/:id/decrypt_payload", to: "beta_leverage_photo#decrypt_payload", as: :beta_leverage_photo_decrypt_payload
+  post "beta/leverage_photos/:id/restore_original", to: "beta_leverage_photo#restore_original", as: :beta_leverage_photo_restore_original
+  delete "beta/leverage_photos/:id/original", to: "beta_leverage_photo#delete_original", as: :beta_leverage_photo_delete_original
   delete "beta/leverage_photos/:id", to: "beta_leverage_photo#destroy", as: :beta_leverage_photo_destroy
   get "beta/leverage_photo", to: redirect("/beta/leverage_photos")
   patch "beta/wallpaper/enforcement", to: "beta_dashboard#update_wallpaper_enforcement", as: :beta_wallpaper_enforcement

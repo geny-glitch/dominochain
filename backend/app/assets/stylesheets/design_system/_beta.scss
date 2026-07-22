@@ -1906,3 +1906,79 @@
   }
 }
 
+.ds-beta-leverage-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: $ds-space-md;
+}
+
+.ds-beta-leverage-grid--home {
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: $ds-space-sm;
+  margin: 0.75rem 0;
+}
+
+.ds-beta-leverage-grid__item {
+  display: flex;
+  flex-direction: column;
+  gap: $ds-space-xs;
+  text-decoration: none;
+  color: inherit;
+  border-radius: var(--md-sys-shape-corner-large, #{$ds-radius-lg});
+  padding: $ds-space-xs;
+  transition: background 0.15s ease;
+
+  &:hover,
+  &:focus-visible {
+    background: rgba(255, 255, 255, 0.04);
+  }
+}
+
+.ds-beta-leverage-grid__thumb {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: var(--md-sys-shape-corner-medium, #{$ds-radius-md});
+  background: rgba(255, 255, 255, 0.06);
+
+  &--pixel {
+    image-rendering: pixelated;
+  }
+
+  &--empty {
+    min-height: 72px;
+  }
+}
+
+.ds-beta-leverage-grid__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.ds-beta-leverage-grid__name {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ds-beta-leverage-grid__pill {
+  align-self: flex-start;
+}
+
+.ds-beta-leverage-grid__until {
+  font-size: 0.75rem;
+  opacity: 0.75;
+}
+
+.ds-beta-leverage-how-list {
+  margin: 0.75rem 0;
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+

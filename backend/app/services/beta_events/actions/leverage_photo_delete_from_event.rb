@@ -13,7 +13,7 @@ module BetaEvents
         raise ActionExecutionStopped.new(:no_eligible_photo) if photo.nil?
 
         photo_id = photo.id
-        photo.permanently_delete!
+        photo.delete_original_from_sanction!
         context.leverage_photo_id = photo_id
       end
     end

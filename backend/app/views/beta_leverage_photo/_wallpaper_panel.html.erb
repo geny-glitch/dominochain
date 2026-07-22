@@ -1,0 +1,51 @@
+<%# locals: photo %>
+<% wallpaper_source_enabled = beta_catalog_source_enabled?("wallpaper") %>
+<% device = current_user.primary_device %>
+<% has_device = current_user.devices.any? %>
+<% boss_controls = current_user.controlled_by_boss? %>
+<% verification_locked = current_user.wallpaper_verification_session_locked? %>
+<% wallpaper_ready = wallpaper_source_enabled && has_device && !boss_controls && !verification_locked %>
+
+<section class="ds-beta-section">
+  <h2 class="ds-section-title"><%= t("leverage_photo.wallpaper.title") %></h2>
+  <div class="ds-beta-control-card">
+    <% unless wallpaper_ready %>
+      <% if !wallpaper_source_enabled %>
+        <p class="ds-beta-control-text"><%= t("leverage_photo.wallpaper.setup_source_disabled") %></p>
+      <% elsif !has_device %>
+        <p class="ds-beta-control-text"><%= t("leverage_photo.wallpaper.setup_no_device") %></p>
+      <% elsif boss_controls %>
+        <p class="ds-beta-control-text"><%= t("leverage_photo.wallpaper.setup_boss_controls") %></p>
+      <% elsif verification_locked %>
+        <p class="ds-beta-control-text"><%= t("leverage_photo.wallpaper.setup_verification_locked") %></p>
+      <% end %>
+      <div class="ds-beta-control-actions" style="margin-top:0.75rem;">
+        <%= link_to t("leverage_photo.wallpaper.open_settings"), beta_sources_wallpaper_path, class: "ds-btn ds-btn--secondary ds-btn--sm" %>
+      </div>
+    <% else %>
+      <p class="ds-beta-control-text"><%= t("leverage_photo.wallpaper.ready_intro") %></p>
+      <% if device.present? %>
+        <p class="ds-beta-control-hint"><%= t("leverage_photo.wallpaper.active_device", name: device.display_name) %></p>
+      <% end %>
+      <div class="ds-beta-control-actions" style="flex-wrap:wrap;gap:0.5rem;margin-top:0.75rem;">
+        <% if photo.censored_image.attached? %>
+          <%= button_to t("leverage_photo.wallpaper.set_censored"),
+                beta_leverage_photo_set_as_wallpaper_path(photo, variant: "censored"),
+                method: :post,
+                class: "ds-btn ds-btn--secondary ds-btn--sm",
+                form: { onsubmit: "return confirm('#{j(t('leverage_photo.wallpaper.set_censored_confirm'))}');" } %>
+        <% end %>
+        <% if photo.teaser_image.attached? %>
+          <%= button_to t("leverage_photo.wallpaper.set_teaser"),
+                beta_leverage_photo_set_as_wallpaper_path(photo, variant: "teaser"),
+                method: :post,
+                class: "ds-btn ds-btn--secondary ds-btn--sm",
+                form: { onsubmit: "return confirm('#{j(t('leverage_photo.wallpaper.set_teaser_confirm'))}');" } %>
+        <% end %>
+      </div>
+      <% unless photo.censored_image.attached? || photo.teaser_image.attached? %>
+        <p class="ds-beta-control-hint"><%= t("leverage_photo.wallpaper.no_images") %></p>
+      <% end %>
+    <% end %>
+  </div>
+</section>

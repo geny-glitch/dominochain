@@ -1,0 +1,34 @@
+<%# locals: photos, limit: nil, variant: nil %>
+<% limit = local_assigns.fetch(:limit, nil) %>
+<% variant = local_assigns.fetch(:variant, nil) %>
+<% display_photos = limit.present? ? photos.first(limit) : photos %>
+<% grid_class = variant == :home ? "ds-beta-leverage-grid ds-beta-leverage-grid--home" : "ds-beta-leverage-grid" %>
+
+<% if display_photos.empty? %>
+  <div class="ds-beta-control-card">
+    <p class="ds-beta-control-text"><%= t("leverage_photo.index.empty") %></p>
+  </div>
+<% else %>
+  <div class="<%= grid_class %>">
+    <% display_photos.each do |photo| %>
+      <%= link_to beta_leverage_photo_path(photo), class: "ds-beta-leverage-grid__item" do %>
+        <% if photo.teaser_image.attached? %>
+          <%= image_tag url_for(photo.teaser_image),
+                alt: "",
+                class: "ds-beta-leverage-grid__thumb ds-beta-leverage-grid__thumb--pixel" %>
+        <% else %>
+          <div class="ds-beta-leverage-grid__thumb ds-beta-leverage-grid__thumb--empty" aria-hidden="true"></div>
+        <% end %>
+        <span class="ds-beta-leverage-grid__meta">
+          <span class="ds-beta-leverage-grid__name" title="<%= photo.download_filename %>"><%= photo.download_filename %></span>
+          <span class="ds-beta-home-pill ds-beta-leverage-grid__pill <%= photo.active? ? "ds-beta-home-pill--on" : "" %>">
+            <%= t("leverage_photo.status.#{photo.status}") %>
+          </span>
+          <% if photo.active? && photo.locked_until %>
+            <span class="ds-beta-leverage-grid__until"><%= t("leverage_photo.index.locked_until", time: l(photo.locked_until, format: :short)) %></span>
+          <% end %>
+        </span>
+      <% end %>
+    <% end %>
+  </div>
+<% end %>

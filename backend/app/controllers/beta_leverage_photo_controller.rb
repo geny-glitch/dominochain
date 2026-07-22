@@ -164,7 +164,8 @@ class BetaLeveragePhotoController < ApplicationController
   end
 
   def set_as_wallpaper
-    LeveragePhotos::ApplyAsWallpaper.new(photo: @photo, user: current_user).call!
+    variant = params[:variant].presence&.to_sym || :display
+    LeveragePhotos::ApplyAsWallpaper.new(photo: @photo, user: current_user, variant: variant).call!
     redirect_back fallback_location: beta_leverage_photos_path, notice: t("flash.beta.leverage_photo.wallpaper_set")
   rescue LeveragePhotos::ApplyAsWallpaper::Error => e
     alert =

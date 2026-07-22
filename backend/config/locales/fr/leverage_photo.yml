@@ -126,7 +126,7 @@ fr:
       setup_source_disabled: "Active la source Wallpaper pour envoyer des photos sur ton appareil Android."
       setup_no_device: "Installe l'app Android et connecte un appareil pour utiliser le wallpaper."
       setup_boss_controls: "Ton·ta boss contrôle les changements de wallpaper pour l'instant."
-      setup_verification_locked: "Le wallpaper est verrouillé pendant une session de vérification active."
+      setup_verification_locked: "Le wallpaper est verrouillé car une session de vérification est en cours."
       open_settings: "Ouvrir les réglages Wallpaper"
       ready_intro: "Envoie cette photo sur ton appareil Android connecté."
       active_device: "Appareil : %{name}"

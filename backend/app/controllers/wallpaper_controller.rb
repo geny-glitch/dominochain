@@ -17,6 +17,12 @@ class WallpaperController < ApplicationController
   end
 
   def upload_new
+    if @beta.wallpaper_verification_session_locked?
+      redirect_to wallpaper_upload_path(@nickname, device_id: @device.device_id),
+                  alert: t("flash.beta.wallpaper.verification_session_locked")
+      return
+    end
+
     @device_id = @device.device_id
   end
 

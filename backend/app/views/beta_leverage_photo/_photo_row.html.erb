@@ -118,7 +118,7 @@
       <span class="ds-beta-leverage-row__btn-spacer" aria-hidden="true"></span>
     <% end %>
 
-    <% if photo.wallpaper_display_attachment.present? && !current_user.controlled_by_boss? %>
+    <% if photo.wallpaper_display_attachment.present? && !current_user.controlled_by_boss? && !current_user.wallpaper_verification_session_locked? %>
       <%= button_to beta_leverage_photo_set_as_wallpaper_path(photo),
             method: :post,
             class: "ds-btn ds-btn--ghost ds-btn--icon ds-btn--sm",

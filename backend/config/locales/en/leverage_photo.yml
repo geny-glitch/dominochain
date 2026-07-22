@@ -126,7 +126,7 @@ en:
       setup_source_disabled: "Enable the Wallpaper source to push photos to your Android device."
       setup_no_device: "Install the Android app and connect a device to use wallpaper."
       setup_boss_controls: "Your boss controls wallpaper changes right now."
-      setup_verification_locked: "Wallpaper is locked during an active verification session."
+      setup_verification_locked: "Wallpaper is locked because a verification session is in progress."
       open_settings: "Open Wallpaper settings"
       ready_intro: "Push this photo to your connected Android device."
       active_device: "Device: %{name}"

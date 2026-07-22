@@ -126,7 +126,7 @@ es:
       setup_source_disabled: "Activa la fuente Wallpaper para enviar fotos a tu dispositivo Android."
       setup_no_device: "Instala la app Android y conecta un dispositivo para usar el wallpaper."
       setup_boss_controls: "Tu boss controla los cambios de wallpaper por ahora."
-      setup_verification_locked: "El wallpaper está bloqueado durante una sesión de verificación activa."
+      setup_verification_locked: "El wallpaper está bloqueado porque hay una sesión de verificación en curso."
       open_settings: "Abrir ajustes de Wallpaper"
       ready_intro: "Envía esta foto a tu dispositivo Android conectado."
       active_device: "Dispositivo: %{name}"

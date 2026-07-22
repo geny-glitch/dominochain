@@ -51,6 +51,8 @@ en:
     download_all: "Download all"
     remove_wallpaper_history_confirm: "Remove this entry from history?"
     set_as_current: "Set as current"
+    verification_session_locked_banner: "Wallpaper changes are locked because a verification session is in progress."
+    verification_session_view_settings: "Open Wallpaper settings"
     no_wallpapers_yet: "No wallpaper yet."
     devices_debug: "Devices (debug)"
     push_on: "Push"

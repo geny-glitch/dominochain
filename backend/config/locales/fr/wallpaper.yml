@@ -51,6 +51,8 @@ fr:
     download_all: "Tout télécharger"
     remove_wallpaper_history_confirm: "Retirer cette entrée de l'historique ?"
     set_as_current: "Définir comme actuel"
+    verification_session_locked_banner: "Les changements de fond d'écran sont bloqués car une session de vérification est en cours."
+    verification_session_view_settings: "Ouvrir les réglages Wallpaper"
     no_wallpapers_yet: "Aucun fond d'écran pour le moment."
     devices_debug: "Devices (debug)"
     push_on: "Push"

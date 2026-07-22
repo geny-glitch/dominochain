@@ -10,6 +10,8 @@ class BetaWallpaperController < ApplicationController
   before_action :require_no_boss!
 
   def upload
+    return if block_wallpaper_change_during_verification_session!
+
     @device = current_user.primary_device
   end
 

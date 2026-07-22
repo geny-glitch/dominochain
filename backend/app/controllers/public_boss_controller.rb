@@ -12,6 +12,12 @@ class PublicBossController < ApplicationController
   end
 
   def upload_new
+    if @beta.wallpaper_verification_session_locked?
+      redirect_to public_boss_path(@nickname, device_id: @device_id),
+                  alert: t("flash.beta.wallpaper.verification_session_locked")
+      return
+    end
+
     render "wallpaper/upload_new"
   end
 

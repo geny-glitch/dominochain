@@ -51,6 +51,8 @@ es:
     download_all: "Descargar todo"
     remove_wallpaper_history_confirm: "¿Quitar esta entrada del historial?"
     set_as_current: "Definir como actual"
+    verification_session_locked_banner: "Los cambios de fondo están bloqueados porque hay una sesión de verificación en curso."
+    verification_session_view_settings: "Abrir ajustes de Wallpaper"
     no_wallpapers_yet: "Aún no hay fondos."
     devices_debug: "Dispositivos (debug)"
     push_on: "Push"

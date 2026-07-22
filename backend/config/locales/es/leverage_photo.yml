@@ -4,6 +4,7 @@ es:
       draft: "Lista"
       active: "Bloqueada"
       unlocked: "Desbloqueada"
+      sanctioned: "Original eliminado"
       deleted: "Eliminada"
     durations:
       one_hour: "1 hora"

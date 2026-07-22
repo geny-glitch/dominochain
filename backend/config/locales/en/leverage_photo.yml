@@ -4,6 +4,7 @@ en:
       draft: "Ready"
       active: "Locked"
       unlocked: "Unlocked"
+      sanctioned: "Original removed"
       deleted: "Deleted"
     durations:
       one_hour: "1 hour"

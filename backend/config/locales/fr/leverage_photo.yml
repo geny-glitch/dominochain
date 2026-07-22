@@ -4,6 +4,7 @@ fr:
       draft: "Prête"
       active: "Verrouillée"
       unlocked: "Débloquée"
+      sanctioned: "Originale supprimée"
       deleted: "Supprimée"
     durations:
       one_hour: "1 heure"

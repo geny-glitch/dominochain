@@ -3,14 +3,16 @@
 require "rails_helper"
 
 RSpec.describe BetaEvents::ActionRegistry do
-  it "registers the six core possibilities" do
+  it "registers the core possibilities including puzzle and crop" do
     expect(described_class.all.keys).to contain_exactly(
       "chaster.add_time",
       "chaster.freeze",
       "chaster.unfreeze",
       "pishock.shock",
       "leverage_photo.lock",
-      "leverage_photo.delete"
+      "leverage_photo.delete",
+      "leverage_photo.crop_to_progress",
+      "puzzle.assign"
     )
   end
 
@@ -61,7 +63,8 @@ RSpec.describe BetaEvents::ActionRegistry do
     expect(described_class.user_configurable_ids).not_to include("chaster.unfreeze")
     expect(described_class.user_configurable_ids(catalog_ids: %w[leverage_photo])).to contain_exactly(
       "leverage_photo.lock",
-      "leverage_photo.delete"
+      "leverage_photo.delete",
+      "leverage_photo.crop_to_progress"
     )
     expect(described_class.user_configurable_ids(catalog_ids: %w[chaster])).to contain_exactly(
       "chaster.add_time",

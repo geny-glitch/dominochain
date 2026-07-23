@@ -119,6 +119,39 @@ class FcmService
       send_request(device, payload)
     end
 
+    def send_puzzle_assigned_notification(device:, session:)
+      unless device.fcm_token.present?
+        Rails.logger.info "[FCM] Skipped puzzle_assigned: no fcm_token for device #{device.device_id}"
+        return
+      end
+      unless credentials_configured?
+        Rails.logger.warn "[FCM] Skipped puzzle_assigned: credentials not configured."
+        return
+      end
+
+      title = notification_title
+      body = I18n.t("puzzle.notifications.assigned_body", default: "A new puzzle is waiting for you.")
+
+      data = {
+        type: "puzzle_assigned",
+        puzzle_session_id: session.id.to_s,
+        title: title,
+        body: body
+      }
+
+      payload = {
+        message: {
+          token: device.fcm_token,
+          data: data,
+          android: {
+            priority: "high"
+          }
+        }
+      }
+
+      send_request(device, payload)
+    end
+
     def send_take_screenshot_notification(device:, dismiss_apps: true)
       unless device.fcm_token.present?
         Rails.logger.info "[FCM] Skipped take_screenshot: no fcm_token for device #{device.device_id}"

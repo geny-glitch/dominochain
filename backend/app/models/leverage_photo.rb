@@ -102,6 +102,15 @@ class LeveragePhoto < ApplicationRecord
     can_delete_original?
   end
 
+  # Crop replaces the visible attachment with a puzzle progress snapshot.
+  # Eligible whenever a displayable image remains (original, censored, or teaser).
+  def eligible_for_crop_to_progress?
+    return false if deleted?
+    return false unless teaser_image.attached?
+
+    original_image.attached? || censored_image.attached? || teaser_image.attached?
+  end
+
   def can_delete_original?
     return false if deleted? || sanctioned?
     return false unless censored_image.attached?

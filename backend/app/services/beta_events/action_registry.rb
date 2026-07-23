@@ -28,7 +28,9 @@ module BetaEvents
       "leverage_photo_lock" => "leverage_photo.lock",
       "leverage_photo_start" => "leverage_photo.lock",
       "leverage_photo_add_time" => "leverage_photo.lock",
-      "leverage_photo_delete" => "leverage_photo.delete"
+      "leverage_photo_delete" => "leverage_photo.delete",
+      "leverage_photo_crop_to_progress" => "leverage_photo.crop_to_progress",
+      "puzzle_assign" => "puzzle.assign"
     }.freeze
 
     POSSIBILITY_TO_LEGACY_ACTION = {
@@ -36,7 +38,9 @@ module BetaEvents
       "chaster.freeze" => "chaster_freeze",
       "pishock.shock" => "pishock",
       "leverage_photo.lock" => "leverage_photo_lock",
-      "leverage_photo.delete" => "leverage_photo_delete"
+      "leverage_photo.delete" => "leverage_photo_delete",
+      "leverage_photo.crop_to_progress" => "leverage_photo_crop_to_progress",
+      "puzzle.assign" => "puzzle_assign"
     }.freeze
 
     class << self
@@ -186,6 +190,53 @@ module BetaEvents
             executor: Actions::LeveragePhotoDeleteFromEvent,
             user_configurable: true,
             config_schema: {
+              target_mode: { type: :enum, values: %w[random specific], default: "random", ui: :leverage_target },
+              photo_id: { type: :integer, optional: true, ui: :leverage_photo_id }
+            }
+          },
+          {
+            id: "leverage_photo.crop_to_progress",
+            catalog_id: "leverage_photo",
+            executor: Actions::LeveragePhotoCropToProgressFromEvent,
+            user_configurable: true,
+            config_schema: {
+              target_mode: { type: :enum, values: %w[random specific], default: "specific", ui: :leverage_target },
+              photo_id: { type: :integer, optional: true, ui: :leverage_photo_id }
+            }
+          },
+          {
+            id: "puzzle.assign",
+            catalog_id: "puzzle",
+            executor: Actions::PuzzleAssignFromEvent,
+            user_configurable: true,
+            config_schema: {
+              image_source: {
+                type: :enum,
+                values: %w[leverage_photo wallpaper],
+                default: "leverage_photo",
+                ui: :enum
+              },
+              piece_count: {
+                type: :integer,
+                min: 9,
+                max: 81,
+                default: 25,
+                required: true,
+                ui: :number
+              },
+              reference_mode: {
+                type: :enum,
+                values: %w[original blurred none],
+                default: "blurred",
+                ui: :enum
+              },
+              time_limit_seconds: {
+                type: :integer,
+                min: PuzzleConfig::MIN_TIME_LIMIT_SECONDS,
+                max: PuzzleConfig::MAX_TIME_LIMIT_SECONDS,
+                optional: true,
+                ui: :number
+              },
               target_mode: { type: :enum, values: %w[random specific], default: "random", ui: :leverage_target },
               photo_id: { type: :integer, optional: true, ui: :leverage_photo_id }
             }

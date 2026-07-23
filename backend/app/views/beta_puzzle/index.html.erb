@@ -1,0 +1,49 @@
+<% content_for :title, t("puzzle.index.page_title") %>
+
+<header class="ds-beta-page-head">
+  <h1 class="ds-beta-page-title"><%= t("puzzle.index.heading") %></h1>
+  <p class="ds-beta-page-lead"><%= t("puzzle.index.lead") %></p>
+</header>
+
+<p><%= link_to t("puzzle.index.back_to_source"), beta_sources_puzzle_path, class: "ds-btn ds-btn--secondary ds-btn--sm" %></p>
+
+<section class="ds-beta-section">
+  <h2 class="ds-section-title"><%= t("puzzle.index.open_title") %></h2>
+  <div class="ds-beta-control-card">
+    <% if @open_sessions.any? %>
+      <ul class="ds-puzzle-session-list">
+        <% @open_sessions.each do |session| %>
+          <li>
+            <span>
+              <%= t("puzzle.play.status.#{session.status}") %>
+              · <%= t("puzzle.index.pieces", count: session.piece_count) %>
+              · <%= l(session.created_at, format: :short) %>
+            </span>
+            <%= link_to t("puzzle.index.open"), beta_puzzle_path(session), class: "ds-btn ds-btn--primary ds-btn--sm" %>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="ds-beta-control-hint"><%= t("puzzle.index.no_open") %></p>
+    <% end %>
+  </div>
+</section>
+
+<section class="ds-beta-section ds-beta-section--tight-top">
+  <h2 class="ds-section-title"><%= t("puzzle.index.history_title") %></h2>
+  <div class="ds-beta-control-card">
+    <% if @recent_sessions.any? %>
+      <ul class="ds-beta-bullet-list">
+        <% @recent_sessions.each do |session| %>
+          <li>
+            <%= t("puzzle.play.status.#{session.status}") %>
+            · <%= t("puzzle.index.pieces_progress", n: session.pieces_placed, total: session.pieces_total) %>
+            · <%= l(session.ended_at || session.updated_at, format: :short) %>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="ds-beta-control-hint"><%= t("puzzle.index.no_history") %></p>
+    <% end %>
+  </div>
+</section>

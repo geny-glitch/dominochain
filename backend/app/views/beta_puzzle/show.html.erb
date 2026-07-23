@@ -1,0 +1,65 @@
+<% content_for :title, t("puzzle.play.page_title") %>
+
+<section
+  class="ds-puzzle-play"
+  data-controller="puzzle"
+  data-puzzle-session-id-value="<%= @session.id %>"
+  data-puzzle-layout-seed-value="<%= @session.layout_seed %>"
+  data-puzzle-grid-cols-value="<%= @session.grid_cols %>"
+  data-puzzle-grid-rows-value="<%= @session.grid_rows %>"
+  data-puzzle-reference-mode-value="<%= @session.reference_mode %>"
+  data-puzzle-deadline-at-value="<%= @session.deadline_at&.iso8601 %>"
+  data-puzzle-image-url-value="<%= beta_puzzle_image_path(@session) %>"
+  data-puzzle-start-url-value="<%= beta_puzzle_start_path(@session) %>"
+  data-puzzle-finish-url-value="<%= beta_puzzle_finish_path(@session) %>"
+  data-puzzle-snapshot-url-value="<%= beta_puzzle_progress_snapshot_path(@session) %>"
+  data-puzzle-pieces-total-value="<%= @session.pieces_total %>"
+>
+  <header class="ds-beta-page-head">
+    <h1 class="ds-beta-page-title"><%= t("puzzle.play.heading") %></h1>
+    <p class="ds-beta-page-lead"><%= t("puzzle.play.lead", count: @session.piece_count) %></p>
+  </header>
+
+  <div class="ds-puzzle-toolbar">
+    <% if @session.assigned? || @session.active? %>
+      <button type="button" class="ds-btn ds-btn--primary" data-puzzle-target="startButton" data-action="puzzle#start">
+        <%= @session.active? ? t("puzzle.play.resume") : t("puzzle.play.start") %>
+      </button>
+      <button type="button" class="ds-btn ds-btn--secondary" data-puzzle-target="abandonButton" data-action="puzzle#abandon" <%= "hidden" unless @session.active? %>>
+        <%= t("puzzle.play.abandon") %>
+      </button>
+    <% else %>
+      <p class="ds-beta-control-hint"><%= t("puzzle.play.status.#{@session.status}") %></p>
+      <%= link_to t("puzzle.play.back"), beta_sources_puzzle_path, class: "ds-btn ds-btn--secondary" %>
+    <% end %>
+  </div>
+
+  <div class="ds-puzzle-meta">
+    <span data-puzzle-target="progress"><%= t("puzzle.play.progress", n: @session.pieces_placed, total: @session.pieces_total) %></span>
+    <span data-puzzle-target="timer" hidden></span>
+  </div>
+  <p class="ds-puzzle-status" data-puzzle-target="status"></p>
+
+  <div class="ds-puzzle-play-layout" data-puzzle-target="playArea" <%= "hidden" unless @session.active? %>>
+    <div class="ds-puzzle-board-wrap">
+      <canvas class="ds-puzzle-canvas" data-puzzle-target="canvas" width="360" height="480" aria-label="<%= t("puzzle.play.canvas_aria") %>"></canvas>
+    </div>
+
+    <aside class="ds-puzzle-reference" data-puzzle-target="reference" <%= "hidden" if @session.reference_mode == "none" %>>
+      <p class="ds-form-label"><%= t("puzzle.play.reference") %></p>
+      <img class="ds-puzzle-reference-img<%= " ds-puzzle-reference-img--blurred" if @session.reference_mode == "blurred" %>" data-puzzle-target="referenceImage" src="<%= beta_puzzle_image_path(@session) %>" alt="">
+    </aside>
+  </div>
+</section>
+
+<script type="application/json" id="puzzle-i18n"><%= raw json_escape({
+  starting: t("puzzle.play.starting"),
+  startFailed: t("puzzle.play.start_failed"),
+  finishing: t("puzzle.play.finishing"),
+  finishFailed: t("puzzle.play.finish_failed"),
+  completed: t("puzzle.play.completed"),
+  abandoned: t("puzzle.play.abandoned"),
+  timedOut: t("puzzle.play.timed_out"),
+  abandonConfirm: t("puzzle.play.abandon_confirm"),
+  progress: t("puzzle.play.progress_template")
+}.to_json) %></script>

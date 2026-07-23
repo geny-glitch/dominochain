@@ -63,7 +63,7 @@ module BetaDashboardHelper
     when "app_unreachable"
       parts << t("beta.scenarios.summary.threshold_minutes", count: scenario.threshold_minutes)
       parts << t("beta.scenarios.summary.delay_minutes", count: scenario.delay_minutes)
-    when "movement_detected", "early_stop", "any_goal_failed"
+    when "movement_detected", "early_stop", "any_goal_failed", "completed", "completed_in_time", "failed_time", "abandoned"
       # No trigger fields — event label is enough.
     when "goal_failed"
       goal_id = (scenario.trigger[:goal_id] || scenario.trigger["goal_id"]).to_i
@@ -88,6 +88,10 @@ module BetaDashboardHelper
       t("beta.scenarios.summary.leverage_lock", seconds: cfg[:seconds].to_i, mode: cfg[:target_mode])
     when "leverage_photo.delete"
       t("beta.scenarios.summary.leverage_delete", mode: cfg[:target_mode])
+    when "leverage_photo.crop_to_progress"
+      t("beta.scenarios.summary.leverage_crop", mode: cfg[:target_mode])
+    when "puzzle.assign"
+      t("beta.scenarios.summary.puzzle_assign", count: cfg[:piece_count].to_i, source: cfg[:image_source])
     else
       ""
     end

@@ -12,12 +12,14 @@ class BetaDashboardController < ApplicationController
     "sources_chess" => "chess",
     "sources_showcase" => "showcase",
     "sources_wallpaper" => "wallpaper",
-    "sources_cornertime" => "cornertime"
+    "sources_cornertime" => "cornertime",
+    "sources_puzzle" => "puzzle"
   }.freeze
   CATALOG_ACTION_ACTIONS = {
     "actions_chaster" => "chaster",
     "actions_pishock" => "pishock",
-    "actions_leverage_photo" => "leverage_photo"
+    "actions_leverage_photo" => "leverage_photo",
+    "actions_puzzle" => "puzzle"
   }.freeze
 
   before_action :authenticate_user!
@@ -72,6 +74,10 @@ class BetaDashboardController < ApplicationController
       config.save!
     when "cornertime"
       config = current_user.ensure_cornertime_config!
+      config.assign_scenarios!(merge_scenario_sets(config.scenario_set, incoming))
+      config.save!
+    when "puzzle"
+      config = current_user.ensure_puzzle_config!
       config.assign_scenarios!(merge_scenario_sets(config.scenario_set, incoming))
       config.save!
     when "strava"
@@ -187,6 +193,37 @@ class BetaDashboardController < ApplicationController
     @sessions = current_user.cornertime_sessions.recent.includes(:cornertime_violations).limit(20)
     @leverage_photos = current_user.leverage_photos.not_deleted.newest_first
     @leverage_action_enabled = BetaCatalog.new(current_user).action_platform_enabled?("leverage_photo")
+  end
+
+  def sources_puzzle
+    @config = current_user.ensure_puzzle_config!
+    @open_sessions = current_user.puzzle_sessions.open.recent.limit(12)
+    @recent_events = PuzzleSessionEvent
+      .joins(:puzzle_session)
+      .where(puzzle_sessions: { user_id: current_user.id })
+      .recent
+      .limit(24)
+    @leverage_photos = current_user.leverage_photos.not_deleted.newest_first
+    @current_wallpaper = current_user.primary_device&.current_wallpaper
+    @leverage_action_enabled = BetaCatalog.new(current_user).action_platform_enabled?("leverage_photo")
+    @puzzle_action_enabled = BetaCatalog.new(current_user).action_platform_enabled?("puzzle")
+  end
+
+  def update_puzzle_config
+    config = current_user.ensure_puzzle_config!
+    config.assign_attributes(puzzle_config_params)
+    if params.key?(:scenarios)
+      assign_host_scenarios!(config, source: :puzzle)
+    end
+    config.save!
+    PosthogProductAnalytics.configured_source(current_user, name: "puzzle")
+    redirect_to beta_sources_puzzle_path, notice: t("flash.beta.puzzle.config_saved")
+  rescue ActiveRecord::RecordInvalid => e
+    redirect_to beta_sources_puzzle_path, alert: e.record.errors.full_messages.join(", ")
+  end
+
+  def actions_puzzle
+    @recent_assignments = current_user.puzzle_sessions.where(origin: "scenario").recent.limit(20)
   end
 
   def update_cornertime_config
@@ -621,6 +658,19 @@ class BetaDashboardController < ApplicationController
     }.compact
   end
 
+  def puzzle_config_params
+    {
+      default_piece_count: params[:default_piece_count],
+      default_reference_mode: params[:default_reference_mode],
+      cooldown_seconds: params[:cooldown_seconds],
+      default_time_limit_seconds: blank_to_nil_param(params[:default_time_limit_seconds])
+    }
+  end
+
+  def blank_to_nil_param(value)
+    value.presence
+  end
+
   def assign_host_scenarios!(host, source:)
     incoming = ScenarioSet.from_params(params[:scenarios], source: source)
     raw = params[:scenarios]
@@ -703,6 +753,7 @@ class BetaDashboardController < ApplicationController
       when "cornertime" then "cornertime"
       when "strava" then "strava"
       when "chess" then "chess"
+      when "puzzle" then "puzzle"
       end
       catalog_id.present? && catalog.source_platform_enabled?(catalog_id) && catalog.source_enabled?(catalog_id)
     end
@@ -733,6 +784,19 @@ class BetaDashboardController < ApplicationController
           source_label: t("beta.scenarios.hub.sources.cornertime"),
           scenario: scenario,
           open_path: beta_sources_cornertime_path,
+          context_label: nil
+        }
+      end
+    end
+
+    if sources.include?("puzzle")
+      config = current_user.ensure_puzzle_config!
+      config.scenario_set.scenarios.each do |scenario|
+        entries << {
+          source: "puzzle",
+          source_label: t("beta.scenarios.hub.sources.puzzle"),
+          scenario: scenario,
+          open_path: beta_sources_puzzle_path,
           context_label: nil
         }
       end

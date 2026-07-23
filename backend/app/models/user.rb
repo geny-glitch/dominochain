@@ -32,6 +32,8 @@ class User < ApplicationRecord
   has_many :wallpaper_compliance_checks, dependent: :destroy
   has_one :cornertime_config, dependent: :destroy
   has_many :cornertime_sessions, dependent: :destroy
+  has_one :puzzle_config, dependent: :destroy
+  has_many :puzzle_sessions, dependent: :destroy
   has_many :leverage_photos, dependent: :destroy
 
   validates :nickname, presence: true, uniqueness: true
@@ -124,6 +126,10 @@ class User < ApplicationRecord
 
   def ensure_cornertime_config!
     cornertime_config || create_cornertime_config!
+  end
+
+  def ensure_puzzle_config!
+    puzzle_config || create_puzzle_config!
   end
 
   def ensure_strava_config!

@@ -30,6 +30,10 @@ es:
           label: "Chess.com"
           subtitle: "Objetivos ELO con fecha límite o comprobaciones regulares"
           events: "Evento: goal.failed"
+        puzzle:
+          label: "Puzzle"
+          subtitle: "Rompecabezas a partir de tus fotos · con o sin tiempo"
+          events: "Eventos: completado, fuera de tiempo, abandonado"
       actions:
         chaster:
           label: "Chaster"
@@ -42,7 +46,11 @@ es:
         leverage_photo:
           label: "Time vault"
           subtitle: "Bloquear o ampliar una foto, o eliminarla definitivamente"
-          events: "Acciones: bloquear/ampliar, eliminación definitiva"
+          events: "Acciones: bloquear/ampliar, eliminación definitiva, conservar el avance del puzzle"
+        puzzle:
+          label: "Puzzle"
+          subtitle: "Asignar un rompecabezas a partir de una foto"
+          events: "Acción: asignar puzzle"
     sanctions:
       shared:
         target_mode: "Foto objetivo"
@@ -73,6 +81,21 @@ es:
             seconds_placeholder: "Segundos"
         delete:
           label: "Eliminar definitivamente una foto leverage"
+        crop_to_progress:
+          label: "Conservar solo la imagen del puzzle incompleto"
+          fields:
+            target_mode: "Foto objetivo"
+            photo_id: "Foto"
+      puzzle:
+        assign:
+          label: "Asignar un puzzle"
+          fields:
+            image_source: "Fuente de la imagen"
+            piece_count: "Número de piezas"
+            reference_mode: "Imagen de referencia"
+            time_limit_seconds: "Límite de tiempo (segundos)"
+            target_mode: "Foto objetivo"
+            photo_id: "Foto"
     scenarios:
       section_title: "Consecuencias"
       empty: "Aún no hay consecuencias. Añade una para reaccionar cuando algo falle."
@@ -97,6 +120,14 @@ es:
           label: "Objetivo fallido"
         goal_failed:
           label: "Objetivo concreto fallido"
+        completed:
+          label: "Puzzle completado"
+        completed_in_time:
+          label: "Puzzle completado a tiempo"
+        failed_time:
+          label: "Puzzle no terminado a tiempo"
+        abandoned:
+          label: "Puzzle abandonado"
       triggers:
         mismatch:
           delay_minutes: "Retraso antes de aplicar (minutos)"
@@ -140,6 +171,8 @@ es:
         pishock: "Intensidad %{intensity} · %{duration}s"
         leverage_lock: "%{seconds}s · %{mode}"
         leverage_delete: "%{mode}"
+        leverage_crop: "recorte · %{mode}"
+        puzzle_assign: "%{count} piezas · %{source}"
         unknown_goal: "objetivo desconocido"
       hub:
         page_title: "Consecuencias — Beta"
@@ -162,6 +195,7 @@ es:
           cornertime: "Corner time"
           strava: "Strava"
           chess: "Chess.com"
+          puzzle: "Puzzle"
     events:
       sources:
         puryfi: "Purify"
@@ -525,3 +559,40 @@ es:
         source_disabled: "Fuente desactivada"
         no_sanctions: "Sin sanción configurada"
         error: "Error"
+
+    puzzle_source:
+      page_title: "Puzzle — %{nickname}"
+      heading: "Puzzle"
+      lead: "Arma un rompecabezas a partir de una foto leverage o un fondo de pantalla. Configura qué pasa al terminar, quedarte sin tiempo o abandonar."
+      default_piece_count: "Número de piezas por defecto"
+      piece_count_option: "%{count} piezas"
+      default_reference_mode: "Imagen de referencia por defecto"
+      reference_modes:
+        original: "Mostrar el original"
+        blurred: "Mostrar una versión difuminada"
+        none: "Sin referencia"
+      default_time_limit: "Límite de tiempo por defecto (segundos)"
+      time_limit_optional: "Opcional"
+      time_limit_hint: "Déjalo vacío para no poner límite."
+      cooldown: "Espera entre puzzles iniciados por ti (segundos)"
+      sanctions_title: "Consecuencias"
+      save: "Guardar ajustes"
+      play_title: "Jugar"
+      start_new: "Empezar un puzzle nuevo"
+      image_source: "Fuente de la imagen"
+      image_sources:
+        leverage_photo: "Foto leverage"
+        wallpaper: "Fondo de pantalla actual"
+      photo_select: "Foto"
+      photo_random: "Foto elegible aleatoria"
+      start_button: "Empezar puzzle"
+      view_all: "Ver todos los puzzles"
+      no_events: "Aún no hay resultados de puzzle."
+    actions_puzzle:
+      page_title: "Acción Puzzle — %{nickname}"
+      heading: "Puzzle"
+      lead: "Asigna un puzzle como consecuencia desde otras fuentes."
+      config_lead: "Usa « Asignar un puzzle » en los escenarios de fuentes (fondo, corner time, Strava, Chess.com o puzzle)."
+      config_hint: "Los puzzles asignados aparecen en la página fuente Puzzle y como notificación en tu dispositivo."
+      open_source: "Abrir fuente Puzzle"
+      no_assignments: "Aún no hay puzzles asignados."

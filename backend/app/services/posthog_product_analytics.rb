@@ -30,6 +30,27 @@ class PosthogProductAnalytics
       capture(user, "pishock_zap", properties)
     end
 
+    def puzzle_started(user, session:)
+      capture(
+        user,
+        "puzzle_started",
+        session_id: session.id,
+        piece_count: session.piece_count,
+        image_source: session.image_source,
+        origin: session.origin
+      )
+    end
+
+    def puzzle_finished(user, kind:, pieces_placed:, pieces_total:)
+      capture(
+        user,
+        "puzzle_finished",
+        kind: kind.to_s,
+        pieces_placed: pieces_placed.to_i,
+        pieces_total: pieces_total.to_i
+      )
+    end
+
     def time_added_reason(source:, metadata: {})
       metadata = (metadata || {}).stringify_keys
       source_key = source.to_s

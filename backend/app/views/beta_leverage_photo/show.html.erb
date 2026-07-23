@@ -14,3 +14,19 @@
 </section>
 
 <%= render "beta_leverage_photo/wallpaper_panel", photo: @photo %>
+
+<% if beta_catalog_source_enabled?("puzzle") && @photo.wallpaper_display_attachment&.attached? %>
+  <section class="ds-beta-section">
+    <h2 class="ds-section-title"><%= t("leverage_photo.puzzle.title") %></h2>
+    <div class="ds-beta-control-card">
+      <p class="ds-beta-control-text"><%= t("leverage_photo.puzzle.lead") %></p>
+      <div class="ds-beta-control-actions" style="margin-top:0.75rem;">
+        <%= button_to t("leverage_photo.puzzle.start"),
+              beta_puzzles_create_path,
+              method: :post,
+              params: { image_source: "leverage_photo", leverage_photo_id: @photo.id },
+              class: "ds-btn ds-btn--primary ds-btn--sm" %>
+      </div>
+    </div>
+  </section>
+<% end %>

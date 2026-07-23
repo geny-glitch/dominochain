@@ -78,6 +78,13 @@ module BetaEvents
       }
     }.freeze
 
+    PUZZLE_EVENTS = {
+      "completed" => { trigger_fields: {} },
+      "completed_in_time" => { trigger_fields: {} },
+      "failed_time" => { trigger_fields: {} },
+      "abandoned" => { trigger_fields: {} }
+    }.freeze
+
     SOURCES = {
       "wallpaper" => {
         event_source: :wallpaper,
@@ -98,6 +105,11 @@ module BetaEvents
         event_source: :chess_com_goal,
         action_kind: :failed_penalty,
         events: CHESS_EVENTS
+      },
+      "puzzle" => {
+        event_source: :puzzle,
+        action_kind: :completed,
+        events: PUZZLE_EVENTS
       }
     }.freeze
 

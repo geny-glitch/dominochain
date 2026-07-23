@@ -8,7 +8,9 @@ module BetaEvents
       "chaster.freeze" => :chaster_freeze,
       "pishock.shock" => :pishock,
       "leverage_photo.lock" => :leverage_photo_lock,
-      "leverage_photo.delete" => :leverage_photo_delete
+      "leverage_photo.delete" => :leverage_photo_delete,
+      "leverage_photo.crop_to_progress" => :leverage_photo_crop_to_progress,
+      "puzzle.assign" => :puzzle_assign
     }.freeze
 
     def initialize(beta:, source:, kind_map: {}, execute: nil)
@@ -95,9 +97,16 @@ module BetaEvents
         payload[:seconds] = config[:seconds]
         payload[:target_mode] = config[:target_mode].presence || "random"
         payload[:photo_id] = config[:photo_id] if config[:photo_id].present?
-      when "leverage_photo.delete"
+      when "leverage_photo.delete", "leverage_photo.crop_to_progress"
         payload[:target_mode] = config[:target_mode].presence || "random"
         payload[:photo_id] = config[:photo_id] if config[:photo_id].present?
+        payload[:puzzle_session_id] = meta["puzzle_session_id"] if meta["puzzle_session_id"].present?
+      when "puzzle.assign"
+        payload.merge!(config)
+      end
+      # Always forward puzzle_session_id from metadata when present (crop needs it).
+      if meta["puzzle_session_id"].present?
+        payload[:puzzle_session_id] ||= meta["puzzle_session_id"]
       end
       payload
     end
@@ -111,13 +120,15 @@ module BetaEvents
           "pishock_intensity" => config[:intensity],
           "pishock_duration" => config[:duration]
         }
-      when "leverage_photo.lock", "leverage_photo.delete"
+      when "leverage_photo.lock", "leverage_photo.delete", "leverage_photo.crop_to_progress"
         meta = {
           "target_mode" => config[:target_mode],
           "leverage_photo_id" => context.leverage_photo_id || config[:photo_id]
         }
         meta["seconds"] = config[:seconds] if config[:seconds].present?
         meta
+      when "puzzle.assign"
+        { "puzzle_session_id" => context.puzzle_session_id }
       else
         {}
       end

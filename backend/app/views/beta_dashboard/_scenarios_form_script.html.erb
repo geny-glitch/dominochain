@@ -262,6 +262,10 @@
       return (config.seconds || "") + "s · " + (config.target_mode || "");
     }
     if (possibilityId === "leverage_photo.delete") return String(config.target_mode || "");
+    if (possibilityId === "leverage_photo.crop_to_progress") return String(config.target_mode || "");
+    if (possibilityId === "puzzle.assign") {
+      return String(config.piece_count || "") + " · " + String(config.image_source || "");
+    }
     return "";
   }
 
@@ -343,6 +347,14 @@
         (bootstrap.photos || []).forEach(function (photo) {
           html += '<option value="' + escapeHtml(photo.id) + '"' + (String(value) === String(photo.id) ? " selected" : "") + ">" +
             escapeHtml(photo.label) + "</option>";
+        });
+        html += "</select>";
+      } else if (field.ui === "enum" || field.type === "enum") {
+        html += '<label class="ds-form-label">' + escapeHtml(label) + "</label>";
+        html += '<select class="ds-input" data-action-edit-key="' + escapeHtml(key) + '">';
+        (field.values || []).forEach(function (opt) {
+          html += '<option value="' + escapeHtml(opt) + '"' + (String(value) === String(opt) ? " selected" : "") + ">" +
+            escapeHtml(opt) + "</option>";
         });
         html += "</select>";
       } else if (field.ui === "number" || field.type === "integer") {
@@ -632,6 +644,14 @@
         html += '<option value=""></option>';
         (bootstrap.photos || []).forEach(function (photo) {
           html += '<option value="' + escapeHtml(photo.id) + '">' + escapeHtml(photo.label) + "</option>";
+        });
+        html += "</select>";
+      } else if (field.ui === "enum" || field.type === "enum") {
+        html += '<label class="ds-form-label">' + escapeHtml(label) + "</label>";
+        html += '<select class="ds-input" data-composer-config-key="' + escapeHtml(key) + '">';
+        (field.values || []).forEach(function (opt) {
+          var selected = String(opt) === String(field.default) ? " selected" : "";
+          html += '<option value="' + escapeHtml(opt) + '"' + selected + ">" + escapeHtml(opt) + "</option>";
         });
         html += "</select>";
       } else if (field.ui === "number" || field.type === "integer") {

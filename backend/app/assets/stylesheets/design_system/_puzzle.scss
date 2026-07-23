@@ -1,0 +1,77 @@
+.ds-puzzle-play {
+  display: grid;
+  gap: 1rem;
+}
+
+.ds-puzzle-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.ds-puzzle-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.ds-puzzle-board-wrap {
+  width: 100%;
+  max-width: 28rem;
+}
+
+.ds-puzzle-canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  min-height: 26rem;
+  touch-action: none;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+}
+
+.ds-puzzle-reference {
+  max-width: 12rem;
+}
+
+.ds-puzzle-reference-img {
+  display: block;
+  width: 100%;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.ds-puzzle-reference-img--blurred {
+  filter: blur(8px);
+}
+
+.ds-puzzle-status {
+  min-height: 1.25rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.ds-puzzle-start-form {
+  display: grid;
+  gap: 0.75rem;
+  max-width: 28rem;
+}
+
+.ds-puzzle-session-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.ds-puzzle-session-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}

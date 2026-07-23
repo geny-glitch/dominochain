@@ -128,6 +128,16 @@ fr:
           invalid_duration: "Choisis une durée de session valide."
       cornertime:
         config_saved: "Paramètres Corner time enregistrés."
+      puzzle:
+        config_saved: "Paramètres Puzzle enregistrés."
+        not_found: "Puzzle introuvable."
+        create_failed: "Impossible de démarrer le puzzle."
+        source_disabled: "Puzzle est désactivé."
+        cooldown: "Attendez un peu avant de démarrer un autre puzzle."
+        no_eligible_photo: "Aucune photo éligible."
+        no_wallpaper: "Aucun fond d’écran actuel."
+        missing_upload: "Choisissez une image à envoyer."
+        invalid_image_source: "Choisissez une source d’image valide."
       strava:
         consequences_saved: "Conséquences Strava enregistrées."
       chess:

@@ -1,0 +1,162 @@
+<section class="ds-beta-section ds-beta-section--first">
+  <h2 class="ds-section-title"><%= t("beta.integration_sections.configuration") %></h2>
+  <div class="ds-beta-control-card">
+    <%= form_with url: beta_puzzle_config_path, method: :patch, local: true, class: "ds-form", data: { turbo: false, scenarios_form: true } do %>
+      <div class="ds-form-group">
+        <%= label_tag :default_piece_count, t("beta.puzzle_source.default_piece_count"), class: "ds-form-label" %>
+        <%= select_tag :default_piece_count,
+              options_for_select(
+                PuzzleConfig::ALLOWED_PIECE_COUNTS.map { |n| [t("beta.puzzle_source.piece_count_option", count: n), n] },
+                @config.default_piece_count
+              ),
+              class: "ds-input" %>
+      </div>
+
+      <div class="ds-form-group">
+        <%= label_tag :default_reference_mode, t("beta.puzzle_source.default_reference_mode"), class: "ds-form-label" %>
+        <%= select_tag :default_reference_mode,
+              options_for_select(
+                PuzzleConfig::REFERENCE_MODES.map { |m| [t("beta.puzzle_source.reference_modes.#{m}"), m] },
+                @config.default_reference_mode
+              ),
+              class: "ds-input" %>
+      </div>
+
+      <div class="ds-form-group">
+        <%= label_tag :default_time_limit_seconds, t("beta.puzzle_source.default_time_limit"), class: "ds-form-label" %>
+        <%= number_field_tag :default_time_limit_seconds,
+              @config.default_time_limit_seconds,
+              min: PuzzleConfig::MIN_TIME_LIMIT_SECONDS,
+              max: PuzzleConfig::MAX_TIME_LIMIT_SECONDS,
+              class: "ds-input",
+              placeholder: t("beta.puzzle_source.time_limit_optional") %>
+        <p class="ds-beta-control-hint"><%= t("beta.puzzle_source.time_limit_hint") %></p>
+      </div>
+
+      <div class="ds-form-group">
+        <%= label_tag :cooldown_seconds, t("beta.puzzle_source.cooldown"), class: "ds-form-label" %>
+        <%= number_field_tag :cooldown_seconds,
+              @config.cooldown_seconds,
+              min: PuzzleConfig::MIN_COOLDOWN_SECONDS,
+              max: PuzzleConfig::MAX_COOLDOWN_SECONDS,
+              class: "ds-input",
+              required: true %>
+      </div>
+
+      <%= render "scenarios_list",
+            source: :puzzle,
+            scenario_set: @config.scenario_set,
+            photos: @leverage_photos,
+            section_title: t("beta.puzzle_source.sanctions_title") %>
+
+      <div class="ds-beta-control-actions">
+        <%= submit_tag t("beta.puzzle_source.save"), class: "ds-btn ds-btn--primary" %>
+      </div>
+    <% end %>
+
+    <%= render "scenarios_form_script" %>
+  </div>
+</section>
+
+<section class="ds-beta-section ds-beta-section--tight-top">
+  <h2 class="ds-section-title"><%= t("beta.puzzle_source.play_title") %></h2>
+  <div class="ds-beta-control-card">
+    <% if @open_sessions.any? %>
+      <ul class="ds-puzzle-session-list">
+        <% @open_sessions.each do |session| %>
+          <li>
+            <span>
+              <%= t("puzzle.play.status.#{session.status}") %>
+              · <%= t("puzzle.index.pieces", count: session.piece_count) %>
+            </span>
+            <%= link_to t("puzzle.index.open"), beta_puzzle_path(session), class: "ds-btn ds-btn--primary ds-btn--sm" %>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="ds-beta-control-hint"><%= t("puzzle.index.no_open") %></p>
+    <% end %>
+
+    <hr class="ds-beta-divider">
+
+    <%= form_with url: beta_puzzles_create_path, method: :post, local: true, class: "ds-puzzle-start-form ds-form", data: { turbo: false } do %>
+      <p class="ds-form-label"><%= t("beta.puzzle_source.start_new") %></p>
+
+      <div class="ds-form-group">
+        <%= label_tag :image_source, t("beta.puzzle_source.image_source"), class: "ds-form-label" %>
+        <%= select_tag :image_source,
+              options_for_select([
+                [t("beta.puzzle_source.image_sources.leverage_photo"), "leverage_photo"],
+                [t("beta.puzzle_source.image_sources.wallpaper"), "wallpaper"]
+              ], "leverage_photo"),
+              class: "ds-input" %>
+      </div>
+
+      <% if @leverage_photos.any? %>
+        <div class="ds-form-group">
+          <%= label_tag :leverage_photo_id, t("beta.puzzle_source.photo_select"), class: "ds-form-label" %>
+          <%= select_tag :leverage_photo_id,
+                options_for_select(
+                  [[t("beta.puzzle_source.photo_random"), ""]] +
+                  @leverage_photos.map { |p| ["#{p.download_filename} (#{t("leverage_photo.status.#{p.status}")})", p.id] }
+                ),
+                class: "ds-input" %>
+        </div>
+      <% end %>
+
+      <div class="ds-form-group">
+        <%= label_tag :piece_count, t("beta.puzzle_source.default_piece_count"), class: "ds-form-label" %>
+        <%= select_tag :piece_count,
+              options_for_select(
+                PuzzleConfig::ALLOWED_PIECE_COUNTS.map { |n| [t("beta.puzzle_source.piece_count_option", count: n), n] },
+                @config.default_piece_count
+              ),
+              class: "ds-input" %>
+      </div>
+
+      <div class="ds-form-group">
+        <%= label_tag :reference_mode, t("beta.puzzle_source.default_reference_mode"), class: "ds-form-label" %>
+        <%= select_tag :reference_mode,
+              options_for_select(
+                PuzzleConfig::REFERENCE_MODES.map { |m| [t("beta.puzzle_source.reference_modes.#{m}"), m] },
+                @config.default_reference_mode
+              ),
+              class: "ds-input" %>
+      </div>
+
+      <div class="ds-form-group">
+        <%= label_tag :time_limit_seconds, t("beta.puzzle_source.default_time_limit"), class: "ds-form-label" %>
+        <%= number_field_tag :time_limit_seconds,
+              @config.default_time_limit_seconds,
+              min: PuzzleConfig::MIN_TIME_LIMIT_SECONDS,
+              max: PuzzleConfig::MAX_TIME_LIMIT_SECONDS,
+              class: "ds-input",
+              placeholder: t("beta.puzzle_source.time_limit_optional") %>
+      </div>
+
+      <div class="ds-beta-control-actions">
+        <%= submit_tag t("beta.puzzle_source.start_button"), class: "ds-btn ds-btn--primary" %>
+        <%= link_to t("beta.puzzle_source.view_all"), beta_puzzles_path, class: "ds-btn ds-btn--secondary" %>
+      </div>
+    <% end %>
+  </div>
+</section>
+
+<section class="ds-beta-section ds-beta-section--tight-top">
+  <h2 class="ds-section-title"><%= t("beta.integration_sections.logs_tracking") %></h2>
+  <div class="ds-beta-control-card">
+    <% if @recent_events.any? %>
+      <ul class="ds-beta-bullet-list">
+        <% @recent_events.each do |event| %>
+          <li>
+            <strong><%= t("beta.scenarios.events.#{event.kind}.label") %></strong>
+            — <%= t("puzzle.index.pieces_progress", n: event.pieces_placed, total: event.pieces_total) %>
+            · <%= l(event.occurred_at, format: :short) %>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="ds-beta-control-hint"><%= t("beta.puzzle_source.no_events") %></p>
+    <% end %>
+  </div>
+</section>

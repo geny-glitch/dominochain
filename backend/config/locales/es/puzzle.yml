@@ -1,0 +1,46 @@
+es:
+  puzzle:
+    notifications:
+      assigned_body: "Hay un puzzle nuevo esperándote."
+    play:
+      page_title: "Puzzle"
+      heading: "Puzzle"
+      lead:
+        one: "Arma %{count} pieza."
+        other: "Arma %{count} piezas."
+      start: "Empezar"
+      resume: "Continuar"
+      abandon: "Abandonar"
+      back: "Volver a Puzzle"
+      progress: "%{n}/%{total}"
+      progress_template: "{n}/{total}"
+      reference: "Referencia"
+      canvas_aria: "Tablero del puzzle"
+      starting: "Empezando…"
+      start_failed: "No se pudo iniciar el puzzle."
+      finishing: "Guardando…"
+      finish_failed: "No se pudo guardar el resultado."
+      completed: "Puzzle completado."
+      abandoned: "Puzzle abandonado."
+      timed_out: "Se acabó el tiempo."
+      abandon_confirm: "¿Abandonar este puzzle?"
+      status:
+        assigned: "Asignado"
+        active: "En curso"
+        completed: "Completado"
+        failed_time: "Fuera de tiempo"
+        abandoned: "Abandonado"
+    index:
+      page_title: "Puzzles"
+      heading: "Puzzles"
+      lead: "Sesiones abiertas y resultados recientes."
+      back_to_source: "Volver a ajustes de Puzzle"
+      open_title: "Abiertos"
+      history_title: "Historial"
+      no_open: "No hay puzzles abiertos."
+      no_history: "Aún no hay puzzles terminados."
+      open: "Abrir"
+      pieces:
+        one: "%{count} pieza"
+        other: "%{count} piezas"
+      pieces_progress: "%{n}/%{total}"

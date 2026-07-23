@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_07_22_130000) do
+ActiveRecord::Schema[7.2].define(version: 2026_07_22_160000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -332,6 +332,59 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_22_130000) do
     t.datetime "updated_at", null: false
     t.index ["task_id", "created_at"], name: "index_punishments_on_task_id_and_created_at"
     t.index ["task_id"], name: "index_punishments_on_task_id"
+  end
+
+  create_table "puzzle_configs", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.integer "default_piece_count", default: 25, null: false
+    t.string "default_reference_mode", default: "blurred", null: false
+    t.integer "default_time_limit_seconds"
+    t.integer "cooldown_seconds", default: 0, null: false
+    t.jsonb "scenarios", default: {"scenarios"=>[]}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_puzzle_configs_on_user_id", unique: true
+  end
+
+  create_table "puzzle_session_events", force: :cascade do |t|
+    t.bigint "puzzle_session_id", null: false
+    t.string "kind", null: false
+    t.integer "pieces_placed", default: 0, null: false
+    t.integer "pieces_total", null: false
+    t.jsonb "actions_executed", default: [], null: false
+    t.datetime "occurred_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["puzzle_session_id", "occurred_at"], name: "idx_on_puzzle_session_id_occurred_at_ca53d8bbb3"
+    t.index ["puzzle_session_id"], name: "index_puzzle_session_events_on_puzzle_session_id"
+  end
+
+  create_table "puzzle_sessions", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "leverage_photo_id"
+    t.bigint "wallpaper_id"
+    t.string "status", default: "assigned", null: false
+    t.string "origin", default: "self", null: false
+    t.string "image_source", null: false
+    t.integer "piece_count", null: false
+    t.integer "grid_cols", null: false
+    t.integer "grid_rows", null: false
+    t.string "reference_mode", default: "blurred", null: false
+    t.integer "time_limit_seconds"
+    t.datetime "deadline_at"
+    t.datetime "started_at"
+    t.datetime "ended_at"
+    t.bigint "layout_seed", null: false
+    t.integer "pieces_placed", default: 0, null: false
+    t.integer "pieces_total", null: false
+    t.jsonb "config_snapshot", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["leverage_photo_id"], name: "index_puzzle_sessions_on_leverage_photo_id"
+    t.index ["user_id", "created_at"], name: "index_puzzle_sessions_on_user_id_and_created_at"
+    t.index ["user_id", "status"], name: "index_puzzle_sessions_on_user_id_and_status"
+    t.index ["user_id"], name: "index_puzzle_sessions_on_user_id"
+    t.index ["wallpaper_id"], name: "index_puzzle_sessions_on_wallpaper_id"
   end
 
   create_table "quiz_questions", force: :cascade do |t|
@@ -775,6 +828,11 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_22_130000) do
   add_foreign_key "leverage_photos", "users"
   add_foreign_key "proof_of_completions", "tasks"
   add_foreign_key "punishments", "tasks"
+  add_foreign_key "puzzle_configs", "users"
+  add_foreign_key "puzzle_session_events", "puzzle_sessions"
+  add_foreign_key "puzzle_sessions", "leverage_photos"
+  add_foreign_key "puzzle_sessions", "users"
+  add_foreign_key "puzzle_sessions", "wallpapers"
   add_foreign_key "showcase_add_time_events", "users"
   add_foreign_key "showcase_time_additions", "users"
   add_foreign_key "solid_queue_blocked_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade

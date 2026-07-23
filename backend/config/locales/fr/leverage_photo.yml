@@ -144,6 +144,10 @@ fr:
       set_censored_confirm: "Utiliser le rappel censuré comme fond d'écran du téléphone ?"
       set_teaser_confirm: "Utiliser le teaser comme fond d'écran du téléphone ?"
       no_images: "Ajoute un rappel censuré ou un teaser avant de définir le wallpaper."
+    puzzle:
+      title: "Puzzle"
+      lead: "Transforme cette photo en puzzle. Si tu ne termines pas, les conséquences configurées peuvent s’appliquer — y compris ne garder que le plateau inachevé."
+      start: "Démarrer un puzzle depuis cette photo"
     source:
       title: "Photo de levier"
       page_title: "Photo de levier"

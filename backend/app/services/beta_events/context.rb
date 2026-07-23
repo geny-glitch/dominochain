@@ -4,7 +4,7 @@ module BetaEvents
   # Mutable execution context passed between consequence actions.
   class Context
     attr_reader :beta, :event
-    attr_accessor :addition, :chaster_lock_snapshot, :leverage_photo_id, :action_config
+    attr_accessor :addition, :chaster_lock_snapshot, :leverage_photo_id, :puzzle_session_id, :action_config
 
     def initialize(beta:, event:, action_config: nil)
       @beta = beta
@@ -12,6 +12,7 @@ module BetaEvents
       @addition = nil
       @chaster_lock_snapshot = nil
       @leverage_photo_id = nil
+      @puzzle_session_id = nil
       @action_config = action_config
     end
 

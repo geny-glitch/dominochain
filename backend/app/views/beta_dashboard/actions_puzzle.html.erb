@@ -1,0 +1,53 @@
+<% content_for :title, t("beta.actions_puzzle.page_title", nickname: current_user.nickname) %>
+
+<header class="ds-beta-page-head">
+  <div class="ds-beta-page-head-row">
+    <h1 class="ds-beta-page-title"><%= t("beta.actions_puzzle.heading") %></h1>
+    <%= form_with url: beta_catalog_visibility_path, method: :patch, local: true, class: "ds-beta-catalog-toggle-form", data: { turbo: false } do %>
+      <%= hidden_field_tag :kind, "action" %>
+      <%= hidden_field_tag :item_id, "puzzle" %>
+      <%= hidden_field_tag :enabled, "0" %>
+      <%= hidden_field_tag :return_to, request.fullpath %>
+      <label class="ds-form-label ds-beta-catalog-toggle" title="<%= t("beta.settings.toggle_aria", label: t("beta.catalog.actions.puzzle.label")) %>">
+        <%= check_box_tag :enabled, "1", beta_catalog_action_enabled?("puzzle"), id: "catalog_action_puzzle_page", class: "ds-beta-catalog-toggle-input", onchange: "this.form.requestSubmit();", "aria-label": t("beta.settings.toggle_aria", label: t("beta.catalog.actions.puzzle.label")) %>
+        <span class="ds-beta-catalog-toggle-switch" aria-hidden="true"></span>
+      </label>
+    <% end %>
+  </div>
+  <p class="ds-beta-page-lead">
+    <%= t("beta.actions_puzzle.lead") %>
+  </p>
+</header>
+
+<section class="ds-beta-section ds-beta-section--first">
+  <h2 class="ds-section-title"><%= t("beta.integration_sections.configuration") %></h2>
+  <div class="ds-beta-control-card">
+    <p class="ds-beta-control-text"><%= t("beta.actions_puzzle.config_lead") %></p>
+    <p class="ds-beta-control-hint"><%= t("beta.actions_puzzle.config_hint") %></p>
+    <div class="ds-beta-control-actions">
+      <%= link_to t("beta.actions_puzzle.open_source"), beta_sources_puzzle_path, class: "ds-btn ds-btn--secondary ds-btn--sm" %>
+    </div>
+  </div>
+</section>
+
+<section class="ds-beta-section ds-beta-section--tight-top">
+  <h2 class="ds-section-title"><%= t("beta.integration_sections.logs_tracking") %></h2>
+  <div class="ds-beta-control-card">
+    <% if @recent_assignments.any? %>
+      <ul class="ds-beta-bullet-list">
+        <% @recent_assignments.each do |session| %>
+          <li>
+            <%= t("puzzle.play.status.#{session.status}") %>
+            · <%= t("puzzle.index.pieces", count: session.piece_count) %>
+            · <%= l(session.created_at, format: :short) %>
+            <% if session.open? %>
+              · <%= link_to t("puzzle.index.open"), beta_puzzle_path(session) %>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="ds-beta-control-hint"><%= t("beta.actions_puzzle.no_assignments") %></p>
+    <% end %>
+  </div>
+</section>

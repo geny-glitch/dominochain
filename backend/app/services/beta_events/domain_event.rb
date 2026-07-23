@@ -16,6 +16,7 @@ module BetaEvents
       cigarette
       wallpaper
       cornertime
+      puzzle
     ].freeze
 
     def initialize(beta:, source:, kind:, payload: {}, occurred_at: Time.current)

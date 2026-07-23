@@ -144,6 +144,10 @@ es:
       set_censored_confirm: "¿Usar el recordatorio censurado como fondo del teléfono?"
       set_teaser_confirm: "¿Usar el teaser como fondo del teléfono?"
       no_images: "Añade un recordatorio censurado o un teaser antes de definir el wallpaper."
+    puzzle:
+      title: "Puzzle"
+      lead: "Convierte esta foto en un rompecabezas. Si no lo terminas, pueden aplicarse las consecuencias configuradas — incluida conservar solo el tablero incompleto."
+      start: "Empezar un puzzle con esta foto"
     source:
       title: "Foto de presión"
       page_title: "Foto de presión"

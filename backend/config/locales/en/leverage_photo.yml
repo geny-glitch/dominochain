@@ -144,6 +144,10 @@ en:
       set_censored_confirm: "Use the censored reminder as your phone wallpaper?"
       set_teaser_confirm: "Use the teaser as your phone wallpaper?"
       no_images: "Add a censored reminder or teaser before setting wallpaper."
+    puzzle:
+      title: "Puzzle"
+      lead: "Turn this photo into a jigsaw. If you do not finish, configured consequences can apply — including keeping only the unfinished board."
+      start: "Start a puzzle from this photo"
     source:
       title: "Leverage photo"
       page_title: "Leverage photo"

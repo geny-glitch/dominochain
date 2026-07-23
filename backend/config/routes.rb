@@ -32,6 +32,15 @@ Rails.application.routes.draw do
 get "beta/sources/vitrine", to: "beta_dashboard#sources_showcase", as: :beta_sources_showcase
   get "beta/sources/wallpaper", to: "beta_dashboard#sources_wallpaper", as: :beta_sources_wallpaper
   get "beta/sources/cornertime", to: "beta_dashboard#sources_cornertime", as: :beta_sources_cornertime
+  get "beta/sources/puzzle", to: "beta_dashboard#sources_puzzle", as: :beta_sources_puzzle
+  patch "beta/puzzle/config", to: "beta_dashboard#update_puzzle_config", as: :beta_puzzle_config
+  get "beta/puzzles", to: "beta_puzzle#index", as: :beta_puzzles
+  post "beta/puzzles", to: "beta_puzzle#create", as: :beta_puzzles_create
+  get "beta/puzzles/:id", to: "beta_puzzle#show", as: :beta_puzzle
+  post "beta/puzzles/:id/start", to: "beta_puzzle#start", as: :beta_puzzle_start
+  post "beta/puzzles/:id/finish", to: "beta_puzzle#finish", as: :beta_puzzle_finish
+  post "beta/puzzles/:id/progress_snapshot", to: "beta_puzzle#progress_snapshot", as: :beta_puzzle_progress_snapshot
+  get "beta/puzzles/:id/image", to: "beta_puzzle#image", as: :beta_puzzle_image
   patch "beta/cornertime/config", to: "beta_dashboard#update_cornertime_config", as: :beta_cornertime_config
   patch "beta/strava/config", to: "beta_dashboard#update_strava_config", as: :beta_strava_config
   patch "beta/chess/config", to: "beta_dashboard#update_chess_config", as: :beta_chess_config
@@ -63,6 +72,7 @@ get "beta/sources/vitrine", to: "beta_dashboard#sources_showcase", as: :beta_sou
   get "beta/actions/chaster", to: "beta_dashboard#actions_chaster", as: :beta_actions_chaster
   get "beta/actions/pishock", to: "beta_dashboard#actions_pishock", as: :beta_actions_pishock
   get "beta/actions/leverage_photo", to: "beta_dashboard#actions_leverage_photo", as: :beta_actions_leverage_photo
+  get "beta/actions/puzzle", to: "beta_dashboard#actions_puzzle", as: :beta_actions_puzzle
   get "beta/sources/leverage_photo", to: redirect("/beta/actions/leverage_photo")
   get "beta/reglages", to: "beta_dashboard#settings", as: :beta_settings
   patch "beta/catalogue/visibility", to: "beta_dashboard#update_catalog_visibility", as: :beta_catalog_visibility

@@ -128,6 +128,16 @@ en:
           invalid_duration: "Choose a valid session duration."
       cornertime:
         config_saved: "Corner time settings saved."
+      puzzle:
+        config_saved: "Puzzle settings saved."
+        not_found: "Puzzle not found."
+        create_failed: "Could not start the puzzle."
+        source_disabled: "Puzzle is disabled."
+        cooldown: "Wait a bit before starting another puzzle."
+        no_eligible_photo: "No eligible photo available."
+        no_wallpaper: "No current wallpaper available."
+        missing_upload: "Choose an image to upload."
+        invalid_image_source: "Choose a valid image source."
       strava:
         consequences_saved: "Strava consequences saved."
       chess:

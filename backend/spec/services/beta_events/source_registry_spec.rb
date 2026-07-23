@@ -25,24 +25,27 @@ RSpec.describe BetaEvents::SourceRegistry do
     expect(source.event(:enforcement_unfreeze).mode).to eq(:fixed)
   end
 
-  it "lists strava form possibilities including chaster and leverage" do
+  it "lists strava form possibilities including chaster, leverage, and puzzle" do
     expect(described_class.allowed_for(:strava_goal, :failed_penalty)).to include(
       "chaster.add_time",
       "leverage_photo.lock",
-      "leverage_photo.delete"
+      "leverage_photo.delete",
+      "puzzle.assign"
     )
     expect(described_class.runtime_allowed_for(:strava_goal, :failed_penalty)).to include(
       "chaster.add_time",
       "leverage_photo.lock",
-      "leverage_photo.delete"
+      "leverage_photo.delete",
+      "puzzle.assign"
     )
   end
 
-  it "lists chess form possibilities including chaster and leverage" do
+  it "lists chess form possibilities including chaster, leverage, and puzzle" do
     expect(described_class.allowed_for(:chess_com_goal, :failed_penalty)).to include(
       "chaster.add_time",
       "leverage_photo.lock",
-      "leverage_photo.delete"
+      "leverage_photo.delete",
+      "puzzle.assign"
     )
   end
 
@@ -56,9 +59,23 @@ RSpec.describe BetaEvents::SourceRegistry do
       "chaster.add_time",
       "pishock.shock",
       "leverage_photo.lock",
-      "leverage_photo.delete"
+      "leverage_photo.delete",
+      "puzzle.assign"
     )
     expect(source.event(:early_stop).mode).to eq(:payload)
     expect(described_class.allowed_for(:cornertime, :early_stop)).to include("chaster.add_time")
+  end
+
+  it "registers puzzle event kinds with payload sanctions" do
+    source = described_class.for_event_source(:puzzle)
+    %i[completed completed_in_time failed_time abandoned].each do |kind|
+      event_def = source.event(kind)
+      expect(event_def.mode).to eq(:payload)
+      expect(event_def.accepted_catalogs).to eq(described_class::PUZZLE_CATALOGS)
+    end
+    expect(described_class.allowed_for(:puzzle, :failed_time)).to include(
+      "puzzle.assign",
+      "leverage_photo.crop_to_progress"
+    )
   end
 end

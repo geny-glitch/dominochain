@@ -30,6 +30,10 @@ en:
           label: "Chess.com"
           subtitle: "ELO goals with deadline or regular checks"
           events: "Event: goal.failed"
+        puzzle:
+          label: "Puzzle"
+          subtitle: "Jigsaw from your photos · timed or free"
+          events: "Events: completed, timed out, abandoned"
       actions:
         chaster:
           label: "Chaster"
@@ -42,7 +46,11 @@ en:
         leverage_photo:
           label: "Time vault"
           subtitle: "Lock or extend a photo, or permanently delete it"
-          events: "Actions: lock/extend, permanent delete"
+          events: "Actions: lock/extend, permanent delete, crop to puzzle progress"
+        puzzle:
+          label: "Puzzle"
+          subtitle: "Assign a jigsaw from a photo"
+          events: "Action: assign puzzle"
     sanctions:
       shared:
         target_mode: "Photo target"
@@ -73,6 +81,21 @@ en:
             seconds_placeholder: "Seconds"
         delete:
           label: "Permanently delete a leverage photo"
+        crop_to_progress:
+          label: "Keep only the unfinished puzzle image"
+          fields:
+            target_mode: "Photo target"
+            photo_id: "Photo"
+      puzzle:
+        assign:
+          label: "Assign a puzzle"
+          fields:
+            image_source: "Image source"
+            piece_count: "Number of pieces"
+            reference_mode: "Reference image"
+            time_limit_seconds: "Time limit (seconds)"
+            target_mode: "Photo target"
+            photo_id: "Photo"
     scenarios:
       section_title: "Consequences"
       empty: "No consequences yet. Add one to react when something goes wrong."
@@ -97,6 +120,14 @@ en:
           label: "Goal missed"
         goal_failed:
           label: "Specific goal missed"
+        completed:
+          label: "Puzzle completed"
+        completed_in_time:
+          label: "Puzzle completed on time"
+        failed_time:
+          label: "Puzzle not finished in time"
+        abandoned:
+          label: "Puzzle abandoned"
       triggers:
         mismatch:
           delay_minutes: "Delay before applying (minutes)"
@@ -140,6 +171,8 @@ en:
         pishock: "Intensity %{intensity} · %{duration}s"
         leverage_lock: "%{seconds}s · %{mode}"
         leverage_delete: "%{mode}"
+        leverage_crop: "crop · %{mode}"
+        puzzle_assign: "%{count} pieces · %{source}"
         unknown_goal: "unknown goal"
       hub:
         page_title: "Consequences — Beta"
@@ -162,6 +195,7 @@ en:
           cornertime: "Corner time"
           strava: "Strava"
           chess: "Chess.com"
+          puzzle: "Puzzle"
     events:
       sources:
         puryfi: "Purify"
@@ -525,3 +559,39 @@ en:
         source_disabled: "Source disabled"
         no_sanctions: "No sanction configured"
         error: "Failed"
+    puzzle_source:
+      page_title: "Puzzle — %{nickname}"
+      heading: "Puzzle"
+      lead: "Assemble a jigsaw from a leverage photo or wallpaper. Configure what happens when you finish, run out of time, or give up."
+      default_piece_count: "Default number of pieces"
+      piece_count_option: "%{count} pieces"
+      default_reference_mode: "Default reference image"
+      reference_modes:
+        original: "Show the original"
+        blurred: "Show a blurred version"
+        none: "No reference"
+      default_time_limit: "Default time limit (seconds)"
+      time_limit_optional: "Optional"
+      time_limit_hint: "Leave empty for no time limit."
+      cooldown: "Cooldown between self-started puzzles (seconds)"
+      sanctions_title: "Consequences"
+      save: "Save settings"
+      play_title: "Play"
+      start_new: "Start a new puzzle"
+      image_source: "Image source"
+      image_sources:
+        leverage_photo: "Leverage photo"
+        wallpaper: "Current wallpaper"
+      photo_select: "Photo"
+      photo_random: "Random eligible photo"
+      start_button: "Start puzzle"
+      view_all: "View all puzzles"
+      no_events: "No puzzle results yet."
+    actions_puzzle:
+      page_title: "Puzzle action — %{nickname}"
+      heading: "Puzzle"
+      lead: "Assign a puzzle as a consequence from other sources."
+      config_lead: "Use “Assign a puzzle” in source scenarios (wallpaper, corner time, Strava, Chess.com, or puzzle itself)."
+      config_hint: "Assigned puzzles appear in the Puzzle source page and as notifications on your device."
+      open_source: "Open Puzzle source"
+      no_assignments: "No assigned puzzles yet."

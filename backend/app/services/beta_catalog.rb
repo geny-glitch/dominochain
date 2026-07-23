@@ -5,7 +5,7 @@ class BetaCatalog
   SOURCES_KEY = "sources"
   ACTIONS_KEY = "actions"
   CACHE_NAMESPACE_KEY = "beta_catalog:feature_flags:namespace:v1"
-  FLAGS_CACHE_VERSION = 6
+  FLAGS_CACHE_VERSION = 7
   FLAGS_CACHE_TTL = 1.minute
   SOURCE_FEATURE_FLAGS = {
     "puryfi" => "beta_source_puryfi",
@@ -14,12 +14,14 @@ class BetaCatalog
     "showcase" => "beta_source_showcase",
     "wallpaper" => "beta_source_wallpaper",
     "cornertime" => "beta_source_cornertime",
-    "chess" => "beta_source_chess"
+    "chess" => "beta_source_chess",
+    "puzzle" => "beta_source_puzzle"
   }.freeze
   ACTION_FEATURE_FLAGS = {
     "chaster" => "beta_action_chaster",
     "pishock" => "beta_action_pishock",
-    "leverage_photo" => "beta_action_leverage_photo"
+    "leverage_photo" => "beta_action_leverage_photo",
+    "puzzle" => "beta_action_puzzle"
   }.freeze
 
   SOURCE_DEFS = [
@@ -57,6 +59,11 @@ class BetaCatalog
       id: "chess",
       path_helper: :beta_sources_chess_path,
       action_name: "sources_chess"
+    },
+    {
+      id: "puzzle",
+      path_helper: :beta_sources_puzzle_path,
+      action_name: "sources_puzzle"
     }
   ].freeze
 
@@ -75,6 +82,11 @@ class BetaCatalog
       id: "leverage_photo",
       path_helper: :beta_actions_leverage_photo_path,
       action_name: "actions_leverage_photo"
+    },
+    {
+      id: "puzzle",
+      path_helper: :beta_actions_puzzle_path,
+      action_name: "actions_puzzle"
     }
   ].freeze
 
@@ -86,7 +98,8 @@ class BetaCatalog
     "puryfi" => "puryfi",
     "wallpaper" => "wallpaper",
     "cornertime" => "cornertime",
-    "chess_com_goal" => "chess"
+    "chess_com_goal" => "chess",
+    "puzzle" => "puzzle"
   }.freeze
 
   ACTION_CLASS_TO_CATALOG_ACTION_ID = {
@@ -95,7 +108,9 @@ class BetaCatalog
     "BetaEvents::Actions::ChasterUnfreezeFromEvent" => "chaster",
     "BetaEvents::Actions::EnqueuePishockFromEvent" => "pishock",
     "BetaEvents::Actions::LeveragePhotoLockFromEvent" => "leverage_photo",
-    "BetaEvents::Actions::LeveragePhotoDeleteFromEvent" => "leverage_photo"
+    "BetaEvents::Actions::LeveragePhotoDeleteFromEvent" => "leverage_photo",
+    "BetaEvents::Actions::LeveragePhotoCropToProgressFromEvent" => "leverage_photo",
+    "BetaEvents::Actions::PuzzleAssignFromEvent" => "puzzle"
   }.freeze
 
   def initialize(user)

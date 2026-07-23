@@ -1,0 +1,46 @@
+en:
+  puzzle:
+    notifications:
+      assigned_body: "A new puzzle is waiting for you."
+    play:
+      page_title: "Puzzle"
+      heading: "Puzzle"
+      lead:
+        one: "Assemble %{count} piece."
+        other: "Assemble %{count} pieces."
+      start: "Start"
+      resume: "Continue"
+      abandon: "Give up"
+      back: "Back to Puzzle"
+      progress: "%{n}/%{total}"
+      progress_template: "{n}/{total}"
+      reference: "Reference"
+      canvas_aria: "Puzzle board"
+      starting: "Starting…"
+      start_failed: "Could not start the puzzle."
+      finishing: "Saving…"
+      finish_failed: "Could not save the result."
+      completed: "Puzzle complete."
+      abandoned: "Puzzle abandoned."
+      timed_out: "Time is up."
+      abandon_confirm: "Give up on this puzzle?"
+      status:
+        assigned: "Assigned"
+        active: "In progress"
+        completed: "Completed"
+        failed_time: "Timed out"
+        abandoned: "Abandoned"
+    index:
+      page_title: "Puzzles"
+      heading: "Puzzles"
+      lead: "Open sessions and recent results."
+      back_to_source: "Back to Puzzle settings"
+      open_title: "Open"
+      history_title: "History"
+      no_open: "No open puzzles."
+      no_history: "No finished puzzles yet."
+      open: "Open"
+      pieces:
+        one: "%{count} piece"
+        other: "%{count} pieces"
+      pieces_progress: "%{n}/%{total}"

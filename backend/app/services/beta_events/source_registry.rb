@@ -6,10 +6,11 @@ module BetaEvents
     SHOWCASE_RATE_LIMIT = { window_seconds: 300, max_seconds: 172_800 }.freeze
 
     # Action catalogs accepted on configurable sanction forms (not possibility ids).
-    WALLPAPER_CATALOGS = %w[chaster pishock leverage_photo].freeze
-    STRAVA_CATALOGS = %w[chaster leverage_photo].freeze
-    CHESS_CATALOGS = %w[chaster leverage_photo].freeze
-    CORNERTIME_CATALOGS = %w[chaster pishock leverage_photo].freeze
+    WALLPAPER_CATALOGS = %w[chaster pishock leverage_photo puzzle].freeze
+    STRAVA_CATALOGS = %w[chaster leverage_photo puzzle].freeze
+    CHESS_CATALOGS = %w[chaster leverage_photo puzzle].freeze
+    CORNERTIME_CATALOGS = %w[chaster pishock leverage_photo puzzle].freeze
+    PUZZLE_CATALOGS = %w[chaster pishock leverage_photo puzzle].freeze
 
     EventDef = Struct.new(
       :kind,
@@ -206,6 +207,33 @@ module BetaEvents
                 kind: :early_stop,
                 mode: :payload,
                 accepted_catalogs: CORNERTIME_CATALOGS
+              )
+            },
+            default_event: nil
+          ),
+          puzzle: SourceDef.new(
+            catalog_id: "puzzle",
+            event_source: :puzzle,
+            events: {
+              completed: EventDef.new(
+                kind: :completed,
+                mode: :payload,
+                accepted_catalogs: PUZZLE_CATALOGS
+              ),
+              completed_in_time: EventDef.new(
+                kind: :completed_in_time,
+                mode: :payload,
+                accepted_catalogs: PUZZLE_CATALOGS
+              ),
+              failed_time: EventDef.new(
+                kind: :failed_time,
+                mode: :payload,
+                accepted_catalogs: PUZZLE_CATALOGS
+              ),
+              abandoned: EventDef.new(
+                kind: :abandoned,
+                mode: :payload,
+                accepted_catalogs: PUZZLE_CATALOGS
               )
             },
             default_event: nil

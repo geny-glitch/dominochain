@@ -18,33 +18,28 @@ class BetaWallpaperController < ApplicationController
   def create
     return if block_wallpaper_change_during_verification_session!
 
-    device = current_user.primary_device
-    unless device
-      redirect_to beta_sources_wallpaper_path, alert: t("flash.beta.wallpaper.no_device")
-      return
-    end
-
-    image_param = params.require(:image)
-    wallpaper = device.wallpapers.create!(image: image_param)
-    device.wallpaper_applications.create!(
-      wallpaper: wallpaper,
-      applied_at: Time.current,
+    Wallpapers::UploadForUser.new(
+      user: current_user,
+      image: params.require(:image),
       applied_by: "beta_self"
-    )
-
-    current_user.devices.where.not(id: device.id).find_each do |d|
-      w = d.wallpapers.new
-      w.image.attach(wallpaper.image.blob)
-      w.save!
-      d.wallpaper_applications.create!(wallpaper: w, applied_at: Time.current, applied_by: "beta_self")
-    end
-
-    WallpaperEnforcementEvaluator.new(current_user).reset_mismatch_on_wallpaper_change!
-    FcmService.send_background_changed_notifications(device: device)
+    ).call!
 
     redirect_to beta_sources_wallpaper_path, notice: t("flash.beta.wallpaper.uploaded")
   rescue ActionController::ParameterMissing
     redirect_to beta_wallpaper_upload_path, alert: t("flash.wallpaper.select_image")
+  rescue Wallpapers::UploadForUser::Error => e
+    alert =
+      case e.message
+      when "boss_controls"
+        t("flash.beta.wallpaper.boss_controls_wallpaper")
+      when "verification_session_locked"
+        t("flash.beta.wallpaper.verification_session_locked")
+      when "no_device"
+        t("flash.beta.wallpaper.no_device")
+      else
+        t("flash.wallpaper.select_image")
+      end
+    redirect_to beta_sources_wallpaper_path, alert: alert
   end
 
   private

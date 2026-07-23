@@ -206,6 +206,24 @@ get "beta/sources/vitrine", to: "beta_dashboard#sources_showcase", as: :beta_sou
     patch "cornertime/sessions/:id/stop", to: "cornertime/sessions#stop"
     post "cornertime/sessions/:id/violations", to: "cornertime/violations#create"
 
+    get "wallpaper/config", to: "wallpaper/configs#show"
+    patch "wallpaper/config", to: "wallpaper/configs#update"
+    get "wallpaper/scenario_schema", to: "wallpaper/scenario_schemas#show"
+    post "wallpaper/upload", to: "wallpaper/uploads#create"
+    post "wallpaper/verification_sessions", to: "wallpaper/verification_sessions#create"
+
+    get "leverage_photos", to: "leverage_photos#index"
+    post "leverage_photos", to: "leverage_photos#create"
+    get "leverage_photos/:id", to: "leverage_photos#show"
+    post "leverage_photos/:id/censor", to: "leverage_photos#censor"
+    post "leverage_photos/:id/start", to: "leverage_photos#start"
+    post "leverage_photos/:id/add_time", to: "leverage_photos#add_time"
+    get "leverage_photos/:id/tlock_blob", to: "leverage_photos#tlock_blob"
+    get "leverage_photos/:id/original", to: "leverage_photos#original"
+    get "leverage_photos/:id/decrypt_payload", to: "leverage_photos#decrypt_payload"
+    post "leverage_photos/:id/restore_original", to: "leverage_photos#restore_original"
+    post "leverage_photos/:id/set_as_wallpaper", to: "leverage_photos#set_as_wallpaper"
+
     get "showcase_settings", to: "showcase_settings#show"
     patch "showcase_settings", to: "showcase_settings#update"
   end

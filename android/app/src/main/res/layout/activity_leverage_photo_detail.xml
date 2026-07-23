@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/ds_bg"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="@dimen/ds_page_padding">
+
+        <ImageView
+            android:id="@+id/leverage_detail_image"
+            android:layout_width="match_parent"
+            android:layout_height="220dp"
+            android:layout_marginBottom="@dimen/ds_space_md"
+            android:contentDescription="@string/leverage_photos_title"
+            android:scaleType="centerCrop"
+            android:background="@color/ds_surface" />
+
+        <TextView
+            android:id="@+id/leverage_detail_status"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/ds_space_sm"
+            style="@style/DsBody" />
+
+        <TextView
+            android:id="@+id/leverage_detail_countdown"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/ds_space_md"
+            style="@style/DsSmall"
+            android:textColor="@color/ds_teal" />
+
+        <TextView
+            android:id="@+id/leverage_crypto_status"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/ds_space_md"
+            style="@style/DsSmall"
+            android:textColor="@color/ds_text_muted" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/ds_space_xs"
+            android:text="@string/leverage_duration_minutes"
+            style="@style/DsSmall"
+            android:textColor="@color/ds_text_muted" />
+
+        <EditText
+            android:id="@+id/leverage_duration_minutes"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/ds_space_sm"
+            android:inputType="number"
+            android:text="1440"
+            android:importantForAutofill="no" />
+
+        <Button
+            android:id="@+id/leverage_start_timer_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/ds_space_sm"
+            android:text="@string/leverage_start_timer"
+            style="@style/DsButton" />
+
+        <Button
+            android:id="@+id/leverage_add_time_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/ds_space_md"
+            android:text="@string/leverage_add_time"
+            style="@style/DsButton" />
+
+        <Button
+            android:id="@+id/leverage_set_teaser_wallpaper"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/ds_space_sm"
+            android:text="@string/leverage_set_teaser_wallpaper"
+            style="@style/DsButton" />
+
+        <Button
+            android:id="@+id/leverage_set_censored_wallpaper"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/ds_space_sm"
+            android:text="@string/leverage_set_censored_wallpaper"
+            style="@style/DsButton" />
+
+        <Button
+            android:id="@+id/leverage_decrypt_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/leverage_decrypt"
+            style="@style/DsButton" />
+
+        <FrameLayout
+            android:id="@+id/leverage_webview_container"
+            android:layout_width="1dp"
+            android:layout_height="1dp"
+            android:visibility="gone" />
+    </LinearLayout>
+</ScrollView>

@@ -67,3 +67,11 @@ console_command = '/rails/bin/rails console'
   cpu_kind = 'shared'
   cpus = 1
   memory_mb = 2048
+
+# The worker has no HTTP service, so Fly can't health-check/restart it via a service.
+# Transient DB connection drops (e.g. Postgres briefly hitting resource limits) can
+# crash the Solid Queue supervisor; without this, Fly's default `on-failure` policy
+# gives up after 10 restarts and leaves the worker permanently stopped.
+[[restart]]
+  policy = 'always'
+  processes = ['worker']

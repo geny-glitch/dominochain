@@ -125,6 +125,9 @@ class WallpaperEnforcementEvaluator
   end
 
   def handle_mismatch_double_check!(config, snapshot, device, reference_time)
+    config.mismatch_since ||= reference_time
+    config.save! if config.changed?
+
     if config.mismatch_recheck_count < WallpaperEnforcementConfig::MAX_DOUBLE_CHECK_RECHECKS
       config.increment!(:mismatch_recheck_count)
       WallpaperMismatchRecheckJob.set(wait: WallpaperMismatchRecheckJob::DOUBLE_CHECK_WAIT).perform_later(device.id)

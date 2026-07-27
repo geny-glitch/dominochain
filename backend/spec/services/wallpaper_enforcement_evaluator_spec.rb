@@ -201,6 +201,52 @@ RSpec.describe WallpaperEnforcementEvaluator do
 
         expect(config.reload.mismatch_recheck_count).to eq(0)
       end
+
+      it "tracks mismatch_since from the first mismatch, not from when rechecks are exhausted" do
+        allow(chaster_service).to receive(:add_time_to_lock)
+
+        travel_to Time.current do
+          # First mismatch: rechecks start, no mismatch_since seeded beforehand (as in production).
+          screenshot1 = create(:device_screenshot, device: device, verification_status: "mismatch", similarity_score: 0.2)
+          evaluator.evaluate_verification!(screenshot: screenshot1)
+          expect(config.reload.mismatch_since).to be_within(1.second).of(Time.current)
+        end
+
+        first_mismatch_at = config.reload.mismatch_since
+
+        # Exhaust the remaining rechecks a few seconds later, as WallpaperMismatchRecheckJob would.
+        travel_to(first_mismatch_at + 20.seconds) do
+          2.times do
+            screenshot = create(:device_screenshot, device: device, verification_status: "mismatch", similarity_score: 0.2)
+            evaluator.evaluate_verification!(screenshot: screenshot)
+          end
+          expect(config.reload.mismatch_recheck_count).to eq(3)
+        end
+
+        # A mismatch just after rechecks are exhausted, well before the configured 30-minute delay
+        # has elapsed since the *first* mismatch, must not apply the sanction yet.
+        travel_to(first_mismatch_at + 25.seconds) do
+          screenshot = create(:device_screenshot, device: device, verification_status: "mismatch", similarity_score: 0.2)
+          evaluator.evaluate_verification!(screenshot: screenshot)
+          expect(config.reload.mismatch_since).to be_within(1.second).of(first_mismatch_at)
+          expect(config.reload.add_time_sanction_applied_at).to be_nil
+        end
+        expect(chaster_service).not_to have_received(:add_time_to_lock)
+
+        # Once 30 minutes have elapsed since the *first* mismatch, the sanction applies.
+        travel_to(first_mismatch_at + 31.minutes) do
+          screenshot = create(:device_screenshot, device: device, verification_status: "mismatch", similarity_score: 0.2)
+          evaluator.evaluate_verification!(screenshot: screenshot)
+          expect(config.reload.add_time_sanction_applied_at).to be_present
+        end
+        expect(chaster_service).to have_received(:add_time_to_lock).with(
+          "lock-1",
+          600,
+          source: "wallpaper",
+          summary: I18n.t("chaster.time_events.summaries.wallpaper.mismatch_add_time"),
+          metadata: hash_including("enforcement_kind" => "mismatch_add_time")
+        )
+      end
     end
 
     context "with consecutive_failures sanction mode" do

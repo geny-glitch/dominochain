@@ -117,6 +117,11 @@ export default class extends Controller {
     this.engine?.zoomOut()
   }
 
+  reshuffle(event) {
+    event?.preventDefault()
+    this.engine?.reshuffle()
+  }
+
   async start(event) {
     event?.preventDefault()
     if (this.engine) return

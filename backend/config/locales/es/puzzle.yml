@@ -18,6 +18,7 @@ es:
       canvas_aria: "Tablero del puzzle"
       background_label: "Fondo"
       move_mode: "Mover"
+      reshuffle: "Reordenar"
       zoom_label: "Zoom"
       zoom_in: "Acercar"
       zoom_out: "Alejar"

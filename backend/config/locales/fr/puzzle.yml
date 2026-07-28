@@ -18,6 +18,7 @@ fr:
       canvas_aria: "Plateau de puzzle"
       background_label: "Fond"
       move_mode: "Déplacer"
+      reshuffle: "Réordonner"
       zoom_label: "Zoom"
       zoom_in: "Zoomer"
       zoom_out: "Dézoomer"

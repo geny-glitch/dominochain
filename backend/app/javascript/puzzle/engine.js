@@ -124,6 +124,51 @@ export class PuzzleEngine {
     internal.zoomBy(factor, { x: internal.contWidth / 2, y: internal.contHeight / 2 })
   }
 
+  // Keep assembled groups where they are; pack lone pieces into side columns
+  // outside a reserved center hole (useful after a window resize).
+  reshuffle() {
+    const internal = this.puzzle?.puzzle
+    if (!internal?.polyPieces?.length) return
+
+    internal.getContainerSize()
+
+    const singles = internal.polyPieces.filter((piece) => (piece.pieces?.length || 0) <= 1)
+    if (!singles.length) return
+
+    const margin = 4
+    const gap = 14
+    const maxHoleFrac = 0.35
+    const stepX = internal.scalex + gap
+    const stepY = internal.scaley + gap
+    const gameWidth = internal.gameWidth || internal.scalex * internal.nx
+    const holeWidth = Math.min(Math.max(gameWidth, internal.scalex * 2), internal.contWidth * maxHoleFrac)
+    const centerX = internal.contWidth / 2
+    const leftEdge = centerX - holeWidth / 2
+    const rightEdge = centerX + holeWidth / 2
+    const rowsFit = Math.max(1, Math.floor((internal.contHeight - margin * 2) / stepY))
+
+    const shuffled = singles.slice()
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      const tmp = shuffled[i]
+      shuffled[i] = shuffled[j]
+      shuffled[j] = tmp
+    }
+
+    shuffled.forEach((piece, index) => {
+      const onLeft = index % 2 === 0
+      const slot = Math.floor(index / 2)
+      const col = Math.floor(slot / rowsFit)
+      const row = slot % rowsFit
+      const y = margin + row * stepY
+      const x = onLeft ? leftEdge - (col + 1) * stepX : rightEdge + col * stepX
+      piece.moveTo(x, y)
+      piece.drawImage?.()
+    })
+
+    internal.evaluateZIndex?.()
+  }
+
   // Piece creation happens asynchronously inside the library's own animation
   // loop, so poll a couple of frames until the real grid exists, then correct
   // our counters (and the UI) to match it instead of the requested numPieces.

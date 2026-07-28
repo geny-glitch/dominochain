@@ -2124,10 +2124,15 @@
 
 .ds-beta-leverage-reminders__img {
   display: block;
-  max-width: 220px;
+  height: 220px;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
   border-radius: $ds-radius-sm;
 
   &--original {
+    height: auto;
+    width: auto;
     max-width: 100%;
     border-radius: $ds-radius-md;
   }

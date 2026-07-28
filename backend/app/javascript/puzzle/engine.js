@@ -160,8 +160,8 @@ export class PuzzleEngine {
     return new Promise((resolve) => canvas.toBlob((blob) => resolve(blob), "image/png"))
   }
 
-  // Progress snapshot for sanctions: full original, heavily blurred, with only
-  // the largest assembled piece group drawn sharp on top (other pieces discarded).
+  // Progress snapshot for sanctions: full original, heavily blurred, with every
+  // assembled group (2+ pieces) drawn sharp on top. Lone pieces are discarded.
   composeProgressImage() {
     const internal = this.puzzle?.puzzle
     const src = internal?.srcImage
@@ -179,10 +179,10 @@ export class PuzzleEngine {
 
     this.drawBlurredOriginal(ctx, src, width, height)
 
-    const largest = this.largestPolyPiece(internal.polyPieces)
-    if (!largest?.canvas) return canvas
-
-    this.drawPolyPieceOnImage(ctx, internal, largest, width, height)
+    const assembled = internal.polyPieces.filter((piece) => (piece.pieces?.length || 0) >= 2)
+    assembled.forEach((piece) => {
+      if (piece.canvas) this.drawPolyPieceOnImage(ctx, internal, piece, width, height)
+    })
     return canvas
   }
 
@@ -197,19 +197,6 @@ export class PuzzleEngine {
     // Oversized, aspect-preserving draw so blur does not leave sharp edges.
     ctx.drawImage(src, (width - drawW) / 2, (height - drawH) / 2, drawW, drawH)
     ctx.restore()
-  }
-
-  largestPolyPiece(polyPieces) {
-    return polyPieces.reduce((best, piece) => {
-      if (!best) return piece
-      const bestCount = best.pieces?.length || 0
-      const nextCount = piece.pieces?.length || 0
-      if (nextCount > bestCount) return piece
-      if (nextCount < bestCount) return best
-      const bestArea = (best.canvas?.width || 0) * (best.canvas?.height || 0)
-      const nextArea = (piece.canvas?.width || 0) * (piece.canvas?.height || 0)
-      return nextArea > bestArea ? piece : best
-    }, null)
   }
 
   // PolyPiece canvases are unrotated bitmaps of the assembled chunk; map the

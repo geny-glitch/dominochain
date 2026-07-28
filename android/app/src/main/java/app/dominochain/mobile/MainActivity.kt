@@ -116,6 +116,9 @@ class MainActivity : AppCompatActivity() {
         binding.cornertimeCard.setOnClickListener {
             startActivity(Intent(this, CornertimeActivity::class.java))
         }
+        binding.wallpaperCard.setOnClickListener {
+            startActivity(Intent(this, WallpaperActivity::class.java))
+        }
 
         WallpaperWorker.schedule(this)
         AppUpdateCheckWorker.schedule(this)

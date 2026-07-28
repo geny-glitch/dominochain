@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/ds_bg"
+    android:orientation="vertical"
+    android:padding="@dimen/ds_page_padding">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/ds_space_sm"
+        android:text="@string/leverage_photos_title"
+        style="@style/DsTitle" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/ds_space_md"
+        android:text="@string/leverage_photos_lead"
+        style="@style/DsBody"
+        android:textColor="@color/ds_text_muted" />
+
+    <Button
+        android:id="@+id/leverage_upload_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/ds_space_md"
+        android:text="@string/leverage_upload"
+        style="@style/DsButton" />
+
+    <TextView
+        android:id="@+id/leverage_status"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/ds_space_md"
+        android:text="@string/leverage_loading"
+        style="@style/DsSmall"
+        android:textColor="@color/ds_text_muted" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/leverage_photos_list"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        tools:listitem="@android:layout/simple_list_item_2" />
+</LinearLayout>

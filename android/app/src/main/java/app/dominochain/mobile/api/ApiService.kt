@@ -293,6 +293,88 @@ interface ApiService {
         @Part("text") text: RequestBody?,
         @Part media: MultipartBody.Part?
     ): Response<ProofResponse>
+
+    @GET("api/wallpaper/config")
+    suspend fun getWallpaperConfig(): Response<WallpaperConfigResponse>
+
+    @PATCH("api/wallpaper/config")
+    suspend fun updateWallpaperConfig(@Body body: WallpaperConfigUpdateRequest): Response<WallpaperConfigResponse>
+
+    @GET("api/wallpaper/scenario_schema")
+    suspend fun getWallpaperScenarioSchema(): Response<WallpaperScenarioSchemaResponse>
+
+    @Multipart
+    @POST("api/wallpaper/upload")
+    suspend fun uploadWallpaperBeta(@Part image: MultipartBody.Part): Response<WallpaperUploadResponse>
+
+    @POST("api/wallpaper/verification_sessions")
+    suspend fun startWallpaperVerificationSession(
+        @Body body: WallpaperVerificationSessionRequest
+    ): Response<WallpaperVerificationSessionStartResponse>
+
+    @GET("api/leverage_photos")
+    suspend fun getLeveragePhotos(): Response<LeveragePhotosListResponse>
+
+    @GET("api/leverage_photos/{id}")
+    suspend fun getLeveragePhoto(@Path("id") id: Long): Response<LeveragePhotoResponse>
+
+    @Multipart
+    @POST("api/leverage_photos")
+    suspend fun createLeveragePhoto(
+        @Part original_image: MultipartBody.Part,
+        @Part teaser_image: MultipartBody.Part,
+        @Part censored_image: MultipartBody.Part?
+    ): Response<LeveragePhotoResponse>
+
+    @Multipart
+    @POST("api/leverage_photos/{id}/censor")
+    suspend fun censorLeveragePhoto(
+        @Path("id") id: Long,
+        @Part censored_image: MultipartBody.Part
+    ): Response<LeveragePhotoResponse>
+
+    @Multipart
+    @POST("api/leverage_photos/{id}/start")
+    suspend fun startLeveragePhotoTimer(
+        @Path("id") id: Long,
+        @Part tlock_blob: MultipartBody.Part,
+        @Part("drand_round") drandRound: RequestBody,
+        @Part("locked_until") lockedUntil: RequestBody,
+        @Part("duration_seconds") durationSeconds: RequestBody,
+        @Part("drand_chain_hash") chainHash: RequestBody?
+    ): Response<LeveragePhotoTimerResponse>
+
+    @Multipart
+    @POST("api/leverage_photos/{id}/add_time")
+    suspend fun addLeveragePhotoTime(
+        @Path("id") id: Long,
+        @Part tlock_blob: MultipartBody.Part,
+        @Part("drand_round") drandRound: RequestBody,
+        @Part("locked_until") lockedUntil: RequestBody,
+        @Part("added_seconds") addedSeconds: RequestBody
+    ): Response<LeveragePhotoTimerResponse>
+
+    @GET("api/leverage_photos/{id}/tlock_blob")
+    suspend fun getLeveragePhotoTlockBlob(@Path("id") id: Long): Response<okhttp3.ResponseBody>
+
+    @GET("api/leverage_photos/{id}/original")
+    suspend fun getLeveragePhotoOriginal(@Path("id") id: Long): Response<okhttp3.ResponseBody>
+
+    @GET("api/leverage_photos/{id}/decrypt_payload")
+    suspend fun getLeveragePhotoDecryptPayload(@Path("id") id: Long): Response<okhttp3.ResponseBody>
+
+    @Multipart
+    @POST("api/leverage_photos/{id}/restore_original")
+    suspend fun restoreLeveragePhotoOriginal(
+        @Path("id") id: Long,
+        @Part original_image: MultipartBody.Part
+    ): Response<LeveragePhotoTimerResponse>
+
+    @POST("api/leverage_photos/{id}/set_as_wallpaper")
+    suspend fun setLeveragePhotoAsWallpaper(
+        @Path("id") id: Long,
+        @Body body: LeveragePhotoWallpaperRequest
+    ): Response<LeveragePhotoWallpaperResponse>
 }
 
 data class TaskResponse(
@@ -405,4 +487,144 @@ data class ProofResponse(
     val review_comment: String?,
     val media_url: String?,
     val created_at: String?
+)
+
+data class WallpaperConfigResponse(
+    val source_enabled: Boolean = false,
+    val enabled: Boolean = false,
+    val check_interval_minutes: Int = 60,
+    val dismiss_apps_before_capture: Boolean = false,
+    val scenarios: WallpaperScenariosWrapper? = null,
+    val verification_session: WallpaperVerificationSessionInfo? = null,
+    val device: WallpaperDeviceInfo? = null,
+    val locked: Boolean = false,
+    val boss_controls: Boolean = false,
+    val config_locked: Boolean = false,
+    val allowed_duration_hours: List<Int> = emptyList(),
+    val leverage_action_enabled: Boolean = false,
+    val leverage_photos: List<WallpaperLeveragePhotoSummary> = emptyList()
+)
+
+data class WallpaperScenariosWrapper(
+    val scenarios: List<WallpaperScenarioDto> = emptyList()
+)
+
+data class WallpaperScenarioDto(
+    val id: String? = null,
+    val event: String,
+    val trigger: Map<String, Any?> = emptyMap(),
+    val actions: List<WallpaperScenarioActionDto> = emptyList()
+)
+
+data class WallpaperScenarioActionDto(
+    val possibility_id: String,
+    val config: Map<String, Any?> = emptyMap()
+)
+
+data class WallpaperVerificationSessionInfo(
+    val active: Boolean = false,
+    val id: Long? = null,
+    val ends_at: String? = null,
+    val started_at: String? = null,
+    val duration_hours: Int? = null,
+    val remaining_seconds: Int? = null,
+    val config_locked: Boolean? = null
+)
+
+data class WallpaperDeviceInfo(
+    val connected: Boolean = false,
+    val name: String? = null,
+    val permissions_ok: Boolean = false,
+    val permissions_missing: List<String> = emptyList(),
+    val has_current_wallpaper: Boolean = false,
+    val fcm_token_present: Boolean = false,
+    val reachable: Boolean = false,
+    val last_seen_at: String? = null
+)
+
+data class WallpaperLeveragePhotoSummary(
+    val id: Long,
+    val status: String? = null,
+    val locked_until: String? = null,
+    val teaser_url: String? = null,
+    val censored_url: String? = null
+)
+
+data class WallpaperConfigUpdateRequest(
+    val enabled: Boolean? = null,
+    val check_interval_minutes: Int? = null,
+    val dismiss_apps_before_capture: Boolean? = null,
+    val scenarios: WallpaperScenariosWrapper? = null
+)
+
+data class WallpaperScenarioSchemaResponse(
+    val events: Map<String, WallpaperEventSchemaDto> = emptyMap(),
+    val actions: List<WallpaperActionSchemaDto> = emptyList()
+)
+
+data class WallpaperEventSchemaDto(
+    val trigger_fields: Map<String, Map<String, Any?>> = emptyMap()
+)
+
+data class WallpaperActionSchemaDto(
+    val possibility_id: String,
+    val catalog_id: String? = null,
+    val config_schema: Map<String, Map<String, Any?>> = emptyMap()
+)
+
+data class WallpaperUploadResponse(
+    val id: Long,
+    val url: String,
+    val updated_at: String
+)
+
+data class WallpaperVerificationSessionRequest(
+    val duration_hours: Int
+)
+
+data class WallpaperVerificationSessionStartResponse(
+    val session: WallpaperVerificationSessionInfo
+)
+
+data class LeveragePhotosListResponse(
+    val photos: List<LeveragePhotoResponse> = emptyList()
+)
+
+data class LeveragePhotoResponse(
+    val id: Long,
+    val status: String,
+    val locked_until: String? = null,
+    val tlock_layer_count: Int = 0,
+    val original_filename: String? = null,
+    val can_start_timer: Boolean = false,
+    val can_add_time: Boolean = false,
+    val can_censor: Boolean = false,
+    val has_original: Boolean = false,
+    val has_censored: Boolean = false,
+    val has_teaser: Boolean = false,
+    val teaser_url: String? = null,
+    val censored_url: String? = null,
+    val created_at: String? = null,
+    val initial_duration_seconds: Int? = null,
+    val drand_rounds: List<Long>? = null,
+    val wallpaper_ready: Boolean = false
+)
+
+data class LeveragePhotoTimerResponse(
+    val status: String? = null,
+    val locked_until: String? = null,
+    val layers: Int? = null,
+    val restored: Boolean? = null,
+    val photo: LeveragePhotoResponse? = null,
+    val error: String? = null
+)
+
+data class LeveragePhotoWallpaperRequest(
+    val variant: String = "display"
+)
+
+data class LeveragePhotoWallpaperResponse(
+    val ok: Boolean = false,
+    val photo: LeveragePhotoResponse? = null,
+    val error: String? = null
 )

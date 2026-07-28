@@ -2,6 +2,10 @@
 
 class PuzzleConfig < ApplicationRecord
   REFERENCE_MODES = %w[original blurred none].freeze
+  MIN_PIECE_COUNT = 4
+  MAX_PIECE_COUNT = 120
+  DEFAULT_PIECE_COUNT = 25
+  # Legacy perfect-square presets (kept for older UI copy / migration references).
   ALLOWED_PIECE_COUNTS = [9, 16, 25, 36, 49, 64, 81].freeze
   MIN_COOLDOWN_SECONDS = 0
   MAX_COOLDOWN_SECONDS = 86_400
@@ -10,7 +14,12 @@ class PuzzleConfig < ApplicationRecord
 
   belongs_to :user
 
-  validates :default_piece_count, inclusion: { in: ALLOWED_PIECE_COUNTS }
+  validates :default_piece_count,
+    numericality: {
+      only_integer: true,
+      greater_than_or_equal_to: MIN_PIECE_COUNT,
+      less_than_or_equal_to: MAX_PIECE_COUNT
+    }
   validates :default_reference_mode, inclusion: { in: REFERENCE_MODES }
   validates :cooldown_seconds,
     numericality: {
@@ -59,13 +68,33 @@ class PuzzleConfig < ApplicationRecord
   end
 
   def self.grid_for_piece_count(piece_count)
-    count = piece_count.to_i
-    side = Math.sqrt(count).round
-    return [side, side] if side * side == count
+    count = [piece_count.to_i, MIN_PIECE_COUNT].max
 
-    cols = Math.sqrt(count).ceil
-    rows = (count.to_f / cols).ceil
-    [cols, rows]
+    best_cols = Math.sqrt(count).ceil
+    best_rows = (count.to_f / best_cols).ceil
+    best_score = (best_cols - best_rows).abs * 10 + (best_cols * best_rows - count)
+
+    max_side = Math.sqrt(count).ceil + 3
+    (1..max_side).each do |cols|
+      rows = (count.to_f / cols).ceil
+      next if rows < 1
+
+      score = (cols - rows).abs * 10 + (cols * rows - count)
+      next if score >= best_score
+
+      best_score = score
+      best_cols = cols
+      best_rows = rows
+    end
+
+    [best_cols, best_rows]
+  end
+
+  def self.clamp_piece_count(raw, fallback: DEFAULT_PIECE_COUNT)
+    count = raw.to_i
+    return fallback if count <= 0
+
+    count.clamp(MIN_PIECE_COUNT, MAX_PIECE_COUNT)
   end
 
   private

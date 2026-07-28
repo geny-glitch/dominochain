@@ -101,13 +101,23 @@
         editTrigger: I18n.t("beta.scenarios.edit_trigger"),
         referenceBlank: I18n.t("beta.scenarios.composer.reference_blank"),
         noStravaGoals: I18n.t("beta.scenarios.hub.no_strava_goals"),
-        noChessGoals: I18n.t("beta.scenarios.hub.no_chess_goals")
+        noChessGoals: I18n.t("beta.scenarios.hub.no_chess_goals"),
+        photoBlank: I18n.t("beta.sanctions.shared.photo_select_blank")
       },
       references: {
         strava_goals: Array(strava_goals).map { |g| { id: g.id, label: g.name } },
         chess_com_goals: Array(chess_com_goals).map { |g| { id: g.id, label: g.name } }
       },
-      photos: Array(photos).map { |p| { id: p.id, label: "#{p.download_filename} (#{I18n.t("leverage_photo.status.#{p.status}")})" } }
+      photos: Array(photos).map { |p|
+        {
+          id: p.id,
+          label: p.download_filename,
+          status: p.status,
+          statusLabel: I18n.t("leverage_photo.status.#{p.status}"),
+          active: p.active?,
+          thumbUrl: (p.thumbnail_attachment.present? ? url_for(p.thumbnail_attachment) : nil)
+        }
+      }
     }.to_json) %>
   </script>
 </div>

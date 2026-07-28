@@ -33,30 +33,20 @@
           <%= image_tag url_for(photo.original_image), alt: t("leverage_photo.show.original_alt"), class: "ds-beta-leverage-reminders__img ds-beta-leverage-reminders__img--original" %>
         </div>
       <% end %>
-      <% if photo.censored_image.attached? %>
-        <div class="ds-beta-leverage-reminders__item">
-          <p class="ds-beta-home-muted"><%= t("leverage_photo.show.censored_label") %></p>
-          <%= image_tag url_for(photo.censored_image), alt: t("leverage_photo.show.censored_alt"), class: "ds-beta-leverage-reminders__img" %>
-        </div>
-      <% end %>
-      <% if photo.teaser_image.attached? %>
-        <div class="ds-beta-leverage-reminders__item">
-          <p class="ds-beta-home-muted"><%= t("leverage_photo.show.teaser_label") %></p>
-          <%= image_tag url_for(photo.teaser_image), alt: t("leverage_photo.show.teaser_alt"), class: "ds-beta-leverage-reminders__img ds-beta-leverage-reminders__img--pixel" %>
-        </div>
+      <% if photo.censored_images.attached? %>
+        <% photo.censored_images.each_with_index do |image, index| %>
+          <div class="ds-beta-leverage-reminders__item">
+            <p class="ds-beta-home-muted"><%= t("leverage_photo.show.censored_version_label", n: index + 1) %></p>
+            <%= image_tag url_for(image), alt: t("leverage_photo.show.censored_alt"), class: "ds-beta-leverage-reminders__img" %>
+          </div>
+        <% end %>
       <% end %>
     </div>
 
-    <% if photo.draft? || photo.unlocked? %>
-      <% if photo.needs_censor? %>
-        <div class="ds-beta-leverage-panel__actions ds-beta-leverage-panel__actions--standalone">
-          <%= link_to t("leverage_photo.show.create_censor"), beta_leverage_photo_censor_path(photo), class: "ds-btn ds-btn--secondary ds-btn--sm" %>
-        </div>
-      <% elsif photo.censored_image.attached? && photo.can_censor? %>
-        <div class="ds-beta-leverage-panel__actions ds-beta-leverage-panel__actions--standalone">
-          <%= link_to t("leverage_photo.show.edit_censor"), beta_leverage_photo_censor_path(photo), class: "ds-btn ds-btn--ghost ds-btn--sm" %>
-        </div>
-      <% end %>
+    <% if photo.can_censor? %>
+      <div class="ds-beta-leverage-panel__actions ds-beta-leverage-panel__actions--standalone">
+        <%= link_to t("leverage_photo.show.add_censor"), beta_leverage_photo_censor_path(photo), class: "ds-btn ds-btn--secondary ds-btn--sm" %>
+      </div>
     <% end %>
 
     <% if photo.unlocked? %>

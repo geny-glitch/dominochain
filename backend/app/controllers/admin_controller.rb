@@ -21,8 +21,7 @@ class AdminController < ApplicationController
 
     scope = LeveragePhoto.includes(
       :user,
-      censored_image_attachment: :blob,
-      teaser_image_attachment: :blob
+      censored_images_attachments: :blob
     ).order(created_at: :desc)
     @total_count = scope.count
     @total_pages = [(@total_count / LEVERAGE_PHOTOS_PER_PAGE.to_f).ceil, 1].max

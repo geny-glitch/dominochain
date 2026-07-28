@@ -4,12 +4,12 @@
     <%= form_with url: beta_puzzle_config_path, method: :patch, local: true, class: "ds-form", data: { turbo: false, scenarios_form: true } do %>
       <div class="ds-form-group">
         <%= label_tag :default_piece_count, t("beta.puzzle_source.default_piece_count"), class: "ds-form-label" %>
-        <%= select_tag :default_piece_count,
-              options_for_select(
-                PuzzleConfig::ALLOWED_PIECE_COUNTS.map { |n| [t("beta.puzzle_source.piece_count_option", count: n), n] },
-                @config.default_piece_count
-              ),
-              class: "ds-input" %>
+        <%= number_field_tag :default_piece_count,
+              @config.default_piece_count,
+              min: PuzzleConfig::MIN_PIECE_COUNT,
+              max: PuzzleConfig::MAX_PIECE_COUNT,
+              class: "ds-input",
+              required: true %>
       </div>
 
       <div class="ds-form-group">
@@ -94,24 +94,25 @@
 
       <% if @leverage_photos.any? %>
         <div class="ds-form-group">
-          <%= label_tag :leverage_photo_id, t("beta.puzzle_source.photo_select"), class: "ds-form-label" %>
-          <%= select_tag :leverage_photo_id,
-                options_for_select(
-                  [[t("beta.puzzle_source.photo_random"), ""]] +
-                  @leverage_photos.map { |p| ["#{p.download_filename} (#{t("leverage_photo.status.#{p.status}")})", p.id] }
-                ),
-                class: "ds-input" %>
+          <p class="ds-form-label" id="puzzle_leverage_photo_label"><%= t("beta.puzzle_source.photo_select") %></p>
+          <%= render "beta_leverage_photo/photo_picker",
+                name: "leverage_photo_id",
+                id: "puzzle_leverage_photo_picker",
+                photos: @leverage_photos,
+                include_blank: true,
+                blank_label: t("beta.puzzle_source.photo_random"),
+                labelled_by: "puzzle_leverage_photo_label" %>
         </div>
       <% end %>
 
       <div class="ds-form-group">
         <%= label_tag :piece_count, t("beta.puzzle_source.default_piece_count"), class: "ds-form-label" %>
-        <%= select_tag :piece_count,
-              options_for_select(
-                PuzzleConfig::ALLOWED_PIECE_COUNTS.map { |n| [t("beta.puzzle_source.piece_count_option", count: n), n] },
-                @config.default_piece_count
-              ),
-              class: "ds-input" %>
+        <%= number_field_tag :piece_count,
+              @config.default_piece_count,
+              min: PuzzleConfig::MIN_PIECE_COUNT,
+              max: PuzzleConfig::MAX_PIECE_COUNT,
+              class: "ds-input",
+              required: true %>
       </div>
 
       <div class="ds-form-group">

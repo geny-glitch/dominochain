@@ -28,8 +28,7 @@ RSpec.describe BetaEvents::Actions::LeveragePhotoDeleteFromEvent do
     photo.reload
     expect(photo).to be_sanctioned
     expect(photo.original_image).not_to be_attached
-    expect(photo.censored_image).to be_attached
-    expect(photo.teaser_image).to be_attached
+    expect(photo.censored_images.count).to eq(2)
     expect(context.leverage_photo_id).to eq(photo.id)
   end
 

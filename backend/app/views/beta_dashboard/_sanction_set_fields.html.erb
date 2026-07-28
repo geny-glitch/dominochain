@@ -69,17 +69,17 @@
                 data: { sanction_field: toggle_key } %>
         </div>
         <div class="ds-wallpaper-sanction-field" style="grid-column:1/-1;">
-          <label class="ds-wallpaper-sanction-field-label" for="<%= photo_select_id %>"><%= t("beta.sanctions.shared.photo_select") %></label>
-          <%= select_tag "#{field_base}[photo_id]",
-                options_for_select(
-                  [[t("beta.sanctions.shared.photo_select_blank"), ""]] +
-                    Array(photos).map { |photo| ["#{photo.download_filename} (#{t("leverage_photo.status.#{photo.status}")})", photo.id] },
-                  item.config[:photo_id]
-                ),
+          <p class="ds-wallpaper-sanction-field-label" id="<%= photo_select_id %>_label"><%= t("beta.sanctions.shared.photo_select") %></p>
+          <%= render "beta_leverage_photo/photo_picker",
+                name: "#{field_base}[photo_id]",
                 id: photo_select_id,
-                class: "ds-wallpaper-sanction-input",
+                photos: photos,
+                selected: item.config[:photo_id],
+                include_blank: true,
+                blank_label: t("beta.sanctions.shared.photo_select_blank"),
+                labelled_by: "#{photo_select_id}_label",
                 disabled: !item.enabled,
-                data: { sanction_field: toggle_key } %>
+                input_html: { data: { sanction_field: toggle_key } } %>
         </div>
       <% end %>
 

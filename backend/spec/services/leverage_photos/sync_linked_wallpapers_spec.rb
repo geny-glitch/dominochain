@@ -29,7 +29,7 @@ RSpec.describe LeveragePhotos::SyncLinkedWallpapers do
 
     wallpaper.reload
     expect(photo.reload).to be_active
-    expect(wallpaper.image.download).to eq("fake-censored")
+    expect(wallpaper.image.download).to eq("fake-censored-image-bytes")
     expect(wallpaper.leverage_original_image.download).to eq("fake-original")
 
     photo.mark_unlocked!
@@ -39,13 +39,15 @@ RSpec.describe LeveragePhotos::SyncLinkedWallpapers do
     expect(wallpaper.image.download).to eq("fake-original")
   end
 
-  it "falls back to teaser when censored is missing" do
-    photo.censored_image.purge
+  it "falls back to remaining censored versions when the preferred one is removed" do
+    preferred = photo.preferred_censored_attachment
+    preferred.purge
+    photo.reload
     wallpaper = device.reload.current_wallpaper
 
     described_class.on_locking!(photo)
 
-    expect(wallpaper.reload.image.download).to eq("fake-teaser")
+    expect(wallpaper.reload.image.download).to eq("tiny")
   end
 
   it "does nothing when another wallpaper is current" do

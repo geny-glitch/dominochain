@@ -1,0 +1,63 @@
+<%# locals: name:, photos:, selected: nil, include_blank: false, blank_label: nil, id: nil, labelled_by: nil, disabled: false, input_html: {} %>
+<% photos = Array(local_assigns.fetch(:photos)) %>
+<% selected = local_assigns.fetch(:selected, nil) %>
+<% include_blank = local_assigns.fetch(:include_blank, false) %>
+<% blank_label = local_assigns.fetch(:blank_label) { t("beta.sanctions.shared.photo_select_blank") } %>
+<% picker_id = local_assigns.fetch(:id) { "photo_picker_#{SecureRandom.hex(4)}" } %>
+<% labelled_by = local_assigns[:labelled_by] %>
+<% disabled = local_assigns.fetch(:disabled, false) %>
+<% input_html = local_assigns.fetch(:input_html, {}) %>
+<% selected_str = selected.present? ? selected.to_s : "" %>
+<% blank_selected = include_blank && selected_str.blank? %>
+
+<div
+  class="ds-photo-picker"
+  role="radiogroup"
+  id="<%= picker_id %>"
+  <% if labelled_by.present? %>aria-labelledby="<%= labelled_by %>"<% end %>
+>
+  <div class="ds-photo-picker__grid">
+    <% if include_blank %>
+      <% blank_input_id = "#{picker_id}_blank" %>
+      <label class="ds-photo-picker__option" for="<%= blank_input_id %>">
+        <%= radio_button_tag name, "", blank_selected,
+              id: blank_input_id,
+              class: "ds-photo-picker__input visually-hidden",
+              disabled: disabled,
+              aria: { label: blank_label },
+              **input_html %>
+        <span class="ds-photo-picker__card ds-photo-picker__card--blank">
+          <span class="ds-photo-picker__blank-label"><%= blank_label %></span>
+        </span>
+      </label>
+    <% end %>
+
+    <% photos.each do |photo| %>
+      <% photo_input_id = "#{picker_id}_#{photo.id}" %>
+      <% checked = selected_str == photo.id.to_s %>
+      <% option_label = "#{photo.download_filename} (#{t("leverage_photo.status.#{photo.status}")})" %>
+      <label class="ds-photo-picker__option" for="<%= photo_input_id %>" title="<%= option_label %>">
+        <%= radio_button_tag name, photo.id, checked,
+              id: photo_input_id,
+              class: "ds-photo-picker__input visually-hidden",
+              disabled: disabled,
+              aria: { label: option_label },
+              **input_html %>
+        <span class="ds-photo-picker__card">
+          <% if photo.thumbnail_attachment.present? %>
+            <%= image_tag url_for(photo.thumbnail_attachment),
+                  alt: "",
+                  class: "ds-photo-picker__thumb ds-photo-picker__thumb--pixel" %>
+          <% else %>
+            <span class="ds-photo-picker__thumb ds-photo-picker__thumb--empty" aria-hidden="true"></span>
+          <% end %>
+          <span class="ds-photo-picker__meta">
+            <span class="ds-beta-home-pill <%= photo.active? ? "ds-beta-home-pill--on" : "" %>">
+              <%= t("leverage_photo.status.#{photo.status}") %>
+            </span>
+          </span>
+        </span>
+      </label>
+    <% end %>
+  </div>
+</div>

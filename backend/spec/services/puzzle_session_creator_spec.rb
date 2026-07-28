@@ -26,7 +26,7 @@ RSpec.describe PuzzleSessionCreator do
     expect(result.session.leverage_photo_id).to eq(photo.id)
   end
 
-  it "snaps invalid piece counts to the nearest allowed value" do
+  it "clamps piece counts into the allowed range" do
     result = described_class.new(
       user: user,
       image_source: "leverage_photo",
@@ -35,6 +35,15 @@ RSpec.describe PuzzleSessionCreator do
     ).call
 
     expect(result.ok).to eq(true)
-    expect(result.session.piece_count).to eq(16).or eq(25)
+    expect(result.session.piece_count).to eq(20)
+
+    high = described_class.new(
+      user: user,
+      image_source: "leverage_photo",
+      leverage_photo_id: photo.id,
+      piece_count: 999
+    ).call
+    expect(high.ok).to eq(true)
+    expect(high.session.piece_count).to eq(PuzzleConfig::MAX_PIECE_COUNT)
   end
 end

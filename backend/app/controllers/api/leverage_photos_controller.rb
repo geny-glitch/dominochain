@@ -27,7 +27,7 @@ module Api
     end
 
     def create
-      unless params[:original_image].present? && params[:teaser_image].present?
+      unless params[:original_image].present? && (params[:teaser_image].present? || params[:censored_image].present?)
         render json: { error: I18n.t("flash.beta.leverage_photo.images_required") }, status: :unprocessable_entity
         return
       end
@@ -50,7 +50,7 @@ module Api
         return
       end
 
-      @photo.censored_image.attach(params[:censored_image])
+      @photo.censored_images.attach(params[:censored_image])
       @photo.save!
       @photo.assert_attachments!
       render json: LeveragePhotoPayload.detail_json(@photo, helpers: self)
@@ -145,7 +145,12 @@ module Api
 
     def set_as_wallpaper
       variant = params[:variant].presence&.to_sym || :display
-      LeveragePhotos::ApplyAsWallpaper.new(photo: @photo, user: current_user, variant: variant).call!
+      LeveragePhotos::ApplyAsWallpaper.new(
+        photo: @photo,
+        user: current_user,
+        variant: variant,
+        censored_image_id: params[:censored_image_id]
+      ).call!
       render json: {
         ok: true,
         photo: LeveragePhotoPayload.detail_json(@photo, helpers: self)
@@ -222,8 +227,8 @@ module Api
 
       photo = current_user.leverage_photos.build(status: "draft", original_filename: filename)
       photo.original_image.attach(original_image)
-      photo.teaser_image.attach(teaser_image)
-      photo.censored_image.attach(censored_image) if censored_image.present?
+      photo.censored_images.attach(censored_image) if censored_image.present?
+      photo.censored_images.attach(teaser_image) if teaser_image.present?
       photo.save!
       photo.original_image.blob.update!(filename: filename) if photo.original_image.attached?
       photo.assert_attachments!

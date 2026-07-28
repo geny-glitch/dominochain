@@ -59,6 +59,7 @@ RSpec.describe "Api::LeveragePhotos", type: :request do
       expect(body["has_original"]).to eq(true)
       expect(body["has_teaser"]).to eq(true)
       expect(body["has_censored"]).to eq(true)
+      expect(body["censored_images"].size).to eq(2)
     end
   end
 

@@ -17,6 +17,12 @@
 <div class="ds-wallpaper-scenarios" data-scenarios data-scenario-source="<%= source %>">
   <h3 class="ds-section-subtitle"><%= section_title %></h3>
 
+  <%# Keep scenarios in the POST body even after the last card is removed, so the
+      server can persist an empty set instead of ignoring the missing key. %>
+  <% unless readonly %>
+    <%= hidden_field_tag "scenarios[present]", "1", id: nil %>
+  <% end %>
+
   <div data-scenarios-list>
     <% if scenario_set.empty? %>
       <p class="ds-beta-control-hint" data-scenarios-empty><%= t("beta.scenarios.empty") %></p>

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Keeps device wallpapers in sync with a Time Vault photo while that wallpaper is still current.
-# Lock → show censored (or teaser). Unlock → restore stashed original when available.
+# Lock → show preferred censored version. Unlock → restore stashed original when available.
 class LeveragePhotos::SyncLinkedWallpapers
   def self.on_locking!(photo, notify: true)
     new(photo).on_locking!(notify: notify)

@@ -95,9 +95,19 @@
         editAction: I18n.t("beta.scenarios.edit_action"),
         doneEditing: I18n.t("beta.scenarios.done_editing"),
         editTrigger: I18n.t("beta.scenarios.edit_trigger"),
-        saveScenario: I18n.t("beta.scenarios.save")
+        saveScenario: I18n.t("beta.scenarios.save"),
+        photoBlank: I18n.t("beta.sanctions.shared.photo_select_blank")
       },
-      photos: Array(photos).map { |p| { id: p.id, label: "#{p.download_filename} (#{I18n.t("leverage_photo.status.#{p.status}")})" } }
+      photos: Array(photos).map { |p|
+        {
+          id: p.id,
+          label: p.download_filename,
+          status: p.status,
+          statusLabel: I18n.t("leverage_photo.status.#{p.status}"),
+          active: p.active?,
+          thumbUrl: (p.thumbnail_attachment.present? ? url_for(p.thumbnail_attachment) : nil)
+        }
+      }
     }.to_json) %>
   </script>
 </div>

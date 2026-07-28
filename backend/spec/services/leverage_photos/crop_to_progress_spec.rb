@@ -7,7 +7,10 @@ RSpec.describe LeveragePhotos::CropToProgress do
   let(:photo) { create(:leverage_photo, :with_images, user: user) }
   let(:session) { create(:puzzle_session, user: user, leverage_photo: photo) }
 
-  it "replaces the photo with the progress snapshot and sanctions it" do
+  it "adds the progress snapshot as a censored version, keeps existing ones, and removes the original" do
+    existing_downloads = photo.censored_images.map(&:download)
+    expect(existing_downloads.size).to eq(2)
+
     session.progress_snapshot.attach(
       io: StringIO.new("fake-png-bytes"),
       filename: "progress.png",
@@ -20,7 +23,8 @@ RSpec.describe LeveragePhotos::CropToProgress do
     expect(photo.status).to eq("sanctioned")
     expect(photo.original_image).not_to be_attached
     expect(photo.tlock_blob).not_to be_attached
-    expect(photo.censored_image).to be_attached
-    expect(photo.teaser_image).to be_attached
+    expect(photo.censored_images.count).to eq(3)
+    expect(photo.censored_images.map(&:download)).to include(*existing_downloads)
+    expect(photo.censored_images.map(&:download)).to include("fake-png-bytes")
   end
 end

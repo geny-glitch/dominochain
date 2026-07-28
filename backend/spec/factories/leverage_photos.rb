@@ -15,13 +15,14 @@ FactoryBot.define do
           filename: "original.jpg",
           content_type: "image/jpeg"
         )
-        photo.censored_image.attach(
-          io: StringIO.new("fake-censored"),
+        # Larger blob first so preferred_censored_attachment picks it.
+        photo.censored_images.attach(
+          io: StringIO.new("fake-censored-image-bytes"),
           filename: "censored.jpg",
           content_type: "image/jpeg"
         )
-        photo.teaser_image.attach(
-          io: StringIO.new("fake-teaser"),
+        photo.censored_images.attach(
+          io: StringIO.new("tiny"),
           filename: "teaser.jpg",
           content_type: "image/jpeg"
         )
@@ -35,8 +36,8 @@ FactoryBot.define do
           filename: "original.jpg",
           content_type: "image/jpeg"
         )
-        photo.teaser_image.attach(
-          io: StringIO.new("fake-teaser"),
+        photo.censored_images.attach(
+          io: StringIO.new("tiny"),
           filename: "teaser.jpg",
           content_type: "image/jpeg"
         )

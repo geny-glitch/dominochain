@@ -30,7 +30,7 @@ class BetaLeveragePhotoController < ApplicationController
   end
 
   def upload
-    unless params[:original_image].present? && params[:teaser_image].present?
+    unless params[:original_image].present? && (params[:teaser_image].present? || params[:censored_image].present?)
       respond_to do |format|
         format.json { render json: { error: t("flash.beta.leverage_photo.images_required") }, status: :unprocessable_entity }
         format.html { redirect_to beta_leverage_photo_upload_path, alert: t("flash.beta.leverage_photo.images_required") }
@@ -50,12 +50,12 @@ class BetaLeveragePhotoController < ApplicationController
         render json: {
           id: photo.id,
           url: beta_leverage_photo_path(photo),
-          censored: photo.censored_image.attached?
+          censored: photo.censored_images.attached?
         }
       end
       format.html do
         notice =
-          if photo.censored_image.attached?
+          if photo.censored_images.count > 1
             t("flash.beta.leverage_photo.uploaded")
           else
             t("flash.beta.leverage_photo.uploaded_without_censor")
@@ -79,7 +79,7 @@ class BetaLeveragePhotoController < ApplicationController
       return
     end
 
-    @photo.censored_image.attach(params[:censored_image])
+    @photo.censored_images.attach(params[:censored_image])
     @photo.save!
     @photo.assert_attachments!
 
@@ -194,7 +194,12 @@ class BetaLeveragePhotoController < ApplicationController
 
   def set_as_wallpaper
     variant = params[:variant].presence&.to_sym || :display
-    LeveragePhotos::ApplyAsWallpaper.new(photo: @photo, user: current_user, variant: variant).call!
+    LeveragePhotos::ApplyAsWallpaper.new(
+      photo: @photo,
+      user: current_user,
+      variant: variant,
+      censored_image_id: params[:censored_image_id]
+    ).call!
     redirect_back fallback_location: beta_leverage_photos_path, notice: t("flash.beta.leverage_photo.wallpaper_set")
   rescue LeveragePhotos::ApplyAsWallpaper::Error => e
     alert =
@@ -292,8 +297,9 @@ class BetaLeveragePhotoController < ApplicationController
 
     photo = current_user.leverage_photos.build(status: "draft", original_filename: filename)
     photo.original_image.attach(original_image)
-    photo.teaser_image.attach(teaser_image)
-    photo.censored_image.attach(censored_image) if censored_image.present?
+    # Optional full reminder first, then auto preview — both become censored versions.
+    photo.censored_images.attach(censored_image) if censored_image.present?
+    photo.censored_images.attach(teaser_image) if teaser_image.present?
     photo.save!
     photo.original_image.blob.update!(filename: filename) if photo.original_image.attached?
     photo.assert_attachments!

@@ -13,8 +13,7 @@ class LeveragePhoto < ApplicationRecord
   has_many :wallpapers, dependent: :nullify
 
   has_one_attached :original_image
-  has_one_attached :censored_image
-  has_one_attached :teaser_image
+  has_many_attached :censored_images
   has_one_attached :tlock_blob
 
   validates :status, inclusion: { in: STATUSES }
@@ -59,11 +58,11 @@ class LeveragePhoto < ApplicationRecord
   end
 
   def ready_to_lock?
-    draft? && original_image.attached? && teaser_image.attached?
+    draft? && original_image.attached? && censored_images.attached?
   end
 
   def ready_to_relock?
-    unlocked? && teaser_image.attached? && (original_image.attached? || tlock_blob.attached?)
+    unlocked? && censored_images.attached? && (original_image.attached? || tlock_blob.attached?)
   end
 
   def can_start_timer?
@@ -75,7 +74,7 @@ class LeveragePhoto < ApplicationRecord
   end
 
   def needs_censor?
-    can_censor? && !censored_image.attached?
+    can_censor? && !censored_images.attached?
   end
 
   def can_add_time?
@@ -102,18 +101,16 @@ class LeveragePhoto < ApplicationRecord
     can_delete_original?
   end
 
-  # Crop replaces the visible attachment with a puzzle progress snapshot.
-  # Eligible whenever a displayable image remains (original, censored, or teaser).
+  # Crop keeps existing censored versions, adds a puzzled board, and removes the original.
   def eligible_for_crop_to_progress?
     return false if deleted?
-    return false unless teaser_image.attached?
 
-    original_image.attached? || censored_image.attached? || teaser_image.attached?
+    original_image.attached? || tlock_blob.attached? || censored_images.attached?
   end
 
   def can_delete_original?
     return false if deleted? || sanctioned?
-    return false unless censored_image.attached?
+    return false unless censored_images.attached?
 
     original_image.attached? || tlock_blob.attached?
   end
@@ -158,28 +155,35 @@ class LeveragePhoto < ApplicationRecord
     end
   end
 
+  # Prefer the largest censored version (full reminder over tiny preview).
+  def preferred_censored_attachment
+    return nil unless censored_images.attached?
+
+    censored_images.max_by { |image| image.blob.byte_size }
+  end
+
+  # Prefer the smallest censored version for list thumbnails.
+  def thumbnail_attachment
+    return nil unless censored_images.attached?
+
+    censored_images.min_by { |image| image.blob.byte_size }
+  end
+
   def wallpaper_display_attachment
     if original_image.attached?
       original_image
-    elsif censored_image.attached?
-      censored_image
-    elsif teaser_image.attached?
-      teaser_image
+    else
+      preferred_censored_attachment
     end
   end
 
   def wallpaper_locked_attachment
-    if censored_image.attached?
-      censored_image
-    elsif teaser_image.attached?
-      teaser_image
-    end
+    preferred_censored_attachment
   end
 
   def permanently_delete!
     original_image.purge if original_image.attached?
-    censored_image.purge if censored_image.attached?
-    teaser_image.purge if teaser_image.attached?
+    censored_images.purge if censored_images.attached?
     tlock_blob.purge if tlock_blob.attached?
     update!(
       status: "deleted",
@@ -202,20 +206,20 @@ class LeveragePhoto < ApplicationRecord
     case status
     when "draft"
       errors.add(:original_image, :blank) unless original_image.attached?
-      errors.add(:teaser_image, :blank) unless teaser_image.attached?
+      errors.add(:censored_images, :blank) unless censored_images.attached?
     when "active"
       errors.add(:original_image, "must be purged while locked") if original_image.attached?
       errors.add(:tlock_blob, :blank) unless tlock_blob.attached?
-      errors.add(:teaser_image, :blank) unless teaser_image.attached?
+      errors.add(:censored_images, :blank) unless censored_images.attached?
     when "unlocked"
-      errors.add(:teaser_image, :blank) unless teaser_image.attached?
+      errors.add(:censored_images, :blank) unless censored_images.attached?
       unless original_image.attached? || tlock_blob.attached?
         errors.add(:base, "must have original or locked payload while unlocked")
       end
     when "sanctioned"
       errors.add(:original_image, "must be purged after sanction delete") if original_image.attached?
       errors.add(:tlock_blob, "must be purged after sanction delete") if tlock_blob.attached?
-      errors.add(:teaser_image, :blank) unless teaser_image.attached?
+      errors.add(:censored_images, :blank) unless censored_images.attached?
     end
   end
 end

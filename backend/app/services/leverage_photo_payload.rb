@@ -8,6 +8,8 @@ module LeveragePhotoPayload
   end
 
   def summary_json(photo, helpers:)
+    preferred = photo.preferred_censored_attachment
+    thumbnail = photo.thumbnail_attachment
     {
       id: photo.id,
       status: photo.status,
@@ -18,10 +20,12 @@ module LeveragePhotoPayload
       can_add_time: photo.can_add_time?,
       can_censor: photo.can_censor?,
       has_original: photo.original_image.attached?,
-      has_censored: photo.censored_image.attached?,
-      has_teaser: photo.teaser_image.attached?,
-      teaser_url: attachment_url(photo.teaser_image, helpers: helpers),
-      censored_url: attachment_url(photo.censored_image, helpers: helpers),
+      has_censored: photo.censored_images.attached?,
+      # Back-compat for Android clients that still read the old singular fields.
+      has_teaser: photo.censored_images.attached?,
+      teaser_url: attachment_url(thumbnail, helpers: helpers),
+      censored_url: attachment_url(preferred, helpers: helpers),
+      censored_images: censored_images_json(photo, helpers: helpers),
       created_at: photo.created_at.iso8601
     }
   end
@@ -42,11 +46,23 @@ module LeveragePhotoPayload
     return false if user.controlled_by_boss?
     return false if user.wallpaper_verification_session_locked?
 
-    photo.censored_image.attached? || photo.teaser_image.attached? || photo.original_image.attached?
+    photo.censored_images.attached? || photo.original_image.attached?
+  end
+
+  def censored_images_json(photo, helpers:)
+    return [] unless photo.censored_images.attached?
+
+    photo.censored_images.map do |image|
+      {
+        id: image.id,
+        url: attachment_url(image, helpers: helpers)
+      }
+    end
   end
 
   def attachment_url(attachment, helpers:)
-    return nil unless attachment&.attached?
+    return nil if attachment.blank?
+    return nil if attachment.respond_to?(:attached?) && !attachment.attached?
 
     helpers.rails_blob_url(attachment, only_path: false)
   rescue StandardError

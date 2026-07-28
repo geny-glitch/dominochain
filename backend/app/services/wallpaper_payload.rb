@@ -116,14 +116,18 @@ module WallpaperPayload
         id: photo.id,
         status: photo.status,
         locked_until: photo.locked_until&.iso8601,
-        teaser_url: attachment_url(photo.teaser_image, helpers: helpers),
-        censored_url: attachment_url(photo.censored_image, helpers: helpers)
+        teaser_url: attachment_url(photo.thumbnail_attachment, helpers: helpers),
+        censored_url: attachment_url(photo.preferred_censored_attachment, helpers: helpers),
+        censored_images: photo.censored_images.map { |image|
+          { id: image.id, url: attachment_url(image, helpers: helpers) }
+        }
       }
     end
   end
 
   def attachment_url(attachment, helpers:)
-    return nil unless attachment&.attached?
+    return nil if attachment.blank?
+    return nil if attachment.respond_to?(:attached?) && !attachment.attached?
 
     helpers.rails_blob_url(attachment, only_path: false)
   rescue StandardError

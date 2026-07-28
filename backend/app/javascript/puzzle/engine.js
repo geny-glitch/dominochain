@@ -17,9 +17,10 @@ export class PuzzleEngine {
     this.onWinCallback = onWin || (() => {})
     this.onProgressCallback = onProgress || (() => {})
     this.groupsRemaining = numPieces
-    // The library rounds numPieces to fit the image's aspect ratio (e.g. asking
-    // for 49 can yield a 5x10 = 50 grid), so the real piece count is only known
-    // once the internal grid exists. Synced in start() and used in mergesTotal().
+    // The library may round numPieces slightly to keep piece cells near 1:1
+    // (e.g. asking for 20 on a portrait photo can yield 4x5 = 20, or nearby),
+    // so the real piece count is only known once the internal grid exists.
+    // Synced in start() and used in mergesTotal().
     this.actualPieceCount = null
     this.puzzle = null
     // Dragging empty background pans the whole board by default in the
@@ -35,7 +36,7 @@ export class PuzzleEngine {
       // Registered before the JigsawPuzzle instance below adds its own
       // mousedown/touchstart/wheel listeners on the same container element,
       // so ours run first (DOM dispatch order for same-target listeners
-      // follows registration order) and can veto the gesture before the
+      // follows registration order) and can veto the gesture before theok
       // library ever sees it.
       this.container.addEventListener("mousedown", this.vetoBackgroundDrag)
       this.container.addEventListener("touchstart", this.vetoBackgroundDrag)

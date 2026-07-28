@@ -19,7 +19,12 @@ class PuzzleSession < ApplicationRecord
   validates :origin, inclusion: { in: ORIGINS }
   validates :image_source, inclusion: { in: IMAGE_SOURCES }
   validates :reference_mode, inclusion: { in: REFERENCE_MODES }
-  validates :piece_count, inclusion: { in: PuzzleConfig::ALLOWED_PIECE_COUNTS }
+  validates :piece_count,
+    numericality: {
+      only_integer: true,
+      greater_than_or_equal_to: PuzzleConfig::MIN_PIECE_COUNT,
+      less_than_or_equal_to: PuzzleConfig::MAX_PIECE_COUNT
+    }
   validates :grid_cols, :grid_rows, :pieces_total, :layout_seed,
     numericality: { only_integer: true, greater_than: 0 }
   validates :pieces_placed,

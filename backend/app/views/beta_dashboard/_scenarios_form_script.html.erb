@@ -42,6 +42,19 @@
     setSaveVisible(form.querySelector('[data-scenario-dirty-save="list"]'), true);
   }
 
+  // Source pages with a shared options+scenarios form (puzzle/cornertime/strava/chess):
+  // persist immediately on Add/Remove. Wallpaper keeps per-card dirty save.
+  function shouldAutoPersistScenarios(form) {
+    return form.matches("[data-scenarios-form]") &&
+      !form.matches("[data-wallpaper-enforcement-form]") &&
+      !form.closest("[data-scenarios-hub-form]");
+  }
+
+  function autoPersistScenariosIfNeeded(form) {
+    if (!shouldAutoPersistScenarios(form) || typeof form.requestSubmit !== "function") return;
+    form.requestSubmit();
+  }
+
   function markFormDirty(form, scopeEl) {
     var card = scopeEl && scopeEl.closest ? scopeEl.closest("[data-scenario-card]") : null;
     if (card) {
@@ -269,6 +282,53 @@
     return "";
   }
 
+  function buildPhotoPickerHtml(bootstrap, options) {
+    options = options || {};
+    var attrName = options.attrName || "data-composer-config-key";
+    var attrValue = options.attrValue || "photo_id";
+    var selected = options.selected != null ? String(options.selected) : "";
+    var includeBlank = options.includeBlank !== false;
+    var blankLabel = options.blankLabel || (bootstrap.i18n && bootstrap.i18n.photoBlank) || "";
+    var uid = "pp_" + Date.now() + "_" + Math.floor(Math.random() * 100000);
+    var groupName = "photo_picker_" + uid;
+    var html = '<div class="ds-photo-picker" role="radiogroup">';
+    html += '<div class="ds-photo-picker__grid">';
+
+    if (includeBlank) {
+      var blankId = uid + "_blank";
+      var blankChecked = selected === "" ? " checked" : "";
+      html += '<label class="ds-photo-picker__option" for="' + blankId + '">';
+      html += '<input class="ds-photo-picker__input visually-hidden" type="radio" name="' + groupName + '" id="' + blankId + '" value=""' +
+        blankChecked + ' ' + attrName + '="' + escapeHtml(attrValue) + '" aria-label="' + escapeHtml(blankLabel) + '">';
+      html += '<span class="ds-photo-picker__card ds-photo-picker__card--blank">';
+      html += '<span class="ds-photo-picker__blank-label">' + escapeHtml(blankLabel) + "</span>";
+      html += "</span></label>";
+    }
+
+    (bootstrap.photos || []).forEach(function (photo, index) {
+      var photoId = String(photo.id);
+      var inputId = uid + "_" + index;
+      var checked = selected === photoId ? " checked" : "";
+      var pillClass = photo.active ? "ds-beta-home-pill ds-beta-home-pill--on" : "ds-beta-home-pill";
+      var optionLabel = (photo.label || "") + (photo.statusLabel ? " (" + photo.statusLabel + ")" : "");
+      html += '<label class="ds-photo-picker__option" for="' + inputId + '" title="' + escapeHtml(optionLabel) + '">';
+      html += '<input class="ds-photo-picker__input visually-hidden" type="radio" name="' + groupName + '" id="' + inputId + '" value="' +
+        escapeHtml(photoId) + '"' + checked + ' ' + attrName + '="' + escapeHtml(attrValue) + '" aria-label="' + escapeHtml(optionLabel) + '">';
+      html += '<span class="ds-photo-picker__card">';
+      if (photo.thumbUrl) {
+        html += '<img class="ds-photo-picker__thumb ds-photo-picker__thumb--pixel" src="' + escapeHtml(photo.thumbUrl) + '" alt="">';
+      } else {
+        html += '<span class="ds-photo-picker__thumb ds-photo-picker__thumb--empty" aria-hidden="true"></span>';
+      }
+      html += '<span class="ds-photo-picker__meta"><span class="' + pillClass + '">' +
+        escapeHtml(photo.statusLabel || photo.status || "") + "</span></span>";
+      html += "</span></label>";
+    });
+
+    html += "</div></div>";
+    return html;
+  }
+
   function buildActionRow(bootstrap, prefix, actionIndex, possibilityId, config) {
     var schema = (bootstrap.actionSchemas && bootstrap.actionSchemas[possibilityId]) || {};
     var label = (bootstrap.i18n.actions[possibilityId] && bootstrap.i18n.actions[possibilityId].label) || possibilityId;
@@ -342,13 +402,12 @@
         html += "</select>";
       } else if (field.ui === "leverage_photo_id") {
         html += '<label class="ds-form-label">' + escapeHtml(label) + "</label>";
-        html += '<select class="ds-input" data-action-edit-key="photo_id">';
-        html += '<option value=""></option>';
-        (bootstrap.photos || []).forEach(function (photo) {
-          html += '<option value="' + escapeHtml(photo.id) + '"' + (String(value) === String(photo.id) ? " selected" : "") + ">" +
-            escapeHtml(photo.label) + "</option>";
+        html += buildPhotoPickerHtml(bootstrap, {
+          attrName: "data-action-edit-key",
+          attrValue: "photo_id",
+          selected: value,
+          includeBlank: true
         });
-        html += "</select>";
       } else if (field.ui === "enum" || field.type === "enum") {
         html += '<label class="ds-form-label">' + escapeHtml(label) + "</label>";
         html += '<select class="ds-input" data-action-edit-key="' + escapeHtml(key) + '">';
@@ -389,6 +448,7 @@
     if (!editor) return;
     var config = {};
     editor.querySelectorAll("[data-action-edit-key]").forEach(function (input) {
+      if (input.type === "radio" && !input.checked) return;
       config[input.getAttribute("data-action-edit-key")] = input.value;
     });
     writeActionConfig(actionLi, config);
@@ -640,12 +700,12 @@
         html += "</select>";
       } else if (field.ui === "leverage_photo_id") {
         html += '<label class="ds-form-label">' + escapeHtml(label) + "</label>";
-        html += '<select class="ds-input" data-composer-config-key="photo_id">';
-        html += '<option value=""></option>';
-        (bootstrap.photos || []).forEach(function (photo) {
-          html += '<option value="' + escapeHtml(photo.id) + '">' + escapeHtml(photo.label) + "</option>";
+        html += buildPhotoPickerHtml(bootstrap, {
+          attrName: "data-composer-config-key",
+          attrValue: "photo_id",
+          selected: "",
+          includeBlank: true
         });
-        html += "</select>";
       } else if (field.ui === "enum" || field.type === "enum") {
         html += '<label class="ds-form-label">' + escapeHtml(label) + "</label>";
         html += '<select class="ds-input" data-composer-config-key="' + escapeHtml(key) + '">';
@@ -746,14 +806,7 @@
       if (confirmBtn && composer.contains(confirmBtn)) {
         var card = commitComposerDraft(form, root, composer, bootstrap);
         if (!card) return;
-        // Source pages with a shared options+scenarios form (cornertime/strava): persist on Add.
-        // Wallpaper keeps per-card dirty save via data-wallpaper-enforcement-form.
-        var autoPersist = form.matches("[data-scenarios-form]") &&
-          !form.matches("[data-wallpaper-enforcement-form]") &&
-          !form.closest("[data-scenarios-hub-form]");
-        if (autoPersist && typeof form.requestSubmit === "function") {
-          form.requestSubmit();
-        }
+        autoPersistScenariosIfNeeded(form);
       }
     });
     composer.addEventListener("change", function (event) {
@@ -813,6 +866,7 @@
           reindexActions(scenarioCard);
           markScenarioDirty(scenarioCard);
         }
+        autoPersistScenariosIfNeeded(form);
       }
     });
 

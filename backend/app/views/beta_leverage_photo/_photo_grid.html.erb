@@ -12,8 +12,9 @@
   <div class="<%= grid_class %>">
     <% display_photos.each do |photo| %>
       <%= link_to beta_leverage_photo_path(photo), class: "ds-beta-leverage-grid__item" do %>
-        <% if photo.teaser_image.attached? %>
-          <%= image_tag url_for(photo.teaser_image),
+        <% thumb = photo.thumbnail_attachment %>
+        <% if thumb.present? %>
+          <%= image_tag url_for(thumb),
                 alt: "",
                 class: "ds-beta-leverage-grid__thumb ds-beta-leverage-grid__thumb--pixel" %>
         <% else %>

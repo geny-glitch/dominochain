@@ -218,9 +218,9 @@ module BetaEvents
               },
               piece_count: {
                 type: :integer,
-                min: 9,
-                max: 81,
-                default: 25,
+                min: PuzzleConfig::MIN_PIECE_COUNT,
+                max: PuzzleConfig::MAX_PIECE_COUNT,
+                default: PuzzleConfig::DEFAULT_PIECE_COUNT,
                 required: true,
                 ui: :number
               },

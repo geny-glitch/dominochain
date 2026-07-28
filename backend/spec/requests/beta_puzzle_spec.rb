@@ -67,4 +67,43 @@ RSpec.describe "Beta puzzle", type: :request do
     expect(response).to have_http_status(:ok)
     expect(session.reload.status).to eq("abandoned")
   end
+
+  it "clears puzzle scenarios when the last consequence is removed" do
+    stub_beta_catalog_feature_flags(
+      "beta_source_puzzle" => true,
+      "beta_action_puzzle" => true,
+      "beta_action_leverage_photo" => true,
+      "beta_action_chaster" => true
+    )
+    config = beta.ensure_puzzle_config!
+    config.assign_scenarios!(
+      ScenarioSet.from_params(
+        {
+          "scenarios" => [
+            {
+              "event" => "abandoned",
+              "trigger" => {},
+              "actions" => [
+                { "possibility_id" => "chaster.add_time", "config" => { "seconds" => 60 } }
+              ]
+            }
+          ]
+        },
+        source: :puzzle
+      )
+    )
+    config.save!
+
+    # After the last card is removed in the UI, only the scenarios[present]
+    # sentinel remains — the controller must still clear the stored set.
+    patch beta_puzzle_config_path, params: {
+      default_piece_count: config.default_piece_count,
+      default_reference_mode: config.default_reference_mode,
+      cooldown_seconds: config.cooldown_seconds,
+      scenarios: { present: "1" }
+    }
+
+    expect(response).to redirect_to(beta_sources_puzzle_path)
+    expect(config.reload.scenario_set).to be_empty
+  end
 end

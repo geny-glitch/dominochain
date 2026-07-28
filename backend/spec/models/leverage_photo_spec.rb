@@ -30,21 +30,22 @@ RSpec.describe LeveragePhoto, type: :model do
     expect(photo).not_to be_eligible_for_start
   end
 
-  it "allows draft without censored reminder" do
+  it "allows draft with only a preview censored version" do
     photo = create(:leverage_photo, :without_censor, user: user)
-    expect(photo).to be_needs_censor
+    expect(photo).not_to be_needs_censor
+    expect(photo.censored_images.count).to eq(1)
     expect(photo).to be_ready_to_lock
     expect(photo).to be_can_censor
   end
 
   it "sanctions by deleting original only" do
     photo = create(:leverage_photo, :with_images, user: user)
+    expect(photo.censored_images.count).to eq(2)
     photo.delete_original_from_sanction!
     photo.reload
     expect(photo).to be_sanctioned
     expect(photo.original_image).not_to be_attached
-    expect(photo.censored_image).to be_attached
-    expect(photo.teaser_image).to be_attached
+    expect(photo.censored_images.count).to eq(2)
   end
 
   it "persists a restored original on unlocked photos" do
@@ -63,9 +64,9 @@ RSpec.describe LeveragePhoto, type: :model do
     expect(photo.original_image.download).to eq("restored-bytes")
   end
 
-  it "can_delete_original? requires censored reminder" do
+  it "can_delete_original? requires at least one censored version" do
     photo = create(:leverage_photo, :without_censor, user: user)
-    expect(photo).not_to be_can_delete_original
+    expect(photo).to be_can_delete_original
 
     photo = create(:leverage_photo, :with_images, user: user)
     expect(photo).to be_can_delete_original
@@ -77,7 +78,6 @@ RSpec.describe LeveragePhoto, type: :model do
     expect(photo).to be_deleted
     expect(photo.original_filename).to be_nil
     expect(photo.original_image).not_to be_attached
-    expect(photo.censored_image).not_to be_attached
-    expect(photo.teaser_image).not_to be_attached
+    expect(photo.censored_images).not_to be_attached
   end
 end

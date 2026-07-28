@@ -23,8 +23,9 @@
      data-invalid-minutes-max="<%= t("leverage_photo.show.invalid_minutes_max") %>">
 
   <div class="ds-beta-leverage-row__thumb-wrap">
-    <% if photo.teaser_image.attached? %>
-      <%= image_tag url_for(photo.teaser_image),
+    <% thumb = photo.thumbnail_attachment %>
+    <% if thumb.present? %>
+      <%= image_tag url_for(thumb),
             alt: "",
             class: "ds-beta-leverage-row__thumb ds-beta-leverage-row__thumb--pixel" %>
     <% else %>
@@ -39,9 +40,9 @@
     <% else %>
       <p class="ds-beta-leverage-row__status">
         <%= t("leverage_photo.status.#{photo.status}") %>
-        <% if photo.needs_censor? %>
+        <% if photo.can_censor? %>
           <span class="ds-beta-leverage-row__dot">·</span>
-          <%= t("leverage_photo.index.needs_censor_short") %>
+          <%= t("leverage_photo.index.add_censor_short") %>
         <% end %>
       </p>
     <% end %>
@@ -107,11 +108,11 @@
       </button>
       <img data-decrypted-image hidden alt="" class="ds-beta-leverage-row__hidden-media" />
       <a data-download-original hidden download="<%= photo.download_filename %>" class="ds-beta-leverage-row__hidden-media"></a>
-    <% elsif photo.needs_censor? %>
+    <% elsif photo.can_censor? %>
       <%= link_to beta_leverage_photo_censor_path(photo),
             class: "ds-btn ds-btn--ghost ds-btn--icon ds-btn--sm",
-            title: t("leverage_photo.index.create_censor"),
-            aria: { label: t("leverage_photo.index.create_censor") } do %>
+            title: t("leverage_photo.index.add_censor"),
+            aria: { label: t("leverage_photo.index.add_censor") } do %>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
       <% end %>
     <% else %>

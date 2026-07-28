@@ -56,7 +56,7 @@ class PuzzleSessionCreator
       return Result.new(ok: false, error: :missing_upload, http_status: :unprocessable_entity)
     end
 
-    piece_count = snap_piece_count(@piece_count.presence || config.default_piece_count)
+    piece_count = PuzzleConfig.clamp_piece_count(@piece_count.presence || config.default_piece_count)
     cols, rows = PuzzleConfig.grid_for_piece_count(piece_count)
     reference_mode = (@reference_mode.presence || config.default_reference_mode).to_s
     reference_mode = "blurred" unless PuzzleConfig::REFERENCE_MODES.include?(reference_mode)
@@ -149,13 +149,6 @@ class PuzzleSessionCreator
     else
       [nil, nil]
     end
-  end
-
-  def snap_piece_count(raw)
-    count = raw.to_i
-    return count if PuzzleConfig::ALLOWED_PIECE_COUNTS.include?(count)
-
-    PuzzleConfig::ALLOWED_PIECE_COUNTS.min_by { |n| (n - count).abs }
   end
 
   def normalize_time_limit(raw)

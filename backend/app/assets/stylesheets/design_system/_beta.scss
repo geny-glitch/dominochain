@@ -1917,6 +1917,106 @@
   }
 }
 
+.ds-photo-picker {
+  margin: 0;
+}
+
+.ds-photo-picker__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: $ds-space-sm;
+}
+
+.ds-photo-picker__option {
+  display: block;
+  margin: 0;
+  cursor: pointer;
+  min-width: 0;
+
+  &:has(.ds-photo-picker__input:disabled) {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+}
+
+.ds-photo-picker__card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.2rem;
+  border-radius: var(--md-sys-shape-corner-medium, #{$ds-radius-md});
+  border: 2px solid transparent;
+  background: rgba(255, 255, 255, 0.03);
+  transition: border-color 0.15s ease, background 0.15s ease;
+  min-height: 100%;
+
+  .ds-photo-picker__option:hover &,
+  .ds-photo-picker__option:focus-within & {
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  &--blank {
+    aspect-ratio: 1;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.05);
+    border-style: dashed;
+    border-color: rgba(255, 255, 255, 0.18);
+  }
+
+  .ds-photo-picker__input:checked + & {
+    border-style: solid;
+    border-color: var(--md-sys-color-primary, #{$ds-magenta});
+    background: rgba($ds-magenta, 0.12);
+  }
+
+  .ds-photo-picker__input:focus-visible + & {
+    outline: 2px solid var(--md-sys-color-primary, #{$ds-magenta});
+    outline-offset: 2px;
+  }
+}
+
+.ds-photo-picker__blank-label {
+  font-size: 0.7rem;
+  line-height: 1.25;
+  font-weight: 500;
+  color: $ds-text-muted;
+  padding: 0.25rem;
+}
+
+.ds-photo-picker__thumb {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: var(--md-sys-shape-corner-small, #{$ds-radius-sm});
+  background: rgba(255, 255, 255, 0.06);
+
+  &--pixel {
+    image-rendering: pixelated;
+  }
+
+  &--empty {
+    min-height: 56px;
+  }
+}
+
+.ds-photo-picker__meta {
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+}
+
+.ds-photo-picker__meta .ds-beta-home-pill {
+  font-size: 0.65rem;
+  padding: 0.1rem 0.35rem;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .ds-beta-leverage-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));

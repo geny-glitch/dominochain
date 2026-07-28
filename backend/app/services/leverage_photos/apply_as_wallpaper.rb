@@ -3,10 +3,11 @@
 class LeveragePhotos::ApplyAsWallpaper
   class Error < StandardError; end
 
-  def initialize(photo:, user:, variant: :display)
+  def initialize(photo:, user:, variant: :display, censored_image_id: nil)
     @photo = photo
     @user = user
     @variant = variant.to_sym
+    @censored_image_id = censored_image_id
   end
 
   def call!
@@ -43,13 +44,24 @@ class LeveragePhotos::ApplyAsWallpaper
   private
 
   def attachment_for_variant
+    if @censored_image_id.present?
+      return find_censored_attachment(@censored_image_id)
+    end
+
     case @variant
     when :censored
-      @photo.censored_image if @photo.censored_image.attached?
+      @photo.preferred_censored_attachment
     when :teaser
-      @photo.teaser_image if @photo.teaser_image.attached?
+      # Back-compat alias for the smallest censored preview.
+      @photo.thumbnail_attachment
     else
       @photo.wallpaper_display_attachment
     end
+  end
+
+  def find_censored_attachment(id)
+    return nil unless @photo.censored_images.attached?
+
+    @photo.censored_images.attachments.find_by(id: id.to_i)
   end
 end

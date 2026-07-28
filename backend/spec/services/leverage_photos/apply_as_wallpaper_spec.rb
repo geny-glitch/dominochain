@@ -31,24 +31,32 @@ RSpec.describe LeveragePhotos::ApplyAsWallpaper do
     described_class.new(photo: photo, user: user).call!
 
     wallpaper = device.reload.current_wallpaper
-    expect(wallpaper.image.download).to eq("fake-censored")
+    expect(wallpaper.image.download).to eq("fake-censored-image-bytes")
     expect(wallpaper.leverage_original_image).not_to be_attached
   end
 
-  it "uses the teaser when variant is teaser" do
+  it "uses the smallest censored preview when variant is teaser" do
     described_class.new(photo: photo, user: user, variant: :teaser).call!
 
     wallpaper = device.reload.current_wallpaper
-    expect(wallpaper.image.download).to eq("fake-teaser")
+    expect(wallpaper.image.download).to eq("tiny")
   end
 
-  it "uses the censored image when variant is censored" do
+  it "uses the preferred censored image when variant is censored" do
     photo = create(:leverage_photo, :active, user: user)
 
     described_class.new(photo: photo, user: user, variant: :censored).call!
 
     wallpaper = device.reload.current_wallpaper
-    expect(wallpaper.image.download).to eq("fake-censored")
+    expect(wallpaper.image.download).to eq("fake-censored-image-bytes")
+  end
+
+  it "uses a specific censored attachment id when provided" do
+    attachment = photo.thumbnail_attachment
+    described_class.new(photo: photo, user: user, censored_image_id: attachment.id).call!
+
+    wallpaper = device.reload.current_wallpaper
+    expect(wallpaper.image.download).to eq("tiny")
   end
 
   it "raises when the user has no device" do

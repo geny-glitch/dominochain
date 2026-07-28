@@ -40,8 +40,7 @@ RSpec.describe BetaLeveragePhotoController, type: :request do
       expect(photo.original_filename).to eq("vacation.jpg")
       expect(photo.original_image).to be_attached
       expect(photo.original_image.filename.to_s).to eq("vacation.jpg")
-      expect(photo.censored_image).to be_attached
-      expect(photo.teaser_image).to be_attached
+      expect(photo.censored_images.count).to eq(2)
     end
 
     it "allows multiple photos per user" do
@@ -57,7 +56,7 @@ RSpec.describe BetaLeveragePhotoController, type: :request do
       expect(user.leverage_photos.not_deleted.count).to eq(2)
     end
 
-    it "creates a draft without censored image" do
+    it "creates a draft with only a preview censored version" do
       post beta_leverage_photo_upload_submit_path, params: {
         original_image: jpeg_upload("vacation"),
         teaser_image: jpeg_upload("teaser"),
@@ -68,14 +67,13 @@ RSpec.describe BetaLeveragePhotoController, type: :request do
       expect(response).to redirect_to(beta_leverage_photo_path(photo))
       expect(photo).to be_draft
       expect(photo.original_image).to be_attached
-      expect(photo.teaser_image).to be_attached
-      expect(photo.censored_image).not_to be_attached
-      expect(photo).to be_needs_censor
+      expect(photo.censored_images.count).to eq(1)
+      expect(photo).not_to be_needs_censor
     end
   end
 
   describe "POST /beta/leverage_photos/:id/censor" do
-    it "attaches censored reminder on a draft" do
+    it "appends a censored version on a draft" do
       photo = create(:leverage_photo, :without_censor, user: user)
 
       post beta_leverage_photo_censor_submit_path(photo), params: {
@@ -84,8 +82,7 @@ RSpec.describe BetaLeveragePhotoController, type: :request do
 
       expect(response).to redirect_to(beta_leverage_photo_path(photo))
       photo.reload
-      expect(photo.censored_image).to be_attached
-      expect(photo.teaser_image).to be_attached
+      expect(photo.censored_images.count).to eq(2)
       expect(photo).not_to be_needs_censor
     end
 
@@ -161,11 +158,12 @@ RSpec.describe BetaLeveragePhotoController, type: :request do
       photo.reload
       expect(photo).to be_sanctioned
       expect(photo.original_image).not_to be_attached
-      expect(photo.censored_image).to be_attached
+      expect(photo.censored_images).to be_attached
     end
 
-    it "rejects when no censored reminder exists" do
+    it "rejects when no censored version exists" do
       photo = create(:leverage_photo, :without_censor, user: user)
+      photo.censored_images.purge
 
       delete beta_leverage_photo_delete_original_path(photo)
 

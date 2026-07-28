@@ -91,12 +91,13 @@ class BetaPuzzleController < ApplicationController
 
   def image
     attachment = @session.display_attachment
-    unless attachment&.attached?
+    unless @session.display_attachment_present?
       head :not_found
       return
     end
 
-    variant = attachment.variant(
+    blob = attachment.respond_to?(:blob) ? attachment.blob : attachment
+    variant = blob.variant(
       resize_to_limit: [PuzzleSession::MAX_PUZZLE_IMAGE_SIDE, PuzzleSession::MAX_PUZZLE_IMAGE_SIDE]
     ).processed
 

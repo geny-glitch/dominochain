@@ -15,7 +15,7 @@
 
 <%= render "beta_leverage_photo/wallpaper_panel", photo: @photo %>
 
-<% if beta_catalog_source_enabled?("puzzle") && @photo.wallpaper_display_attachment&.attached? %>
+<% if beta_catalog_source_enabled?("puzzle") && @photo.wallpaper_display_attachment.present? %>
   <section class="ds-beta-section">
     <h2 class="ds-section-title"><%= t("leverage_photo.puzzle.title") %></h2>
     <div class="ds-beta-control-card">

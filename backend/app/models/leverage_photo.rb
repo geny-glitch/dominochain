@@ -156,6 +156,7 @@ class LeveragePhoto < ApplicationRecord
   end
 
   # Prefer the largest censored version (full reminder over tiny preview).
+  # Returns an ActiveStorage::Attachment (not Attached::One) — use .present?, not .attached?.
   def preferred_censored_attachment
     return nil unless censored_images.attached?
 
@@ -163,12 +164,15 @@ class LeveragePhoto < ApplicationRecord
   end
 
   # Prefer the smallest censored version for list thumbnails.
+  # Returns an ActiveStorage::Attachment (not Attached::One) — use .present?, not .attached?.
   def thumbnail_attachment
     return nil unless censored_images.attached?
 
     censored_images.min_by { |image| image.blob.byte_size }
   end
 
+  # Original when available, otherwise preferred censored.
+  # May return Attached::One or ActiveStorage::Attachment — use .present?, not .attached?.
   def wallpaper_display_attachment
     if original_image.attached?
       original_image
@@ -177,6 +181,7 @@ class LeveragePhoto < ApplicationRecord
     end
   end
 
+  # May return ActiveStorage::Attachment — use .present?, not .attached?.
   def wallpaper_locked_attachment
     preferred_censored_attachment
   end

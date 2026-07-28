@@ -155,35 +155,78 @@ export class PuzzleEngine {
   }
 
   async exportProgressBlob() {
-    const canvas = this.flatten()
+    const canvas = this.composeProgressImage()
     if (!canvas) return null
     return new Promise((resolve) => canvas.toBlob((blob) => resolve(blob), "image/png"))
   }
 
-  // The library renders each piece group on its own absolutely-positioned
-  // canvas rather than a single board canvas, so we flatten the current
-  // arrangement into one offscreen canvas for the progress snapshot.
-  flatten() {
+  // Progress snapshot for sanctions: full original, heavily blurred, with only
+  // the largest assembled piece group drawn sharp on top (other pieces discarded).
+  composeProgressImage() {
     const internal = this.puzzle?.puzzle
-    if (!internal || !Array.isArray(internal.polyPieces) || !internal.polyPieces.length) return null
+    const src = internal?.srcImage
+    if (!internal || !src?.naturalWidth || !Array.isArray(internal.polyPieces) || !internal.polyPieces.length) {
+      return null
+    }
 
+    const width = Math.max(1, Math.round(src.naturalWidth))
+    const height = Math.max(1, Math.round(src.naturalHeight))
     const canvas = document.createElement("canvas")
-    canvas.width = Math.max(1, Math.round(internal.contWidth || this.container.clientWidth || 1))
-    canvas.height = Math.max(1, Math.round(internal.contHeight || this.container.clientHeight || 1))
+    canvas.width = width
+    canvas.height = height
     const ctx = canvas.getContext("2d")
+    if (!ctx) return null
 
-    internal.polyPieces.forEach((piece) => {
-      const width = piece.canvas.width
-      const height = piece.canvas.height
-      const angle = ((piece.rotationDegrees || 0) * Math.PI) / 180
-      ctx.save()
-      ctx.translate(piece.x + width / 2, piece.y + height / 2)
-      ctx.rotate(angle)
-      ctx.drawImage(piece.canvas, -width / 2, -height / 2)
-      ctx.restore()
-    })
+    this.drawBlurredOriginal(ctx, src, width, height)
 
+    const largest = this.largestPolyPiece(internal.polyPieces)
+    if (!largest?.canvas) return canvas
+
+    this.drawPolyPieceOnImage(ctx, internal, largest, width, height)
     return canvas
+  }
+
+  drawBlurredOriginal(ctx, src, width, height) {
+    const blurPx = Math.max(16, Math.round(Math.min(width, height) * 0.045))
+    const pad = blurPx * 2
+    const scale = (Math.max(width, height) + pad * 2) / Math.max(width, height)
+    const drawW = width * scale
+    const drawH = height * scale
+    ctx.save()
+    ctx.filter = `blur(${blurPx}px)`
+    // Oversized, aspect-preserving draw so blur does not leave sharp edges.
+    ctx.drawImage(src, (width - drawW) / 2, (height - drawH) / 2, drawW, drawH)
+    ctx.restore()
+  }
+
+  largestPolyPiece(polyPieces) {
+    return polyPieces.reduce((best, piece) => {
+      if (!best) return piece
+      const bestCount = best.pieces?.length || 0
+      const nextCount = piece.pieces?.length || 0
+      if (nextCount > bestCount) return piece
+      if (nextCount < bestCount) return best
+      const bestArea = (best.canvas?.width || 0) * (best.canvas?.height || 0)
+      const nextArea = (piece.canvas?.width || 0) * (piece.canvas?.height || 0)
+      return nextArea > bestArea ? piece : best
+    }, null)
+  }
+
+  // PolyPiece canvases are unrotated bitmaps of the assembled chunk; map the
+  // group's grid bounds onto the full source image and draw it sharp on top.
+  drawPolyPieceOnImage(ctx, internal, polyPiece, width, height) {
+    const gameWidth = internal.gameWidth || internal.scalex * internal.nx
+    const gameHeight = internal.gameHeight || internal.scaley * internal.ny
+    if (!(gameWidth > 0) || !(gameHeight > 0)) return
+
+    const scaleX = width / gameWidth
+    const scaleY = height / gameHeight
+    const destX = (polyPiece.pckxmin - 0.5) * internal.scalex * scaleX
+    const destY = (polyPiece.pckymin - 0.5) * internal.scaley * scaleY
+    const destW = polyPiece.canvas.width * scaleX
+    const destH = polyPiece.canvas.height * scaleY
+
+    ctx.drawImage(polyPiece.canvas, destX, destY, destW, destH)
   }
 
   destroy() {

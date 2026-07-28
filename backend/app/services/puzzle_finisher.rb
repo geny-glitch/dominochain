@@ -129,6 +129,13 @@ class PuzzleFinisher
   end
 
   def valid_completion?
+    # The jigsawpuzzlegame engine has no fixed board grid: pieces interlock
+    # freely and the client only knows "solved" once every piece has merged
+    # into one group, so it does not report per-cell positions. Trust that
+    # signal when no grid is supplied; otherwise fall back to the legacy
+    # per-cell check for any caller that still provides one.
+    return true if @piece_positions.blank?
+
     return false unless @piece_positions.is_a?(Array)
     return false unless @piece_positions.size == @session.pieces_total
 
@@ -136,7 +143,6 @@ class PuzzleFinisher
     positions = @piece_positions.map(&:to_i)
     return false unless positions.sort == expected
 
-    # Grid MVP: piece i must be in cell i when complete.
     positions.each_with_index.all? { |cell, piece_index| cell == piece_index }
   end
 

@@ -1,5 +1,8 @@
 .ds-puzzle-play {
-  display: grid;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
   gap: 1rem;
 }
 
@@ -17,25 +20,82 @@
   font-variant-numeric: tabular-nums;
 }
 
-.ds-puzzle-board-wrap {
-  width: 100%;
-  max-width: 28rem;
+.ds-puzzle-play-layout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 1.5rem;
+  flex: 1;
+  min-height: 0;
 }
 
-.ds-puzzle-canvas {
-  display: block;
+.ds-puzzle-board-wrap {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 0.5rem;
+  flex: 1 1 32rem;
+  min-width: 0;
+  min-height: 0;
   width: 100%;
-  height: auto;
-  min-height: 26rem;
-  touch-action: none;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 0.75rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.ds-puzzle-board-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.ds-puzzle-zoom-group {
+  display: flex;
+  gap: 0.25rem;
+}
+
+// .ds-btn--secondary is already magenta-on-transparent at rest, so the
+// active ("move mode on") state inverts it to a filled pill instead.
+[data-puzzle-target="moveModeButton"].is-active {
+  background: $ds-magenta;
+  color: $ds-bg;
+
+  &:hover {
+    background: $ds-magenta-dim;
+    color: $ds-bg;
+  }
+}
+
+.ds-puzzle-bg-picker {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   cursor: pointer;
 }
 
+.ds-puzzle-bg-input {
+  width: 32px;
+  height: 24px;
+  padding: 2px;
+  border: 1px solid $ds-border;
+  border-radius: $ds-radius-sm;
+  background: $ds-surface;
+  cursor: pointer;
+}
+
+.ds-puzzle-container {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  min-height: 20rem;
+  touch-action: none;
+  background: var(--ds-puzzle-bg, #{$ds-surface});
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
 .ds-puzzle-reference {
+  flex: 0 0 12rem;
   max-width: 12rem;
+  align-self: flex-start;
 }
 
 .ds-puzzle-reference-img {

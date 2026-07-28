@@ -392,6 +392,17 @@
   padding: $ds-space-xl $ds-space-xl $ds-space-3xl;
 }
 
+// Opt-out of the default reading-width column for pages (like the puzzle
+// board) that need to use the full width and height next to the sidebar.
+// The flex column + min-height lets a flex-grow child (e.g. the puzzle
+// canvas) expand to fill all the remaining viewport space.
+.ds-beta-main-inner--wide {
+  max-width: none;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
 @media (max-width: 52rem) {
   .ds-beta-app {
     display: block;

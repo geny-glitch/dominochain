@@ -1,295 +1,196 @@
-// Deterministic mulberry32 PRNG from a numeric seed.
-function mulberry32(seed) {
-  let t = seed >>> 0
-  return function () {
-    t += 0x6d2b79f5
-    let r = Math.imul(t ^ (t >>> 15), 1 | t)
-    r ^= r + Math.imul(r ^ (r >>> 7), 61 | r)
-    return ((r ^ (r >>> 14)) >>> 0) / 4294967296
-  }
-}
+import { JigsawPuzzle } from "jigsawpuzzlegame"
 
-function shuffle(array, random) {
-  const out = array.slice()
-  for (let i = out.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(random() * (i + 1))
-    const tmp = out[i]
-    out[i] = out[j]
-    out[j] = tmp
-  }
-  return out
-}
+// jigsawpuzzlegame supports shape types 0-3; 3 gives the roundest, most
+// classic-looking knobs.
+const DEFAULT_SHAPE_TYPE = 0
 
+// Thin wrapper around the jigsawpuzzlegame library: pieces interlock freely
+// (no fixed board grid) and merge into groups until only one remains.
 export class PuzzleEngine {
-  constructor({ canvas, cols, rows, layoutSeed, onProgress, onComplete }) {
-    this.canvas = canvas
-    this.ctx = canvas.getContext("2d")
-    this.cols = cols
-    this.rows = rows
-    this.pieceCount = cols * rows
-    this.layoutSeed = layoutSeed
-    this.onProgress = onProgress || (() => {})
-    this.onComplete = onComplete || (() => {})
-    this.image = null
-    this.board = Array(this.pieceCount).fill(null)
-    this.tray = []
-    this.dragging = null
-    this.boardRect = { x: 0, y: 0, w: 0, h: 0 }
-    this.trayRect = { x: 0, y: 0, w: 0, h: 0 }
-    this.pieceW = 0
-    this.pieceH = 0
-    this.raf = null
-    this._boundPointerDown = this.onPointerDown.bind(this)
-    this._boundPointerMove = this.onPointerMove.bind(this)
-    this._boundPointerUp = this.onPointerUp.bind(this)
+  constructor({ container, numPieces, allowRotation = false, shapeType = DEFAULT_SHAPE_TYPE, onReady, onStart, onWin, onProgress }) {
+    this.container = container
+    this.numPieces = numPieces
+    this.allowRotation = allowRotation
+    this.shapeType = shapeType
+    this.onReadyCallback = onReady || (() => {})
+    this.onStartCallback = onStart || (() => {})
+    this.onWinCallback = onWin || (() => {})
+    this.onProgressCallback = onProgress || (() => {})
+    this.groupsRemaining = numPieces
+    // The library rounds numPieces to fit the image's aspect ratio (e.g. asking
+    // for 49 can yield a 5x10 = 50 grid), so the real piece count is only known
+    // once the internal grid exists. Synced in start() and used in mergesTotal().
+    this.actualPieceCount = null
+    this.puzzle = null
+    // Dragging empty background pans the whole board by default in the
+    // library; we only want that once the user opts into "move mode" (see
+    // setMoveMode / vetoBackgroundDrag).
+    this.moveModeEnabled = false
+    this.vetoBackgroundDrag = this.vetoBackgroundDrag.bind(this)
+    this.vetoZoomGesture = this.vetoZoomGesture.bind(this)
   }
 
-  async loadImage(url) {
-    const img = new Image()
-    img.crossOrigin = "anonymous"
-    await new Promise((resolve, reject) => {
-      img.onload = resolve
-      img.onerror = reject
-      img.src = url
+  loadImage(url) {
+    return new Promise((resolve) => {
+      // Registered before the JigsawPuzzle instance below adds its own
+      // mousedown/touchstart/wheel listeners on the same container element,
+      // so ours run first (DOM dispatch order for same-target listeners
+      // follows registration order) and can veto the gesture before the
+      // library ever sees it.
+      this.container.addEventListener("mousedown", this.vetoBackgroundDrag)
+      this.container.addEventListener("touchstart", this.vetoBackgroundDrag)
+      // Zoom is now driven exclusively by the +/- buttons; block the
+      // library's own scroll-wheel and two-finger pinch zoom gestures.
+      this.container.addEventListener("wheel", this.vetoZoomGesture, { passive: false })
+      this.container.addEventListener("touchstart", this.vetoZoomGesture)
+
+      this.puzzle = new JigsawPuzzle(this.container, {
+        image: url,
+        numPieces: this.numPieces,
+        shapeType: this.shapeType,
+        allowRotation: this.allowRotation,
+        // We never pass savedData, so every session starts a brand new game:
+        // this tells the library to scatter pieces across the board instead
+        // of leaving them stacked in a pile (its default for a fresh game).
+        initialFullySpreadPieces: true,
+        onReady: () => {
+          resolve()
+          this.onReadyCallback()
+        },
+        onStart: () => this.onStartCallback(),
+        // The library's actual piece grid can differ slightly from the
+        // requested numPieces (it rounds to fit the image's aspect ratio),
+        // so our merge-based counter can land one short of its own total
+        // when the puzzle is actually solved. Force it to read as fully
+        // complete here rather than trusting the last onMerged tally.
+        onWin: () => {
+          this.groupsRemaining = 1
+          this.onProgressCallback(this.mergesTotal(), this.mergesTotal())
+          this.onWinCallback()
+        },
+        onMerged: () => {
+          this.groupsRemaining = Math.max(1, this.groupsRemaining - 1)
+          this.onProgressCallback(this.mergesDone(), this.mergesTotal())
+        }
+      })
     })
-    this.image = img
-    this.resetPieces()
-    this.layout()
-    this.draw()
   }
 
-  resetPieces() {
-    const random = mulberry32(this.layoutSeed)
-    const indices = Array.from({ length: this.pieceCount }, (_, i) => i)
-    this.tray = shuffle(indices, random).map((pieceIndex, order) => ({
-      pieceIndex,
-      trayOrder: order,
-      placed: false
-    }))
-    this.board = Array(this.pieceCount).fill(null)
+  start() {
+    this.puzzle?.start()
+    this.syncActualPieceCount()
   }
 
-  layout() {
-    const dpr = window.devicePixelRatio || 1
-    const cssW = this.canvas.clientWidth || 360
-    const cssH = Math.max(420, Math.round(cssW * 1.35))
-    this.canvas.width = Math.round(cssW * dpr)
-    this.canvas.height = Math.round(cssH * dpr)
-    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+  // Clicking directly on a piece must always work (that's how you play);
+  // only a drag that starts on truly empty board space is affected by move
+  // mode. We replicate the library's own hit test so this stays correct
+  // even where a piece's transparent canvas padding overlaps empty space.
+  vetoBackgroundDrag(event) {
+    if (this.moveModeEnabled) return
+    const internal = this.puzzle?.puzzle
+    if (!internal?.polyPieces) return
+    const point = internal.relativeMouseCoordinates(event.touches ? event.touches[0] : event)
+    const onPiece = internal.polyPieces.some((piece) => piece.isPointInPath(point))
+    if (onPiece) return
+    event.preventDefault()
+    event.stopImmediatePropagation()
+  }
 
-    const pad = 12
-    const boardSize = Math.min(cssW - pad * 2, Math.round(cssH * 0.58))
-    this.boardRect = {
-      x: (cssW - boardSize) / 2,
-      y: pad,
-      w: boardSize,
-      h: boardSize
+  setMoveMode(enabled) {
+    this.moveModeEnabled = enabled
+  }
+
+  // Wheel always means "zoom" to the library, and a second touch landing
+  // anywhere starts a pinch; both are vetoed unconditionally since the +/-
+  // buttons are now the only intended way to zoom.
+  vetoZoomGesture(event) {
+    if (event.type !== "wheel" && (!event.touches || event.touches.length < 2)) return
+    event.preventDefault()
+    event.stopImmediatePropagation()
+  }
+
+  zoomIn() {
+    this.zoomBy(1.3)
+  }
+
+  zoomOut() {
+    this.zoomBy(1 / 1.3)
+  }
+
+  zoomBy(factor) {
+    const internal = this.puzzle?.puzzle
+    if (!internal) return
+    internal.zoomBy(factor, { x: internal.contWidth / 2, y: internal.contHeight / 2 })
+  }
+
+  // Piece creation happens asynchronously inside the library's own animation
+  // loop, so poll a couple of frames until the real grid exists, then correct
+  // our counters (and the UI) to match it instead of the requested numPieces.
+  syncActualPieceCount() {
+    if (!this.puzzle) return
+    const count = this.puzzle.puzzle?.polyPieces?.length
+    if (count) {
+      this.actualPieceCount = count
+      this.groupsRemaining = count
+      this.onProgressCallback(this.mergesDone(), this.mergesTotal())
+    } else if (!this.actualPieceCount) {
+      requestAnimationFrame(() => this.syncActualPieceCount())
     }
-    this.pieceW = this.boardRect.w / this.cols
-    this.pieceH = this.boardRect.h / this.rows
-    this.trayRect = {
-      x: pad,
-      y: this.boardRect.y + this.boardRect.h + 16,
-      w: cssW - pad * 2,
-      h: cssH - (this.boardRect.y + this.boardRect.h + 28)
-    }
   }
 
-  attach() {
-    this.canvas.addEventListener("pointerdown", this._boundPointerDown)
-    window.addEventListener("pointermove", this._boundPointerMove)
-    window.addEventListener("pointerup", this._boundPointerUp)
-    window.addEventListener("pointercancel", this._boundPointerUp)
+  // Every merge reduces the number of independent piece groups by one;
+  // the puzzle is solved once a single group remains, so this is the
+  // natural unit of progress for a free-form (non-grid) jigsaw.
+  mergesTotal() {
+    return Math.max(1, (this.actualPieceCount || this.numPieces) - 1)
   }
 
-  detach() {
-    this.canvas.removeEventListener("pointerdown", this._boundPointerDown)
-    window.removeEventListener("pointermove", this._boundPointerMove)
-    window.removeEventListener("pointerup", this._boundPointerUp)
-    window.removeEventListener("pointercancel", this._boundPointerUp)
-  }
-
-  piecesPlaced() {
-    return this.board.filter((v) => v !== null).length
-  }
-
-  piecePositions() {
-    // Returns cell occupancy: index = pieceIndex, value = cellIndex (or -1 if unplaced).
-    const positions = Array(this.pieceCount).fill(-1)
-    this.board.forEach((pieceIndex, cellIndex) => {
-      if (pieceIndex !== null) positions[pieceIndex] = cellIndex
-    })
-    return positions
+  mergesDone() {
+    return this.mergesTotal() - (this.groupsRemaining - 1)
   }
 
   isComplete() {
-    return this.board.every((pieceIndex, cellIndex) => pieceIndex === cellIndex)
+    return this.groupsRemaining <= 1
   }
 
-  onPointerDown(event) {
-    if (!this.image) return
-    const point = this.eventPoint(event)
-    const trayHit = this.hitTray(point)
-    if (trayHit) {
-      this.dragging = {
-        pieceIndex: trayHit.pieceIndex,
-        from: "tray",
-        offsetX: point.x - trayHit.x,
-        offsetY: point.y - trayHit.y,
-        x: trayHit.x,
-        y: trayHit.y
-      }
-      this.tray = this.tray.filter((p) => p.pieceIndex !== trayHit.pieceIndex)
-      this.canvas.setPointerCapture(event.pointerId)
-      this.draw()
-      return
-    }
-
-    const boardHit = this.hitBoard(point)
-    if (boardHit && this.board[boardHit.cellIndex] !== null) {
-      const pieceIndex = this.board[boardHit.cellIndex]
-      this.board[boardHit.cellIndex] = null
-      this.dragging = {
-        pieceIndex,
-        from: "board",
-        fromCell: boardHit.cellIndex,
-        offsetX: point.x - boardHit.x,
-        offsetY: point.y - boardHit.y,
-        x: boardHit.x,
-        y: boardHit.y
-      }
-      this.onProgress(this.piecesPlaced())
-      this.canvas.setPointerCapture(event.pointerId)
-      this.draw()
-    }
+  async exportProgressBlob() {
+    const canvas = this.flatten()
+    if (!canvas) return null
+    return new Promise((resolve) => canvas.toBlob((blob) => resolve(blob), "image/png"))
   }
 
-  onPointerMove(event) {
-    if (!this.dragging) return
-    const point = this.eventPoint(event)
-    this.dragging.x = point.x - this.dragging.offsetX
-    this.dragging.y = point.y - this.dragging.offsetY
-    this.draw()
-  }
+  // The library renders each piece group on its own absolutely-positioned
+  // canvas rather than a single board canvas, so we flatten the current
+  // arrangement into one offscreen canvas for the progress snapshot.
+  flatten() {
+    const internal = this.puzzle?.puzzle
+    if (!internal || !Array.isArray(internal.polyPieces) || !internal.polyPieces.length) return null
 
-  onPointerUp() {
-    if (!this.dragging) return
-    const { pieceIndex, x, y } = this.dragging
-    const cell = this.cellAt(x + this.pieceW / 2, y + this.pieceH / 2)
-    if (cell !== null && this.board[cell] === null) {
-      this.board[cell] = pieceIndex
-      this.onProgress(this.piecesPlaced())
-      if (this.isComplete()) this.onComplete(this.piecePositions())
-    } else {
-      this.tray.push({ pieceIndex, trayOrder: this.tray.length, placed: false })
-    }
-    this.dragging = null
-    this.draw()
-  }
+    const canvas = document.createElement("canvas")
+    canvas.width = Math.max(1, Math.round(internal.contWidth || this.container.clientWidth || 1))
+    canvas.height = Math.max(1, Math.round(internal.contHeight || this.container.clientHeight || 1))
+    const ctx = canvas.getContext("2d")
 
-  eventPoint(event) {
-    const rect = this.canvas.getBoundingClientRect()
-    return {
-      x: event.clientX - rect.left,
-      y: event.clientY - rect.top
-    }
-  }
-
-  cellAt(x, y) {
-    const { boardRect, cols, rows, pieceW, pieceH } = this
-    if (x < boardRect.x || y < boardRect.y || x > boardRect.x + boardRect.w || y > boardRect.y + boardRect.h) {
-      return null
-    }
-    const col = Math.min(cols - 1, Math.max(0, Math.floor((x - boardRect.x) / pieceW)))
-    const row = Math.min(rows - 1, Math.max(0, Math.floor((y - boardRect.y) / pieceH)))
-    return row * cols + col
-  }
-
-  hitBoard(point) {
-    const cell = this.cellAt(point.x, point.y)
-    if (cell === null) return null
-    const col = cell % this.cols
-    const row = Math.floor(cell / this.cols)
-    return {
-      cellIndex: cell,
-      x: this.boardRect.x + col * this.pieceW,
-      y: this.boardRect.y + row * this.pieceH
-    }
-  }
-
-  hitTray(point) {
-    const unplaced = this.tray
-    if (!unplaced.length) return null
-    const gap = 8
-    const size = Math.min(this.pieceW * 0.85, this.pieceH * 0.85, 72)
-    const perRow = Math.max(1, Math.floor((this.trayRect.w + gap) / (size + gap)))
-    for (let i = 0; i < unplaced.length; i += 1) {
-      const col = i % perRow
-      const row = Math.floor(i / perRow)
-      const x = this.trayRect.x + col * (size + gap)
-      const y = this.trayRect.y + row * (size + gap)
-      if (point.x >= x && point.x <= x + size && point.y >= y && point.y <= y + size) {
-        return { pieceIndex: unplaced[i].pieceIndex, x, y, size }
-      }
-    }
-    return null
-  }
-
-  drawPiece(pieceIndex, dx, dy, dw, dh) {
-    if (!this.image) return
-    const col = pieceIndex % this.cols
-    const row = Math.floor(pieceIndex / this.cols)
-    const sw = this.image.naturalWidth / this.cols
-    const sh = this.image.naturalHeight / this.rows
-    this.ctx.save()
-    this.ctx.drawImage(this.image, col * sw, row * sh, sw, sh, dx, dy, dw, dh)
-    this.ctx.strokeStyle = "rgba(255,255,255,0.35)"
-    this.ctx.lineWidth = 1
-    this.ctx.strokeRect(dx + 0.5, dy + 0.5, dw - 1, dh - 1)
-    this.ctx.restore()
-  }
-
-  draw() {
-    const { ctx, canvas, boardRect, trayRect } = this
-    const cssW = canvas.clientWidth || 360
-    const cssH = canvas.height / (window.devicePixelRatio || 1)
-    ctx.clearRect(0, 0, cssW, cssH)
-
-    ctx.fillStyle = "rgba(255,255,255,0.06)"
-    ctx.fillRect(boardRect.x, boardRect.y, boardRect.w, boardRect.h)
-    ctx.strokeStyle = "rgba(255,255,255,0.2)"
-    ctx.strokeRect(boardRect.x, boardRect.y, boardRect.w, boardRect.h)
-
-    for (let cell = 0; cell < this.pieceCount; cell += 1) {
-      const col = cell % this.cols
-      const row = Math.floor(cell / this.cols)
-      const x = boardRect.x + col * this.pieceW
-      const y = boardRect.y + row * this.pieceH
-      ctx.strokeStyle = "rgba(255,255,255,0.08)"
-      ctx.strokeRect(x, y, this.pieceW, this.pieceH)
-      const pieceIndex = this.board[cell]
-      if (pieceIndex !== null) this.drawPiece(pieceIndex, x, y, this.pieceW, this.pieceH)
-    }
-
-    const gap = 8
-    const size = Math.min(this.pieceW * 0.85, this.pieceH * 0.85, 72)
-    const perRow = Math.max(1, Math.floor((trayRect.w + gap) / (size + gap)))
-    this.tray.forEach((item, i) => {
-      const col = i % perRow
-      const row = Math.floor(i / perRow)
-      const x = trayRect.x + col * (size + gap)
-      const y = trayRect.y + row * (size + gap)
-      this.drawPiece(item.pieceIndex, x, y, size, size)
+    internal.polyPieces.forEach((piece) => {
+      const width = piece.canvas.width
+      const height = piece.canvas.height
+      const angle = ((piece.rotationDegrees || 0) * Math.PI) / 180
+      ctx.save()
+      ctx.translate(piece.x + width / 2, piece.y + height / 2)
+      ctx.rotate(angle)
+      ctx.drawImage(piece.canvas, -width / 2, -height / 2)
+      ctx.restore()
     })
 
-    if (this.dragging) {
-      this.drawPiece(this.dragging.pieceIndex, this.dragging.x, this.dragging.y, this.pieceW, this.pieceH)
-    }
+    return canvas
   }
 
-  exportProgressBlob() {
-    return new Promise((resolve) => {
-      this.canvas.toBlob((blob) => resolve(blob), "image/png")
-    })
+  destroy() {
+    this.container.removeEventListener("mousedown", this.vetoBackgroundDrag)
+    this.container.removeEventListener("touchstart", this.vetoBackgroundDrag)
+    this.container.removeEventListener("wheel", this.vetoZoomGesture)
+    this.container.removeEventListener("touchstart", this.vetoZoomGesture)
+    this.puzzle?.destroy()
+    this.puzzle = null
   }
 }

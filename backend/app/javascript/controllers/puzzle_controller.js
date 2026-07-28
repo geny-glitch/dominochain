@@ -2,9 +2,12 @@ import { Controller } from "@hotwired/stimulus"
 import { PuzzleEngine } from "puzzle/engine"
 import { postJson, postFormData } from "puzzle/api"
 
+const BACKGROUND_STORAGE_KEY = "puzzle:board-background"
+const DEFAULT_BACKGROUND = "#16161b"
+
 export default class extends Controller {
   static targets = [
-    "canvas",
+    "container",
     "progress",
     "timer",
     "reference",
@@ -12,14 +15,13 @@ export default class extends Controller {
     "status",
     "startButton",
     "abandonButton",
-    "playArea"
+    "playArea",
+    "backgroundInput",
+    "moveModeButton"
   ]
 
   static values = {
     sessionId: Number,
-    layoutSeed: Number,
-    gridCols: Number,
-    gridRows: Number,
     referenceMode: String,
     deadlineAt: String,
     imageUrl: String,
@@ -35,11 +37,12 @@ export default class extends Controller {
     this.finishing = false
     this.i18n = this.readI18n()
     this.setupReference()
+    this.setupBackground()
   }
 
   disconnect() {
     this.clearTimer()
-    if (this.engine) this.engine.detach()
+    if (this.engine) this.engine.destroy()
   }
 
   readI18n() {
@@ -66,6 +69,54 @@ export default class extends Controller {
     }
   }
 
+  // The board background is purely a display preference (not tied to the
+  // session outcome), so it lives in localStorage rather than the backend.
+  setupBackground() {
+    if (!this.hasBackgroundInputTarget) return
+    let stored = DEFAULT_BACKGROUND
+    try {
+      stored = window.localStorage.getItem(BACKGROUND_STORAGE_KEY) || DEFAULT_BACKGROUND
+    } catch (_e) {
+      // localStorage unavailable (private mode, etc.): fall back to the default.
+    }
+    this.backgroundInputTarget.value = stored
+    this.applyBackground(stored)
+  }
+
+  changeBackground(event) {
+    const color = event.target.value
+    this.applyBackground(color)
+    try {
+      window.localStorage.setItem(BACKGROUND_STORAGE_KEY, color)
+    } catch (_e) {
+      // Ignore storage failures; the color still applies for this page view.
+    }
+  }
+
+  applyBackground(color) {
+    if (this.hasContainerTarget) this.containerTarget.style.setProperty("--ds-puzzle-bg", color)
+  }
+
+  // Off by default: dragging the board background is reserved for move mode
+  // so it doesn't fight with picking up pieces near the edges of the board.
+  toggleMoveMode(event) {
+    event?.preventDefault()
+    const enabled = !this.moveModeButtonTarget.classList.contains("is-active")
+    this.moveModeButtonTarget.classList.toggle("is-active", enabled)
+    this.moveModeButtonTarget.setAttribute("aria-pressed", String(enabled))
+    if (this.engine) this.engine.setMoveMode(enabled)
+  }
+
+  zoomIn(event) {
+    event?.preventDefault()
+    this.engine?.zoomIn()
+  }
+
+  zoomOut(event) {
+    event?.preventDefault()
+    this.engine?.zoomOut()
+  }
+
   async start(event) {
     event?.preventDefault()
     if (this.engine) return
@@ -73,33 +124,32 @@ export default class extends Controller {
       this.setStatus(this.i18n.starting || "Starting…")
       const started = await postJson(this.startUrlValue, {})
       if (started.deadline_at) this.deadlineAtValue = started.deadline_at
+      // The container must be visible (and laid out) before the engine
+      // measures it, otherwise it sizes every piece at 0x0.
+      if (this.hasStartButtonTarget) this.startButtonTarget.hidden = true
+      if (this.hasPlayAreaTarget) this.playAreaTarget.hidden = false
       this.engine = new PuzzleEngine({
-        canvas: this.canvasTarget,
-        cols: this.gridColsValue,
-        rows: this.gridRowsValue,
-        layoutSeed: this.layoutSeedValue,
-        onProgress: (n) => this.updateProgress(n),
-        onComplete: (positions) => this.complete(positions)
+        container: this.containerTarget,
+        numPieces: this.piecesTotalValue,
+        onProgress: (n, total) => this.updateProgress(n, total),
+        onWin: () => this.complete()
       })
       await this.engine.loadImage(this.imageUrlValue)
-      this.engine.attach()
-      this.updateProgress(0)
+      this.engine.start()
+      this.updateProgress(0, this.engine.mergesTotal())
       this.startTimer()
-      if (this.hasStartButtonTarget) this.startButtonTarget.hidden = true
       if (this.hasAbandonButtonTarget) this.abandonButtonTarget.hidden = false
-      if (this.hasPlayAreaTarget) this.playAreaTarget.hidden = false
       this.setStatus("")
     } catch (error) {
       this.setStatus(this.i18n.startFailed || "Could not start the puzzle.")
     }
   }
 
-  updateProgress(n) {
+  updateProgress(n, total) {
     if (this.hasProgressTarget) {
-      const total = this.piecesTotalValue
       this.progressTarget.textContent = (this.i18n.progress || "{n}/{total}")
         .replace("{n}", String(n))
-        .replace("{total}", String(total))
+        .replace("{total}", String(total ?? this.piecesTotalValue))
     }
   }
 
@@ -128,7 +178,7 @@ export default class extends Controller {
     }
   }
 
-  async complete(positions) {
+  async complete() {
     if (this.finishing) return
     this.finishing = true
     this.clearTimer()
@@ -136,8 +186,7 @@ export default class extends Controller {
     try {
       await postJson(this.finishUrlValue, {
         outcome: "complete",
-        pieces_placed: this.piecesTotalValue,
-        piece_positions: positions
+        pieces_placed: this.piecesTotalValue
       })
       this.setStatus(this.i18n.completed || "Puzzle complete.")
       if (this.hasAbandonButtonTarget) this.abandonButtonTarget.hidden = true
@@ -165,18 +214,15 @@ export default class extends Controller {
     this.setStatus(this.i18n.finishing || "Finishing…")
     try {
       if (this.engine) {
+        const piecesPlaced = this.engine.mergesDone()
         const blob = await this.engine.exportProgressBlob()
         if (blob) {
           const form = new FormData()
           form.append("snapshot", blob, "progress.png")
-          form.append("pieces_placed", String(this.engine.piecesPlaced()))
+          form.append("pieces_placed", String(piecesPlaced))
           await postFormData(this.snapshotUrlValue, form)
         }
-        await postJson(this.finishUrlValue, {
-          outcome,
-          pieces_placed: this.engine.piecesPlaced(),
-          piece_positions: this.engine.piecePositions()
-        })
+        await postJson(this.finishUrlValue, { outcome, pieces_placed: piecesPlaced })
       } else {
         await postJson(this.finishUrlValue, { outcome })
       }

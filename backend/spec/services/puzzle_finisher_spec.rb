@@ -38,6 +38,15 @@ RSpec.describe PuzzleFinisher do
     expect(result.kind).to eq("completed_in_time")
   end
 
+  it "trusts a completion with no piece grid (free-form puzzle engine)" do
+    result = described_class.new(session: session, outcome: :complete, pieces_placed: 9).call
+
+    expect(result.ok).to eq(true)
+    expect(result.kind).to eq("completed")
+    expect(session.reload.status).to eq("completed")
+    expect(session.pieces_placed).to eq(9)
+  end
+
   it "rejects invalid completion grids" do
     result = described_class.new(session: session, outcome: :complete, piece_positions: [1, 0, 2, 3, 4, 5, 6, 7, 8]).call
 

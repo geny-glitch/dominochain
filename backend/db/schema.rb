@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_07_28_160000) do
+ActiveRecord::Schema[7.2].define(version: 2026_07_29_153000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -60,7 +60,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_28_160000) do
     t.datetime "end_date"
     t.boolean "is_frozen", default: false, null: false
     t.datetime "frozen_at"
-    t.integer "total_duration"
+    t.bigint "total_duration"
     t.datetime "unlocked_at"
     t.jsonb "raw_data"
     t.datetime "created_at", null: false

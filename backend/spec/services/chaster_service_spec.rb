@@ -57,6 +57,47 @@ RSpec.describe ChasterService do
     end
   end
 
+  describe "#sync_locks!" do
+    let(:user) { create(:user, :beta, chaster_access_token: "token", chaster_token_expires_at: 1.hour.from_now) }
+    let(:service) { described_class.new(user) }
+    let(:lock_id) { "689dca51fb161cc4369899c0" }
+    let(:total_duration_ms) { 30_160_371_241 }
+
+    before do
+      response = instance_double(Net::HTTPResponse, code: "200", body: locks_payload.to_json)
+      allow(response).to receive(:is_a?).with(Net::HTTPSuccess).and_return(true)
+      allow(Net::HTTP).to receive(:start).and_yield(instance_double(Net::HTTP, request: response))
+    end
+
+    let(:locks_payload) do
+      [
+        {
+          "_id" => lock_id,
+          "title" => "Long lock",
+          "status" => "locked",
+          "startDate" => "2025-08-14T11:36:49.000Z",
+          "endDate" => "2027-04-12T23:39:57.297Z",
+          "isFrozen" => false,
+          "totalDuration" => total_duration_ms
+        }
+      ]
+    end
+
+    it "persists locks whose totalDuration exceeds 32-bit integer range" do
+      expect { service.sync_locks! }.to change(user.chaster_locks, :count).by(1)
+
+      lock = user.chaster_locks.find_by!(chaster_lock_id: lock_id)
+      expect(lock.total_duration).to eq(total_duration_ms)
+      expect(lock.status).to eq("locked")
+    end
+
+    it "returns the synced lock from current_lock" do
+      lock = service.current_lock
+
+      expect(lock).to include(id: lock_id, title: "Long lock", is_frozen: false)
+    end
+  end
+
   describe ".freeze_supported?" do
     it "returns false while freeze UI is disabled" do
       expect(described_class.freeze_supported?(

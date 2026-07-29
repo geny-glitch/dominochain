@@ -611,7 +611,9 @@ class BetaDashboardController < ApplicationController
     return nil unless current_user.chaster_access_token.present?
 
     ChasterService.new(current_user).current_lock
-  rescue ChasterService::Unauthorized, ChasterService::Error
+  rescue ChasterService::Unauthorized, ChasterService::Error,
+         ActiveModel::RangeError, ActiveRecord::ActiveRecordError => e
+    Rails.logger.warn("Chaster lock fetch failed for user=#{current_user.id}: #{e.class}: #{e.message}")
     nil
   end
 

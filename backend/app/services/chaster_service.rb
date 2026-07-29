@@ -140,7 +140,14 @@ class ChasterService
     locks.each do |lock_data|
       next unless (lock_data["status"] || lock_data["Status"]) == "locked"
 
-      upsert_lock(lock_data)
+      begin
+        upsert_lock(lock_data)
+      rescue ActiveModel::RangeError, ActiveRecord::ActiveRecordError => e
+        Rails.logger.warn(
+          "Chaster lock upsert failed for user=#{@user.id} " \
+          "lock=#{lock_data['_id']}: #{e.class}: #{e.message}"
+        )
+      end
     end
   end
 

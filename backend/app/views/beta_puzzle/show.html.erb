@@ -13,84 +13,82 @@
   data-puzzle-snapshot-url-value="<%= beta_puzzle_progress_snapshot_path(@session) %>"
   data-puzzle-pieces-total-value="<%= @session.pieces_total %>"
 >
-  <header class="ds-beta-page-head">
-    <h1 class="ds-beta-page-title"><%= t("puzzle.play.heading") %></h1>
-    <p class="ds-beta-page-lead"><%= t("puzzle.play.lead", count: @session.piece_count) %></p>
-  </header>
+  <div class="ds-puzzle-topbar">
+    <div class="ds-puzzle-topbar__start">
+      <% if @session.assigned? || @session.active? %>
+        <button type="button" class="ds-btn ds-btn--primary ds-btn--sm" data-puzzle-target="startButton" data-action="puzzle#start">
+          <%= @session.active? ? t("puzzle.play.resume") : t("puzzle.play.start") %>
+        </button>
+        <button type="button" class="ds-btn ds-btn--secondary ds-btn--sm" data-puzzle-target="abandonButton" data-action="puzzle#abandon" <%= "hidden" unless @session.active? %>>
+          <%= t("puzzle.play.abandon") %>
+        </button>
+      <% else %>
+        <p class="ds-beta-control-hint"><%= t("puzzle.play.status.#{@session.status}") %></p>
+        <%= link_to t("puzzle.play.back"), beta_sources_puzzle_path, class: "ds-btn ds-btn--secondary ds-btn--sm" %>
+      <% end %>
+      <div class="ds-puzzle-meta">
+        <span data-puzzle-target="progress"><%= t("puzzle.play.progress", n: @session.pieces_placed, total: @session.pieces_total) %></span>
+        <span data-puzzle-target="timer" hidden></span>
+      </div>
+    </div>
 
-  <div class="ds-puzzle-toolbar">
-    <% if @session.assigned? || @session.active? %>
-      <button type="button" class="ds-btn ds-btn--primary" data-puzzle-target="startButton" data-action="puzzle#start">
-        <%= @session.active? ? t("puzzle.play.resume") : t("puzzle.play.start") %>
+    <div class="ds-puzzle-topbar__tools">
+      <div class="ds-puzzle-zoom-group" role="group" aria-label="<%= t("puzzle.play.zoom_label") %>">
+        <button
+          type="button"
+          class="ds-btn ds-btn--secondary ds-btn--icon ds-btn--sm"
+          data-action="puzzle#zoomOut"
+          title="<%= t("puzzle.play.zoom_out") %>"
+          aria-label="<%= t("puzzle.play.zoom_out") %>"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+        <button
+          type="button"
+          class="ds-btn ds-btn--secondary ds-btn--icon ds-btn--sm"
+          data-action="puzzle#zoomIn"
+          title="<%= t("puzzle.play.zoom_in") %>"
+          aria-label="<%= t("puzzle.play.zoom_in") %>"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+      </div>
+      <button
+        type="button"
+        class="ds-btn ds-btn--secondary ds-btn--icon ds-btn--sm"
+        data-puzzle-target="moveModeButton"
+        data-action="puzzle#toggleMoveMode"
+        aria-pressed="false"
+        title="<%= t("puzzle.play.move_mode") %>"
+        aria-label="<%= t("puzzle.play.move_mode") %>"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="5 9 2 12 5 15"/><polyline points="9 5 12 2 15 5"/><polyline points="15 19 12 22 9 19"/><polyline points="19 9 22 12 19 15"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>
       </button>
-      <button type="button" class="ds-btn ds-btn--secondary" data-puzzle-target="abandonButton" data-action="puzzle#abandon" <%= "hidden" unless @session.active? %>>
-        <%= t("puzzle.play.abandon") %>
+      <button
+        type="button"
+        class="ds-btn ds-btn--secondary ds-btn--icon ds-btn--sm"
+        data-action="puzzle#reshuffle"
+        title="<%= t("puzzle.play.reshuffle") %>"
+        aria-label="<%= t("puzzle.play.reshuffle") %>"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
       </button>
-    <% else %>
-      <p class="ds-beta-control-hint"><%= t("puzzle.play.status.#{@session.status}") %></p>
-      <%= link_to t("puzzle.play.back"), beta_sources_puzzle_path, class: "ds-btn ds-btn--secondary" %>
-    <% end %>
+      <label class="ds-puzzle-bg-picker" title="<%= t("puzzle.play.background_label") %>">
+        <span class="ds-form-label"><%= t("puzzle.play.background_label") %></span>
+        <input
+          type="color"
+          class="ds-puzzle-bg-input"
+          data-puzzle-target="backgroundInput"
+          data-action="input->puzzle#changeBackground"
+        >
+      </label>
+    </div>
   </div>
 
-  <div class="ds-puzzle-meta">
-    <span data-puzzle-target="progress"><%= t("puzzle.play.progress", n: @session.pieces_placed, total: @session.pieces_total) %></span>
-    <span data-puzzle-target="timer" hidden></span>
-  </div>
   <p class="ds-puzzle-status" data-puzzle-target="status"></p>
 
   <div class="ds-puzzle-play-layout" data-puzzle-target="playArea" <%= "hidden" unless @session.active? %>>
     <div class="ds-puzzle-board-wrap">
-      <div class="ds-puzzle-board-toolbar">
-        <div class="ds-puzzle-zoom-group" role="group" aria-label="<%= t("puzzle.play.zoom_label") %>">
-          <button
-            type="button"
-            class="ds-btn ds-btn--secondary ds-btn--icon ds-btn--sm"
-            data-action="puzzle#zoomOut"
-            title="<%= t("puzzle.play.zoom_out") %>"
-            aria-label="<%= t("puzzle.play.zoom_out") %>"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          </button>
-          <button
-            type="button"
-            class="ds-btn ds-btn--secondary ds-btn--icon ds-btn--sm"
-            data-action="puzzle#zoomIn"
-            title="<%= t("puzzle.play.zoom_in") %>"
-            aria-label="<%= t("puzzle.play.zoom_in") %>"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          </button>
-        </div>
-        <button
-          type="button"
-          class="ds-btn ds-btn--secondary ds-btn--icon ds-btn--sm"
-          data-puzzle-target="moveModeButton"
-          data-action="puzzle#toggleMoveMode"
-          aria-pressed="false"
-          title="<%= t("puzzle.play.move_mode") %>"
-          aria-label="<%= t("puzzle.play.move_mode") %>"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="5 9 2 12 5 15"/><polyline points="9 5 12 2 15 5"/><polyline points="15 19 12 22 9 19"/><polyline points="19 9 22 12 19 15"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>
-        </button>
-        <button
-          type="button"
-          class="ds-btn ds-btn--secondary ds-btn--icon ds-btn--sm"
-          data-action="puzzle#reshuffle"
-          title="<%= t("puzzle.play.reshuffle") %>"
-          aria-label="<%= t("puzzle.play.reshuffle") %>"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
-        </button>
-        <label class="ds-puzzle-bg-picker" title="<%= t("puzzle.play.background_label") %>">
-          <span class="ds-form-label"><%= t("puzzle.play.background_label") %></span>
-          <input
-            type="color"
-            class="ds-puzzle-bg-input"
-            data-puzzle-target="backgroundInput"
-            data-action="input->puzzle#changeBackground"
-          >
-        </label>
-      </div>
       <div
         class="ds-puzzle-container"
         data-puzzle-target="container"
@@ -100,8 +98,7 @@
     </div>
 
     <aside class="ds-puzzle-reference" data-puzzle-target="reference" <%= "hidden" if @session.reference_mode == "none" %>>
-      <p class="ds-form-label"><%= t("puzzle.play.reference") %></p>
-      <img class="ds-puzzle-reference-img<%= " ds-puzzle-reference-img--blurred" if @session.reference_mode == "blurred" %>" data-puzzle-target="referenceImage" src="<%= beta_puzzle_image_path(@session) %>" alt="">
+      <img class="ds-puzzle-reference-img<%= " ds-puzzle-reference-img--blurred" if @session.reference_mode == "blurred" %>" data-puzzle-target="referenceImage" src="<%= beta_puzzle_image_path(@session) %>" alt="<%= t("puzzle.play.reference") %>">
     </aside>
   </div>
 </section>

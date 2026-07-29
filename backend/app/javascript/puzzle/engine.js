@@ -137,14 +137,8 @@ export class PuzzleEngine {
 
     const margin = 4
     const gap = 14
-    const maxHoleFrac = 0.35
     const stepX = internal.scalex + gap
     const stepY = internal.scaley + gap
-    const gameWidth = internal.gameWidth || internal.scalex * internal.nx
-    const holeWidth = Math.min(Math.max(gameWidth, internal.scalex * 2), internal.contWidth * maxHoleFrac)
-    const centerX = internal.contWidth / 2
-    const leftEdge = centerX - holeWidth / 2
-    const rightEdge = centerX + holeWidth / 2
     const rowsFit = Math.max(1, Math.floor((internal.contHeight - margin * 2) / stepY))
 
     const shuffled = singles.slice()
@@ -161,8 +155,15 @@ export class PuzzleEngine {
       const col = Math.floor(slot / rowsFit)
       const row = slot % rowsFit
       const y = margin + row * stepY
-      const x = onLeft ? leftEdge - (col + 1) * stepX : rightEdge + col * stepX
-      piece.moveTo(x, y)
+      // Single-piece canvases are 2*scalex wide (half-cell knob padding on each
+      // side). Step by scalex so pads overlap, but use the full canvas width
+      // when anchoring against the right edge so nothing clips off-screen.
+      const pieceWidth = piece.canvas?.width || internal.scalex * 2
+      const maxX = Math.max(margin, internal.contWidth - margin - pieceWidth)
+      const x = onLeft
+        ? margin + col * stepX
+        : maxX - col * stepX
+      piece.moveTo(Math.min(Math.max(x, margin), maxX), y)
       piece.drawImage?.()
     })
 

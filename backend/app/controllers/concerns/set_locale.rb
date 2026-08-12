@@ -30,7 +30,40 @@ module SetLocale
       return sl
     end
 
+    if (al = locale_from_accept_language)
+      session[:locale] = al.to_s
+      return al
+    end
+
     I18n.default_locale
+  end
+
+  # Parses Accept-Language (e.g. "fr-FR,fr;q=0.9,en;q=0.8") and returns the
+  # first supported primary language tag, preferring higher q-values.
+  def locale_from_accept_language
+    header = request.headers["Accept-Language"]
+    return nil if header.blank?
+
+    candidates = header.to_s.split(",").filter_map do |part|
+      lang, *params = part.strip.split(";")
+      next if lang.blank?
+
+      q = 1.0
+      params.each do |param|
+        key, value = param.strip.split("=", 2)
+        q = value.to_f if key == "q" && value.present?
+      end
+
+      primary = lang.downcase.tr("_", "-").split("-").first
+      next unless primary.present?
+
+      [primary.to_sym, q]
+    end
+
+    candidates
+      .sort_by { |(_locale, q)| -q }
+      .map(&:first)
+      .find { |locale| SUPPORTED_LOCALES.include?(locale) }
   end
 
   def normalize_locale(value)

@@ -46,7 +46,7 @@ class SettingsActivity : AppCompatActivity() {
         binding.checkUpdatesButton.setOnClickListener {
             AppUpdateManager(this).checkForUpdates(force = true)
         }
-        binding.accountNickname.text = sessionManager.nickname ?: "-"
+        binding.accountNickname.text = sessionManager.nickname ?: getString(R.string.empty_placeholder)
         binding.accountDeviceName.setText(getDeviceName() ?: "")
 
         setupPermissions()
@@ -283,7 +283,7 @@ class SettingsActivity : AppCompatActivity() {
                             flags = Intent.FLAG_ACTIVITY_NEW_TASK
                         })
                     } catch (_: Exception) {
-                        Toast.makeText(this, "Impossible d'ouvrir les réglages batterie", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, R.string.settings_battery_open_failed, Toast.LENGTH_SHORT).show()
                     }
                 }
             }
@@ -320,27 +320,31 @@ class SettingsActivity : AppCompatActivity() {
             val newPass = binding.newPassword.text.toString()
             val confirm = binding.confirmPassword.text.toString()
             if (current.isBlank()) {
-                Toast.makeText(this, "Mot de passe actuel requis", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, R.string.password_current_required, Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
             if (newPass.length < 6) {
-                Toast.makeText(this, "6 caractères minimum", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, R.string.password_min_length, Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
             if (newPass != confirm) {
-                Toast.makeText(this, "Les mots de passe ne correspondent pas", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, R.string.auth_passwords_mismatch, Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
             lifecycleScope.launch {
                 authRepository.changePassword(current, newPass, confirm)
                     .onSuccess {
-                        Toast.makeText(this@SettingsActivity, "Mot de passe modifié", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@SettingsActivity, R.string.password_changed, Toast.LENGTH_SHORT).show()
                         binding.currentPassword.text?.clear()
                         binding.newPassword.text?.clear()
                         binding.confirmPassword.text?.clear()
                     }
                     .onFailure {
-                        Toast.makeText(this@SettingsActivity, it.message ?: "Erreur", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            this@SettingsActivity,
+                            it.message ?: getString(R.string.generic_error),
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
             }
         }
@@ -352,7 +356,7 @@ class SettingsActivity : AppCompatActivity() {
         binding.sendControlRequestButton.setOnClickListener {
             val bossNickname = binding.bossNicknameInput.text.toString().trim()
             if (bossNickname.isBlank()) {
-                Toast.makeText(this, "Entrez le pseudo du boss", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, R.string.boss_nickname_required, Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
             lifecycleScope.launch {
@@ -361,9 +365,24 @@ class SettingsActivity : AppCompatActivity() {
                         Toast.makeText(this@SettingsActivity, msg, Toast.LENGTH_SHORT).show()
                     }
                     .onFailure {
-                        Toast.makeText(this@SettingsActivity, it.message ?: "Erreur", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            this@SettingsActivity,
+                            it.message ?: getString(R.string.generic_error),
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
             }
+        }
+
+        binding.logoutButton.setOnClickListener {
+            sessionManager.clear()
+            RetrofitClient.sessionManager = sessionManager
+            startActivity(
+                Intent(this, LoginActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                }
+            )
+            finish()
         }
     }
 

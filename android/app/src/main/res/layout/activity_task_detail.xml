@@ -36,7 +36,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Description"
+            android:text="@string/task_description_label"
             style="@style/DsSectionTitle"
             android:layout_marginBottom="@dimen/ds_space_xs" />
 
@@ -50,7 +50,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Preuve attendue"
+            android:text="@string/task_expected_proof_label"
             style="@style/DsSectionTitle"
             android:layout_marginBottom="@dimen/ds_space_xs" />
 
@@ -74,7 +74,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Punitions reçues"
+                android:text="@string/task_punishments_title"
                 style="@style/DsTitleSmall"
                 android:layout_marginBottom="@dimen/ds_space_sm" />
 
@@ -99,7 +99,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Soumettre une preuve"
+                android:text="@string/proof_submit_section"
                 style="@style/DsTitleSmall"
                 android:layout_marginBottom="@dimen/ds_space_sm" />
 
@@ -108,7 +108,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:minLines="3"
-                android:hint="Texte de la preuve..."
+                android:hint="@string/proof_text_hint"
                 android:inputType="textMultiLine"
                 style="@style/DsEditText"
                 android:layout_marginBottom="@dimen/ds_space_sm" />
@@ -117,7 +117,7 @@
                 android:id="@+id/proof_media_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Ajouter image/vidéo"
+                android:text="@string/proof_add_media"
                 style="@style/DsButtonSecondary"
                 android:layout_marginBottom="@dimen/ds_space_sm" />
 
@@ -133,7 +133,7 @@
                 android:id="@+id/proof_submit_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Envoyer la preuve"
+                android:text="@string/proof_send"
                 style="@style/DsButton" />
 
         </LinearLayout>
@@ -150,7 +150,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Preuve soumise"
+                android:text="@string/proof_submitted_section"
                 style="@style/DsTitleSmall"
                 android:layout_marginBottom="@dimen/ds_space_sm" />
 

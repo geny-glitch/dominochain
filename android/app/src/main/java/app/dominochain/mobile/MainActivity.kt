@@ -87,13 +87,13 @@ class MainActivity : AppCompatActivity() {
                 loadWallpapers(deviceId)
                 loadChasterLock()
             }.onFailure {
-                binding.webUrlText.text = "Erreur: ${it.message}"
+                binding.webUrlText.text = getString(R.string.error_with_message, it.message)
             }
         }
 
         binding.refreshButton.setOnClickListener {
             syncWallpaper()
-            Toast.makeText(this, "Checking for new wallpaper...", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, R.string.wallpaper_checking, Toast.LENGTH_SHORT).show()
             deviceId.let { loadWallpapers(it) }
         }
 
@@ -181,7 +181,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }.onFailure {
                 binding.tasksEmpty.visibility = android.view.View.VISIBLE
-                binding.tasksEmpty.text = "Erreur de chargement"
+                binding.tasksEmpty.text = getString(R.string.tasks_load_error)
             }
         }
     }
@@ -189,14 +189,14 @@ class MainActivity : AppCompatActivity() {
     private fun refreshTrackers() {
         val cigarettes = trackerRepository.snapshot(TrackerType.Cigarettes)
         binding.cigarettesCount.text = cigarettes.count.toString()
-        binding.cigarettesUnit.text = cigarettes.type.unitLabel
+        binding.cigarettesUnit.text = getString(cigarettes.type.unitLabelRes)
         CigaretteTrackerWidgetProvider.updateWidgets(this)
         CigaretteQuickAddWidgetProvider.updateWidgets(this)
 
         lifecycleScope.launch {
             val remote = trackerRepository.refreshRemote().getOrNull() ?: return@launch
             binding.cigarettesCount.text = remote.count.toString()
-            binding.cigarettesUnit.text = remote.type.unitLabel
+            binding.cigarettesUnit.text = getString(remote.type.unitLabelRes)
             CigaretteTrackerWidgetProvider.updateWidgets(this@MainActivity)
             CigaretteQuickAddWidgetProvider.updateWidgets(this@MainActivity)
         }
@@ -206,17 +206,17 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             val snapshot = if (sessionManager.isLoggedIn) {
                 trackerRepository.incrementRemote().getOrElse {
-                    Toast.makeText(this@MainActivity, "Backend indisponible: cigarette non envoyée", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@MainActivity, R.string.cigarettes_sync_failed, Toast.LENGTH_SHORT).show()
                     return@launch
                 }
             } else {
                 trackerRepository.increment(TrackerType.Cigarettes)
             }
             binding.cigarettesCount.text = snapshot.count.toString()
-            binding.cigarettesUnit.text = snapshot.type.unitLabel
+            binding.cigarettesUnit.text = getString(snapshot.type.unitLabelRes)
             CigaretteTrackerWidgetProvider.updateWidgets(this@MainActivity)
             CigaretteQuickAddWidgetProvider.updateWidgets(this@MainActivity)
-            Toast.makeText(this@MainActivity, "+1 cigarette", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this@MainActivity, R.string.cigarettes_incremented, Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -239,10 +239,10 @@ class MainActivity : AppCompatActivity() {
                 val dinoSec = response?.showcase_dino_seconds_per_obstacle?.takeIf { it > 0 }
                 val tetrisSec = response?.showcase_tetris_seconds_per_line?.takeIf { it > 0 }
                 val gameSecondsText = listOfNotNull(
-                    quizSec?.let { "Q: $it" },
-                    snakeSec?.let { "S: $it" },
-                    dinoSec?.let { "D: $it" },
-                    tetrisSec?.let { "T: $it" }
+                    quizSec?.let { getString(R.string.showcase_quiz_seconds_short, it) },
+                    snakeSec?.let { getString(R.string.showcase_snake_seconds_short, it) },
+                    dinoSec?.let { getString(R.string.showcase_dino_seconds_short, it) },
+                    tetrisSec?.let { getString(R.string.showcase_tetris_seconds_short, it) }
                 ).joinToString("  ")
                 if (gameSecondsText.isNotEmpty()) {
                     binding.chasterSnakeSeconds.visibility = android.view.View.VISIBLE
@@ -256,29 +256,29 @@ class MainActivity : AppCompatActivity() {
                 when {
                     lock != null -> {
                         card.visibility = android.view.View.VISIBLE
-                        // Utiliser remaining_seconds pour calculer la fin locale (évite la dérive serveur/appareil)
+                        // Use remaining_seconds for local end time (avoids server/device drift)
                         val remainingSec = lock.remaining_seconds ?: 0
                         val localEndTimeMs = System.currentTimeMillis() + remainingSec * 1000L
                         card.tag = ChasterLockDisplay(lock, localEndTimeMs)
-                        binding.chasterLockTitle.text = lock.title?.takeIf { it.isNotBlank() } ?: "Lock en cours"
+                        binding.chasterLockTitle.text = lock.title?.takeIf { it.isNotBlank() }
+                            ?: getString(R.string.chaster_lock_in_progress)
                         binding.chasterRemaining.text = formatRemainingTime(lock)
                         binding.chasterHint.visibility = android.view.View.GONE
-                        scheduleChasterRefresh() // décompte en temps réel, ne pas annuler
+                        scheduleChasterRefresh()
                     }
                     error != null -> {
                         chasterRefreshJob?.cancel()
                         card.visibility = android.view.View.VISIBLE
-                        binding.chasterLockTitle.text = "Chaster"
-                        binding.chasterRemaining.text = "Non connecté"
+                        binding.chasterLockTitle.text = getString(R.string.chaster_title)
+                        binding.chasterRemaining.text = getString(R.string.chaster_not_connected)
                         binding.chasterHint.visibility = android.view.View.VISIBLE
-                        binding.chasterHint.text = "Connecte Chaster depuis le dashboard web"
+                        binding.chasterHint.text = getString(R.string.chaster_connect_hint)
                     }
                     else -> {
                         chasterRefreshJob?.cancel()
-                        // Connecté mais aucun lock
                         card.visibility = android.view.View.VISIBLE
-                        binding.chasterLockTitle.text = "Chaster"
-                        binding.chasterRemaining.text = "Aucun lock en cours"
+                        binding.chasterLockTitle.text = getString(R.string.chaster_title)
+                        binding.chasterRemaining.text = getString(R.string.chaster_no_lock)
                         binding.chasterHint.visibility = android.view.View.GONE
                     }
                 }
@@ -312,22 +312,22 @@ class MainActivity : AppCompatActivity() {
     )
 
     private fun formatRemainingFromSeconds(sec: Int): String {
-        if (sec <= 0) return "Terminé"
+        if (sec <= 0) return getString(R.string.chaster_finished)
         val days = sec / 86400
         val hours = (sec % 86400) / 3600
         val mins = (sec % 3600) / 60
         val secs = sec % 60
         return when {
-            days > 0 -> "${days}j ${hours}h ${mins}min ${secs}s"
-            hours > 0 -> "${hours}h ${mins}min ${secs}s"
-            mins > 0 -> "${mins}min ${secs}s"
-            else -> "${secs}s"
+            days > 0 -> getString(R.string.duration_days_hours_mins_secs, days, hours, mins, secs)
+            hours > 0 -> getString(R.string.duration_hours_mins_secs, hours, mins, secs)
+            mins > 0 -> getString(R.string.duration_mins_secs, mins, secs)
+            else -> getString(R.string.duration_secs, secs)
         }
     }
 
     private fun formatRemainingTime(lock: app.dominochain.mobile.api.ChasterLock): String {
-        if (lock.is_frozen) return "Gelé"
-        val sec = lock.remaining_seconds ?: return "--"
+        if (lock.is_frozen) return getString(R.string.chaster_frozen)
+        val sec = lock.remaining_seconds ?: return getString(R.string.chaster_remaining_placeholder)
         return formatRemainingFromSeconds(sec)
     }
 
@@ -355,7 +355,7 @@ class MainActivity : AppCompatActivity() {
             }
             startActivity(Intent.createChooser(shareIntent, getString(R.string.share)))
         } catch (e: Exception) {
-            Toast.makeText(this, "Impossible de partager", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, R.string.share_failed, Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -435,14 +435,14 @@ class MainActivity : AppCompatActivity() {
         try {
             startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
         } catch (e: Exception) {
-            Toast.makeText(this, "Cannot open URL", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, R.string.open_url_failed, Toast.LENGTH_SHORT).show()
         }
     }
 
     private fun copyToClipboard(text: String) {
         val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-        clipboard.setPrimaryClip(ClipData.newPlainText("Web URL", text))
-        Toast.makeText(this, "Copié", Toast.LENGTH_SHORT).show()
+        clipboard.setPrimaryClip(ClipData.newPlainText(getString(R.string.clipboard_label_web_url), text))
+        Toast.makeText(this, R.string.copied, Toast.LENGTH_SHORT).show()
     }
 
     private fun requestNotificationPermission() {

@@ -393,6 +393,14 @@ fr:
       media_label: "Image ou vidéo (optionnel si tu as du texte)"
       submit: "Envoyer la preuve"
       cancel: "Annuler"
+    tasks:
+      title: "Tâches en cours"
+      deadline: "Deadline: %{datetime}"
+      proof_pending: "Preuve en attente"
+      proof_accepted: "Preuve acceptée"
+      submit_proof: "Soumettre preuve"
+      awaiting_validation: "En attente de validation"
+      validated: "✓ Validé"
     hints:
       chaster_no_lock: "Aucun lock en cours. Le temps restant s'affiche sur l'app et le widget."
     empty:

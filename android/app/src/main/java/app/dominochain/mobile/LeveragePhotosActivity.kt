@@ -166,7 +166,8 @@ private class LeveragePhotosAdapter(
 
     override fun onBindViewHolder(holder: Holder, position: Int) {
         val item = items[position]
-        holder.title.text = item.original_filename ?: "Photo #${item.id}"
+        holder.title.text = item.original_filename
+            ?: holder.itemView.context.getString(R.string.leverage_photo_fallback_title, item.id)
         holder.subtitle.text = buildString {
             append(item.status)
             item.locked_until?.let { append(" · "); append(it) }

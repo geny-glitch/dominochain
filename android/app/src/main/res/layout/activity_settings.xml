@@ -482,7 +482,7 @@
                 android:id="@+id/account_device_name"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Ex: Mon téléphone"
+                android:hint="@string/device_name_hint"
                 android:inputType="text"
                 android:maxLines="1"
                 style="@style/DsEditText"
@@ -556,7 +556,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Demander à être contrôlé par un boss"
+                    android:text="@string/control_request_title"
                     style="@style/DsSmall"
                     android:layout_marginBottom="@dimen/ds_space_xs" />
                 <EditText
@@ -605,6 +605,14 @@
                     android:textColor="@color/ds_teal"
                     android:text="@string/boss_owned_teasing" />
             </LinearLayout>
+
+            <Button
+                android:id="@+id/logout_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/ds_space_xl"
+                android:text="@string/logout"
+                style="@style/DsButtonSecondary" />
         </LinearLayout>
 
         <!-- Debug -->

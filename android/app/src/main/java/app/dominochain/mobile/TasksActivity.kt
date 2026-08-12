@@ -29,7 +29,7 @@ class TasksActivity : AppCompatActivity() {
 
         val deviceId = sessionManager.deviceId ?: prefs.getString(WallpaperWorker.KEY_DEVICE_ID, null)
         if (deviceId == null) {
-            Toast.makeText(this, "Device non enregistré", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, R.string.device_not_registered, Toast.LENGTH_SHORT).show()
             finish()
             return
         }
@@ -80,9 +80,9 @@ class TasksActivity : AppCompatActivity() {
                     binding.tasksList.visibility = View.VISIBLE
                 }
             }.onFailure {
-                Toast.makeText(this@TasksActivity, "Erreur: ${it.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@TasksActivity, getString(R.string.error_with_message, it.message), Toast.LENGTH_SHORT).show()
                 binding.tasksEmpty.visibility = View.VISIBLE
-                binding.tasksEmpty.text = "Erreur de chargement"
+                binding.tasksEmpty.text = getString(R.string.tasks_load_error)
             }
         }
     }

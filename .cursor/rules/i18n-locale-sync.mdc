@@ -14,6 +14,24 @@ When adding, renaming, or changing a translation key in any locale file under `b
 - If a locale cannot be updated immediately, explicitly mention the gap in the final response and mark it as follow-up.
 - For keys intentionally different by locale (legal/compliance/tone), keep the difference but still verify all locales were reviewed.
 
+## Devise special case
+
+English Devise flash/mailer keys live in `backend/config/locales/devise.en.yml`, while French and Spanish Devise keys live under `devise:` in `backend/config/locales/fr/pages.yml` and `backend/config/locales/es/pages.yml` (plus UI form labels in `en/pages.yml`).
+
+When editing any Devise key (`devise.failure.*`, `devise.mailer.*`, `devise.sessions.*`, `errors.messages.*`, etc.):
+
+- Update `devise.en.yml` (and/or `en/pages.yml` for form labels)
+- Update the matching keys in `fr/pages.yml` and `es/pages.yml`
+- Do not assume Rails `fallbacks` will cover missing locales
+
+## Verification
+
+Before finishing a translation change, run:
+
+```bash
+cd backend && bundle exec rspec spec/lib/locale_completeness_spec.rb
+```
+
 ## Practical example
 
-- If you change `devise.passwords.send_instructions` in `fr/pages.yml`, also review and update `en/pages.yml` and `es/pages.yml` (or clearly state why not).
+- If you change `devise.passwords.send_instructions` in `fr/pages.yml`, also review and update `devise.en.yml` / `en/pages.yml` and `es/pages.yml` (or clearly state why not).

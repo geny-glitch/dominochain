@@ -49,14 +49,16 @@ class LoginActivity : AppCompatActivity() {
     private fun updateFormVisibility() {
         binding.loginForm.visibility = if (isRegisterMode) View.GONE else View.VISIBLE
         binding.registerForm.visibility = if (isRegisterMode) View.VISIBLE else View.GONE
-        binding.switchMode.text = if (isRegisterMode) "J'ai déjà un compte" else "Créer un compte"
+        binding.switchMode.text = getString(
+            if (isRegisterMode) R.string.login_switch_to_login else R.string.login_switch_to_register
+        )
     }
 
     private fun doLogin() {
         val email = binding.loginEmail.text.toString().trim()
         val password = binding.loginPassword.text.toString()
         if (email.isBlank() || password.isBlank()) {
-            Toast.makeText(this, "E-mail et mot de passe requis", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, R.string.auth_email_password_required, Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -90,15 +92,15 @@ class LoginActivity : AppCompatActivity() {
         val password = binding.registerPassword.text.toString()
         val passwordConfirm = binding.registerPasswordConfirm.text.toString()
         if (email.isBlank() || password.isBlank()) {
-            Toast.makeText(this, "E-mail et mot de passe requis", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, R.string.auth_email_password_required, Toast.LENGTH_SHORT).show()
             return
         }
         if (password.length < 6) {
-            Toast.makeText(this, "Mot de passe : 6 caractères minimum", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, R.string.auth_password_min_length, Toast.LENGTH_SHORT).show()
             return
         }
         if (password != passwordConfirm) {
-            Toast.makeText(this, "Les mots de passe ne correspondent pas", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, R.string.auth_passwords_mismatch, Toast.LENGTH_SHORT).show()
             return
         }
 

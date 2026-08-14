@@ -2,14 +2,13 @@ package app.dominochain.mobile
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.os.Bundle
 import android.speech.tts.TextToSpeech
 import android.speech.tts.Voice
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
+import android.widget.FrameLayout
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
@@ -35,11 +34,13 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import java.util.regex.Pattern
 
-class CornertimeActivity : AppCompatActivity() {
+class CornertimeActivity : BetaShellActivity() {
 
     private lateinit var binding: ActivityCornertimeBinding
     private val sessionManager by lazy { (application as BgApplication).sessionManager }
     private val repository = CornertimeRepository()
+
+    override val navDestination = AppNavDestination.SOURCE_CORNERTIME
 
     private var cameraExecutor: ExecutorService? = null
     private var sessionId: Long? = null
@@ -85,11 +86,9 @@ class CornertimeActivity : AppCompatActivity() {
         }
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+    override fun onCreateContent(container: FrameLayout) {
         RetrofitClient.sessionManager = sessionManager
-        binding = ActivityCornertimeBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        binding = ActivityCornertimeBinding.inflate(layoutInflater, container, true)
 
         usePoseDetection = intent.getBooleanExtra(EXTRA_USE_POSE, false)
         voiceIntro = getString(R.string.cornertime_voice_intro)
@@ -119,6 +118,10 @@ class CornertimeActivity : AppCompatActivity() {
             }
             applyConfig(config)
         }
+    }
+
+    override fun onSectionsConfigUpdated(config: AppSectionsConfig, isBeta: Boolean) {
+        if (!config.sourceEnabled("cornertime")) openDestination(AppNavDestination.HOME)
     }
 
     private fun ensureCameraAndStart() {

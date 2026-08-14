@@ -1,13 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="@color/ds_bg">
 
-    <!-- Link bar - collé à la navbar -->
     <LinearLayout
         android:id="@+id/link_bar"
         android:layout_width="match_parent"
@@ -66,44 +64,6 @@
             android:scaleType="centerInside" />
     </LinearLayout>
 
-    <LinearLayout
-        android:id="@+id/beta_showcase_section"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center"
-        android:paddingHorizontal="@dimen/ds_page_padding"
-        android:paddingBottom="@dimen/ds_space_sm"
-        android:visibility="gone"
-        android:background="@color/ds_surface">
-
-        <TextView
-            android:id="@+id/showcase_link_vitrine"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/main_link_vitrine"
-            style="@style/DsBody"
-            android:textColor="@color/ds_teal"
-            android:padding="@dimen/ds_space_sm"
-            android:background="?attr/selectableItemBackground"
-            android:clickable="true"
-            android:focusable="true" />
-
-        <TextView
-            android:id="@+id/showcase_link_backdoor"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/ds_space_lg"
-            android:text="@string/main_link_backdoor"
-            style="@style/DsBody"
-            android:textColor="@color/ds_teal"
-            android:padding="@dimen/ds_space_sm"
-            android:background="?attr/selectableItemBackground"
-            android:clickable="true"
-            android:focusable="true"
-            android:visibility="gone" />
-    </LinearLayout>
-
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -115,6 +75,14 @@
             android:orientation="vertical"
             android:padding="@dimen/ds_page_padding">
 
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/home_lead"
+                style="@style/DsBody"
+                android:textColor="@color/ds_text_muted"
+                android:layout_marginBottom="@dimen/ds_space_xl" />
+
             <Button
                 android:id="@+id/refresh_button"
                 android:layout_width="wrap_content"
@@ -123,196 +91,11 @@
                 style="@style/DsButton"
                 android:layout_marginBottom="@dimen/ds_space_xl" />
 
-            <!-- Trackers -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/trackers_title"
-                style="@style/DsSectionTitle"
-                android:layout_marginBottom="@dimen/ds_space_md" />
-
             <androidx.cardview.widget.CardView
-                android:id="@+id/cigarettes_card"
+                android:id="@+id/home_tasks_card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/ds_space_xl"
-                android:clickable="true"
-                android:focusable="true"
-                android:foreground="?attr/selectableItemBackground"
-                app:cardBackgroundColor="@color/ds_surface"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="2dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:padding="@dimen/ds_space_md">
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/tracker_cigarettes_title"
-                            style="@style/DsBody"
-                            android:textStyle="bold"
-                            android:layout_marginBottom="@dimen/ds_space_xs" />
-
-                        <LinearLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:baselineAligned="true">
-
-                            <TextView
-                                android:id="@+id/cigarettes_count"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="@string/zero_placeholder"
-                                android:textColor="@color/ds_teal"
-                                android:textSize="32sp"
-                                android:textStyle="bold" />
-
-                            <TextView
-                                android:id="@+id/cigarettes_unit"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginStart="@dimen/ds_space_sm"
-                                android:text="@string/tracker_cigarettes_unit"
-                                style="@style/DsBody"
-                                android:textColor="@color/ds_text_muted" />
-                        </LinearLayout>
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/tracker_cigarettes_hint"
-                            style="@style/DsSmall"
-                            android:layout_marginTop="@dimen/ds_space_xs" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/tracker_cigarettes_open_history"
-                            style="@style/DsSmall"
-                            android:textColor="@color/ds_teal"
-                            android:layout_marginTop="@dimen/ds_space_sm" />
-                    </LinearLayout>
-
-                    <Button
-                        android:id="@+id/cigarettes_increment"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/tracker_increment"
-                        style="@style/DsButton" />
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
-
-            <!-- Chaster lock widget -->
-            <androidx.cardview.widget.CardView
-                android:id="@+id/chaster_card"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/ds_space_xl"
-                android:clickable="true"
-                android:focusable="true"
-                android:foreground="?attr/selectableItemBackground"
-                android:visibility="gone"
-                app:cardBackgroundColor="@color/ds_surface"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="2dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="@dimen/ds_space_md">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical"
-                        android:layout_marginBottom="@dimen/ds_space_sm">
-
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="@string/chaster_title"
-                            style="@style/DsSectionTitle" />
-
-                        <ImageButton
-                            android:id="@+id/chaster_refresh"
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
-                            android:background="?attr/selectableItemBackgroundBorderless"
-                            android:src="@drawable/ic_refresh"
-                            android:tint="@color/ds_magenta"
-                            android:contentDescription="@string/refresh"
-                            android:scaleType="centerInside" />
-                    </LinearLayout>
-
-                    <TextView
-                        android:id="@+id/chaster_lock_title"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/chaster_lock_in_progress"
-                        style="@style/DsBody"
-                        android:layout_marginBottom="@dimen/ds_space_xs" />
-
-                    <TextView
-                        android:id="@+id/chaster_remaining"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/chaster_remaining_placeholder"
-                        style="@style/DsBody"
-                        android:textSize="18sp"
-                        android:textColor="@color/ds_teal"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/chaster_snake_seconds"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="end"
-                        android:textSize="10sp"
-                        android:textColor="@color/ds_text_muted"
-                        android:visibility="gone" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/ds_space_sm"
-                        android:text="@string/chaster_open_history"
-                        android:textColor="@color/ds_teal"
-                        style="@style/DsSmall" />
-
-                    <TextView
-                        android:id="@+id/chaster_hint"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/chaster_connect_hint"
-                        style="@style/DsBody"
-                        android:textColor="@color/ds_text_muted"
-                        android:textSize="12sp"
-                        android:visibility="gone"
-                        android:layout_marginTop="@dimen/ds_space_sm" />
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
-
-            <!-- Corner time -->
-            <androidx.cardview.widget.CardView
-                android:id="@+id/cornertime_card"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/ds_space_xl"
+                android:layout_marginBottom="@dimen/ds_space_md"
                 android:clickable="true"
                 android:focusable="true"
                 android:foreground="?attr/selectableItemBackground"
@@ -329,115 +112,19 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/cornertime_open"
+                        android:text="@string/nav_tasks"
                         style="@style/DsSectionTitle"
                         android:layout_marginBottom="@dimen/ds_space_xs" />
 
                     <TextView
+                        android:id="@+id/home_tasks_summary"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/cornertime_card_hint"
+                        android:text="@string/tasks_empty"
                         style="@style/DsSmall"
                         android:textColor="@color/ds_text_muted" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
-
-            <!-- Wallpaper hub -->
-            <androidx.cardview.widget.CardView
-                android:id="@+id/wallpaper_card"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/ds_space_xl"
-                android:clickable="true"
-                android:focusable="true"
-                android:foreground="?attr/selectableItemBackground"
-                app:cardBackgroundColor="@color/ds_surface"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="2dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="@dimen/ds_space_md">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/wallpaper_open"
-                        style="@style/DsSectionTitle"
-                        android:layout_marginBottom="@dimen/ds_space_xs" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/wallpaper_card_hint"
-                        style="@style/DsSmall"
-                        android:textColor="@color/ds_text_muted" />
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
-
-            <!-- Tâches -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/tasks_title"
-                style="@style/DsSectionTitle"
-                android:layout_marginBottom="@dimen/ds_space_md" />
-
-            <ProgressBar
-                android:id="@+id/tasks_progress"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:visibility="gone"
-                android:layout_marginBottom="@dimen/ds_space_md" />
-
-            <TextView
-                android:id="@+id/tasks_empty"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/tasks_empty"
-                style="@style/DsBody"
-                android:textColor="@color/ds_text_muted"
-                android:visibility="gone"
-                android:layout_marginBottom="@dimen/ds_space_lg" />
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/tasks_list"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:nestedScrollingEnabled="false"
-                android:visibility="gone"
-                tools:listitem="@layout/item_task"
-                android:layout_marginBottom="@dimen/ds_space_xl" />
-
-            <!-- Historique wallpapers -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/wallpapers_history_title"
-                style="@style/DsSectionTitle"
-                android:layout_marginBottom="@dimen/ds_space_md" />
-
-            <TextView
-                android:id="@+id/wallpapers_empty"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/wallpapers_empty"
-                style="@style/DsBody"
-                android:textColor="@color/ds_text_muted"
-                android:visibility="gone"
-                android:layout_marginBottom="@dimen/ds_space_md" />
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/wallpapers_list"
-                android:layout_width="match_parent"
-                android:layout_height="180dp"
-                android:nestedScrollingEnabled="false"
-                android:visibility="gone"
-                tools:listitem="@layout/item_wallpaper" />
-
         </LinearLayout>
     </ScrollView>
 </LinearLayout>

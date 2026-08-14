@@ -1,18 +1,16 @@
 package app.dominochain.mobile
 
-import app.dominochain.mobile.api.RetrofitClient
 import android.content.Intent
-import android.os.Bundle
 import android.view.View
+import android.widget.FrameLayout
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import app.dominochain.mobile.api.TaskResponse
+import app.dominochain.mobile.api.RetrofitClient
 import app.dominochain.mobile.databinding.ActivityTasksBinding
 import kotlinx.coroutines.launch
 
-class TasksActivity : AppCompatActivity() {
+class TasksActivity : BetaShellActivity() {
 
     private lateinit var binding: ActivityTasksBinding
     private val sessionManager by lazy { (application as BgApplication).sessionManager }
@@ -20,26 +18,24 @@ class TasksActivity : AppCompatActivity() {
     private val repository = DeviceRepository()
     private lateinit var adapter: TasksAdapter
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+    override val navDestination = AppNavDestination.TASKS
+
+    override fun onCreateContent(container: FrameLayout) {
         RetrofitClient.sessionManager = sessionManager
-        binding = ActivityTasksBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        binding = ActivityTasksBinding.inflate(layoutInflater, container, true)
 
         val deviceId = sessionManager.deviceId ?: prefs.getString(WallpaperWorker.KEY_DEVICE_ID, null)
         if (deviceId == null) {
             Toast.makeText(this, R.string.device_not_registered, Toast.LENGTH_SHORT).show()
-            finish()
+            openDestination(AppNavDestination.HOME)
             return
         }
 
         adapter = TasksAdapter { task ->
-            val intent = Intent(this, TaskDetailActivity::class.java).apply {
+            startActivity(Intent(this, TaskDetailActivity::class.java).apply {
                 putExtra("device_id", deviceId)
                 putExtra("task_id", task.id)
-            }
-            startActivity(intent)
+            })
         }
         binding.tasksList.layoutManager = LinearLayoutManager(this)
         binding.tasksList.adapter = adapter
@@ -50,18 +46,16 @@ class TasksActivity : AppCompatActivity() {
         if (taskIdFromIntent != null) {
             val taskId = taskIdFromIntent.toLongOrNull()
             if (taskId != null) {
-                val intent = Intent(this, TaskDetailActivity::class.java).apply {
+                startActivity(Intent(this, TaskDetailActivity::class.java).apply {
                     putExtra("device_id", deviceId)
                     putExtra("task_id", taskId)
-                }
-                startActivity(intent)
+                })
             }
         }
     }
 
-    override fun onSupportNavigateUp(): Boolean {
-        finish()
-        return true
+    override fun onSectionsConfigUpdated(config: AppSectionsConfig, isBeta: Boolean) {
+        if (!config.sectionVisible("tasks")) openDestination(AppNavDestination.HOME)
     }
 
     private fun loadTasks(deviceId: String) {

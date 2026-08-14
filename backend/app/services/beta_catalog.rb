@@ -166,6 +166,14 @@ class BetaCatalog
     item_available_by_feature_flag?(ACTIONS_KEY, item_id) && item_enabled?(ACTIONS_KEY, item_id)
   end
 
+  def sources_enabled_map
+    SOURCE_DEFS.to_h { |d| [d[:id], source_enabled?(d[:id])] }
+  end
+
+  def actions_enabled_map
+    ACTION_DEFS.to_h { |d| [d[:id], action_enabled?(d[:id])] }
+  end
+
   def source_enabled_for_event_source?(event_source)
     source_id = EVENT_SOURCE_TO_CATALOG_SOURCE_ID[event_source.to_s]
     return true if source_id.blank?

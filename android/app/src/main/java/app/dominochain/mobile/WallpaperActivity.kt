@@ -2,12 +2,11 @@ package app.dominochain.mobile
 
 import android.content.Intent
 import android.net.Uri
-import android.os.Bundle
 import android.view.View
 import android.widget.ArrayAdapter
+import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import app.dominochain.mobile.api.RetrofitClient
 import app.dominochain.mobile.api.WallpaperActionSchemaDto
@@ -22,7 +21,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.util.UUID
 
-class WallpaperActivity : AppCompatActivity() {
+class WallpaperActivity : BetaShellActivity() {
 
     private lateinit var binding: ActivityWallpaperBinding
     private val repository = WallpaperRepository()
@@ -33,6 +32,8 @@ class WallpaperActivity : AppCompatActivity() {
     private var durationHours: List<Int> = listOf(1, 2, 4, 8, 12, 24)
     private var updatingUi = false
 
+    override val navDestination = AppNavDestination.SOURCE_WALLPAPER
+
     private val pickImage = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri ?: return@registerForActivityResult
         val file = copyToCache(uri) ?: run {
@@ -42,13 +43,9 @@ class WallpaperActivity : AppCompatActivity() {
         uploadWallpaper(file)
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+    override fun onCreateContent(container: FrameLayout) {
         RetrofitClient.sessionManager = (application as BgApplication).sessionManager
-        binding = ActivityWallpaperBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        title = getString(R.string.wallpaper_title)
+        binding = ActivityWallpaperBinding.inflate(layoutInflater, container, true)
 
         binding.wallpaperUploadButton.setOnClickListener { pickImage.launch("image/*") }
         binding.wallpaperSaveOptionsButton.setOnClickListener { saveOptions() }
@@ -56,7 +53,7 @@ class WallpaperActivity : AppCompatActivity() {
         binding.wallpaperClearScenariosButton.setOnClickListener { clearScenarios() }
         binding.wallpaperStartVerificationButton.setOnClickListener { startVerification() }
         binding.wallpaperOpenLeverageButton.setOnClickListener {
-            startActivity(Intent(this, LeveragePhotosActivity::class.java))
+            openDestination(AppNavDestination.ACTION_LEVERAGE_PHOTO)
         }
         binding.wallpaperEnabledSwitch.setOnCheckedChangeListener { _, checked ->
             if (!updatingUi) toggleEnabled(checked)
@@ -65,9 +62,8 @@ class WallpaperActivity : AppCompatActivity() {
         loadAll()
     }
 
-    override fun onSupportNavigateUp(): Boolean {
-        finish()
-        return true
+    override fun onSectionsConfigUpdated(config: AppSectionsConfig, isBeta: Boolean) {
+        if (!config.sourceEnabled("wallpaper")) openDestination(AppNavDestination.HOME)
     }
 
     private fun loadAll() {

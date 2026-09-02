@@ -12,18 +12,21 @@ class LeveragePhotos::AddTime
   end
 
   def call!
-    raise Error, "cannot add time" unless @photo.can_add_time?
     raise Error, "tlock blob missing" if @tlock_blob.blank?
     raise Error, "invalid round" if @drand_round <= 0
-    raise Error, "invalid locked_until" if @locked_until.blank? || @locked_until <= @photo.locked_until
     raise Error, "invalid added_seconds" if @added_seconds <= 0
 
-    previous_rounds = Array(@photo.drand_rounds)
-    raise Error, "round must be later" if previous_rounds.any? && @drand_round <= previous_rounds.last.to_i
+    # Serialize with StartTimer and other extends. A stale wrap of an older
+    # blob is rejected via locked_until / drand round after the first commit.
+    @photo.with_lock do
+      raise Error, "cannot add time" unless @photo.can_add_time?
+      raise Error, "invalid locked_until" if @locked_until.blank? || @locked_until <= @photo.locked_until
 
-    locked_until_before = @photo.locked_until
+      previous_rounds = Array(@photo.drand_rounds)
+      raise Error, "round must be later" if previous_rounds.any? && @drand_round <= previous_rounds.last.to_i
 
-    LeveragePhoto.transaction do
+      locked_until_before = @photo.locked_until
+
       @photo.tlock_blob.purge
       @photo.tlock_blob.attach(@tlock_blob)
       @photo.leverage_photo_extensions.create!(

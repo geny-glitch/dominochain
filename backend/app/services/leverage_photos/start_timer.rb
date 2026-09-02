@@ -14,8 +14,6 @@ class LeveragePhotos::StartTimer
   end
 
   def call!
-    raise Error, "photo cannot be locked" unless @photo.draft? || @photo.unlocked?
-    raise Error, "original missing" if @photo.draft? && !@photo.original_image.attached?
     raise Error, "tlock blob missing" if @tlock_blob.blank?
     raise Error, "invalid round" if @drand_round <= 0
     raise Error, "invalid locked_until" if @locked_until.blank? || @locked_until <= Time.current
@@ -26,7 +24,12 @@ class LeveragePhotos::StartTimer
     raise Error, "invalid layer count" unless @tlock_layer_count.between?(1, LeveragePhoto::MAX_PEEL_LAYERS)
 
     touched_devices = []
-    LeveragePhoto.transaction do
+    # Serialize lock/extend on this row so a second request (double-submit,
+    # event + button, two tabs) re-checks status after the first commit.
+    @photo.with_lock do
+      raise Error, "photo cannot be locked" unless @photo.draft? || @photo.unlocked?
+      raise Error, "original missing" if @photo.draft? && !@photo.original_image.attached?
+
       if @photo.unlocked?
         @photo.tlock_blob.purge if @photo.tlock_blob.attached?
         @photo.leverage_photo_extensions.destroy_all

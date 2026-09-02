@@ -3,6 +3,9 @@
 class LeveragePhoto < ApplicationRecord
   STATUSES = %w[draft active unlocked sanctioned deleted].freeze
   MAX_TLOCK_LAYERS = 20
+  # Restore peels until plaintext, not until tlock_layer_count. The recorded
+  # count can lag the real onion (server relock wraps without resetting it).
+  MAX_PEEL_LAYERS = 64
   MAX_DURATION_SECONDS = 365.days.to_i
   MIN_DURATION_SECONDS = 1.minute.to_i
   # drand quicknet (mainnetClient in tlock-js)

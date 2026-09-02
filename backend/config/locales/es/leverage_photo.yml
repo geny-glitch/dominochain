@@ -123,6 +123,7 @@ es:
       status_peeling: "Restaurando…"
       status_loading_crypto: "Preparando…"
       status_crypto_load_error: "Algo salió mal. Inténtalo de nuevo."
+      status_peel_error: "No se pudo restaurar el original. Inténtalo de nuevo."
       status_fetching_original: "Cargando foto…"
       status_fetching_blob: "Cargando foto bloqueada…"
       status_encrypting: "Asegurando tu foto…"

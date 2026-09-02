@@ -189,6 +189,7 @@
     <string name="leverage_time_added">Temps ajouté</string>
     <string name="leverage_wallpaper_set">Fond d\'écran mis à jour</string>
     <string name="leverage_restored">Photo restaurée</string>
+    <string name="leverage_restore_failed">Impossible de restaurer l\'originale. Réessaye.</string>
     <string name="leverage_countdown">Reste : %1$s</string>
     <string name="leverage_ready_to_unlock">Prêt à déverrouiller</string>
     <string name="error_with_message">Erreur: %1$s</string>

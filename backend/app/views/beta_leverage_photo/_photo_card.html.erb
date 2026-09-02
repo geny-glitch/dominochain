@@ -17,6 +17,7 @@
        data-has-original="<%= photo.original_image.attached? ? "true" : "false" %>"
        data-locked-until="<%= photo.locked_until&.iso8601 %>"
        data-layer-count="<%= photo.tlock_layer_count %>"
+       data-max-peel-layers="<%= LeveragePhoto::MAX_PEEL_LAYERS %>"
        data-invalid-minutes="<%= t("leverage_photo.show.invalid_minutes") %>"
        data-invalid-minutes-max="<%= t("leverage_photo.show.invalid_minutes_max") %>">
     <div class="ds-beta-home-card-head">
@@ -81,6 +82,7 @@
        data-peeling="<%= t("leverage_photo.show.status_peeling") %>"
        data-loading-crypto="<%= t("leverage_photo.show.status_loading_crypto") %>"
        data-crypto-load-error="<%= t("leverage_photo.show.status_crypto_load_error") %>"
+       data-peel-error="<%= t("leverage_photo.show.status_peel_error") %>"
        data-fetching-original="<%= t("leverage_photo.show.status_fetching_original") %>"
        data-fetching-blob="<%= t("leverage_photo.show.status_fetching_blob") %>"
        data-encrypting="<%= t("leverage_photo.show.status_encrypting") %>"

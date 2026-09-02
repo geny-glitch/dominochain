@@ -123,6 +123,7 @@ fr:
       status_peeling: "Restauration…"
       status_loading_crypto: "Préparation…"
       status_crypto_load_error: "Une erreur est survenue. Réessayez."
+      status_peel_error: "Impossible de restaurer l'originale. Réessayez."
       status_fetching_original: "Chargement de la photo…"
       status_fetching_blob: "Chargement de la photo verrouillée…"
       status_encrypting: "Sécurisation de la photo…"

@@ -189,6 +189,7 @@
     <string name="leverage_time_added">Time added</string>
     <string name="leverage_wallpaper_set">Wallpaper updated</string>
     <string name="leverage_restored">Photo restored</string>
+    <string name="leverage_restore_failed">Could not restore the original. Try again.</string>
     <string name="leverage_countdown">Left: %1$s</string>
     <string name="leverage_ready_to_unlock">Ready to unlock</string>
     <string name="error_with_message">Error: %1$s</string>

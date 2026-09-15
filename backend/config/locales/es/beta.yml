@@ -393,6 +393,14 @@ es:
       media_label: "Imagen o vídeo (opcional si hay texto)"
       submit: "Enviar prueba"
       cancel: "Cancelar"
+    tasks:
+      title: "Tareas en curso"
+      deadline: "Plazo: %{datetime}"
+      proof_pending: "Prueba pendiente"
+      proof_accepted: "Prueba aceptada"
+      submit_proof: "Enviar prueba"
+      awaiting_validation: "Pendiente de validación"
+      validated: "✓ Validado"
     hints:
       chaster_no_lock: "Sin candado activo. El tiempo restante se muestra en la app y el widget."
     empty:

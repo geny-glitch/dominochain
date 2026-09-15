@@ -123,6 +123,7 @@ en:
       status_peeling: "Restoring…"
       status_loading_crypto: "Preparing…"
       status_crypto_load_error: "Something went wrong. Please try again."
+      status_peel_error: "Could not restore the original. Try again."
       status_fetching_original: "Loading photo…"
       status_fetching_blob: "Loading locked photo…"
       status_encrypting: "Securing your photo…"

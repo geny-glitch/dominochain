@@ -56,3 +56,26 @@
         <% end %>
       </div>
     </section>
+
+    <section class="ds-beta-section">
+      <h2 class="ds-section-title"><%= t("beta.pishock.public_page_title") %></h2>
+      <div class="ds-beta-control-card">
+        <p class="ds-beta-control-hint"><%= t("beta.pishock.public_page_hint") %></p>
+        <%= form_with url: beta_public_pishock_path, method: :patch, local: true, class: "ds-beta-catalog-toggle-form", data: { turbo: false } do %>
+          <%= hidden_field_tag :public_pishock_enabled, "0" %>
+          <label class="ds-beta-catalog-toggle">
+            <%= check_box_tag :public_pishock_enabled, "1", current_user.public_pishock_enabled?, id: "public_pishock_enabled", class: "ds-beta-catalog-toggle-input", data: { auto_submit: true }, "aria-label": t("beta.pishock.public_page_checkbox") %>
+            <span class="ds-beta-catalog-toggle-switch" aria-hidden="true"></span>
+            <span><%= t("beta.pishock.public_page_checkbox") %></span>
+          </label>
+          <% if current_user.public_pishock_enabled? %>
+            <div class="ds-showcase-link" style="margin-top: 0.75rem;">
+              <%= link_to public_pishock_url(current_user.nickname), public_pishock_path(current_user.nickname), id: "public-pishock-url", target: "_blank", rel: "noopener noreferrer", class: "ds-showcase-link-url" %>
+              <button type="button" class="ds-btn ds-btn--secondary ds-btn--sm" data-copy-target="public-pishock-url" title="<%= t("beta.pishock.public_page_copy") %>">
+                <%= t("beta.pishock.public_page_copy") %>
+              </button>
+            </div>
+          <% end %>
+        <% end %>
+      </div>
+    </section>

@@ -1,7 +1,6 @@
 package app.dominochain.mobile
 
-import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
+import android.widget.FrameLayout
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -11,7 +10,7 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-class CigaretteHistoryActivity : AppCompatActivity() {
+class CigaretteHistoryActivity : BetaShellActivity() {
 
     private lateinit var binding: ActivityCigaretteHistoryBinding
     private val trackerRepository by lazy { TrackerRepository(this) }
@@ -21,11 +20,10 @@ class CigaretteHistoryActivity : AppCompatActivity() {
     private lateinit var historyAdapter: CigaretteHistoryAdapter
     private var loadingMoreHistory = false
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        binding = ActivityCigaretteHistoryBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+    override val navDestination = AppNavDestination.SOURCE_CIGARETTES
+
+    override fun onCreateContent(container: FrameLayout) {
+        binding = ActivityCigaretteHistoryBinding.inflate(layoutInflater, container, true)
 
         historyAdapter = CigaretteHistoryAdapter(trackerRepository, TrackerType.Cigarettes)
         binding.cigaretteHistoryRecycler.layoutManager = LinearLayoutManager(this)
@@ -52,15 +50,16 @@ class CigaretteHistoryActivity : AppCompatActivity() {
         refreshRemote()
     }
 
-    override fun onResume() {
-        super.onResume()
-        refreshHistory()
-        refreshRemote()
+    override fun onSectionsConfigUpdated(config: AppSectionsConfig, isBeta: Boolean) {
+        if (!config.sourceEnabled("cigarettes")) openDestination(AppNavDestination.HOME)
     }
 
-    override fun onSupportNavigateUp(): Boolean {
-        finish()
-        return true
+    override fun onResume() {
+        super.onResume()
+        if (::binding.isInitialized) {
+            refreshHistory()
+            refreshRemote()
+        }
     }
 
     private fun refreshHistory() {

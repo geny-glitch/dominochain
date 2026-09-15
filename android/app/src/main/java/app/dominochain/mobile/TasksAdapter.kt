@@ -39,7 +39,7 @@ class TasksAdapter(
         fun bind(task: TaskResponse) {
             text1.text = task.name
             val deadlineStr = formatDeadline(task.deadline_at)
-            text2.text = "Deadline: $deadlineStr · ${task.status}"
+            text2.text = itemView.context.getString(R.string.task_list_subtitle, deadlineStr, task.status)
         }
     }
 

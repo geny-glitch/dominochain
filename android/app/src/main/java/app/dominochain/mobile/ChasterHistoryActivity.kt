@@ -1,14 +1,14 @@
 package app.dominochain.mobile
 
-import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
+import android.view.View
+import android.widget.FrameLayout
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import app.dominochain.mobile.databinding.ActivityChasterHistoryBinding
 import kotlinx.coroutines.launch
 
-class ChasterHistoryActivity : AppCompatActivity() {
+class ChasterHistoryActivity : BetaShellActivity() {
 
     private lateinit var binding: ActivityChasterHistoryBinding
     private val repository = DeviceRepository()
@@ -17,11 +17,10 @@ class ChasterHistoryActivity : AppCompatActivity() {
     private var loading = false
     private var hasMore = true
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        binding = ActivityChasterHistoryBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+    override val navDestination = AppNavDestination.ACTION_CHASTER
+
+    override fun onCreateContent(container: FrameLayout) {
+        binding = ActivityChasterHistoryBinding.inflate(layoutInflater, container, true)
 
         binding.chasterHistoryRecycler.layoutManager = LinearLayoutManager(this)
         binding.chasterHistoryRecycler.adapter = adapter
@@ -39,9 +38,10 @@ class ChasterHistoryActivity : AppCompatActivity() {
         loadNextPage(reset = true)
     }
 
-    override fun onSupportNavigateUp(): Boolean {
-        finish()
-        return true
+    override fun onSectionsConfigUpdated(config: AppSectionsConfig, isBeta: Boolean) {
+        if (!config.actionEnabled("chaster") || !config.sectionVisible("chaster")) {
+            openDestination(AppNavDestination.HOME)
+        }
     }
 
     private fun loadNextPage(reset: Boolean = false) {
@@ -50,18 +50,18 @@ class ChasterHistoryActivity : AppCompatActivity() {
             adapter.clear()
             nextPage = 1
             hasMore = true
-            binding.chasterHistoryStatus.visibility = android.view.View.GONE
+            binding.chasterHistoryStatus.visibility = View.GONE
         }
         if (!hasMore) return
 
         loading = true
         if (adapter.itemCount == 0) {
-            binding.chasterHistoryProgress.visibility = android.view.View.VISIBLE
+            binding.chasterHistoryProgress.visibility = View.VISIBLE
         }
 
         lifecycleScope.launch {
             val result = repository.getChasterTimeEvents(nextPage, PAGE_SIZE)
-            binding.chasterHistoryProgress.visibility = android.view.View.GONE
+            binding.chasterHistoryProgress.visibility = View.GONE
             loading = false
 
             result.onSuccess { response ->
@@ -70,7 +70,7 @@ class ChasterHistoryActivity : AppCompatActivity() {
                 hasMore = response.meta?.next_page != null
                 updateStatus()
             }.onFailure {
-                binding.chasterHistoryStatus.visibility = android.view.View.VISIBLE
+                binding.chasterHistoryStatus.visibility = View.VISIBLE
                 binding.chasterHistoryStatus.text = getString(R.string.chaster_history_load_error)
             }
         }
@@ -83,9 +83,9 @@ class ChasterHistoryActivity : AppCompatActivity() {
             else -> getString(R.string.chaster_history_end)
         }
         binding.chasterHistoryStatus.visibility = if (message == null) {
-            android.view.View.GONE
+            View.GONE
         } else {
-            android.view.View.VISIBLE
+            View.VISIBLE
         }
         if (message != null) binding.chasterHistoryStatus.text = message
     }

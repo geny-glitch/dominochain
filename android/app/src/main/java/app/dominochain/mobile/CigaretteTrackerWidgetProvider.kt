@@ -84,7 +84,7 @@ class CigaretteTrackerWidgetProvider : AppWidgetProvider() {
 
             return RemoteViews(context.packageName, R.layout.widget_tracker_cigarettes).apply {
                 setTextViewText(R.id.widget_cigarettes_count, snapshot.count.toString())
-                setTextViewText(R.id.widget_cigarettes_unit, snapshot.type.unitLabel)
+                setTextViewText(R.id.widget_cigarettes_unit, context.getString(snapshot.type.unitLabelRes))
                 setOnClickPendingIntent(R.id.widget_cigarettes_root, openAppIntent)
                 setOnClickPendingIntent(R.id.widget_cigarettes_increment, incrementIntent)
             }

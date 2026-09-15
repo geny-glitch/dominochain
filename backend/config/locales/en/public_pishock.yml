@@ -1,0 +1,15 @@
+en:
+  public_pishock:
+    title: "Zap — %{nickname}"
+    heading: "⚡️ Zap"
+    lead: "Control page for %{nickname}"
+    duration_label: "Duration"
+    intensity_label: "Intensity"
+    cta: "⚡️ Tazer"
+    cta_sending: "Sending…"
+    flash:
+      sent: "Sent."
+      auth_error: "Could not send — account credentials were rejected."
+      device_error: "Could not send — the device is offline, paused, or unavailable."
+      skipped: "Could not send — PiShock is not fully set up."
+      error: "Could not send — connection problem. Try again."

@@ -28,7 +28,8 @@ class BgFirebaseMessagingService : FirebaseMessagingService() {
             }
             "new_task" -> {
                 val title = message.data["title"] ?: message.notification?.title ?: BuildConfig.NOTIFICATION_TITLE
-                val body = message.data["body"] ?: message.notification?.body ?: "Nouvelle tâche"
+                val body = message.data["body"] ?: message.notification?.body
+                    ?: getString(R.string.notification_new_task_fallback)
                 val taskId = message.data["task_id"] ?: ""
                 val triggerAlarm = message.data["trigger_alarm"] == "true"
                 val alarmSound = message.data["alarm_sound"] ?: "urgent"
@@ -51,7 +52,8 @@ class BgFirebaseMessagingService : FirebaseMessagingService() {
             }
             "punishment" -> {
                 val title = message.data["title"] ?: message.notification?.title ?: BuildConfig.NOTIFICATION_TITLE
-                val body = message.data["body"] ?: message.notification?.body ?: "Tâche non terminée à temps..."
+                val body = message.data["body"] ?: message.notification?.body
+                    ?: getString(R.string.punishment_default_message)
                 val taskId = message.data["task_id"] ?: ""
                 NotificationHelper.showPunishmentNotification(applicationContext, title, body, taskId)
             }
@@ -71,7 +73,8 @@ class BgFirebaseMessagingService : FirebaseMessagingService() {
             "take_screenshot" -> {
                 Log.d(TAG, "Take screenshot push received")
                 val title = message.data["title"] ?: message.notification?.title ?: BuildConfig.NOTIFICATION_TITLE
-                val body = message.data["body"] ?: message.notification?.body ?: "On vérifie ton écran"
+                val body = message.data["body"] ?: message.notification?.body
+                    ?: getString(R.string.screenshot_checking)
                 val dismissApps = message.data["dismiss_apps"] != "false"
                 serviceScope.launch {
                     val app = applicationContext as? BgApplication ?: return@launch
@@ -112,7 +115,7 @@ class BgFirebaseMessagingService : FirebaseMessagingService() {
                     }
                 }
                 if (result.allOk) {
-                    NotificationHelper.showTeaser(applicationContext, title, "Tout est déjà configuré ✓")
+                    NotificationHelper.showTeaser(applicationContext, title, getString(R.string.permissions_already_ok))
                 } else {
                     NotificationHelper.showPermissionsMissingNotification(applicationContext, result.missingReasons)
                 }

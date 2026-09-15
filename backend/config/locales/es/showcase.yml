@@ -78,6 +78,12 @@ es:
       js_no_active_lock: "Sin candado activo"
       js_connect_hint: "Conecta Chaster en el beta para ver la cuenta atrás."
       js_active_lock_fallback: "Candado activo"
+      js_not_connected: "No conectado"
+      js_not_connected_hint: "El beta debe conectar Chaster para que la vitrina pueda actuar sobre el candado."
+      js_lock_fetch_error: "No se pudo recuperar el estado del candado por ahora."
+      js_name_required: "Indica un nombre."
+      js_message_required: "Deja un mensaje."
+      js_generic_error: "Error."
     snake:
       seconds_foot: "S: %{seconds}"
       title: "Snake"

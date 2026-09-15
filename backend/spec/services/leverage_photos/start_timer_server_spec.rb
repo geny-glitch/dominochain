@@ -45,7 +45,33 @@ RSpec.describe LeveragePhotos::StartTimerServer do
     expect(LeveragePhotos::TlockCrypto).to have_received(:encrypt_outer_layer)
     photo.reload
     expect(photo.status).to eq("active")
+    expect(photo.tlock_layer_count).to eq(2)
     expect(photo.locked_until).to be_within(5.seconds).of(Time.current + duration_seconds.seconds)
+  end
+
+  it "increments the layer count when wrapping an unlocked photo that already had nested layers" do
+    photo = create(:leverage_photo, :unlocked, user: user, tlock_layer_count: 3)
+    stub_encrypt_outer_layer!
+
+    described_class.new(photo: photo, duration_seconds: duration_seconds).call!
+
+    expect(photo.reload.tlock_layer_count).to eq(4)
+  end
+
+  it "starts a fresh single layer when an unlocked photo has its original back" do
+    photo = create(:leverage_photo, :unlocked, user: user)
+    photo.tlock_blob.purge
+    photo.original_image.attach(
+      io: StringIO.new("restored-original"),
+      filename: "original.jpg",
+      content_type: "image/jpeg"
+    )
+    stub_encrypt_bytes!
+
+    described_class.new(photo: photo, duration_seconds: duration_seconds).call!
+
+    expect(LeveragePhotos::TlockCrypto).to have_received(:encrypt_bytes)
+    expect(photo.reload.tlock_layer_count).to eq(1)
   end
 
   it "raises when the photo is neither draft nor unlocked" do

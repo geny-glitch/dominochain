@@ -34,7 +34,7 @@ class TaskDetailActivity : AppCompatActivity() {
             selectedMediaUri = it
             selectedMediaFile = copyToCache(it)
             binding.proofMediaName.visibility = View.VISIBLE
-            binding.proofMediaName.text = selectedMediaFile?.name ?: "Fichier sélectionné"
+            binding.proofMediaName.text = selectedMediaFile?.name ?: getString(R.string.proof_file_selected)
         }
     }
 
@@ -46,13 +46,13 @@ class TaskDetailActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         deviceId = intent.getStringExtra("device_id") ?: run {
-            Toast.makeText(this, "Device ID manquant", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, R.string.device_id_missing, Toast.LENGTH_SHORT).show()
             finish()
             return
         }
         taskId = intent.getLongExtra("task_id", 0)
         if (taskId == 0L) {
-            Toast.makeText(this, "Task ID manquant", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, R.string.task_id_missing, Toast.LENGTH_SHORT).show()
             finish()
             return
         }
@@ -97,7 +97,7 @@ class TaskDetailActivity : AppCompatActivity() {
                 if (!isDestroyed) displayTask(task)
             }.onFailure {
                 if (!isDestroyed) {
-                    Toast.makeText(this@TaskDetailActivity, "Erreur: ${it.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@TaskDetailActivity, getString(R.string.error_with_message, it.message), Toast.LENGTH_SHORT).show()
                     finish()
                 }
             }
@@ -106,16 +106,16 @@ class TaskDetailActivity : AppCompatActivity() {
 
     private fun displayTask(task: TaskDetailResponse) {
         binding.taskName.text = task.name
-        binding.taskDeadline.text = "Deadline: ${formatDate(task.deadline_at)}"
+        binding.taskDeadline.text = getString(R.string.task_deadline, formatDate(task.deadline_at))
         binding.taskStatus.text = task.status
-        binding.taskDescription.text = task.description ?: "-"
-        binding.taskExpectedProof.text = task.expected_proof ?: "-"
+        binding.taskDescription.text = task.description ?: getString(R.string.empty_placeholder)
+        binding.taskExpectedProof.text = task.expected_proof ?: getString(R.string.empty_placeholder)
 
         val punishments = task.punishments.orEmpty()
         if (punishments.isNotEmpty()) {
             binding.punishmentsSection.visibility = View.VISIBLE
             binding.punishmentsList.text = punishments.joinToString("\n\n") { p ->
-                val msg = p.message?.takeIf { it.isNotBlank() } ?: "Tâche non terminée à temps..."
+                val msg = p.message?.takeIf { it.isNotBlank() } ?: getString(R.string.punishment_default_message)
                 val date = formatPunishmentDate(p.created_at)
                 "$msg\n— $date"
             }
@@ -129,11 +129,11 @@ class TaskDetailActivity : AppCompatActivity() {
         } else if (task.proof != null) {
             binding.proofFormSection.visibility = View.GONE
             binding.proofSubmittedSection.visibility = View.VISIBLE
-            binding.proofSubmittedText.text = task.proof.text ?: "(pas de texte)"
+            binding.proofSubmittedText.text = task.proof.text ?: getString(R.string.proof_no_text)
             binding.proofSubmittedStatus.text = when (task.proof.status) {
-                "pending" -> "En attente de validation"
-                "accepted" -> "Preuve acceptée ✓"
-                "rejected" -> "Preuve refusée"
+                "pending" -> getString(R.string.proof_status_pending)
+                "accepted" -> getString(R.string.proof_status_accepted)
+                "rejected" -> getString(R.string.proof_status_rejected)
                 else -> task.proof.status
             }
             if (!task.proof.review_comment.isNullOrBlank()) {
@@ -182,7 +182,7 @@ class TaskDetailActivity : AppCompatActivity() {
         val mediaFile = selectedMediaFile
 
         if (text.isEmpty() && mediaFile == null) {
-            Toast.makeText(this, "Ajoute du texte ou une image/vidéo", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, R.string.proof_required, Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -194,11 +194,11 @@ class TaskDetailActivity : AppCompatActivity() {
             if (isDestroyed) return@launch
             result.onSuccess {
                 if (!isDestroyed) {
-                    Toast.makeText(this@TaskDetailActivity, "Preuve envoyée", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@TaskDetailActivity, R.string.proof_submitted, Toast.LENGTH_SHORT).show()
                     loadTaskDetail()
                 }
             }.onFailure {
-                if (!isDestroyed) Toast.makeText(this@TaskDetailActivity, "Erreur: ${it.message}", Toast.LENGTH_LONG).show()
+                if (!isDestroyed) Toast.makeText(this@TaskDetailActivity, getString(R.string.error_with_message, it.message), Toast.LENGTH_LONG).show()
             }
         }
     }

@@ -218,6 +218,10 @@ es:
       test_hint_html: "Prueba con las credenciales <strong>ya guardadas</strong> (guarda el formulario si acabas de cambiarlas)."
       test_button: "Probar conexión (API pública + pitido de 1 s)"
       test_confirm: "¿Validar cuenta en api.pishock.com, asociar share code si hace falta y luego emitir pitido de prueba?"
+      public_page_title: "Página de control pública"
+      public_page_hint: "Cualquiera con el enlace puede enviar un zap con duración — sin iniciar sesión. Puedes desactivarlo cuando quieras."
+      public_page_checkbox: "Activar la página pública de PiShock"
+      public_page_copy: "Copiar"
 
     chess:
       page_title: "Fuentes · Chess.com — %{nickname}"

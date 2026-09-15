@@ -184,6 +184,9 @@ en:
     lead: "You are about to accept control of beta %{nickname}."
     submit: "Accept control"
     sign_in_first: "Sign in to continue."
+    from_link_title: "Accept control of %{nickname}?"
+    from_link_lead: "By accepting, you will be able to manage this beta's wallpapers and tasks."
+    cancel: "Cancel"
   admin:
     index_title: "Admin — Domino Chain"
     heading: "Admin"

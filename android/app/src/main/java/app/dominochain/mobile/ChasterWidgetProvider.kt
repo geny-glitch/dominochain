@@ -82,7 +82,8 @@ class ChasterWidgetProvider : AppWidgetProvider() {
             val dinoRaw = p.getInt(KEY_DINO, -1)
             val tetrisRaw = p.getInt(KEY_TETRIS, -1)
             return WidgetState(
-                remaining = p.getString(KEY_STATIC, "--") ?: "--",
+                remaining = p.getString(KEY_STATIC, null)
+                    ?: context.getString(R.string.chaster_remaining_placeholder),
                 endTimeMs = end,
                 pishockEnabled = p.getBoolean(KEY_PISH, false),
                 quizSecondsPerPoint = quizRaw.takeIf { it > 0 },
@@ -157,11 +158,11 @@ class ChasterWidgetProvider : AppWidgetProvider() {
                 System.currentTimeMillis() + remainingSec * 1000L
             } else null
             val staticText = when {
-                lock != null && lock.is_frozen -> "Gelé"
-                error != null -> "Non connecté"
-                lock != null && (lock.remaining_seconds ?: 0) <= 0 -> "Terminé"
-                lock == null -> "Aucun lock"
-                else -> formatRemaining(lock.remaining_seconds ?: 0)
+                lock != null && lock.is_frozen -> context.getString(R.string.chaster_frozen)
+                error != null -> context.getString(R.string.chaster_not_connected)
+                lock != null && (lock.remaining_seconds ?: 0) <= 0 -> context.getString(R.string.chaster_finished)
+                lock == null -> context.getString(R.string.chaster_no_lock_short)
+                else -> formatRemaining(context, lock.remaining_seconds ?: 0)
             }
 
             updateWidgets(
@@ -176,17 +177,17 @@ class ChasterWidgetProvider : AppWidgetProvider() {
             )
         }
 
-        private fun formatRemaining(sec: Int): String {
-            if (sec <= 0) return "Terminé"
+        private fun formatRemaining(context: Context, sec: Int): String {
+            if (sec <= 0) return context.getString(R.string.chaster_finished)
             val days = sec / 86400
             val hours = (sec % 86400) / 3600
             val mins = (sec % 3600) / 60
             val secs = sec % 60
             return when {
-                days > 0 -> "${days}j ${hours}h ${mins}min ${secs}s"
-                hours > 0 -> "${hours}h ${mins}min ${secs}s"
-                mins > 0 -> "${mins}min ${secs}s"
-                else -> "${secs}s"
+                days > 0 -> context.getString(R.string.duration_days_hours_mins_secs, days, hours, mins, secs)
+                hours > 0 -> context.getString(R.string.duration_hours_mins_secs, hours, mins, secs)
+                mins > 0 -> context.getString(R.string.duration_mins_secs, mins, secs)
+                else -> context.getString(R.string.duration_secs, secs)
             }
         }
 
@@ -292,10 +293,10 @@ class ChasterWidgetProvider : AppWidgetProvider() {
             }
 
             val gameSecondsText = listOfNotNull(
-                quiz?.let { "Q: $it" },
-                snake?.let { "S: $it" },
-                dino?.let { "D: $it" },
-                tetris?.let { "T: $it" }
+                quiz?.let { context.getString(R.string.showcase_quiz_seconds_short, it) },
+                snake?.let { context.getString(R.string.showcase_snake_seconds_short, it) },
+                dino?.let { context.getString(R.string.showcase_dino_seconds_short, it) },
+                tetris?.let { context.getString(R.string.showcase_tetris_seconds_short, it) }
             ).joinToString("  ")
             if (gameSecondsText.isNotEmpty()) {
                 views.setViewVisibility(R.id.widget_chaster_snake_hint, android.view.View.VISIBLE)

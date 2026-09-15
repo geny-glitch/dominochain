@@ -25,9 +25,9 @@ object PermissionsChecker {
         val cameraGranted = isCameraGranted(context)
 
         val missingReasons = mutableListOf<String>()
-        if (!accessibilityEnabled) missingReasons.add("accessibilité")
-        if (!batteryOptimizationIgnored) missingReasons.add("optimisation batterie")
-        if (!notificationsGranted) missingReasons.add("notifications")
+        if (!accessibilityEnabled) missingReasons.add(context.getString(R.string.permission_reason_accessibility))
+        if (!batteryOptimizationIgnored) missingReasons.add(context.getString(R.string.permission_reason_battery))
+        if (!notificationsGranted) missingReasons.add(context.getString(R.string.permission_reason_notifications))
 
         return Result(
             allOk = missingReasons.isEmpty(),

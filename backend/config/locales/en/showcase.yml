@@ -78,6 +78,12 @@ en:
       js_no_active_lock: "No active lock"
       js_connect_hint: "Connect Chaster on the beta side to show the countdown."
       js_active_lock_fallback: "Active lock"
+      js_not_connected: "Not connected"
+      js_not_connected_hint: "The beta must connect Chaster so the showcase can act on the lock."
+      js_lock_fetch_error: "Could not load the lock status right now."
+      js_name_required: "Enter a name."
+      js_message_required: "Leave a message."
+      js_generic_error: "Something went wrong."
     snake:
       seconds_foot: "S: %{seconds}"
       title: "Snake"

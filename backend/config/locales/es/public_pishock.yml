@@ -1,0 +1,15 @@
+es:
+  public_pishock:
+    title: "Zap — %{nickname}"
+    heading: "⚡️ Zap"
+    lead: "Página de control de %{nickname}"
+    duration_label: "Duración"
+    intensity_label: "Intensidad"
+    cta: "⚡️ Tazer"
+    cta_sending: "Enviando…"
+    flash:
+      sent: "Enviado."
+      auth_error: "No se pudo enviar — credenciales rechazadas."
+      device_error: "No se pudo enviar — el dispositivo está fuera de línea, en pausa o no disponible."
+      skipped: "No se pudo enviar — PiShock no está completamente configurado."
+      error: "No se pudo enviar — problema de conexión. Inténtalo de nuevo."

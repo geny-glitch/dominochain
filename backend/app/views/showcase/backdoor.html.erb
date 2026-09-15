@@ -70,7 +70,13 @@
   js_frozen: t("showcase.backdoor.js_frozen"),
   js_no_active_lock: t("showcase.backdoor.js_no_active_lock"),
   js_connect_hint: t("showcase.backdoor.js_connect_hint"),
-  js_active_lock_fallback: t("showcase.backdoor.js_active_lock_fallback")
+  js_active_lock_fallback: t("showcase.backdoor.js_active_lock_fallback"),
+  js_not_connected: t("showcase.backdoor.js_not_connected"),
+  js_not_connected_hint: t("showcase.backdoor.js_not_connected_hint"),
+  js_lock_fetch_error: t("showcase.backdoor.js_lock_fetch_error"),
+  js_name_required: t("showcase.backdoor.js_name_required"),
+  js_message_required: t("showcase.backdoor.js_message_required"),
+  js_generic_error: t("showcase.backdoor.js_generic_error")
 }.to_json) %></script>
 
 <script>
@@ -219,8 +225,8 @@
     if (res.status === 401) {
       titleEl.textContent = "Chaster";
       endMs = null;
-      countdownEl.textContent = "Non connecté";
-      hintEl.textContent = "Le beta doit connecter Chaster pour que la vitrine puisse agir sur le cadenas.";
+      countdownEl.textContent = i18n.js_not_connected || "";
+      hintEl.textContent = i18n.js_not_connected_hint || "";
       hintEl.hidden = false;
       return;
     }
@@ -228,7 +234,7 @@
       titleEl.textContent = "Chaster";
       endMs = null;
       countdownEl.textContent = "—";
-      hintEl.textContent = "Impossible de récupérer l’état du cadenas pour le moment.";
+      hintEl.textContent = i18n.js_lock_fetch_error || "";
       hintEl.hidden = false;
       return;
     }
@@ -240,8 +246,8 @@
     dhmErr.hidden = true;
     const name = (nameInput.value || "").trim();
     const message = (messageInput.value || "").trim();
-    if (!name) { formErr.textContent = "Indique un nom."; formErr.hidden = false; return false; }
-    if (!message) { formErr.textContent = "Laisse un message."; formErr.hidden = false; return false; }
+    if (!name) { formErr.textContent = i18n.js_name_required || ""; formErr.hidden = false; return false; }
+    if (!message) { formErr.textContent = i18n.js_message_required || ""; formErr.hidden = false; return false; }
     if (totalSeconds() <= 0) { dhmErr.hidden = false; return false; }
     return true;
   }
@@ -270,7 +276,7 @@
         await fetchLock();
         return;
       }
-      formErr.textContent = data.error || "Erreur.";
+      formErr.textContent = data.error || i18n.js_generic_error || "";
       formErr.hidden = false;
     } finally {
       btn.disabled = false;

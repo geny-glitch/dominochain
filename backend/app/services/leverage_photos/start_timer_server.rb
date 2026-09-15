@@ -9,30 +9,34 @@ class LeveragePhotos::StartTimerServer
   end
 
   def call!
-    raise Error, "photo cannot be locked" unless @photo.draft? || @photo.unlocked?
-    raise Error, "no source image available to lock" unless source_available?
-    raise Error, "invalid duration" unless @duration_seconds.between?(
-      LeveragePhoto::MIN_DURATION_SECONDS,
-      LeveragePhoto::MAX_DURATION_SECONDS
-    )
+    # Hold the row lock across encrypt so a parallel lock cannot wrap a stale blob.
+    @photo.with_lock do
+      raise Error, "photo cannot be locked" unless @photo.draft? || @photo.unlocked?
+      raise Error, "no source image available to lock" unless source_available?
+      raise Error, "invalid duration" unless @duration_seconds.between?(
+        LeveragePhoto::MIN_DURATION_SECONDS,
+        LeveragePhoto::MAX_DURATION_SECONDS
+      )
 
-    locked_until = Time.current + @duration_seconds.seconds
-    crypto = encrypt_for(locked_until)
+      locked_until = Time.current + @duration_seconds.seconds
+      crypto, layer_count = encrypt_for(locked_until)
 
-    blob = {
-      io: StringIO.new(crypto[:armored]),
-      filename: "layer.tlock",
-      content_type: "text/plain"
-    }
+      blob = {
+        io: StringIO.new(crypto[:armored]),
+        filename: "layer.tlock",
+        content_type: "text/plain"
+      }
 
-    LeveragePhotos::StartTimer.new(
-      photo: @photo,
-      tlock_blob: blob,
-      drand_round: crypto[:round],
-      locked_until: locked_until,
-      duration_seconds: @duration_seconds,
-      chain_hash: crypto[:chain_hash]
-    ).call!
+      LeveragePhotos::StartTimer.new(
+        photo: @photo,
+        tlock_blob: blob,
+        drand_round: crypto[:round],
+        locked_until: locked_until,
+        duration_seconds: @duration_seconds,
+        chain_hash: crypto[:chain_hash],
+        tlock_layer_count: layer_count
+      ).call!
+    end
   rescue LeveragePhotos::StartTimer::Error, LeveragePhotos::TlockCrypto::Error => e
     raise Error, e.message
   end
@@ -49,10 +53,14 @@ class LeveragePhotos::StartTimerServer
 
   def encrypt_for(locked_until)
     if @photo.original_image.attached?
-      LeveragePhotos::TlockCrypto.encrypt_bytes(@photo.original_image.download, locked_until)
+      [LeveragePhotos::TlockCrypto.encrypt_bytes(@photo.original_image.download, locked_until), 1]
     else
+      previous = [@photo.tlock_layer_count.to_i, 1].max
+      next_count = previous + 1
+      raise Error, "photo cannot be locked" if next_count > LeveragePhoto::MAX_PEEL_LAYERS
+
       armored = @photo.tlock_blob.download.force_encoding("UTF-8")
-      LeveragePhotos::TlockCrypto.encrypt_outer_layer(armored, locked_until)
+      [LeveragePhotos::TlockCrypto.encrypt_outer_layer(armored, locked_until), next_count]
     end
   end
 end

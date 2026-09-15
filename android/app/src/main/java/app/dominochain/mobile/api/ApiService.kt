@@ -64,6 +64,11 @@ data class MeResponse(
     val role: String? = null
 )
 
+data class BetaCatalogResponse(
+    val sources: Map<String, Boolean> = emptyMap(),
+    val actions: Map<String, Boolean> = emptyMap()
+)
+
 data class ShowcaseSettingsResponse(
     val showcase_quiz_enabled: Boolean,
     val showcase_snake_enabled: Boolean,
@@ -73,7 +78,9 @@ data class ShowcaseSettingsResponse(
     val showcase_quiz_seconds_per_point: Int? = null,
     val showcase_snake_seconds_per_fruit: Int? = null,
     val showcase_dino_seconds_per_obstacle: Int? = null,
-    val showcase_tetris_seconds_per_line: Int? = null
+    val showcase_tetris_seconds_per_line: Int? = null,
+    val catalog: BetaCatalogResponse? = null,
+    val capabilities: Map<String, Boolean>? = null
 )
 
 data class ShowcaseSettingsRequest(

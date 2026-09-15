@@ -2,14 +2,13 @@ package app.dominochain.mobile
 
 import android.content.Intent
 import android.net.Uri
-import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -20,7 +19,7 @@ import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
 
-class LeveragePhotosActivity : AppCompatActivity() {
+class LeveragePhotosActivity : BetaShellActivity() {
 
     private lateinit var binding: ActivityLeveragePhotosBinding
     private val repository = LeveragePhotoRepository()
@@ -29,6 +28,8 @@ class LeveragePhotosActivity : AppCompatActivity() {
             putExtra(LeveragePhotoDetailActivity.EXTRA_PHOTO_ID, photo.id)
         })
     }
+
+    override val navDestination = AppNavDestination.ACTION_LEVERAGE_PHOTO
 
     private var pendingOriginal: File? = null
     private var pendingTeaser: File? = null
@@ -63,13 +64,9 @@ class LeveragePhotosActivity : AppCompatActivity() {
         }
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+    override fun onCreateContent(container: FrameLayout) {
         RetrofitClient.sessionManager = (application as BgApplication).sessionManager
-        binding = ActivityLeveragePhotosBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        title = getString(R.string.leverage_photos_title)
+        binding = ActivityLeveragePhotosBinding.inflate(layoutInflater, container, true)
 
         binding.leveragePhotosList.layoutManager = LinearLayoutManager(this)
         binding.leveragePhotosList.adapter = adapter
@@ -80,16 +77,16 @@ class LeveragePhotosActivity : AppCompatActivity() {
             binding.leverageStatus.setText(R.string.leverage_pick_original)
             pickImage.launch("image/*")
         }
+        refresh()
+    }
+
+    override fun onSectionsConfigUpdated(config: AppSectionsConfig, isBeta: Boolean) {
+        if (!config.actionEnabled("leverage_photo")) openDestination(AppNavDestination.HOME)
     }
 
     override fun onResume() {
         super.onResume()
-        refresh()
-    }
-
-    override fun onSupportNavigateUp(): Boolean {
-        finish()
-        return true
+        if (::binding.isInitialized) refresh()
     }
 
     private fun refresh() {
@@ -166,7 +163,8 @@ private class LeveragePhotosAdapter(
 
     override fun onBindViewHolder(holder: Holder, position: Int) {
         val item = items[position]
-        holder.title.text = item.original_filename ?: "Photo #${item.id}"
+        holder.title.text = item.original_filename
+            ?: holder.itemView.context.getString(R.string.leverage_photo_fallback_title, item.id)
         holder.subtitle.text = buildString {
             append(item.status)
             item.locked_until?.let { append(" · "); append(it) }

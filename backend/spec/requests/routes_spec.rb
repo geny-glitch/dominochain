@@ -732,7 +732,14 @@ RSpec.describe "Routes", type: :request do
       end
 
       it "returns game flags for beta" do
-        beta = create(:user, :beta, showcase_quiz_enabled: true, showcase_snake_enabled: true, showcase_dino_enabled: true, showcase_tetris_enabled: true)
+        beta = create(:user, :beta)
+        beta.update!(
+          showcase_quiz_enabled: true,
+          showcase_snake_enabled: true,
+          showcase_dino_enabled: true,
+          showcase_tetris_enabled: true,
+          showcase_backdoor_enabled: true
+        )
         device = create(:device, user: beta)
         get "/api/showcase_settings",
           headers: { "X-Device-Id" => device.device_id, "X-Device-Token" => device.auth_token }
@@ -747,6 +754,13 @@ RSpec.describe "Routes", type: :request do
         expect(json["showcase_snake_seconds_per_fruit"]).to eq(300)
         expect(json["showcase_dino_seconds_per_obstacle"]).to eq(300)
         expect(json["showcase_tetris_seconds_per_line"]).to eq(60)
+        expect(json["catalog"]).to be_a(Hash)
+        expect(json["catalog"]["sources"]).to be_a(Hash)
+        expect(json["catalog"]["actions"]).to be_a(Hash)
+        expect(json["catalog"]["sources"].keys).to include("wallpaper", "cornertime", "cigarettes", "showcase")
+        expect(json["catalog"]["actions"].keys).to include("chaster")
+        expect(json["capabilities"]).to be_a(Hash)
+        expect(json["capabilities"].keys).to include("chaster", "showcase", "control", "tasks")
       end
     end
 

@@ -8,10 +8,10 @@ import java.time.LocalDate
 
 enum class TrackerType(
     val id: String,
-    val title: String,
-    val unitLabel: String
+    val titleRes: Int,
+    val unitLabelRes: Int
 ) {
-    Cigarettes("cigarettes", "Cigarettes fumées", "cigarettes")
+    Cigarettes("cigarettes", R.string.tracker_cigarettes_title, R.string.tracker_cigarettes_unit)
 }
 
 data class TrackerSnapshot(

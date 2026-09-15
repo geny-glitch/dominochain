@@ -1,0 +1,30 @@
+---
+description: Ban hardcoded user-facing copy; require en/fr/es string resources
+alwaysApply: true
+---
+
+# No Hardcoded User-Facing Copy
+
+English is the default product language. French and Spanish must stay in sync for every user-facing string.
+
+## Rails (backend)
+
+- Any new or edited user-facing string in ERB views, mailers, controllers (flash), or similar must go through `t()` / `I18n.t`.
+- Add the key to `en`, `fr`, and `es` in the same change (see `i18n-locale-sync`).
+- Do not leave French or English literals in product views when a translation key can be used.
+- Internal-only debug tools may keep hardcoded copy when they are not end-user UI.
+- Verify with `bundle exec rspec spec/lib/locale_completeness_spec.rb` before finishing.
+
+## Android
+
+- Any new or edited user-facing string in Kotlin (Toasts, dialogs, notifications, `setText`, widget RemoteViews) or layout XML (`android:text`, `android:hint`) must use a `@string/` / `R.string.*` resource.
+- Add the key to all three buckets in the same change:
+  - `android/app/src/main/res/values/strings.xml` (English default / fallback)
+  - `android/app/src/main/res/values-fr/strings.xml`
+  - `android/app/src/main/res/values-es/strings.xml`
+- Keep the three files on the same `name=` key set.
+- Prefer reusing an existing key over inventing a near-duplicate.
+
+## Product copy tone
+
+Follow `user-facing-ui-copy`: describe outcomes for end users; never put crypto, infra, or developer jargon in locale / string resources.

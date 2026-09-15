@@ -82,6 +82,7 @@ get "beta/sources/vitrine", to: "beta_dashboard#sources_showcase", as: :beta_sou
   get "beta/pishock/debug", to: "pishock_debug#show", as: :beta_pishock_debug
   patch "beta/backdoor", to: "beta_dashboard#update_backdoor", as: :beta_backdoor
   patch "beta/public_boss", to: "beta_dashboard#update_public_boss", as: :beta_public_boss
+  patch "beta/public_pishock", to: "beta_dashboard#update_public_pishock", as: :beta_public_pishock
   patch "beta/snake_seconds", to: "beta_dashboard#update_snake_seconds", as: :beta_snake_seconds
   patch "beta/puryfi", to: "beta_dashboard#update_puryfi", as: :beta_puryfi
   post "beta/puryfi/regenerate_token", to: "beta_dashboard#regenerate_puryfi_token", as: :beta_puryfi_regenerate_token
@@ -97,6 +98,10 @@ get "beta/sources/vitrine", to: "beta_dashboard#sources_showcase", as: :beta_sou
   post "watch/:nickname/screenshot_request", to: "public_boss#screenshot_request", as: :public_boss_screenshot_request
   post "watch/:nickname/wallpapers/:wallpaper_id/set_current", to: "public_boss#set_current", as: :public_boss_set_current
   post "watch/:nickname", to: "public_boss#upload", as: :public_boss_upload
+
+  # Public PiShock control page (no authentication)
+  get "zap/:nickname", to: "public_pishock#show", as: :public_pishock
+  post "zap/:nickname", to: "public_pishock#shock", as: :public_pishock_shock
 
   # Vitrine du beta (page publique)
   get "showcase/:nickname", to: "showcase#show", as: :showcase

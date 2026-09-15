@@ -25,6 +25,19 @@ es:
     empty: "Ningún beta controlado. Pide a un beta que comparta su enlace o envíe una solicitud."
     sign_out: "Cerrar sesión"
   devise:
+    failure:
+      already_authenticated: "Ya has iniciado sesión."
+      inactive: "Tu cuenta aún no está activada."
+      invalid: "%{authentication_keys} o contraseña no válidos."
+      locked: "Tu cuenta está bloqueada."
+      last_attempt: "Te queda un intento antes de que tu cuenta se bloquee."
+      not_found_in_database: "%{authentication_keys} o contraseña no válidos."
+      timeout: "Tu sesión ha caducado. Inicia sesión de nuevo para continuar."
+      unauthenticated: "Debes iniciar sesión o registrarte antes de continuar."
+      unconfirmed: "Debes confirmar tu dirección de correo antes de continuar."
+    omniauth_callbacks:
+      failure: "No se pudo autenticarte con %{kind} porque \"%{reason}\"."
+      success: "Autenticado correctamente con la cuenta %{kind}."
     mailer:
       confirmation_instructions:
         subject: "Confirma tu correo de DominoChain"
@@ -70,12 +83,23 @@ es:
       resend_unlock: "¿No recibiste las instrucciones de desbloqueo?"
       sign_in_with: "Entrar con %{provider}"
     sessions:
+      signed_in: "Sesión iniciada correctamente."
+      signed_out: "Sesión cerrada correctamente."
+      already_signed_out: "Sesión cerrada correctamente."
       title: "Iniciar sesión"
       email: "Correo"
       password: "Contraseña"
       remember_me: "Recordarme"
       submit: "Entrar"
     registrations:
+      destroyed: "¡Hasta pronto! Tu cuenta se ha cancelado correctamente. Esperamos verte de nuevo."
+      signed_up: "¡Bienvenido! Te has registrado correctamente."
+      signed_up_but_inactive: "Te has registrado correctamente. Sin embargo, no pudimos iniciar sesión porque tu cuenta aún no está activada."
+      signed_up_but_locked: "Te has registrado correctamente. Sin embargo, no pudimos iniciar sesión porque tu cuenta está bloqueada."
+      signed_up_but_unconfirmed: "Se ha enviado un mensaje con un enlace de confirmación a tu correo. Sigue el enlace para activar tu cuenta."
+      update_needs_confirmation: "Actualizaste tu cuenta correctamente, pero necesitamos verificar tu nuevo correo. Revisa tu bandeja y sigue el enlace de confirmación."
+      updated: "Tu cuenta se ha actualizado correctamente."
+      updated_but_not_signed_in: "Tu cuenta se ha actualizado correctamente, pero como cambiaste la contraseña, debes iniciar sesión de nuevo."
       new_title: "Registrarse"
       new_eyebrow: "Crear cuenta"
       edit_title: "Editar cuenta"
@@ -114,23 +138,42 @@ es:
       delete_confirmation_label: "ELIMINAR MI CUENTA"
       delete_confirmation_mismatch: "Confirmacion invalida. Copia/pega exactamente la etiqueta solicitada."
     passwords:
+      no_token: "No puedes acceder a esta página sin venir de un correo de restablecimiento de contraseña. Si vienes de ese correo, asegúrate de haber usado la URL completa proporcionada."
+      send_instructions: "Instrucciones enviadas. Revisa tu bandeja de entrada y no olvides mirar en correo no deseado."
+      send_paranoid_instructions: "Instrucciones enviadas. Revisa tu bandeja de entrada y no olvides mirar en correo no deseado."
+      updated: "Tu contraseña se ha cambiado correctamente. Ya has iniciado sesión."
+      updated_not_active: "Tu contraseña se ha cambiado correctamente."
       new_title: "¿Olvidaste la contraseña?"
       email: "Correo"
       send_instructions_button: "Enviarme instrucciones de restablecimiento"
-      send_instructions: "Instrucciones enviadas. Revisa tu bandeja de entrada y no olvides mirar en correo no deseado."
-      send_paranoid_instructions: "Instrucciones enviadas. Revisa tu bandeja de entrada y no olvides mirar en correo no deseado."
       edit_title: "Cambiar contraseña"
       new_password: "Nueva contraseña"
       confirm_password: "Confirmar nueva contraseña"
       submit_change: "Cambiar mi contraseña"
     confirmations:
+      confirmed: "Tu dirección de correo ha sido confirmada correctamente."
+      send_instructions: "Recibirás un correo con instrucciones para confirmar tu dirección de correo en unos minutos."
+      send_paranoid_instructions: "Si tu dirección de correo existe en nuestra base de datos, recibirás un correo con instrucciones para confirmarla en unos minutos."
       new_title: "Reenviar instrucciones de confirmación"
       email: "Correo"
       submit: "Reenviar instrucciones de confirmación"
     unlocks:
+      send_instructions: "Recibirás un correo con instrucciones para desbloquear tu cuenta en unos minutos."
+      send_paranoid_instructions: "Si tu cuenta existe, recibirás un correo con instrucciones para desbloquearla en unos minutos."
+      unlocked: "Tu cuenta se ha desbloqueado correctamente. Inicia sesión para continuar."
       new_title: "Reenviar instrucciones de desbloqueo"
       email: "Correo"
       submit: "Reenviar instrucciones de desbloqueo"
+  errors:
+    messages:
+      already_confirmed: "ya fue confirmado, intenta iniciar sesión"
+      confirmation_period_expired: "debe confirmarse en un plazo de %{period}, solicita uno nuevo"
+      expired: "ha caducado, solicita uno nuevo"
+      not_found: "no encontrado"
+      not_locked: "no estaba bloqueado"
+      not_saved:
+        one: "1 error impidió guardar este %{resource}:"
+        other: "%{count} errores impidieron guardar este %{resource}:"
   boss_registration:
     title: "Alta boss"
     eyebrow: "Crear cuenta (boss)"
@@ -220,6 +263,9 @@ es:
     lead: "Vas a aceptar el control del beta %{nickname}."
     submit: "Aceptar control"
     sign_in_first: "Inicia sesión para continuar."
+    from_link_title: "¿Aceptar controlar a %{nickname}?"
+    from_link_lead: "Al aceptar, podrás gestionar los fondos de pantalla y las tareas de este beta."
+    cancel: "Cancelar"
   admin:
     index_title: "Admin — Domino Chain"
     heading: "Admin"

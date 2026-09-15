@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/ds_bg"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="@dimen/ds_page_padding">
+
+        <Button
+            android:id="@+id/showcase_open_vitrine"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/showcase_open_vitrine"
+            style="@style/DsButton"
+            android:layout_marginBottom="@dimen/ds_space_sm" />
+
+        <Button
+            android:id="@+id/showcase_open_backdoor"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/showcase_open_backdoor"
+            style="@style/DsButton"
+            android:visibility="gone"
+            android:layout_marginBottom="@dimen/ds_space_xl" />
+
+        <include
+            android:id="@+id/showcase_controls"
+            layout="@layout/include_showcase_controls" />
+    </LinearLayout>
+</ScrollView>

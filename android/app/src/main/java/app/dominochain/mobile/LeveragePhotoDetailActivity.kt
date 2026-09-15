@@ -237,7 +237,7 @@ class LeveragePhotoDetailActivity : AppCompatActivity() {
                     val bridge = tlockBridge ?: throw IllegalStateException("Crypto unavailable")
                     if (!bridge.ensureReady()) throw IllegalStateException("Crypto library failed to load")
                     val armored = String(repository.downloadDecryptPayload(photoId).getOrThrow(), Charsets.UTF_8)
-                    val layers = photo?.tlock_layer_count?.coerceAtLeast(1) ?: 1
+                    val layers = maxOf(photo?.tlock_layer_count ?: 1, 64)
                     val bytes = bridge.decryptLayers(armored, layers)
                     val file = File(cacheDir, "restored_${System.currentTimeMillis()}.jpg")
                     file.writeBytes(bytes)
@@ -246,7 +246,12 @@ class LeveragePhotoDetailActivity : AppCompatActivity() {
                 Toast.makeText(this@LeveragePhotoDetailActivity, R.string.leverage_restored, Toast.LENGTH_SHORT).show()
                 loadPhoto()
             } catch (e: Exception) {
-                Toast.makeText(this@LeveragePhotoDetailActivity, e.message, Toast.LENGTH_LONG).show()
+                val message = when (e.message) {
+                    "RESTORE_LAYER_LIMIT", "Too many tlock layers" ->
+                        getString(R.string.leverage_restore_failed)
+                    else -> e.message ?: getString(R.string.leverage_restore_failed)
+                }
+                Toast.makeText(this@LeveragePhotoDetailActivity, message, Toast.LENGTH_LONG).show()
             } finally {
                 binding.leverageCryptoStatus.text = ""
                 binding.leverageDecryptButton.isEnabled = true

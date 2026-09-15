@@ -7,22 +7,7 @@ module Api
     def show
       return head :forbidden unless current_user.beta?
 
-      caps = BetaCapabilities.for(current_user)
-      render json: {
-        showcase_quiz_enabled: current_user.showcase_quiz_enabled,
-        showcase_snake_enabled: current_user.showcase_snake_enabled,
-        showcase_dino_enabled: current_user.showcase_dino_enabled,
-        showcase_tetris_enabled: current_user.showcase_tetris_enabled,
-        showcase_backdoor_enabled: current_user.showcase_backdoor_enabled,
-        showcase_quiz_seconds_per_point: current_user.showcase_quiz_seconds_per_point,
-        showcase_snake_seconds_per_fruit: current_user.showcase_snake_seconds_per_fruit,
-        showcase_dino_seconds_per_obstacle: current_user.showcase_dino_seconds_per_obstacle,
-        showcase_tetris_seconds_per_line: current_user.showcase_tetris_seconds_per_line,
-        puryfi_min_score: current_user.puryfi_min_score,
-        puryfi_seconds_per_label: current_user.puryfi_seconds_per_label,
-        **PuryfiConfig.pishock_payload_for_user(current_user),
-        capabilities: caps.as_json
-      }
+      render json: settings_json
     end
 
     def update
@@ -71,8 +56,17 @@ module Api
         )
       end
       current_user.update!(attrs)
+      render json: settings_json
+    rescue ActiveRecord::RecordInvalid => e
+      render json: { error: e.record.errors.full_messages.join(" ") }, status: :unprocessable_entity
+    end
+
+    private
+
+    def settings_json
       caps = BetaCapabilities.for(current_user)
-      render json: {
+      catalog = BetaCatalog.new(current_user)
+      {
         showcase_quiz_enabled: current_user.showcase_quiz_enabled,
         showcase_snake_enabled: current_user.showcase_snake_enabled,
         showcase_dino_enabled: current_user.showcase_dino_enabled,
@@ -85,13 +79,13 @@ module Api
         puryfi_min_score: current_user.puryfi_min_score,
         puryfi_seconds_per_label: current_user.puryfi_seconds_per_label,
         **PuryfiConfig.pishock_payload_for_user(current_user),
+        catalog: {
+          sources: catalog.sources_enabled_map,
+          actions: catalog.actions_enabled_map
+        },
         capabilities: caps.as_json
       }
-    rescue ActiveRecord::RecordInvalid => e
-      render json: { error: e.record.errors.full_messages.join(" ") }, status: :unprocessable_entity
     end
-
-    private
 
     def cast_bool(value)
       ActiveModel::Type::Boolean.new.cast(value)

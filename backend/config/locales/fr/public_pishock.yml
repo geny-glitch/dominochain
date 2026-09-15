@@ -1,0 +1,15 @@
+fr:
+  public_pishock:
+    title: "Zap — %{nickname}"
+    heading: "⚡️ Zap"
+    lead: "Page de contrôle de %{nickname}"
+    duration_label: "Durée"
+    intensity_label: "Intensité"
+    cta: "⚡️ Tazer"
+    cta_sending: "Envoi…"
+    flash:
+      sent: "Envoyé."
+      auth_error: "Envoi impossible — identifiants refusés."
+      device_error: "Envoi impossible — appareil hors ligne, en pause ou indisponible."
+      skipped: "Envoi impossible — PiShock n'est pas complètement configuré."
+      error: "Envoi impossible — problème de connexion. Réessaie."

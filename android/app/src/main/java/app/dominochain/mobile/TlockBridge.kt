@@ -55,7 +55,7 @@ class TlockBridge(private val context: Context) {
                   function utf8Bytes(str) { return new TextEncoder().encode(str); }
                   function bytesToUtf8(bytes) { return new TextDecoder().decode(bytes); }
                   function isArmoredAge(text) {
-                    return typeof text === "string" && text.indexOf("-----BEGIN AGE ENCRYPTED FILE-----") !== -1;
+                    return typeof text === "string" && text.trimStart().indexOf("-----BEGIN AGE ENCRYPTED FILE-----") === 0;
                   }
                   function b64ToBytes(b64) {
                     const bin = atob(b64);
@@ -107,7 +107,8 @@ class TlockBridge(private val context: Context) {
                       const client = api.mainnetClient();
                       let payload = bytesToUtf8(b64ToBytes(outerArmoredB64));
                       let layersPeeled = 0;
-                      const max = expectedLayers || 20;
+                      const recorded = Number(expectedLayers) || 0;
+                      const max = Math.max(recorded, 64);
                       while (layersPeeled < max) {
                         const decrypted = await api.timelockDecrypt(payload, client);
                         layersPeeled += 1;
@@ -119,7 +120,7 @@ class TlockBridge(private val context: Context) {
                         }));
                         return;
                       }
-                      throw new Error("Too many tlock layers");
+                      throw new Error("RESTORE_LAYER_LIMIT");
                     } catch (e) {
                       AndroidTlock.onError(String(e && e.message ? e.message : e));
                     }

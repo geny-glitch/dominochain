@@ -19,7 +19,8 @@
     }
 
     function isArmoredAge(text) {
-      return typeof text === "string" && text.indexOf("-----BEGIN AGE ENCRYPTED FILE-----") !== -1;
+      if (typeof text !== "string") return false;
+      return text.trimStart().indexOf("-----BEGIN AGE ENCRYPTED FILE-----") === 0;
     }
 
     async function fetchBytes(url) {
@@ -90,12 +91,28 @@
         return { armored: armored, round: round, chainHash: chainInfo.hash };
       }
 
-      async function peelLayers(outerArmored, expectedLayers) {
+      function peelLayerLimit() {
+        const fromDom = parseInt(root.dataset.maxPeelLayers || "", 10);
+        const recorded = parseInt(root.dataset.layerCount || "", 10);
+        const cap = Number.isFinite(fromDom) && fromDom > 0 ? fromDom : 64;
+        const expected = Number.isFinite(recorded) && recorded > 0 ? recorded : 0;
+        return Math.max(expected, cap);
+      }
+
+      function displayCryptoError(err) {
+        const msg = err && err.message ? err.message : String(err);
+        if (msg === "RESTORE_LAYER_LIMIT") {
+          return statusEl?.dataset.peelError || statusEl?.dataset.cryptoLoadError || msg;
+        }
+        return msg;
+      }
+
+      async function peelLayers(outerArmored) {
         const api = requireTlock();
         const client = api.mainnetClient();
         let payload = outerArmored;
         let layersPeeled = 0;
-        const max = expectedLayers || 20;
+        const max = peelLayerLimit();
         while (layersPeeled < max) {
           const decrypted = await api.timelockDecrypt(payload, client);
           layersPeeled += 1;
@@ -106,17 +123,14 @@
           }
           return { bytes: decrypted, layersPeeled: layersPeeled };
         }
-        throw new Error("Too many tlock layers");
+        throw new Error("RESTORE_LAYER_LIMIT");
       }
 
       async function peelOriginalBytes() {
         setStatus(statusEl?.dataset.fetchingBlob || "Loading locked photo…");
         const armored = await fetchText(root.dataset.decryptUrl);
         setStatus(statusEl?.dataset.peeling || "Restoring…");
-        const peeled = await peelLayers(
-          armored,
-          parseInt(root.dataset.layerCount || "1", 10)
-        );
+        const peeled = await peelLayers(armored);
         return peeled.bytes;
       }
 
@@ -230,10 +244,7 @@
         requireTlock();
         setStatus(statusEl?.dataset.peeling || "Unlocking…");
         const armored = await fetchText(root.dataset.decryptUrl);
-        const peeled = await peelLayers(
-          armored,
-          parseInt(root.dataset.layerCount || "1", 10)
-        );
+        const peeled = await peelLayers(armored);
         await persistRestoredOriginal(peeled.bytes);
         window.location.reload();
       }
@@ -261,7 +272,7 @@
             window.location.reload();
           } catch (err) {
             console.error("[leverage_photo] start failed", err);
-            setStatus(err && err.message ? err.message : String(err));
+            setStatus(displayCryptoError(err));
             startBtn.disabled = false;
           }
         });
@@ -278,7 +289,7 @@
             window.location.reload();
           } catch (err) {
             console.error("[leverage_photo] add_time failed", err);
-            setStatus(err && err.message ? err.message : String(err));
+            setStatus(displayCryptoError(err));
             addBtn.disabled = false;
           }
         });
@@ -292,7 +303,7 @@
             await decryptAndDisplay();
           } catch (err) {
             console.error("[leverage_photo] decrypt failed", err);
-            setStatus(err && err.message ? err.message : String(err));
+            setStatus(displayCryptoError(err));
             decryptBtn.disabled = false;
           }
         });

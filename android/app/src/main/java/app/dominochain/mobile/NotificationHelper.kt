@@ -76,7 +76,7 @@ object NotificationHelper {
         )
 
         val reasons = missingReasons.joinToString(", ")
-        val contentText = "Accorde les autorisations : $reasons"
+        val contentText = context.getString(R.string.permissions_missing_notification_body, reasons)
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
@@ -112,9 +112,9 @@ object NotificationHelper {
         )
 
         val contentText = if (serviceEnabled) {
-            "Le service Bg ne répond plus. Désactive puis réactive Bg dans Accessibilité pour réactiver les captures."
+            context.getString(R.string.screenshot_service_unresponsive)
         } else {
-            "Active l'accessibilité Bg pour permettre les captures d'écran"
+            context.getString(R.string.screenshot_enable_accessibility)
         }
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
@@ -172,7 +172,11 @@ object NotificationHelper {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val importance = NotificationManager.IMPORTANCE_HIGH
-            val channelName = if (triggerAlarm) "${BuildConfig.NOTIFICATION_TITLE} Tâches urgentes" else "${BuildConfig.NOTIFICATION_TITLE} Tâches"
+            val channelName = if (triggerAlarm) {
+                context.getString(R.string.notification_channel_tasks_urgent, BuildConfig.NOTIFICATION_TITLE)
+            } else {
+                context.getString(R.string.notification_channel_tasks, BuildConfig.NOTIFICATION_TITLE)
+            }
             val channel = NotificationChannel(channelId, channelName, importance).apply {
                 enableVibration(true)
                 if (triggerAlarm && soundUri != null) {
@@ -220,7 +224,11 @@ object NotificationHelper {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(CHANNEL_TASKS, "${BuildConfig.NOTIFICATION_TITLE} Tâches", NotificationManager.IMPORTANCE_DEFAULT)
+            val channel = NotificationChannel(
+                CHANNEL_TASKS,
+                context.getString(R.string.notification_channel_tasks, BuildConfig.NOTIFICATION_TITLE),
+                NotificationManager.IMPORTANCE_DEFAULT
+            )
             notificationManager.createNotificationChannel(channel)
         }
 
@@ -252,7 +260,11 @@ object NotificationHelper {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(CHANNEL_TASKS, "${BuildConfig.NOTIFICATION_TITLE} Tâches", NotificationManager.IMPORTANCE_HIGH)
+            val channel = NotificationChannel(
+                CHANNEL_TASKS,
+                context.getString(R.string.notification_channel_tasks, BuildConfig.NOTIFICATION_TITLE),
+                NotificationManager.IMPORTANCE_HIGH
+            )
             notificationManager.createNotificationChannel(channel)
         }
 

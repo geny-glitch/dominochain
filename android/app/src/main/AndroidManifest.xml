@@ -17,6 +17,7 @@
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:localeConfig="@xml/locales_config"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Bg"
@@ -35,11 +36,11 @@
         <activity
             android:name=".MainActivity"
             android:exported="false"
-            android:theme="@style/Theme.Bg" />
+            android:theme="@style/Theme.Bg.NoActionBar" />
         <activity
             android:name=".TasksActivity"
             android:exported="false"
-            android:theme="@style/Theme.Bg" />
+            android:theme="@style/Theme.Bg.NoActionBar" />
         <activity
             android:name=".TaskDetailActivity"
             android:exported="false"
@@ -47,28 +48,32 @@
         <activity
             android:name=".SettingsActivity"
             android:exported="false"
-            android:theme="@style/Theme.Bg" />
+            android:theme="@style/Theme.Bg.NoActionBar" />
+        <activity
+            android:name=".ShowcaseActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Bg.NoActionBar" />
         <activity
             android:name=".CigaretteHistoryActivity"
             android:exported="false"
-            android:theme="@style/Theme.Bg" />
+            android:theme="@style/Theme.Bg.NoActionBar" />
         <activity
             android:name=".ChasterHistoryActivity"
             android:exported="false"
-            android:theme="@style/Theme.Bg" />
+            android:theme="@style/Theme.Bg.NoActionBar" />
         <activity
             android:name=".CornertimeActivity"
             android:exported="false"
             android:screenOrientation="portrait"
-            android:theme="@style/Theme.Bg" />
+            android:theme="@style/Theme.Bg.NoActionBar" />
         <activity
             android:name=".WallpaperActivity"
             android:exported="false"
-            android:theme="@style/Theme.Bg" />
+            android:theme="@style/Theme.Bg.NoActionBar" />
         <activity
             android:name=".LeveragePhotosActivity"
             android:exported="false"
-            android:theme="@style/Theme.Bg" />
+            android:theme="@style/Theme.Bg.NoActionBar" />
         <activity
             android:name=".LeveragePhotoDetailActivity"
             android:exported="false"

@@ -93,6 +93,8 @@ en:
       backdoor_disabled: "Backdoor page disabled."
       public_boss_enabled: "Public boss page enabled. URL: %{url}"
       public_boss_disabled: "Public boss page disabled."
+      public_pishock_enabled: "Public PiShock page enabled. URL: %{url}"
+      public_pishock_disabled: "Public PiShock page disabled."
       pishock_saved: "PiShock settings saved."
       pishock_test_ok: "PiShock: account validated (api.pishock.com) and test beep OK — check the device or logs on pishock.com."
       pishock_test_auth: "PiShock: username or API key rejected (public API v1). Check pishock.com → Account."

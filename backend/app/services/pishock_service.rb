@@ -32,7 +32,7 @@ class PishockService
     return :skipped unless BetaCatalog.new(@user).action_enabled?("pishock")
     return :skipped unless credentials_complete?
 
-    intensity = intensity.to_i.clamp(1, 100)
+    intensity = intensity.to_i.clamp(0, 100)
     duration_ms = duration_to_milliseconds(duration)
 
     shocker_id = resolve_shocker_id!

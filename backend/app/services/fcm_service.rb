@@ -440,6 +440,39 @@ class FcmService
       send_request(device, payload)
     end
 
+    def send_pishock_zap_notification(device:, intensity:, duration:)
+      unless device.fcm_token.present?
+        Rails.logger.info "[FCM] Skipped pishock_zap: no fcm_token for device #{device.device_id}"
+        return
+      end
+      unless credentials_configured?
+        Rails.logger.warn "[FCM] Skipped pishock_zap: credentials not configured."
+        return
+      end
+
+      body = I18n.t(
+        "fcm.pishock_zap.body",
+        intensity: intensity.to_i,
+        duration: duration.to_i
+      )
+
+      payload = {
+        message: {
+          token: device.fcm_token,
+          notification: { title: notification_title, body: body },
+          data: {
+            type: "pishock_zap",
+            intensity: intensity.to_i.to_s,
+            duration: duration.to_i.to_s,
+            body: body
+          },
+          android: { priority: "high" }
+        }
+      }
+
+      send_request(device, payload)
+    end
+
     def credentials_configured?
       project_id.present? && credentials_json.present?
     end

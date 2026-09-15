@@ -1,0 +1,117 @@
+// Public PiShock control page (mobile-first)
+
+.public-pishock-body {
+  background: $ds-bg;
+}
+
+.public-pishock-page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  padding: $ds-space-xl $ds-space-md;
+  box-sizing: border-box;
+}
+
+.public-pishock-container {
+  width: 100%;
+  max-width: 28rem;
+  margin: 0 auto;
+}
+
+.public-pishock-header {
+  margin-bottom: $ds-space-2xl;
+  text-align: center;
+}
+
+.public-pishock-title {
+  margin: 0 0 $ds-space-sm;
+  font-size: clamp(1.5rem, 5vw, 1.85rem);
+  font-weight: 600;
+}
+
+.public-pishock-lead {
+  margin: 0;
+  color: $ds-text-muted;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.public-pishock-form {
+  display: flex;
+  flex-direction: column;
+  gap: $ds-space-xl;
+  padding: $ds-space-xl;
+  background: $ds-surface-elevated;
+  border: 1px solid $ds-border;
+  border-radius: $ds-radius-lg;
+}
+
+.public-pishock-status {
+  margin: 0;
+  padding: $ds-space-sm $ds-space-md;
+  border-radius: $ds-radius-md;
+  font-size: 0.95rem;
+  line-height: 1.35;
+}
+
+.public-pishock-status--ok {
+  color: $ds-text;
+  background: rgba($ds-teal, 0.16);
+  border: 1px solid rgba($ds-teal, 0.45);
+}
+
+.public-pishock-status--error {
+  color: $ds-text;
+  background: rgba($ds-magenta, 0.14);
+  border: 1px solid rgba($ds-magenta, 0.45);
+}
+
+.public-pishock-field {
+  display: flex;
+  flex-direction: column;
+  gap: $ds-space-sm;
+}
+
+.public-pishock-field-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: $ds-space-sm;
+}
+
+.public-pishock-value {
+  font-family: $ds-font-mono;
+  font-variant-numeric: tabular-nums;
+  font-size: 1rem;
+  font-weight: 500;
+  color: $ds-teal;
+}
+
+.public-pishock-range {
+  width: 100%;
+  height: 2.5rem;
+  margin: 0;
+  cursor: pointer;
+  accent-color: $ds-magenta;
+  touch-action: none;
+}
+
+.public-pishock-cta {
+  width: 100%;
+  min-height: 3.25rem;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+@media (max-width: 480px) {
+  .public-pishock-page {
+    padding: $ds-space-lg $ds-space-sm;
+    align-items: flex-start;
+    padding-top: $ds-space-2xl;
+  }
+
+  .public-pishock-form {
+    padding: $ds-space-lg;
+  }
+}

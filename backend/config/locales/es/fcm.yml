@@ -1,5 +1,7 @@
 es:
   fcm:
+    pishock_zap:
+      body: "⚡️%{intensity} x %{duration}s"
     wallpaper_check:
       title: "Background check"
       body:

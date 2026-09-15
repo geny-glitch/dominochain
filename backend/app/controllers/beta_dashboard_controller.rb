@@ -450,6 +450,20 @@ class BetaDashboardController < ApplicationController
     redirect_to beta_sources_wallpaper_path, alert: e.record.errors.full_messages.join(", ")
   end
 
+  def update_public_pishock
+    enabled = checkbox_param_bool(:public_pishock_enabled)
+    current_user.update!(public_pishock_enabled: enabled)
+    PosthogProductAnalytics.configured_action(current_user, name: "pishock")
+    if enabled
+      redirect_to beta_actions_pishock_path,
+        notice: t("flash.beta.public_pishock_enabled", url: "#{request.base_url}#{public_pishock_path(current_user.nickname)}")
+    else
+      redirect_to beta_actions_pishock_path, notice: t("flash.beta.public_pishock_disabled")
+    end
+  rescue ActiveRecord::RecordInvalid => e
+    redirect_to beta_actions_pishock_path, alert: e.record.errors.full_messages.join(", ")
+  end
+
   def update_pishock
     p = params.permit(:pishock_enabled, :pishock_username, :pishock_share_code, :pishock_api_key, :pishock_intensity_factor)
     attrs = {}

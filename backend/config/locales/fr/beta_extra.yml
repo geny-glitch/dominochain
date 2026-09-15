@@ -218,6 +218,10 @@ fr:
       test_hint_html: "Teste avec les identifiants <strong>déjà enregistrés</strong> (enregistre le formulaire si tu viens de les modifier)."
       test_button: "Tester la connexion (API publique + bip 1 s)"
       test_confirm: "Valider le compte sur api.pishock.com, rattacher le share code si besoin, puis bip de test ?"
+      public_page_title: "Page de contrôle publique"
+      public_page_hint: "Toute personne avec le lien peut envoyer un zap minuté — sans connexion. Tu peux désactiver ça à tout moment."
+      public_page_checkbox: "Activer la page PiShock publique"
+      public_page_copy: "Copier"
 
     chess:
       page_title: "Sources · Chess.com — %{nickname}"

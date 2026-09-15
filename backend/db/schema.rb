@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_07_28_160000) do
+ActiveRecord::Schema[7.2].define(version: 2026_09_15_090000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -60,7 +60,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_28_160000) do
     t.datetime "end_date"
     t.boolean "is_frozen", default: false, null: false
     t.datetime "frozen_at"
-    t.integer "total_duration"
+    t.bigint "total_duration"
     t.datetime "unlocked_at"
     t.jsonb "raw_data"
     t.datetime "created_at", null: false
@@ -270,6 +270,60 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_28_160000) do
     t.datetime "updated_at", null: false
     t.index ["user_id", "game_type"], name: "index_game_sessions_on_user_id_and_game_type"
     t.index ["user_id"], name: "index_game_sessions_on_user_id"
+  end
+
+  create_table "gaze_configs", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.integer "calibration_points", default: 5, null: false
+    t.integer "off_zone_hold_ms", default: 1000, null: false
+    t.integer "violation_cooldown_seconds", default: 8, null: false
+    t.jsonb "scenarios", default: {"scenarios"=>[]}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_gaze_configs_on_user_id", unique: true
+  end
+
+  create_table "gaze_sessions", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "device_id"
+    t.bigint "gaze_target_id", null: false
+    t.string "status", default: "calibrating", null: false
+    t.string "client", null: false
+    t.datetime "started_at", null: false
+    t.datetime "ended_at"
+    t.integer "violation_count", default: 0, null: false
+    t.integer "planned_duration_seconds"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["device_id"], name: "index_gaze_sessions_on_device_id"
+    t.index ["gaze_target_id"], name: "index_gaze_sessions_on_gaze_target_id"
+    t.index ["user_id", "started_at"], name: "index_gaze_sessions_on_user_id_and_started_at"
+    t.index ["user_id", "status"], name: "index_gaze_sessions_on_user_id_and_status"
+    t.index ["user_id"], name: "index_gaze_sessions_on_user_id"
+  end
+
+  create_table "gaze_targets", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "status", default: "active", null: false
+    t.jsonb "zones", default: [], null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "status"], name: "index_gaze_targets_on_user_id_and_status"
+    t.index ["user_id"], name: "index_gaze_targets_on_user_id"
+  end
+
+  create_table "gaze_violations", force: :cascade do |t|
+    t.bigint "gaze_session_id", null: false
+    t.datetime "detected_at", null: false
+    t.float "distance_score"
+    t.string "client_violation_id"
+    t.jsonb "actions_executed", default: [], null: false
+    t.string "status", default: "applied", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["gaze_session_id", "client_violation_id"], name: "index_gaze_violations_on_session_and_client_id", unique: true, where: "(client_violation_id IS NOT NULL)"
+    t.index ["gaze_session_id", "detected_at"], name: "index_gaze_violations_on_gaze_session_id_and_detected_at"
+    t.index ["gaze_session_id"], name: "index_gaze_violations_on_gaze_session_id"
   end
 
   create_table "influencer_images", force: :cascade do |t|
@@ -674,6 +728,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_28_160000) do
     t.string "chess_com_verification_code"
     t.datetime "chess_com_verification_code_expires_at"
     t.string "time_zone", default: "Europe/Paris", null: false
+    t.boolean "public_pishock_enabled", default: false, null: false
     t.index ["chess_com_player_id"], name: "index_users_on_chess_com_player_id", unique: true, where: "(chess_com_player_id IS NOT NULL)"
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["nickname"], name: "index_users_on_nickname", unique: true
@@ -824,6 +879,12 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_28_160000) do
   add_foreign_key "device_screenshots", "wallpapers"
   add_foreign_key "devices", "users"
   add_foreign_key "game_sessions", "users"
+  add_foreign_key "gaze_configs", "users"
+  add_foreign_key "gaze_sessions", "devices"
+  add_foreign_key "gaze_sessions", "gaze_targets"
+  add_foreign_key "gaze_sessions", "users"
+  add_foreign_key "gaze_targets", "users"
+  add_foreign_key "gaze_violations", "gaze_sessions"
   add_foreign_key "leverage_photo_extensions", "leverage_photos"
   add_foreign_key "leverage_photos", "users"
   add_foreign_key "proof_of_completions", "tasks"

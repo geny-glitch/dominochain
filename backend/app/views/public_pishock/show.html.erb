@@ -1,0 +1,153 @@
+<% content_for :title, t("public_pishock.title", nickname: @nickname) %>
+<% content_for :body_class, "public-pishock-body" %>
+
+<div class="public-pishock-page ds-page">
+  <div class="ds-container public-pishock-container">
+    <header class="public-pishock-header">
+      <h1 class="public-pishock-title"><%= t("public_pishock.heading") %></h1>
+      <p class="public-pishock-lead"><%= t("public_pishock.lead", nickname: @nickname) %></p>
+    </header>
+
+    <%= form_with url: public_pishock_shock_path(@nickname), method: :post, local: true, class: "public-pishock-form", id: "public-pishock-form", data: { turbo: false } do %>
+      <div
+        id="public-pishock-status"
+        class="public-pishock-status"
+        role="status"
+        aria-live="polite"
+        hidden
+      ></div>
+
+      <div class="public-pishock-field">
+        <div class="public-pishock-field-head">
+          <label class="ds-form-label" for="public_pishock_duration"><%= t("public_pishock.duration_label") %></label>
+          <span class="public-pishock-value" id="public_pishock_duration_value" aria-live="polite">1s</span>
+        </div>
+        <input
+          type="range"
+          name="duration"
+          id="public_pishock_duration"
+          class="public-pishock-range"
+          min="1"
+          max="5"
+          step="1"
+          value="1"
+          aria-valuemin="1"
+          aria-valuemax="5"
+          aria-valuenow="1"
+          aria-describedby="public_pishock_duration_value"
+        >
+      </div>
+
+      <div class="public-pishock-field">
+        <div class="public-pishock-field-head">
+          <label class="ds-form-label" for="public_pishock_intensity"><%= t("public_pishock.intensity_label") %></label>
+          <span class="public-pishock-value" id="public_pishock_intensity_value" aria-live="polite">50</span>
+        </div>
+        <input
+          type="range"
+          name="intensity"
+          id="public_pishock_intensity"
+          class="public-pishock-range"
+          min="0"
+          max="100"
+          step="1"
+          value="50"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          aria-valuenow="50"
+          aria-describedby="public_pishock_intensity_value"
+        >
+      </div>
+
+      <%= submit_tag t("public_pishock.cta"), id: "public-pishock-submit", class: "ds-btn ds-btn--primary public-pishock-cta" %>
+    <% end %>
+  </div>
+</div>
+
+<script type="application/json" id="public-pishock-i18n"><%= raw json_escape({
+  sending: t("public_pishock.cta_sending"),
+  cta: t("public_pishock.cta"),
+  generic_error: t("public_pishock.flash.error")
+}.to_json) %></script>
+
+<script>
+  (function () {
+    var form = document.getElementById("public-pishock-form");
+    var duration = document.getElementById("public_pishock_duration");
+    var durationValue = document.getElementById("public_pishock_duration_value");
+    var intensity = document.getElementById("public_pishock_intensity");
+    var intensityValue = document.getElementById("public_pishock_intensity_value");
+    var statusEl = document.getElementById("public-pishock-status");
+    var submitBtn = document.getElementById("public-pishock-submit");
+    var i18nNode = document.getElementById("public-pishock-i18n");
+    if (!form || !duration || !intensity || !statusEl || !submitBtn) return;
+
+    var i18n = {};
+    try {
+      i18n = JSON.parse(i18nNode ? i18nNode.textContent : "{}");
+    } catch (e) {
+      i18n = {};
+    }
+
+    function syncDuration() {
+      durationValue.textContent = duration.value + "s";
+      duration.setAttribute("aria-valuenow", duration.value);
+    }
+    function syncIntensity() {
+      intensityValue.textContent = intensity.value;
+      intensity.setAttribute("aria-valuenow", intensity.value);
+    }
+
+    function setStatus(kind, message) {
+      statusEl.hidden = !message;
+      statusEl.textContent = message || "";
+      statusEl.classList.remove("public-pishock-status--ok", "public-pishock-status--error");
+      if (kind === "ok") statusEl.classList.add("public-pishock-status--ok");
+      if (kind === "error") statusEl.classList.add("public-pishock-status--error");
+    }
+
+    duration.addEventListener("input", syncDuration);
+    intensity.addEventListener("input", syncIntensity);
+    syncDuration();
+    syncIntensity();
+
+    form.addEventListener("submit", function (event) {
+      event.preventDefault();
+      if (submitBtn.disabled) return;
+
+      setStatus(null, "");
+      submitBtn.disabled = true;
+      var previousLabel = submitBtn.value;
+      submitBtn.value = i18n.sending || previousLabel;
+
+      fetch(form.action, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "X-Requested-With": "XMLHttpRequest"
+        },
+        body: new FormData(form),
+        credentials: "same-origin"
+      })
+        .then(function (res) {
+          return res.json().catch(function () { return {}; }).then(function (data) {
+            return { ok: res.ok, data: data };
+          });
+        })
+        .then(function (result) {
+          if (result.ok && result.data && result.data.ok) {
+            setStatus("ok", result.data.message || "");
+            return;
+          }
+          setStatus("error", (result.data && result.data.error) || i18n.generic_error || "");
+        })
+        .catch(function () {
+          setStatus("error", i18n.generic_error || "");
+        })
+        .finally(function () {
+          submitBtn.disabled = false;
+          submitBtn.value = i18n.cta || previousLabel;
+        });
+    });
+  })();
+</script>

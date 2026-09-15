@@ -218,6 +218,10 @@ en:
       test_hint_html: "Test with the <strong>already saved</strong> credentials (save the form first if you just changed them)."
       test_button: "Test connection (public API + 1 s beep)"
       test_confirm: "Validate account on api.pishock.com, bind share code if needed, then run test beep?"
+      public_page_title: "Public control page"
+      public_page_hint: "Anyone with the link can send a timed zap — no sign-in. Turn this off anytime."
+      public_page_checkbox: "Enable the public PiShock page"
+      public_page_copy: "Copy"
 
     chess:
       page_title: "Sources · Chess.com — %{nickname}"

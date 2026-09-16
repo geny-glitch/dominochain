@@ -158,7 +158,8 @@ class LeveragePhoto < ApplicationRecord
     end
   end
 
-  # Prefer the largest censored version (full reminder over tiny preview).
+  # Highest-definition censored version (largest blob). Use this on lists and as
+  # the locked hero — mixed uploads may include a tiny preview plus a full reminder.
   # Returns an ActiveStorage::Attachment (not Attached::One) — use .present?, not .attached?.
   def preferred_censored_attachment
     return nil unless censored_images.attached?
@@ -166,12 +167,27 @@ class LeveragePhoto < ApplicationRecord
     censored_images.max_by { |image| image.blob.byte_size }
   end
 
-  # Prefer the smallest censored version for list thumbnails.
+  # Smallest censored version. Wallpaper teaser / compact API preview only.
   # Returns an ActiveStorage::Attachment (not Attached::One) — use .present?, not .attached?.
   def thumbnail_attachment
     return nil unless censored_images.attached?
 
     censored_images.min_by { |image| image.blob.byte_size }
+  end
+
+  # Initial lock plus add-time rows for the current timer (cleared on relock).
+  def current_lock_time_entries
+    rows = []
+    started = initial_duration_seconds.to_i
+    rows << { kind: :started, seconds: started } if started.positive?
+    leverage_photo_extensions.sort_by(&:created_at).each do |extension|
+      rows << { kind: :added, seconds: extension.added_seconds, at: extension.created_at }
+    end
+    rows
+  end
+
+  def current_lock_total_seconds
+    initial_duration_seconds.to_i + leverage_photo_extensions.sum { |extension| extension.added_seconds.to_i }
   end
 
   # Original when available, otherwise preferred censored.

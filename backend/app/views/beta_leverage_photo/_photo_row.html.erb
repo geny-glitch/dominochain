@@ -26,11 +26,11 @@
      data-invalid-minutes-max="<%= t("leverage_photo.show.invalid_minutes_max") %>">
 
   <div class="ds-beta-leverage-row__thumb-wrap">
-    <% thumb = photo.thumbnail_attachment %>
-    <% if thumb.present? %>
-      <%= image_tag url_for(thumb),
+    <% preview = photo.preferred_censored_attachment %>
+    <% if preview.present? %>
+      <%= image_tag url_for(preview),
             alt: "",
-            class: "ds-beta-leverage-row__thumb ds-beta-leverage-row__thumb--pixel" %>
+            class: "ds-beta-leverage-row__thumb" %>
     <% else %>
       <div class="ds-beta-leverage-row__thumb ds-beta-leverage-row__thumb--empty" aria-hidden="true"></div>
     <% end %>

@@ -6,6 +6,17 @@ es:
       unlocked: "Desbloqueada"
       sanctioned: "Original eliminado"
       deleted: "Eliminada"
+    duration:
+      zero: "0 min"
+      days:
+        one: "1 día"
+        other: "%{count} días"
+      hours:
+        one: "1 hora"
+        other: "%{count} horas"
+      minutes:
+        one: "1 min"
+        other: "%{count} min"
     durations:
       one_hour: "1 hora"
       six_hours: "6 horas"
@@ -64,7 +75,7 @@ es:
       empty: "Aún no hay fotos de presión. Súbelas cuando quieras."
       upload_cta: "Subir una foto"
       open: "Abrir"
-      locked_until: "Bloqueada hasta %{time}"
+      locked_until: "🔒 %{time}"
       draft_hint: "Temporizador aún no iniciado."
       needs_censor_hint: "Puedes añadir más versiones censuradas antes de bloquear."
       needs_censor_short: "añadir censura"
@@ -99,6 +110,11 @@ es:
       invalid_minutes_max: "La duración no puede superar 365 días."
       start_timer: "Iniciar temporizador"
       time_lock_title: "Time lock"
+      time_history:
+        title: "Tiempo añadido en este bloqueo"
+        started: "Empezó con %{duration}"
+        added: "+ %{duration} · %{time}"
+        total: "Total %{duration}"
       danger_zone_title: "Danger zone"
       delete_all: "Eliminar todo"
       delete_all_confirm: "¿Eliminar definitivamente esta foto y todas las versiones (original y censuradas)?"

@@ -288,4 +288,61 @@ RSpec.describe BetaLeveragePhotoController, type: :request do
       expect(photo.reload).to be_deleted
     end
   end
+
+  describe "GET /beta/leverage_photos/:id" do
+    it "shows a large censored hero, keeps censored thumbs, and recaps added time" do
+      photo = create(:leverage_photo, :active, user: user, initial_duration_seconds: 1.day.to_i)
+      photo.leverage_photo_extensions.create!(
+        added_seconds: 3600,
+        locked_until_before: photo.locked_until,
+        locked_until_after: photo.locked_until + 1.hour,
+        drand_round_added: 88_001
+      )
+
+      get beta_leverage_photo_path(photo)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("ds-beta-leverage-hero")
+      expect(response.body).to include("censored.jpg")
+      expect(response.body).to include("teaser.jpg")
+      expect(response.body).to include("ds-beta-leverage-reminders--thumbs")
+      expect(response.body).to include(I18n.t("leverage_photo.show.time_history.title"))
+      expect(response.body).to include("Started with 1 day")
+      expect(response.body).to include("+ 1 hour")
+      expect(response.body).to include("Total 1 day 1 hour")
+    end
+  end
+
+  describe "GET /beta/actions/leverage_photo" do
+    it "uses the higher-definition censored preview and a compact lock date" do
+      photo = create(:leverage_photo, :active, user: user, locked_until: Time.zone.local(2026, 9, 28, 19, 9, 43))
+
+      get beta_actions_leverage_photo_path
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("censored.jpg")
+      expect(response.body).not_to include("teaser.jpg")
+      expect(response.body).to include("🔒 28-09-2026 19:09")
+      expect(response.body).not_to include("Locked until")
+    end
+  end
+
+  describe "GET /beta" do
+    it "uses the higher-definition censored preview and a compact lock date" do
+      user.update!(
+        beta_ui_prefs: {
+          "catalog_visibility" => { "actions" => { "leverage_photo" => true } }
+        }
+      )
+      create(:leverage_photo, :active, user: user, locked_until: Time.zone.local(2026, 9, 28, 19, 9, 43))
+
+      get beta_dashboard_path
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("censored.jpg")
+      expect(response.body).not_to include("teaser.jpg")
+      expect(response.body).to include("🔒 28-09-2026 19:09")
+      expect(response.body).not_to include("Locked until")
+    end
+  end
 end

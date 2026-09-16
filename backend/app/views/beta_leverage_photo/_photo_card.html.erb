@@ -27,22 +27,36 @@
       </span>
     </div>
 
-    <div class="ds-beta-leverage-reminders">
-      <% if photo.original_image.attached? && !photo.active? %>
-        <div class="ds-beta-leverage-reminders__item">
+    <% preferred_censored = photo.preferred_censored_attachment %>
+    <% hero = if photo.original_image.attached? && !photo.active?
+         photo.original_image
+       else
+         preferred_censored
+       end %>
+    <% if hero.present? %>
+      <div class="ds-beta-leverage-hero">
+        <% if photo.original_image.attached? && !photo.active? %>
           <p class="ds-beta-home-muted"><%= t("leverage_photo.show.original_label") %></p>
-          <%= image_tag url_for(photo.original_image), alt: t("leverage_photo.show.original_alt"), class: "ds-beta-leverage-reminders__img ds-beta-leverage-reminders__img--original" %>
-        </div>
-      <% end %>
-      <% if photo.censored_images.attached? %>
+          <%= image_tag url_for(hero), alt: t("leverage_photo.show.original_alt"), class: "ds-beta-leverage-hero__img" %>
+        <% else %>
+          <p class="ds-beta-home-muted"><%= t("leverage_photo.show.censored_label") %></p>
+          <%= image_tag url_for(hero), alt: t("leverage_photo.show.censored_alt"), class: "ds-beta-leverage-hero__img" %>
+        <% end %>
+      </div>
+    <% end %>
+
+    <% if photo.censored_images.attached? %>
+      <div class="ds-beta-leverage-reminders ds-beta-leverage-reminders--thumbs">
         <% photo.censored_images.each_with_index do |image, index| %>
           <div class="ds-beta-leverage-reminders__item">
             <p class="ds-beta-home-muted"><%= t("leverage_photo.show.censored_version_label", n: index + 1) %></p>
             <%= image_tag url_for(image), alt: t("leverage_photo.show.censored_alt"), class: "ds-beta-leverage-reminders__img" %>
           </div>
         <% end %>
-      <% end %>
-    </div>
+      </div>
+    <% end %>
+
+    <%= render "beta_leverage_photo/time_history", photo: photo %>
 
     <% if photo.can_censor? %>
       <div class="ds-beta-leverage-panel__actions ds-beta-leverage-panel__actions--standalone">

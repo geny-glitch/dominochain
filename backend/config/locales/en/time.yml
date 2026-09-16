@@ -2,6 +2,7 @@ en:
   time:
     formats:
       short: "%Y-%m-%d %H:%M"
+      lock_until: "%d-%m-%Y %H:%M"
       unlock: "%m/%d %H:%M"
     finished: "Finished"
     remaining_days_hours_mins_secs: "%{days}d %{hours}h %{mins}min %{secs}s"

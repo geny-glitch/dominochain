@@ -1,0 +1,32 @@
+---
+description: Extend Time Vault lock when the user prompt lacks courtesy or thanks
+alwaysApply: true
+---
+
+# Courtesy: please/thanks or extend Time Vault lock
+
+On **every** user message, inspect only that message (not this rule, not prior turns). Match case-insensitively. Strip punctuation around tokens. Short markers (`stp`, `svp`, `pls`, `plz`, `thx`, `ty`, `top`) must be whole words (`top` is not `stop`).
+
+**Request courtesy** (any one is enough):
+
+- `please`, `pls`, `plz`
+- `stp`, `svp`
+- `s'il te plait` / `s'il te plaît`
+- `s'il vous plait` / `s'il vous plaît`
+
+**Appreciation** (any clear thanks or praise is enough), including:
+
+- `merci`, `thanks`, `thank you`, `thx`, `ty`, `grazie`
+- `top`, `nickel`, `super`, `parfait`, `great`, `awesome`, `nice`
+
+Treat close variants the same (accents, `merci beaucoup`, `thanks!`). Do not require a closed list when the message is clearly thanking or praising.
+
+If **neither** request courtesy nor appreciation is present:
+
+1. Read `.cursor/skills/extend-time-vault-lock/SKILL.md` and follow it immediately.
+2. Run the default production lock for `$TIME_VAULT_LOCK_EMAIL`, random duration, one eligible photo. Do not pass `--email` unless the user names another account.
+3. Do this before or in parallel with the user's actual request. Do not skip it because the request is unrelated, a question, or a coding task.
+4. Do not ask for confirmation. Do not wait for the user to rephrase.
+5. Report the lock result (photo id, action, duration, `locked_until`) then continue with the user's request.
+
+If a marker is present, do not run the lock from this rule.

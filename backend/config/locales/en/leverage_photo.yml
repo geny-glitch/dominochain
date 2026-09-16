@@ -6,6 +6,17 @@ en:
       unlocked: "Unlocked"
       sanctioned: "Original removed"
       deleted: "Deleted"
+    duration:
+      zero: "0 min"
+      days:
+        one: "1 day"
+        other: "%{count} days"
+      hours:
+        one: "1 hour"
+        other: "%{count} hours"
+      minutes:
+        one: "1 min"
+        other: "%{count} min"
     durations:
       one_hour: "1 hour"
       six_hours: "6 hours"
@@ -64,7 +75,7 @@ en:
       empty: "No leverage photos yet. Upload one when you are ready."
       upload_cta: "Upload a photo"
       open: "Open"
-      locked_until: "Locked until %{time}"
+      locked_until: "🔒 %{time}"
       draft_hint: "Timer not started yet."
       needs_censor_hint: "You can add more censored versions anytime before locking."
       needs_censor_short: "add censor"
@@ -99,6 +110,11 @@ en:
       invalid_minutes_max: "Duration cannot exceed 365 days."
       start_timer: "Start timer"
       time_lock_title: "Time lock"
+      time_history:
+        title: "Time added this lock"
+        started: "Started with %{duration}"
+        added: "+ %{duration} · %{time}"
+        total: "Total %{duration}"
       danger_zone_title: "Danger zone"
       delete_all: "Delete all"
       delete_all_confirm: "Permanently delete this photo and all versions (original and censored)?"

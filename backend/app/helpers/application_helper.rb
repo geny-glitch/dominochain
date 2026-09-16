@@ -27,4 +27,19 @@ module ApplicationHelper
       t("time.remaining_secs", secs:)
     end
   end
+
+  def format_leverage_duration(seconds)
+    s = seconds.to_i
+    return t("leverage_photo.duration.zero") if s <= 0
+
+    days, rem = s.divmod(86_400)
+    hours, rem = rem.divmod(3600)
+    mins = rem / 60
+    parts = []
+    parts << t("leverage_photo.duration.days", count: days) if days.positive?
+    parts << t("leverage_photo.duration.hours", count: hours) if hours.positive?
+    parts << t("leverage_photo.duration.minutes", count: mins) if mins.positive?
+    parts << t("leverage_photo.duration.zero") if parts.empty?
+    parts.join(" ")
+  end
 end

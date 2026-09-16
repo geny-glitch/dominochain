@@ -1,0 +1,23 @@
+<%# locals: photo %>
+<% entries = photo.current_lock_time_entries %>
+<% if entries.any? %>
+  <section class="ds-beta-leverage-time-history" aria-labelledby="lp-<%= photo.id %>-time-history">
+    <h3 id="lp-<%= photo.id %>-time-history" class="ds-beta-leverage-panel__title"><%= t("leverage_photo.show.time_history.title") %></h3>
+    <ul class="ds-beta-leverage-time-history__list">
+      <% entries.each do |entry| %>
+        <li>
+          <% if entry[:kind] == :started %>
+            <%= t("leverage_photo.show.time_history.started", duration: format_leverage_duration(entry[:seconds])) %>
+          <% else %>
+            <%= t("leverage_photo.show.time_history.added",
+                  duration: format_leverage_duration(entry[:seconds]),
+                  time: l(entry[:at], format: :lock_until)) %>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+    <p class="ds-beta-leverage-time-history__total">
+      <%= t("leverage_photo.show.time_history.total", duration: format_leverage_duration(photo.current_lock_total_seconds)) %>
+    </p>
+  </section>
+<% end %>

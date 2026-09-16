@@ -18,7 +18,7 @@ class BetaLeveragePhotoController < ApplicationController
   before_action :ensure_active!, only: %i[add_time]
 
   def index
-    @photos = current_user.leverage_photos.not_deleted.newest_first
+    @photos = current_user.leverage_photos.not_deleted.with_attached_censored_images.newest_first
     @photos.each { |photo| maybe_unlock!(photo) }
   end
 
@@ -233,7 +233,7 @@ class BetaLeveragePhotoController < ApplicationController
   end
 
   def set_photo
-    @photo = current_user.leverage_photos.not_deleted.find_by(id: params[:id])
+    @photo = current_user.leverage_photos.not_deleted.includes(:leverage_photo_extensions).find_by(id: params[:id])
     return if @photo.present?
 
     redirect_to beta_leverage_photos_path, alert: t("flash.beta.leverage_photo.not_found")

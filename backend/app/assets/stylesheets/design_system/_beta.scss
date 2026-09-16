@@ -2085,6 +2085,48 @@
   opacity: 0.75;
 }
 
+.ds-beta-leverage-hero {
+  margin-bottom: $ds-space-md;
+}
+
+.ds-beta-leverage-hero__img {
+  display: block;
+  width: 100%;
+  max-height: 70vh;
+  height: auto;
+  object-fit: contain;
+  border-radius: $ds-radius-md;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.ds-beta-leverage-reminders--thumbs {
+  .ds-beta-leverage-reminders__img {
+    height: 96px;
+  }
+}
+
+.ds-beta-leverage-time-history {
+  margin: $ds-space-md 0 0;
+}
+
+.ds-beta-leverage-time-history__list {
+  margin: 0.35rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: $ds-small-size;
+  color: $ds-text-muted;
+}
+
+.ds-beta-leverage-time-history__total {
+  margin: 0.5rem 0 0;
+  font-size: $ds-small-size;
+  font-weight: 600;
+  color: $ds-text;
+}
+
 .ds-beta-leverage-how-list {
   margin: 0.75rem 0;
   padding-left: 1.25rem;

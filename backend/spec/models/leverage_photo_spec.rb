@@ -80,4 +80,31 @@ RSpec.describe LeveragePhoto, type: :model do
     expect(photo.original_image).not_to be_attached
     expect(photo.censored_images).not_to be_attached
   end
+
+  it "summarizes the current lock duration and extensions" do
+    photo = create(:leverage_photo, :active, user: user, initial_duration_seconds: 1.day.to_i)
+    photo.leverage_photo_extensions.create!(
+      added_seconds: 3600,
+      locked_until_before: photo.locked_until,
+      locked_until_after: photo.locked_until + 1.hour,
+      drand_round_added: 99_001
+    )
+    photo.leverage_photo_extensions.create!(
+      added_seconds: 1800,
+      locked_until_before: photo.locked_until + 1.hour,
+      locked_until_after: photo.locked_until + 90.minutes,
+      drand_round_added: 99_002
+    )
+
+    entries = photo.current_lock_time_entries
+    expect(entries.map { |row| row[:kind] }).to eq(%i[started added added])
+    expect(entries.map { |row| row[:seconds] }).to eq([86_400, 3600, 1800])
+    expect(photo.current_lock_total_seconds).to eq(91_800)
+  end
+
+  it "picks the largest censored blob as the preferred preview" do
+    photo = create(:leverage_photo, :with_images, user: user)
+    expect(photo.preferred_censored_attachment.filename.to_s).to eq("censored.jpg")
+    expect(photo.thumbnail_attachment.filename.to_s).to eq("teaser.jpg")
+  end
 end

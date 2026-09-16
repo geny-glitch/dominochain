@@ -12,11 +12,11 @@
   <div class="<%= grid_class %>">
     <% display_photos.each do |photo| %>
       <%= link_to beta_leverage_photo_path(photo), class: "ds-beta-leverage-grid__item" do %>
-        <% thumb = photo.thumbnail_attachment %>
-        <% if thumb.present? %>
-          <%= image_tag url_for(thumb),
+        <% preview = photo.preferred_censored_attachment %>
+        <% if preview.present? %>
+          <%= image_tag url_for(preview),
                 alt: "",
-                class: "ds-beta-leverage-grid__thumb ds-beta-leverage-grid__thumb--pixel" %>
+                class: "ds-beta-leverage-grid__thumb" %>
         <% else %>
           <div class="ds-beta-leverage-grid__thumb ds-beta-leverage-grid__thumb--empty" aria-hidden="true"></div>
         <% end %>
@@ -26,7 +26,7 @@
             <%= t("leverage_photo.status.#{photo.status}") %>
           </span>
           <% if photo.active? && photo.locked_until %>
-            <span class="ds-beta-leverage-grid__until"><%= t("leverage_photo.index.locked_until", time: l(photo.locked_until, format: :short)) %></span>
+            <span class="ds-beta-leverage-grid__until"><%= t("leverage_photo.index.locked_until", time: l(photo.locked_until, format: :lock_until)) %></span>
           <% end %>
         </span>
       <% end %>

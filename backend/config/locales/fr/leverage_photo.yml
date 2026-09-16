@@ -6,6 +6,17 @@ fr:
       unlocked: "Débloquée"
       sanctioned: "Originale supprimée"
       deleted: "Supprimée"
+    duration:
+      zero: "0 min"
+      days:
+        one: "1 jour"
+        other: "%{count} jours"
+      hours:
+        one: "1 heure"
+        other: "%{count} heures"
+      minutes:
+        one: "1 min"
+        other: "%{count} min"
     durations:
       one_hour: "1 heure"
       six_hours: "6 heures"
@@ -64,7 +75,7 @@ fr:
       empty: "Aucune photo de levier pour l'instant. Uploadez-en une quand vous voulez."
       upload_cta: "Uploader une photo"
       open: "Ouvrir"
-      locked_until: "Verrouillée jusqu'au %{time}"
+      locked_until: "🔒 %{time}"
       draft_hint: "Timer pas encore démarré."
       needs_censor_hint: "Tu peux ajouter d'autres versions censurées avant de verrouiller."
       needs_censor_short: "ajouter censure"
@@ -99,6 +110,11 @@ fr:
       invalid_minutes_max: "La durée ne peut pas dépasser 365 jours."
       start_timer: "Démarrer le timer"
       time_lock_title: "Time lock"
+      time_history:
+        title: "Temps ajouté depuis ce verrouillage"
+        started: "Départ : %{duration}"
+        added: "+ %{duration} · %{time}"
+        total: "Total %{duration}"
       danger_zone_title: "Danger zone"
       delete_all: "Tout supprimer"
       delete_all_confirm: "Supprimer définitivement cette photo et toutes les versions (originale et censurées) ?"

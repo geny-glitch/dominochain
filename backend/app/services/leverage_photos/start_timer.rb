@@ -41,6 +41,8 @@ class LeveragePhotos::StartTimer
         status: "active",
         locked_until: @locked_until,
         initial_duration_seconds: @duration_seconds,
+        add_time_base_seconds: nil,
+        add_time_step_n: 0,
         drand_rounds: [@drand_round],
         drand_chain_hash: @chain_hash,
         # Client start encrypts plaintext (always 1). Server relock of an

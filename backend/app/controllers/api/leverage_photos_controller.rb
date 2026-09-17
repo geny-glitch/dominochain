@@ -84,13 +84,17 @@ module Api
     def add_time
       locked_until = Time.zone.parse(params.require(:locked_until).to_s)
       added_seconds = params.require(:added_seconds).to_i
+      save_as_base = ActiveModel::Type::Boolean.new.cast(params[:save_as_base])
+      apply_next_step = ActiveModel::Type::Boolean.new.cast(params[:apply_next_step])
 
       LeveragePhotos::AddTime.new(
         photo: @photo,
         tlock_blob: params.require(:tlock_blob),
         drand_round: params.require(:drand_round),
         locked_until: locked_until,
-        added_seconds: added_seconds
+        added_seconds: added_seconds,
+        save_as_base: save_as_base,
+        apply_next_step: apply_next_step
       ).call!
 
       render json: {

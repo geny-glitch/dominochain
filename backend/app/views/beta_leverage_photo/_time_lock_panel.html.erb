@@ -1,39 +1,58 @@
 <%# locals: photo, id_prefix, mode (:start, :relock, :add_time) %>
 <% mode = local_assigns.fetch(:mode, :start) %>
-<% duration_shortcuts = [
-  [60, t("leverage_photo.durations.one_hour")],
-  [360, t("leverage_photo.durations.six_hours")],
-  [1440, t("leverage_photo.durations.one_day")],
-  [4320, t("leverage_photo.durations.three_days")],
-  [10080, t("leverage_photo.durations.one_week")]
-] %>
-<% add_time_shortcuts = duration_shortcuts.first(4) %>
+<% if mode == :add_time && photo.add_time_base?
+     add_amount, add_unit = LeveragePhoto.duration_parts(photo.add_time_base_seconds)
+   else
+     add_amount = 1
+     add_unit = "days"
+   end %>
 
 <section class="ds-beta-leverage-panel ds-beta-leverage-panel--time-lock">
   <h3 class="ds-beta-leverage-panel__title"><%= t("leverage_photo.show.time_lock_title") %></h3>
 
   <% if mode == :add_time %>
+    <% next_n = photo.next_step_n %>
+    <% base_label = photo.add_time_base? ? format_leverage_duration(photo.add_time_base_seconds) : format_leverage_duration(1.day.to_i) %>
     <p class="ds-beta-leverage-panel__countdown ds-beta-home-metric" data-countdown data-ready="<%= t("leverage_photo.show.ready") %>">—</p>
     <%= render "beta_leverage_photo/duration_picker",
           label: t("leverage_photo.show.add_duration"),
           input_name: "add-minutes",
           field_id: "#{id_prefix}-add-minutes",
-          default_minutes: 1440,
-          shortcuts: add_time_shortcuts %>
+          default_amount: add_amount,
+          default_unit: add_unit %>
+    <label class="ds-checkbox-label ds-beta-leverage-duration__base" for="<%= id_prefix %>-save-as-base">
+      <input
+        type="checkbox"
+        id="<%= id_prefix %>-save-as-base"
+        data-save-as-base>
+      <%= t("leverage_photo.show.save_as_base") %>
+    </label>
     <div class="ds-beta-leverage-panel__actions">
       <button type="button" class="ds-btn ds-btn--primary ds-btn--sm" data-action="add-time"><%= t("leverage_photo.show.add_time") %></button>
+      <button
+        type="button"
+        class="ds-btn ds-btn--secondary ds-btn--sm"
+        data-action="add-time-step"
+        data-base-seconds="<%= photo.add_time_base_seconds.to_i %>"
+        data-step-n="<%= photo.add_time_step_n.to_i %>"
+        data-base-label="<%= photo.add_time_base? ? format_leverage_duration(photo.add_time_base_seconds) : "" %>"
+        data-label-template="<%= t("leverage_photo.show.add_next_step", n: "%{n}", duration: "%{duration}") %>">
+        <%= t("leverage_photo.show.add_next_step", n: next_n, duration: base_label) %>
+      </button>
     </div>
   <% else %>
     <%= render "beta_leverage_photo/duration_picker",
           label: t("leverage_photo.show.duration"),
           input_name: "duration-minutes",
           field_id: "#{id_prefix}-duration-minutes",
-          default_minutes: 1440,
-          shortcuts: duration_shortcuts %>
+          default_amount: 1,
+          default_unit: "days" %>
     <div class="ds-beta-leverage-panel__actions">
       <button type="button" class="ds-btn ds-btn--primary ds-btn--sm" data-action="start-timer">
         <%= mode == :relock ? t("leverage_photo.show.lock_again") : t("leverage_photo.show.start_timer") %>
       </button>
     </div>
   <% end %>
+
+  <%= render "beta_leverage_photo/time_history", photo: photo %>
 </section>

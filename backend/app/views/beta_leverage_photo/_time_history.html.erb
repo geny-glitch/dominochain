@@ -2,7 +2,7 @@
 <% entries = photo.current_lock_time_entries %>
 <% if entries.any? %>
   <section class="ds-beta-leverage-time-history" aria-labelledby="lp-<%= photo.id %>-time-history">
-    <h3 id="lp-<%= photo.id %>-time-history" class="ds-beta-leverage-panel__title"><%= t("leverage_photo.show.time_history.title") %></h3>
+    <h4 id="lp-<%= photo.id %>-time-history" class="ds-beta-leverage-panel__title"><%= t("leverage_photo.show.time_history.title") %></h4>
     <ul class="ds-beta-leverage-time-history__list">
       <% entries.each do |entry| %>
         <li>

@@ -60,14 +60,77 @@
         return tlock;
       }
 
-      function readMinutes(selector, fallbackMinutes) {
+      const UNIT_SECONDS = {
+        years: 365 * 86400,
+        months: 30 * 86400,
+        weeks: 7 * 86400,
+        days: 86400,
+        hours: 3600,
+        minutes: 60
+      };
+      const MAX_SECONDS = 365 * 86400;
+      const DAY_SECONDS = 86400;
+
+      function unitSeconds(unit) {
+        return UNIT_SECONDS[unit] || DAY_SECONDS;
+      }
+
+      function maxAmountFor(unit) {
+        return Math.max(1, Math.floor(MAX_SECONDS / unitSeconds(unit)));
+      }
+
+      function bindDurationPicker(picker) {
+        const input = picker.querySelector("input[type='number']");
+        const unitSelect = picker.querySelector("[data-duration-unit]");
+        if (!input || !unitSelect) return;
+
+        function syncMax() {
+          input.max = String(maxAmountFor(unitSelect.value));
+        }
+
+        function setSeconds(seconds) {
+          const amount = Math.max(1, Math.round(seconds / unitSeconds(unitSelect.value)));
+          input.value = String(Math.min(amount, maxAmountFor(unitSelect.value)));
+        }
+
+        unitSelect.addEventListener("change", function () {
+          const prev = unitSelect.getAttribute("data-previous-unit") || "days";
+          const seconds = parseInt(input.value, 10) * unitSeconds(prev);
+          unitSelect.setAttribute("data-previous-unit", unitSelect.value);
+          syncMax();
+          if (Number.isFinite(seconds) && seconds > 0) setSeconds(seconds);
+        });
+
+        syncMax();
+        unitSelect.setAttribute("data-previous-unit", unitSelect.value);
+      }
+
+      function readDurationSeconds(selector, fallbackSeconds) {
         const input = root.querySelector(selector);
-        const minutes = parseInt(input && input.value ? input.value : String(fallbackMinutes), 10);
+        const picker = input && input.closest(".ds-beta-leverage-duration");
+        const unitSelect = picker && picker.querySelector("[data-duration-unit]");
+        const raw = parseInt(input && input.value ? input.value : "", 10);
+        const fallback = fallbackSeconds || DAY_SECONDS;
+
+        if (unitSelect) {
+          const amount = Number.isFinite(raw) && raw >= 1
+            ? raw
+            : Math.max(1, Math.round(fallback / unitSeconds(unitSelect.value)));
+          const seconds = amount * unitSeconds(unitSelect.value);
+          if (seconds < 60) {
+            throw new Error(root.dataset.invalidMinutes || "Enter at least 1 minute.");
+          }
+          if (seconds > MAX_SECONDS) {
+            throw new Error(root.dataset.invalidMinutesMax || "Duration is too long.");
+          }
+          return seconds;
+        }
+
+        const minutes = Number.isFinite(raw) && raw >= 1 ? raw : Math.round(fallback / 60);
         if (!Number.isFinite(minutes) || minutes < 1) {
           throw new Error(root.dataset.invalidMinutes || "Enter at least 1 minute.");
         }
-        const maxMinutes = Math.floor(365 * 24 * 60);
-        if (minutes > maxMinutes) {
+        if (minutes > Math.floor(MAX_SECONDS / 60)) {
           throw new Error(root.dataset.invalidMinutesMax || "Duration is too long.");
         }
         return minutes * 60;
@@ -202,7 +265,8 @@
         return data;
       }
 
-      async function addTime(addedSeconds) {
+      async function addTime(addedSeconds, options) {
+        options = options || {};
         requireTlock();
         const base = root.dataset.lockedUntil
           ? new Date(root.dataset.lockedUntil)
@@ -224,6 +288,8 @@
         formData.append("drand_round", String(result.round));
         formData.append("added_seconds", String(addedSeconds));
         formData.append("locked_until", lockedUntil.toISOString());
+        if (options.saveAsBase) formData.append("save_as_base", "true");
+        if (options.applyNextStep) formData.append("apply_next_step", "true");
 
         setStatus(statusEl?.dataset.uploading || "Uploading…");
         const res = await fetch(root.dataset.addTimeUrl, {
@@ -249,17 +315,7 @@
         window.location.reload();
       }
 
-      root.querySelectorAll("[data-duration-shortcut]").forEach(function (btn) {
-        btn.addEventListener("click", function () {
-          const targetName = btn.getAttribute("data-target");
-          const minutes = btn.getAttribute("data-minutes");
-          const input = root.querySelector("[data-" + targetName + "]");
-          if (input && minutes) {
-            input.value = minutes;
-            input.focus();
-          }
-        });
-      });
+      root.querySelectorAll(".ds-beta-leverage-duration").forEach(bindDurationPicker);
 
       const startBtn = root.querySelector("[data-action='start-timer']");
       if (startBtn) {
@@ -267,7 +323,7 @@
           startBtn.disabled = true;
           setStatus(statusEl?.dataset.starting || "Starting…");
           try {
-            const durationSeconds = readMinutes("[data-duration-minutes]", 1440);
+            const durationSeconds = readDurationSeconds("[data-duration-minutes]", DAY_SECONDS);
             await startTimer(durationSeconds);
             window.location.reload();
           } catch (err) {
@@ -278,22 +334,96 @@
         });
       }
 
+      function saveAsBaseChecked() {
+        const checkbox = root.querySelector("[data-save-as-base]");
+        return Boolean(checkbox && checkbox.checked);
+      }
+
+      function pickerDurationLabel() {
+        const input = root.querySelector("[data-add-minutes]");
+        const unitSelect = root.querySelector("[data-duration-unit]");
+        const amount = input && input.value ? input.value : "1";
+        const unitText = unitSelect && unitSelect.selectedOptions[0]
+          ? unitSelect.selectedOptions[0].textContent.trim()
+          : "";
+        return (amount + " " + unitText).trim();
+      }
+
+      function fillStepLabel(template, n, duration) {
+        return template.replace("%{n}", String(n)).replace("%{duration}", duration);
+      }
+
+      function updateStepButton() {
+        const stepBtn = root.querySelector("[data-action='add-time-step']");
+        if (!stepBtn) return;
+        const template = stepBtn.dataset.labelTemplate || "";
+        const storedBase = parseInt(stepBtn.dataset.baseSeconds || "0", 10);
+        const storedN = parseInt(stepBtn.dataset.stepN || "0", 10);
+        if (saveAsBaseChecked() || !storedBase) {
+          stepBtn.textContent = fillStepLabel(template, 1, pickerDurationLabel());
+        } else {
+          stepBtn.textContent = fillStepLabel(template, storedN + 1, stepBtn.dataset.baseLabel || pickerDurationLabel());
+        }
+      }
+
       const addBtn = root.querySelector("[data-action='add-time']");
+      const stepBtn = root.querySelector("[data-action='add-time-step']");
+
+      function setAddButtonsDisabled(disabled) {
+        if (addBtn) addBtn.disabled = disabled;
+        if (stepBtn) stepBtn.disabled = disabled;
+      }
+
       if (addBtn) {
         addBtn.addEventListener("click", async function () {
-          addBtn.disabled = true;
+          setAddButtonsDisabled(true);
           setStatus(statusEl?.dataset.adding || "Adding time…");
           try {
-            const addedSeconds = readMinutes("[data-add-minutes]", 1440);
-            await addTime(addedSeconds);
+            const addedSeconds = readDurationSeconds("[data-add-minutes]", DAY_SECONDS);
+            await addTime(addedSeconds, { saveAsBase: saveAsBaseChecked() });
             window.location.reload();
           } catch (err) {
             console.error("[leverage_photo] add_time failed", err);
             setStatus(displayCryptoError(err));
-            addBtn.disabled = false;
+            setAddButtonsDisabled(false);
           }
         });
       }
+
+      if (stepBtn) {
+        stepBtn.addEventListener("click", async function () {
+          setAddButtonsDisabled(true);
+          setStatus(statusEl?.dataset.adding || "Adding time…");
+          try {
+            const storedBase = parseInt(stepBtn.dataset.baseSeconds || "0", 10);
+            const storedN = parseInt(stepBtn.dataset.stepN || "0", 10);
+            const resetBase = saveAsBaseChecked() || !storedBase;
+            const addedSeconds = resetBase
+              ? readDurationSeconds("[data-add-minutes]", DAY_SECONDS)
+              : (storedN + 1) * storedBase;
+            if (!Number.isFinite(addedSeconds) || addedSeconds < 60) {
+              throw new Error(root.dataset.invalidMinutes || "Enter at least 1 minute.");
+            }
+            if (addedSeconds > MAX_SECONDS) {
+              throw new Error(root.dataset.invalidMinutesMax || "Duration is too long.");
+            }
+            await addTime(addedSeconds, { saveAsBase: resetBase, applyNextStep: true });
+            window.location.reload();
+          } catch (err) {
+            console.error("[leverage_photo] add_time_step failed", err);
+            setStatus(displayCryptoError(err));
+            setAddButtonsDisabled(false);
+          }
+        });
+      }
+
+      const saveAsBase = root.querySelector("[data-save-as-base]");
+      const addAmountInput = root.querySelector("[data-add-minutes]");
+      const addUnitSelect = root.querySelector("[data-duration-unit]");
+      if (saveAsBase) saveAsBase.addEventListener("change", updateStepButton);
+      if (addAmountInput) addAmountInput.addEventListener("input", updateStepButton);
+      if (addUnitSelect) addUnitSelect.addEventListener("change", updateStepButton);
+      updateStepButton();
 
       const decryptBtn = root.querySelector("[data-action='decrypt']");
       if (decryptBtn) {

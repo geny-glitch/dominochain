@@ -102,6 +102,27 @@ RSpec.describe LeveragePhoto, type: :model do
     expect(photo.current_lock_total_seconds).to eq(91_800)
   end
 
+  it "tracks an explicit add-time base and multiplier" do
+    photo = create(:leverage_photo, :active, user: user)
+    expect(photo.add_time_base?).to be(false)
+    expect(photo.next_step_n).to eq(1)
+
+    photo.update!(add_time_base_seconds: 3.days.to_i, add_time_step_n: 1)
+    expect(photo.add_time_base?).to be(true)
+    expect(photo.next_step_n).to eq(2)
+    expect(photo.next_step_seconds).to eq(6.days.to_i)
+
+    photo.update!(add_time_step_n: 2)
+    expect(photo.next_step_seconds).to eq(9.days.to_i)
+  end
+
+  it "splits durations into the largest exact unit" do
+    expect(described_class.duration_parts(3.days.to_i)).to eq([3, "days"])
+    expect(described_class.duration_parts(7.days.to_i)).to eq([1, "weeks"])
+    expect(described_class.duration_parts(2.hours.to_i)).to eq([2, "hours"])
+    expect(described_class.duration_parts(90.minutes.to_i)).to eq([90, "minutes"])
+  end
+
   it "picks the largest censored blob as the preferred preview" do
     photo = create(:leverage_photo, :with_images, user: user)
     expect(photo.preferred_censored_attachment.filename.to_s).to eq("censored.jpg")

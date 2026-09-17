@@ -56,8 +56,6 @@
       </div>
     <% end %>
 
-    <%= render "beta_leverage_photo/time_history", photo: photo %>
-
     <% if photo.can_censor? %>
       <div class="ds-beta-leverage-panel__actions ds-beta-leverage-panel__actions--standalone">
         <%= link_to t("leverage_photo.show.add_censor"), beta_leverage_photo_censor_path(photo), class: "ds-btn ds-btn--secondary ds-btn--sm" %>

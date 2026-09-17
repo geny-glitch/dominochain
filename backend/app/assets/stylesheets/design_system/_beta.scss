@@ -2238,43 +2238,27 @@
 
 .ds-beta-leverage-duration__row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: $ds-space-sm;
 }
 
-.ds-beta-leverage-duration__input {
-  width: 7rem;
+.ds-input.ds-beta-leverage-duration__input {
+  width: 5.5rem;
+  flex: 0 0 auto;
   cursor: text;
 }
 
-.ds-beta-leverage-duration__unit {
-  font-size: $ds-body-size;
-  color: $ds-text-muted;
-}
-
-.ds-beta-leverage-duration-shortcuts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: $ds-space-xs;
-}
-
-.ds-beta-leverage-duration-shortcuts__btn {
-  padding: 0.25rem 0.55rem;
-  border: 0;
-  border-radius: $ds-radius-sm;
-  background: transparent;
-  color: var(--md-sys-color-primary, #60a5fa);
-  font: inherit;
-  font-size: 0.8125rem;
-  font-weight: 500;
+select.ds-beta-leverage-duration__unit {
+  width: auto;
+  min-width: 7.5rem;
+  flex: 0 0 auto;
   cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 2px;
+  color: $ds-text;
+}
 
-  &:hover,
-  &:focus-visible {
-    color: $ds-text;
-  }
+.ds-beta-leverage-duration__base {
+  margin: $ds-space-sm 0 0;
 }
 
 .ds-beta-leverage-crypto-status {

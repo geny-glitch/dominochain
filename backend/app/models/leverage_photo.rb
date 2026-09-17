@@ -8,6 +8,15 @@ class LeveragePhoto < ApplicationRecord
   MAX_PEEL_LAYERS = 64
   MAX_DURATION_SECONDS = 365.days.to_i
   MIN_DURATION_SECONDS = 1.minute.to_i
+  DURATION_UNIT_SECONDS = {
+    "years" => 365.days.to_i,
+    "months" => 30.days.to_i,
+    "weeks" => 7.days.to_i,
+    "days" => 1.day.to_i,
+    "hours" => 1.hour.to_i,
+    "minutes" => 1.minute.to_i
+  }.freeze
+  DURATION_UNIT_KEYS = %w[years months weeks days hours minutes].freeze
   # drand quicknet (mainnetClient in tlock-js)
   DEFAULT_DRAND_CHAIN_HASH = "52db9ba70e0cc0f6eaf7803dd07447a1f5477735fd3f661792ba94600c84e971"
 
@@ -149,7 +158,9 @@ class LeveragePhoto < ApplicationRecord
       drand_rounds: [],
       tlock_layer_count: 0,
       drand_chain_hash: nil,
-      initial_duration_seconds: nil
+      initial_duration_seconds: nil,
+      add_time_base_seconds: nil,
+      add_time_step_n: 0
     )
     assert_attachments!
 
@@ -190,6 +201,40 @@ class LeveragePhoto < ApplicationRecord
     initial_duration_seconds.to_i + leverage_photo_extensions.sum { |extension| extension.added_seconds.to_i }
   end
 
+  def add_time_base?
+    add_time_base_seconds.to_i.positive?
+  end
+
+  def next_step_n
+    add_time_step_n.to_i + 1
+  end
+
+  def next_step_seconds
+    return nil unless add_time_base?
+
+    next_step_n * add_time_base_seconds
+  end
+
+  def self.duration_parts(seconds)
+    seconds = seconds.to_i
+    DURATION_UNIT_KEYS.each do |unit|
+      unit_seconds = DURATION_UNIT_SECONDS.fetch(unit)
+      next if seconds < unit_seconds
+      next unless (seconds % unit_seconds).zero?
+
+      return [seconds / unit_seconds, unit]
+    end
+
+    [[(seconds / 60.0).round, 1].max, "minutes"]
+  end
+
+  def self.max_amount_for_unit(unit)
+    unit_seconds = DURATION_UNIT_SECONDS[unit]
+    return MAX_DURATION_SECONDS / 60 if unit_seconds.blank?
+
+    [MAX_DURATION_SECONDS / unit_seconds, 1].max
+  end
+
   # Original when available, otherwise preferred censored.
   # May return Attached::One or ActiveStorage::Attachment — use .present?, not .attached?.
   def wallpaper_display_attachment
@@ -216,6 +261,8 @@ class LeveragePhoto < ApplicationRecord
       tlock_layer_count: 0,
       drand_chain_hash: nil,
       initial_duration_seconds: nil,
+      add_time_base_seconds: nil,
+      add_time_step_n: 0,
       original_filename: nil
     )
   end

@@ -37,7 +37,9 @@ class LeveragePhotos::CropToProgress
       drand_rounds: [],
       tlock_layer_count: 0,
       drand_chain_hash: nil,
-      initial_duration_seconds: nil
+      initial_duration_seconds: nil,
+      add_time_base_seconds: nil,
+      add_time_step_n: 0
     }
 
     @photo.update!(attrs)

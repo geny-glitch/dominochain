@@ -3,12 +3,14 @@
 class LeveragePhotos::AddTime
   class Error < StandardError; end
 
-  def initialize(photo:, tlock_blob:, drand_round:, locked_until:, added_seconds:)
+  def initialize(photo:, tlock_blob:, drand_round:, locked_until:, added_seconds:, save_as_base: false, apply_next_step: false)
     @photo = photo
     @tlock_blob = tlock_blob
     @drand_round = drand_round.to_i
     @locked_until = locked_until
     @added_seconds = added_seconds.to_i
+    @save_as_base = save_as_base
+    @apply_next_step = apply_next_step
   end
 
   def call!
@@ -35,11 +37,18 @@ class LeveragePhotos::AddTime
         locked_until_after: @locked_until,
         drand_round_added: @drand_round
       )
-      @photo.update!(
+      attrs = {
         locked_until: @locked_until,
         drand_rounds: previous_rounds + [@drand_round],
         tlock_layer_count: @photo.tlock_layer_count + 1
-      )
+      }
+      if @save_as_base || (@apply_next_step && !@photo.add_time_base?)
+        attrs[:add_time_base_seconds] = @added_seconds
+        attrs[:add_time_step_n] = 1
+      elsif @apply_next_step
+        attrs[:add_time_step_n] = @photo.add_time_step_n.to_i + 1
+      end
+      @photo.update!(attrs)
     end
 
     @photo

@@ -1,5 +1,8 @@
-<%# locals: label, input_name, default_minutes, shortcuts ([[minutes, label], ...]), field_id (optional unique id) %>
+<%# locals: label, input_name, default_amount, default_unit, field_id (optional unique id) %>
 <% field_id = local_assigns.fetch(:field_id, input_name) %>
+<% default_unit = local_assigns.fetch(:default_unit, "days") %>
+<% default_amount = local_assigns.fetch(:default_amount, 1) %>
+<% unit_field_id = "#{field_id}-unit" %>
 <div class="ds-beta-leverage-duration">
   <label class="ds-beta-leverage-duration__label" for="<%= field_id %>"><%= label %></label>
   <div class="ds-beta-leverage-duration__row">
@@ -9,25 +12,23 @@
       class="ds-input ds-beta-leverage-duration__input"
       data-<%= input_name %>
       min="1"
-      max="<%= LeveragePhoto::MAX_DURATION_SECONDS / 60 %>"
+      max="<%= LeveragePhoto.max_amount_for_unit(default_unit) %>"
       step="1"
-      value="<%= default_minutes %>"
+      value="<%= default_amount %>"
       inputmode="numeric"
       required
-      aria-describedby="<%= field_id %>-unit"
+      aria-describedby="<%= unit_field_id %>"
     >
-    <span id="<%= field_id %>-unit" class="ds-beta-leverage-duration__unit"><%= t("leverage_photo.show.minutes_unit") %></span>
-  </div>
-  <div class="ds-beta-leverage-duration-shortcuts" role="group" aria-label="<%= t("leverage_photo.show.duration_shortcuts") %>">
-    <% shortcuts.each do |minutes, shortcut_label| %>
-      <button
-        type="button"
-        class="ds-beta-leverage-duration-shortcuts__btn"
-        data-duration-shortcut
-        data-target="<%= input_name %>"
-        data-minutes="<%= minutes %>">
-        <%= shortcut_label %>
-      </button>
-    <% end %>
+    <label class="visually-hidden" for="<%= unit_field_id %>"><%= t("leverage_photo.show.duration_unit_label") %></label>
+    <select
+      id="<%= unit_field_id %>"
+      class="ds-input ds-beta-leverage-duration__unit"
+      data-duration-unit
+      data-previous-unit="<%= default_unit %>"
+      aria-label="<%= t("leverage_photo.show.duration_unit_label") %>">
+      <% LeveragePhoto::DURATION_UNIT_KEYS.each do |unit| %>
+        <option value="<%= unit %>" <%= "selected" if unit == default_unit %>><%= t("leverage_photo.show.duration_units.#{unit}") %></option>
+      <% end %>
+    </select>
   </div>
 </div>

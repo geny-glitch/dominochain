@@ -264,6 +264,47 @@ RSpec.describe BetaLeveragePhotoController, type: :request do
       expect(photo.drand_rounds).to eq([12_345, 200_000])
       expect(photo.leverage_photo_extensions.count).to eq(1)
     end
+
+    it "saves the current duration as the add-time base" do
+      photo = create(:leverage_photo, :active, user: user)
+      new_until = photo.locked_until + 3.days
+
+      post beta_leverage_photo_add_time_path(photo),
+        params: {
+          tlock_blob: tlock_upload("OUTER"),
+          drand_round: 200_001,
+          added_seconds: 3.days.to_i,
+          locked_until: new_until.iso8601,
+          save_as_base: true,
+          apply_next_step: true
+        },
+        headers: { "Accept" => "application/json" }
+
+      expect(response).to have_http_status(:ok)
+      photo.reload
+      expect(photo.add_time_base_seconds).to eq(3.days.to_i)
+      expect(photo.add_time_step_n).to eq(1)
+    end
+
+    it "increments the stored multiplier on the next step" do
+      photo = create(:leverage_photo, :active, user: user, add_time_base_seconds: 3.days.to_i, add_time_step_n: 1)
+      new_until = photo.locked_until + 6.days
+
+      post beta_leverage_photo_add_time_path(photo),
+        params: {
+          tlock_blob: tlock_upload("OUTER"),
+          drand_round: 200_002,
+          added_seconds: 6.days.to_i,
+          locked_until: new_until.iso8601,
+          apply_next_step: true
+        },
+        headers: { "Accept" => "application/json" }
+
+      expect(response).to have_http_status(:ok)
+      photo.reload
+      expect(photo.add_time_base_seconds).to eq(3.days.to_i)
+      expect(photo.add_time_step_n).to eq(2)
+    end
   end
 
   describe "GET /beta/leverage_photos/:id/decrypt_payload" do
@@ -310,6 +351,39 @@ RSpec.describe BetaLeveragePhotoController, type: :request do
       expect(response.body).to include("Started with 1 day")
       expect(response.body).to include("+ 1 hour")
       expect(response.body).to include("Total 1 day 1 hour")
+      expect(response.body.index("data-action=\"add-time\"")).to be < response.body.index(
+        I18n.t("leverage_photo.show.time_history.title")
+      )
+      expect(response.body).to include("data-duration-unit")
+      expect(response.body).to include(%(value="days" selected))
+      expect(response.body).to include("data-action=\"add-time-step\"")
+      expect(response.body).to include("data-save-as-base")
+      expect(response.body).not_to include("ds-beta-leverage-duration-shortcuts")
+    end
+
+    it "labels the next step from the saved base, not the last add" do
+      photo = create(
+        :leverage_photo,
+        :active,
+        user: user,
+        add_time_base_seconds: 3.days.to_i,
+        add_time_step_n: 1
+      )
+
+      get beta_leverage_photo_path(photo)
+
+      expect(response.body).to include("Add 2 × 3 days")
+    end
+
+    it "defaults a new lock duration to days" do
+      photo = create(:leverage_photo, :with_images, user: user)
+
+      get beta_leverage_photo_path(photo)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(%(value="days" selected))
+      expect(response.body).to include(%(id="lp-#{photo.id}-duration-minutes"))
+      expect(response.body).to match(/id="lp-#{photo.id}-duration-minutes"[^>]*value="1"/)
     end
   end
 

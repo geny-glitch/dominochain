@@ -27,6 +27,42 @@ RSpec.describe LeveragePhotos::AddTime do
     expect(photo.locked_until).to be_within(1.second).of(new_until)
   end
 
+  it "records a new base and starts the multiplier at 1" do
+    new_until = photo.locked_until + 3.days
+
+    described_class.new(
+      photo: photo.reload,
+      tlock_blob: { io: StringIO.new("OUTER-base"), filename: "layer.tlock", content_type: "text/plain" },
+      drand_round: 200_010,
+      locked_until: new_until,
+      added_seconds: 3.days.to_i,
+      save_as_base: true,
+      apply_next_step: true
+    ).call!
+
+    photo.reload
+    expect(photo.add_time_base_seconds).to eq(3.days.to_i)
+    expect(photo.add_time_step_n).to eq(1)
+  end
+
+  it "increments the multiplier without changing the base" do
+    photo.update!(add_time_base_seconds: 3.days.to_i, add_time_step_n: 1)
+    new_until = photo.locked_until + 6.days
+
+    described_class.new(
+      photo: photo.reload,
+      tlock_blob: { io: StringIO.new("OUTER-step"), filename: "layer.tlock", content_type: "text/plain" },
+      drand_round: 200_011,
+      locked_until: new_until,
+      added_seconds: 6.days.to_i,
+      apply_next_step: true
+    ).call!
+
+    photo.reload
+    expect(photo.add_time_base_seconds).to eq(3.days.to_i)
+    expect(photo.add_time_step_n).to eq(2)
+  end
+
   it "rejects a second extend that does not move the expiry forward" do
     new_until = photo.locked_until + 1.hour
     add!(locked_until: new_until, round: 200_000)

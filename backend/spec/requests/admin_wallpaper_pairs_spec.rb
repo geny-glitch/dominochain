@@ -179,15 +179,15 @@ RSpec.describe "Admin wallpaper pairs", type: :request do
       sign_in admin
     end
 
-    it "runs the requested algorithm and stores the result" do
+    it "runs patch_search without changing production algorithm" do
       post admin_wallpaper_pair_run_algorithm_path(screenshot),
-        params: { algorithm: "local_match" },
+        params: { algorithm: "patch_search" },
         headers: modern_headers
 
       expect(response).to redirect_to(admin_wallpaper_pairs_path)
-      comparison = WallpaperAlgorithmComparison.find_by!(device_screenshot: screenshot, algorithm: "local_match")
+      comparison = WallpaperAlgorithmComparison.find_by!(device_screenshot: screenshot, algorithm: "patch_search")
       expect(comparison.status).to eq("verified")
-      expect(comparison.score).to be >= 0.85
+      expect(AppSetting.wallpaper_verification_algorithm).to eq("local_match")
     end
 
     it "shows stored algorithm results on the pairs page" do
@@ -203,6 +203,7 @@ RSpec.describe "Admin wallpaper pairs", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Grid fuzzy")
+      expect(response.body).to include("Patch search")
       expect(response.body).to include("verified · 91%")
     end
 

@@ -24,6 +24,11 @@ class WallpaperScreenshotComparator
   CLOCK_ZONE_ROW_RATIO = 0.22
   CLOCK_ZONE_COL_START_RATIO = 0.25
   CLOCK_ZONE_COL_END_RATIO = 0.75
+  PATCH_SEARCH_MAX_SIDE = 480
+  PATCH_SEARCH_COLS = 5
+  PATCH_SEARCH_ROWS = 8
+  PATCH_SEARCH_TILE = 40
+  PATCH_SEARCH_MAX_TILES = 12
 
   def initialize(wallpaper:, device:, timer: nil, screenshot:, algorithm: nil)
     @screenshot = screenshot
@@ -40,6 +45,8 @@ class WallpaperScreenshotComparator
     case @algorithm
     when "local_match"
       measure(:compare_local_match) { compare_local_match(captured_image, reference_image) }
+    when "patch_search"
+      measure(:compare_patch_search) { compare_patch_search(captured_image, reference_image) }
     else
       measure(:compare_grid) { compare_grid_fuzzy(captured_image, reference_image) }
     end
@@ -89,11 +96,11 @@ class WallpaperScreenshotComparator
     Vips::Image.new_from_memory(data, image.width, image.height, image.bands, :uchar)
   end
 
-  def downscale_if_large(image)
+  def downscale_if_large(image, max_side = WORKING_MAX_SIDE)
     longest = [image.width, image.height].max
-    return image if longest <= WORKING_MAX_SIDE
+    return image if longest <= max_side
 
-    scale = WORKING_MAX_SIDE.to_f / longest
+    scale = max_side.to_f / longest
     image.resize(scale, vscale: scale)
   end
 
@@ -105,6 +112,11 @@ class WallpaperScreenshotComparator
   def compare_local_match(captured_image, reference_image)
     local_metrics = local_match_metrics_for(captured_image, reference_image)
     classify_local_match(**local_metrics)
+  end
+
+  def compare_patch_search(captured_image, reference_image)
+    patch_metrics = patch_search_metrics_for(captured_image, reference_image)
+    classify_patch_search(**patch_metrics)
   end
 
   def grid_metrics_for(captured_image, reference_image)
@@ -539,18 +551,13 @@ class WallpaperScreenshotComparator
                          peak_score < sparse_patch_peak_cap
 
     patch_verified = (strong_match_count >= min_strong_cells && strong_match_ratio >= min_strong_ratio) ||
-                     peak_score >= peak_threshold ||
+                     (peak_score >= peak_threshold && strong_match_count >= 1) ||
                      (p90_score >= p90_threshold &&
                       strong_match_count >= 1 &&
                       peak_score >= p90_peak_min &&
                       !sparse_patch_match)
-    peak_band_verified = local_match_peak_band_verified?(
-      strong_match_count: strong_match_count,
-      peak_score: peak_score,
-      cells_compared: cells_compared
-    )
 
-    verified = patch_verified || peak_band_verified
+    verified = patch_verified
 
     clearly_mismatch = strong_match_count.zero? &&
                        p90_score < mismatch_p90 &&
@@ -577,24 +584,228 @@ class WallpaperScreenshotComparator
     )
   end
 
-  def local_match_peak_band_verified?(strong_match_count:, peak_score:, cells_compared:)
-    return false unless strong_match_count.zero?
+  def patch_search_metrics_for(captured_image, reference_image)
+    captured = preprocess_for_patch_search(captured_image)
+    reference = resize_to_match(preprocess_for_patch_search(reference_image), captured)
+    tiles = distinctive_wallpaper_tiles(reference)
 
-    sparse_peak_min = ENV.fetch("WALLPAPER_LOCAL_SPARSE_PEAK_MIN", "0.70").to_f
-    sparse_cells_max = ENV.fetch("WALLPAPER_LOCAL_SPARSE_CELLS_MAX", "12").to_i
-    medium_peak_min = ENV.fetch("WALLPAPER_LOCAL_MEDIUM_PEAK_MIN", "0.72").to_f
-    medium_cells_max = ENV.fetch("WALLPAPER_LOCAL_MEDIUM_CELLS_MAX", "16").to_i
-    wide_peak_min = ENV.fetch("WALLPAPER_LOCAL_WIDE_PEAK_MIN", "0.66").to_f
-    wide_cells_min = ENV.fetch("WALLPAPER_LOCAL_WIDE_CELLS_MIN", "20").to_i
-    wide_cells_max = ENV.fetch("WALLPAPER_LOCAL_WIDE_CELLS_MAX", "25").to_i
+    if low_texture_wallpaper?(reference)
+      skipped = (PATCH_SEARCH_COLS * PATCH_SEARCH_ROWS) - tiles.size
+      return low_texture_patch_metrics(captured, reference, tiles_skipped: skipped)
+    end
 
-    return true if peak_score >= sparse_peak_min && cells_compared <= sparse_cells_max
-    return true if peak_score >= medium_peak_min && cells_compared <= medium_cells_max
-    return true if peak_score >= wide_peak_min &&
-                   cells_compared >= wide_cells_min &&
-                   cells_compared <= wide_cells_max
+    captured_grey = to_grey(captured)
+    matches = tiles.filter_map { |tile| search_wallpaper_tile(captured, captured_grey, tile) }
+    cluster = consensus_shift_cluster(matches)
 
-    false
+    nccs = cluster.map { |match| match[:ncc] }
+    mads = cluster.map { |match| match[:mad] }
+    peak_ncc = (matches.map { |match| match[:ncc] }.max || 0.0)
+    median_ncc = median_value(nccs)
+    median_mad = median_value(mads)
+
+    {
+      score: patch_search_display_score(median_ncc: median_ncc, peak_ncc: peak_ncc, cluster_size: cluster.size, tiles: tiles.size),
+      ssim: median_ncc,
+      dhash_distance: ((1.0 - peak_ncc) * 64).round,
+      mad: median_mad,
+      cells_compared: tiles.size,
+      cells_skipped: (PATCH_SEARCH_COLS * PATCH_SEARCH_ROWS) - tiles.size,
+      strong_match_count: cluster.size,
+      strong_match_ratio: tiles.empty? ? 0.0 : (cluster.size.to_f / tiles.size).round(4),
+      peak_score: peak_ncc.round(4),
+      low_texture: false
+    }
+  end
+
+  def classify_patch_search(
+    ssim:, dhash_distance:, mad:, score:, cells_compared:, cells_skipped:,
+    strong_match_count:, strong_match_ratio:, peak_score:, low_texture:
+  )
+    min_consensus = ENV.fetch("WALLPAPER_PATCH_MIN_CONSENSUS", "3").to_i
+    ncc_verified = ENV.fetch("WALLPAPER_PATCH_NCC_VERIFIED", "0.58").to_f
+    color_mad_max = ENV.fetch("WALLPAPER_PATCH_COLOR_MAD_MAX", "32").to_f
+    low_texture_mad = ENV.fetch("WALLPAPER_PATCH_LOW_TEXTURE_MAD", "30").to_f
+    low_texture_quad_mad = ENV.fetch("WALLPAPER_PATCH_LOW_TEXTURE_QUAD_MAD", "40").to_f
+
+    verified = if low_texture
+      mad <= low_texture_mad && ssim <= low_texture_quad_mad
+    else
+      strong_match_count >= min_consensus &&
+        ssim >= ncc_verified &&
+        mad <= color_mad_max
+    end
+
+    build_result(
+      algorithm: "patch_search",
+      score: score,
+      status: verified ? "verified" : "mismatch",
+      ssim: ssim,
+      dhash_distance: dhash_distance,
+      mad: mad,
+      cells_compared: cells_compared,
+      cells_skipped: cells_skipped,
+      strong_match_count: strong_match_count,
+      strong_match_ratio: strong_match_ratio,
+      peak_score: peak_score
+    )
+  end
+
+  def preprocess_for_patch_search(image)
+    image = flatten_alpha(image)
+    aligned = center_crop_to_device_aspect(crop_margins(image))
+    working = downscale_if_large(aligned, PATCH_SEARCH_MAX_SIDE)
+    materialize_image(working.gaussblur(0.8))
+  end
+
+  def flatten_alpha(image)
+    image.has_alpha? ? image.flatten(background: 255) : image
+  end
+
+  def to_grey(image)
+    image.bands == 1 ? image : image.colourspace("b-w")
+  end
+
+  def distinctive_wallpaper_tiles(reference)
+    min_variance = ENV.fetch("WALLPAPER_PATCH_MIN_VARIANCE", "12").to_f
+    max_tiles = ENV.fetch("WALLPAPER_PATCH_MAX_TILES", PATCH_SEARCH_MAX_TILES.to_s).to_i
+
+    wallpaper_grid_cells(reference)
+      .select { |candidate| candidate[:variance] >= min_variance }
+      .sort_by { |candidate| -candidate[:variance] }
+      .first(max_tiles)
+  end
+
+  def low_texture_wallpaper?(reference)
+    variances = wallpaper_grid_cells(reference).map { |cell| cell[:variance] }
+    median_value(variances) < ENV.fetch("WALLPAPER_PATCH_TEXTURE_VARIANCE", "28").to_f
+  end
+
+  def wallpaper_grid_cells(reference)
+    cell_w = [reference.width / PATCH_SEARCH_COLS, 1].max
+    cell_h = [reference.height / PATCH_SEARCH_ROWS, 1].max
+    tile_w = [PATCH_SEARCH_TILE, cell_w].min
+    tile_h = [PATCH_SEARCH_TILE, cell_h].min
+
+    cells = []
+    PATCH_SEARCH_ROWS.times do |row|
+      PATCH_SEARCH_COLS.times do |col|
+        next if fixed_ui_mask?(row, col, cols: PATCH_SEARCH_COLS, rows: PATCH_SEARCH_ROWS)
+
+        x = (col * cell_w) + [(cell_w - tile_w) / 2, 0].max
+        y = (row * cell_h) + [(cell_h - tile_h) / 2, 0].max
+        next if x + tile_w > reference.width || y + tile_h > reference.height
+
+        tile = reference.crop(x, y, tile_w, tile_h)
+        cells << { x: x, y: y, width: tile_w, height: tile_h, tile: tile, variance: to_grey(tile).deviate }
+      end
+    end
+    cells
+  end
+
+  def search_wallpaper_tile(captured, captured_grey, tile_info)
+    tile = tile_info[:tile]
+    grey_tile = to_grey(tile)
+    return nil if grey_tile.deviate < 1.0
+
+    search_x = (captured.width * ENV.fetch("WALLPAPER_PATCH_SEARCH_X_RATIO", "0.20").to_f).round
+    search_y = (captured.height * ENV.fetch("WALLPAPER_PATCH_SEARCH_Y_RATIO", "0.16").to_f).round
+    left = [tile_info[:x] - search_x, 0].max
+    top = [tile_info[:y] - search_y, 0].max
+    right = [tile_info[:x] + tile_info[:width] + search_x, captured.width].min
+    bottom = [tile_info[:y] + tile_info[:height] + search_y, captured.height].min
+    win_w = right - left
+    win_h = bottom - top
+    return nil if win_w <= tile_info[:width] || win_h <= tile_info[:height]
+
+    corr = captured_grey.crop(left, top, win_w, win_h).spcor(grey_tile)
+    ncc, peak_x, peak_y = corr.maxpos
+    return nil if ncc.nil? || ncc.nan? || ncc < ENV.fetch("WALLPAPER_PATCH_NCC_KEEP", "0.50").to_f
+
+    origin_x = (left + peak_x - (tile_info[:width] / 2)).clamp(0, captured.width - tile_info[:width])
+    origin_y = (top + peak_y - (tile_info[:height] / 2)).clamp(0, captured.height - tile_info[:height])
+    captured_patch = captured.crop(origin_x, origin_y, tile_info[:width], tile_info[:height])
+    mad = mean_absolute_difference(captured_patch, resize_to_match(tile, captured_patch))
+
+    {
+      dx: origin_x - tile_info[:x],
+      dy: origin_y - tile_info[:y],
+      ncc: ncc.to_f,
+      mad: mad.to_f
+    }
+  rescue Vips::Error
+    nil
+  end
+
+  def consensus_shift_cluster(matches)
+    return [] if matches.empty?
+
+    tolerance = ENV.fetch("WALLPAPER_PATCH_SHIFT_TOLERANCE", "14").to_i
+    scored = matches.map do |match|
+      neighbors = matches.select do |other|
+        (other[:dx] - match[:dx]).abs <= tolerance && (other[:dy] - match[:dy]).abs <= tolerance
+      end
+      [neighbors.size, match, neighbors]
+    end
+    _count, _center, cluster = scored.max_by { |count, match, _neighbors| [count, match[:ncc]] }
+    cluster
+  end
+
+  def low_texture_patch_metrics(captured, reference, tiles_skipped:)
+    cap = crop_chrome_for_color(captured)
+    ref = resize_to_match(crop_chrome_for_color(reference), cap)
+    overall_mad = mean_absolute_difference(cap, ref)
+    quadrant_mads = quadrant_color_mads(cap, ref)
+
+    {
+      score: (1.0 - [overall_mad / 255.0, 1.0].min).round(3),
+      ssim: quadrant_mads.max || overall_mad,
+      dhash_distance: [(overall_mad / 4.0).round, 64].min,
+      mad: overall_mad,
+      cells_compared: 4,
+      cells_skipped: tiles_skipped,
+      strong_match_count: quadrant_mads.count { |value| value <= ENV.fetch("WALLPAPER_PATCH_LOW_TEXTURE_QUAD_MAD", "40").to_f },
+      strong_match_ratio: 0.0,
+      peak_score: (1.0 - [overall_mad / 255.0, 1.0].min).round(4),
+      low_texture: true
+    }
+  end
+
+  def crop_chrome_for_color(image)
+    top = (image.height * CLOCK_ZONE_ROW_RATIO).round
+    crop_height = [image.height - top - (image.height * BOTTOM_MARGIN_RATIO).round, 1].max
+    image.crop(0, top, image.width, crop_height)
+  end
+
+  def quadrant_color_mads(captured, reference)
+    half_w = [captured.width / 2, 1].max
+    half_h = [captured.height / 2, 1].max
+    2.times.flat_map do |row|
+      2.times.map do |col|
+        x = col * half_w
+        y = row * half_h
+        w = col.zero? ? half_w : [captured.width - half_w, 1].max
+        h = row.zero? ? half_h : [captured.height - half_h, 1].max
+        mean_absolute_difference(captured.crop(x, y, w, h), reference.crop(x, y, w, h))
+      end
+    end
+  end
+
+  def patch_search_display_score(median_ncc:, peak_ncc:, cluster_size:, tiles:)
+    ratio = tiles.positive? ? cluster_size.to_f / tiles : 0.0
+    [median_ncc, peak_ncc * 0.95, [ratio, 1.0].min].max.round(3)
+  end
+
+  def median_value(values)
+    return 0.0 if values.blank?
+
+    sorted = values.sort
+    mid = sorted.length / 2
+    if sorted.length.odd?
+      sorted[mid].to_f
+    else
+      (sorted[mid - 1] + sorted[mid]) / 2.0
+    end
   end
 
   def build_result(algorithm:, score:, status:, ssim:, dhash_distance:, mad:, cells_compared:, cells_skipped:,

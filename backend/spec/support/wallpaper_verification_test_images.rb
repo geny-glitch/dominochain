@@ -35,6 +35,37 @@ module WallpaperVerificationTestImages
     )
   end
 
+  LANDMARKS = [
+    [60, 180, 90, 90, [210, 40, 50]],
+    [280, 320, 80, 110, [40, 180, 90]],
+    [120, 560, 100, 80, [50, 90, 210]],
+    [350, 700, 70, 90, [220, 180, 40]]
+  ].freeze
+
+  def attach_landmark_png(record, attachment_name:, width:, height:, shift_y: 0)
+    png = ChunkyPNG::Image.new(width, height, ChunkyPNG::Color.rgb(22, 26, 32))
+    LANDMARKS.each do |x, y, w, h, color|
+      top = y + shift_y
+      bottom = top + h - 1
+      next if bottom < 0 || top >= height || x >= width
+
+      clipped_top = [top, 0].max
+      clipped_bottom = [bottom, height - 1].min
+      clipped_right = [x + w - 1, width - 1].min
+      fill = ChunkyPNG::Color.rgb(*color)
+      png.rect(x, clipped_top, clipped_right, clipped_bottom, fill, fill)
+    end
+
+    io = StringIO.new
+    png.write(io)
+    io.rewind
+    record.public_send(attachment_name).attach(
+      io: io,
+      filename: "landmarks-#{shift_y}.png",
+      content_type: "image/png"
+    )
+  end
+
   def attach_overlay_screenshot(device_screenshot, base_color:, overlay_color:)
     width = device_screenshot.device.screen_width
     height = device_screenshot.device.screen_height

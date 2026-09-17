@@ -3,11 +3,13 @@
     <span class="ds-badge <%= comparison.status == "verified" ? "ds-badge--success" : "ds-badge--pending" %>">
       <%= t("admin_wallpaper_pairs.algorithm_status", status: comparison.status, percent: (comparison.score * 100).round) %>
     </span>
-    <% if algorithm_key == "local_match" && comparison.strong_match_count.present? %>
+    <% if %w[local_match patch_search].include?(algorithm_key) && comparison.strong_match_count.present? %>
       <div class="ds-wallpaper-pairs-table__muted">
-        <%= t("admin_wallpaper_pairs.local_match_detail",
+        <%= t(
+          algorithm_key == "patch_search" ? "admin_wallpaper_pairs.patch_search_detail" : "admin_wallpaper_pairs.local_match_detail",
           strong: comparison.strong_match_count,
-          peak: ((comparison.peak_score || 0) * 100).round) %>
+          peak: ((comparison.peak_score || 0) * 100).round
+        ) %>
       </div>
     <% end %>
     <div class="ds-wallpaper-pairs-table__muted">

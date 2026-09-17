@@ -333,7 +333,7 @@ fr:
     influencer_names_label: "Noms (un par ligne)"
     influencer_names_placeholder: "Selena Gomez\nKylie Jenner\n..."
     wallpaper_algorithm_label: "Algorithme de vérification du fond d'écran"
-    wallpaper_algorithm_hint: "Grid fuzzy fait la moyenne des scores par cellule (legacy). Local match cherche des zones strictement similaires non masquées — mieux quand l'UI recouvre la majeure partie de l'écran."
+    wallpaper_algorithm_hint: "Grid fuzzy fait la moyenne des scores par cellule (legacy). Local match cherche des zones strictement similaires non masquées. Patch search cherche des zones colorées du fond dans la capture, y compris quand des icônes en recouvrent une partie. La production reste sur local match tant que patch search n'est pas choisi ici."
     save: "Enregistrer"
     back: "Retour admin"
   admin_review:
@@ -376,6 +376,7 @@ fr:
     rerun_algorithm: "Relancer"
     compared_at: "Comparé le %{datetime}"
     local_match_detail: "Patches stricts : %{strong} · Pic %{peak}%"
+    patch_search_detail: "Zones en accord : %{strong} · Pic %{peak}%"
     pass: "OK"
     fail: "KO"
     ignore: "Ignorer"

@@ -3,7 +3,8 @@
 class AppSetting < ApplicationRecord
   WALLPAPER_VERIFICATION_ALGORITHMS = {
     "grid_fuzzy" => "Grid fuzzy (SSIM + dHash median)",
-    "local_match" => "Local match (strict patch detection)"
+    "local_match" => "Local match (strict patch detection)",
+    "patch_search" => "Patch search (color NCC + geometry)"
   }.freeze
   DEFAULT_WALLPAPER_VERIFICATION_ALGORITHM = "local_match"
 

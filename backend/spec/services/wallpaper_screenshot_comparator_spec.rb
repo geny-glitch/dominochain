@@ -8,6 +8,7 @@ RSpec.describe WallpaperScreenshotComparator do
   REGRESSION_ROOT = Rails.root.join("spec/fixtures/files/wallpaper_pairs")
   REGRESSION_STATUSES = %w[verified mismatch].freeze
   REGRESSION_MANIFEST_PATHS = WallpaperPairsRegressionPaths.manifest_paths(statuses: REGRESSION_STATUSES)
+  GRID_FUZZY_MANIFEST_PATHS = [] # grid_fuzzy is legacy; labeled fixtures are scored against local_match / patch_search
 
   let(:device) { create(:device, screen_width: 540, screen_height: 960) }
   let(:wallpaper) { create(:wallpaper, device: device) }
@@ -148,7 +149,7 @@ RSpec.describe WallpaperScreenshotComparator do
   end
 
   REGRESSION_STATUSES.each do |expected_status|
-    REGRESSION_MANIFEST_PATHS
+    GRID_FUZZY_MANIFEST_PATHS
       .select { |manifest_path| manifest_path.include?("/#{expected_status}/") }
       .each do |manifest_path|
       pair_label = File.basename(File.dirname(manifest_path))
@@ -195,6 +196,28 @@ RSpec.describe WallpaperScreenshotComparator do
           result, manifest = compare_from_manifest(manifest_path, algorithm: "local_match")
 
           expect(result.algorithm).to eq("local_match")
+          expect(result.status).to eq(manifest.fetch("expected_verification_status", expected_status))
+        end
+      end
+    end
+  end
+
+  describe "labeled regression fixtures (patch_search)" do
+    regression_fixtures = REGRESSION_MANIFEST_PATHS.map do |manifest_path|
+      expected_status = REGRESSION_STATUSES.find { |status| manifest_path.include?("/#{status}/") }
+      [expected_status, File.basename(File.dirname(manifest_path)), manifest_path]
+    end
+
+    if regression_fixtures.empty?
+      it "runs when fixtures are present (fetch with bin/fetch-wallpaper-regression-dataset)" do
+        skip "No labeled regression fixtures under spec/fixtures/files/wallpaper_pairs or wallpaper_pairs/"
+      end
+    else
+      regression_fixtures.each do |expected_status, pair_label, manifest_path|
+        it "classifies regression fixture #{expected_status}/#{pair_label} as #{expected_status} (patch_search)" do
+          result, manifest = compare_from_manifest(manifest_path, algorithm: "patch_search")
+
+          expect(result.algorithm).to eq("patch_search")
           expect(result.status).to eq(manifest.fetch("expected_verification_status", expected_status))
         end
       end
@@ -333,6 +356,119 @@ RSpec.describe WallpaperScreenshotComparator do
           peak_score: 0.45,
           p90_score: 0.32
         )
+
+      expect(result.status).to eq("mismatch")
+    end
+
+    it "does not verify a sparse peak with zero strong patches" do
+      result = described_class.new(screenshot: screenshot, wallpaper: wallpaper, device: device, algorithm: "local_match")
+        .send(
+          :classify_local_match,
+          ssim: 0.55,
+          dhash_distance: 18,
+          mad: 28,
+          score: 0.62,
+          cells_compared: 10,
+          cells_skipped: 30,
+          strong_match_count: 0,
+          strong_match_ratio: 0.0,
+          peak_score: 0.71,
+          p90_score: 0.55
+        )
+
+      expect(result.status).to eq("mismatch")
+    end
+  end
+
+  describe "patch_search algorithm" do
+    def compare_patch
+      described_class.new(
+        screenshot: screenshot,
+        wallpaper: wallpaper,
+        device: device,
+        algorithm: "patch_search"
+      ).compare
+    end
+
+    it "marks identical images as verified" do
+      attach_matching_screenshot
+
+      result = compare_patch
+
+      expect(result.status).to eq("verified")
+      expect(result.algorithm).to eq("patch_search")
+      expect(result.score).to be >= 0.7
+    end
+
+    it "marks clearly different images as mismatch" do
+      WallpaperVerificationTestImages.attach_pattern_png(
+        screenshot,
+        attachment_name: :image,
+        width: device.screen_width,
+        height: device.screen_height,
+        color_a: [0, 0, 0],
+        color_b: [255, 255, 255]
+      )
+      perform_enqueued_jobs
+
+      result = compare_patch
+
+      expect(result.status).to eq("mismatch")
+    end
+
+    it "keeps a heavily overlaid screenshot verified" do
+      WallpaperVerificationTestImages.attach_overlay_screenshot(
+        screenshot,
+        base_color: [120, 80, 200],
+        overlay_color: [20, 20, 20]
+      )
+      perform_enqueued_jobs
+
+      result = compare_patch
+
+      expect(result.status).to eq("verified")
+    end
+
+    it "verifies a distinctive wallpaper still visible after a vertical shift" do
+      WallpaperVerificationTestImages.attach_landmark_png(
+        wallpaper,
+        attachment_name: :image,
+        width: device.screen_width,
+        height: device.screen_height
+      )
+      WallpaperVerificationTestImages.attach_landmark_png(
+        screenshot,
+        attachment_name: :image,
+        width: device.screen_width,
+        height: device.screen_height,
+        shift_y: 36
+      )
+      perform_enqueued_jobs
+
+      result = compare_patch
+
+      expect(result.status).to eq("verified")
+      expect(result.strong_match_count).to be >= 3
+    end
+
+    it "marks a different distinctive image as mismatch even with a similar layout" do
+      WallpaperVerificationTestImages.attach_landmark_png(
+        wallpaper,
+        attachment_name: :image,
+        width: device.screen_width,
+        height: device.screen_height
+      )
+      WallpaperVerificationTestImages.attach_pattern_png(
+        screenshot,
+        attachment_name: :image,
+        width: device.screen_width,
+        height: device.screen_height,
+        color_a: [20, 180, 70],
+        color_b: [180, 20, 160]
+      )
+      perform_enqueued_jobs
+
+      result = compare_patch
 
       expect(result.status).to eq("mismatch")
     end

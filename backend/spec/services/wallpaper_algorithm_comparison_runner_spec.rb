@@ -37,6 +37,16 @@ RSpec.describe WallpaperAlgorithmComparisonRunner do
     expect(comparison.compared_at).to be_present
   end
 
+  it "stores patch_search results without changing the production default" do
+    expect(AppSetting.wallpaper_verification_algorithm).to eq("local_match")
+
+    comparison = described_class.new(screenshot: screenshot, algorithm: "patch_search").run!
+
+    expect(comparison.algorithm).to eq("patch_search")
+    expect(comparison.status).to eq("verified")
+    expect(AppSetting.wallpaper_verification_algorithm).to eq("local_match")
+  end
+
   it "upserts when rerun" do
     described_class.new(screenshot: screenshot, algorithm: "grid_fuzzy").run!
     first = WallpaperAlgorithmComparison.find_by!(device_screenshot: screenshot, algorithm: "grid_fuzzy")

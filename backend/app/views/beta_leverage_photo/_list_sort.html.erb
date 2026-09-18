@@ -1,0 +1,11 @@
+<%# locals: list_path %>
+<% current_sort = @list_sort || LeveragePhoto::LIST_SORT_DEFAULT %>
+<%= form_with url: list_path, method: :get, local: true, class: "ds-beta-leverage-sort" do %>
+  <label class="ds-form-label" for="leverage-photo-sort"><%= t("leverage_photo.index.sort_label") %></label>
+  <select name="sort" id="leverage-photo-sort" class="ds-input" aria-label="<%= t("leverage_photo.index.sort_aria") %>">
+    <option value="unlock_asc" <%= "selected" if current_sort == "unlock_asc" %>><%= t("leverage_photo.index.sort_unlock_soonest") %></option>
+    <option value="unlock_desc" <%= "selected" if current_sort == "unlock_desc" %>><%= t("leverage_photo.index.sort_unlock_latest") %></option>
+    <option value="newest" <%= "selected" if current_sort == "newest" %>><%= t("leverage_photo.index.sort_newest") %></option>
+  </select>
+  <button type="submit" class="ds-btn ds-btn--secondary ds-btn--sm"><%= t("leverage_photo.index.sort_apply") %></button>
+<% end %>

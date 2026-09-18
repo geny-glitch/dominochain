@@ -41,6 +41,16 @@ RSpec.describe "Api::LeveragePhotos", type: :request do
       expect(body["photos"].size).to eq(1)
       expect(body["photos"].first["status"]).to eq("draft")
     end
+
+    it "sorts by unlock date when requested" do
+      later = create(:leverage_photo, :active, user: user, locked_until: 3.days.from_now)
+      sooner = create(:leverage_photo, :active, user: user, locked_until: 1.hour.from_now)
+
+      get "/api/leverage_photos", params: { sort: "unlock_asc" }, headers: auth_headers
+
+      ids = JSON.parse(response.body)["photos"].map { |row| row["id"] }
+      expect(ids).to eq([sooner.id, later.id])
+    end
   end
 
   describe "POST /api/leverage_photos" do

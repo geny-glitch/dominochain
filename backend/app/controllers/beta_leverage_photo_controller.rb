@@ -11,14 +11,15 @@ class BetaLeveragePhotoController < ApplicationController
   ]
   before_action :ensure_lockable_for_start!, only: %i[start]
   before_action :ensure_original_access!, only: %i[original]
-  before_action :ensure_can_censor!, only: %i[censor_new censor]
+    before_action :ensure_can_attach_censored!, only: %i[censor_new censor]
   before_action :ensure_active_or_unlocked!, only: %i[tlock_blob decrypt_payload]
   before_action :ensure_restorable!, only: %i[restore_original]
   before_action :ensure_can_delete_original!, only: %i[delete_original]
   before_action :ensure_active!, only: %i[add_time]
 
   def index
-    @photos = current_user.leverage_photos.not_deleted.with_attached_censored_images.newest_first
+    @list_sort = LeveragePhoto.normalize_list_sort(params[:sort])
+    @photos = LeveragePhoto.for_user_list(current_user, sort: @list_sort)
     @photos.each { |photo| maybe_unlock!(photo) }
   end
 
@@ -74,12 +75,13 @@ class BetaLeveragePhotoController < ApplicationController
   end
 
   def censor
-    unless params[:censored_image].present?
+    files = censor_upload_files
+    if files.empty?
       redirect_to beta_leverage_photo_censor_path(@photo), alert: t("flash.beta.leverage_photo.censor_required")
       return
     end
 
-    @photo.censored_images.attach(params[:censored_image])
+    files.each { |file| @photo.censored_images.attach(file) }
     @photo.save!
     @photo.assert_attachments!
 
@@ -396,10 +398,14 @@ class BetaLeveragePhotoController < ApplicationController
     redirect_to beta_leverage_photo_path(@photo), alert: t("flash.beta.leverage_photo.original_delete_unavailable")
   end
 
-  def ensure_can_censor!
-    return if @photo.can_censor?
+  def ensure_can_attach_censored!
+    return if @photo.can_attach_censored?
 
     redirect_to beta_leverage_photo_path(@photo), alert: t("flash.beta.leverage_photo.censor_unavailable")
+  end
+
+  def censor_upload_files
+    LeveragePhoto.uploaded_files(params[:censored_image], params[:censored_images])
   end
 
   def ensure_lockable_for_start!

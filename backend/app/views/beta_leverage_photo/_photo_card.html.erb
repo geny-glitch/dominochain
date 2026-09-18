@@ -64,6 +64,10 @@
       </div>
     <% end %>
 
+    <% if photo.can_attach_censored? %>
+      <%= render "beta_leverage_photo/censored_upload_form", photo: photo %>
+    <% end %>
+
     <% if photo.unlocked? %>
       <section class="ds-beta-leverage-panel">
         <% if has_viewable_original %>

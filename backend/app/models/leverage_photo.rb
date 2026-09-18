@@ -36,10 +36,39 @@ class LeveragePhoto < ApplicationRecord
   validates :tlock_format, inclusion: { in: TLOCK_FORMATS }
   validate :attachments_match_status, on: :strict
 
+  LIST_SORT_DEFAULT = "unlock_asc"
+  LIST_SORT_KEYS = %w[unlock_asc unlock_desc newest].freeze
+  NULLS_LAST = Arel.sql("CASE WHEN locked_until IS NULL THEN 1 ELSE 0 END ASC").freeze
+
   scope :not_deleted, -> { where.not(status: "deleted") }
   scope :active, -> { where(status: "active") }
   scope :due_for_unlock, ->(at = Time.current) { active.where("locked_until <= ?", at) }
   scope :newest_first, -> { order(created_at: :desc) }
+  scope :by_unlock_asc, -> { order(NULLS_LAST, locked_until: :asc, created_at: :desc) }
+  scope :by_unlock_desc, -> { order(NULLS_LAST, locked_until: :desc, created_at: :desc) }
+
+  def self.normalize_list_sort(sort)
+    key = sort.to_s
+    LIST_SORT_KEYS.include?(key) ? key : LIST_SORT_DEFAULT
+  end
+
+  def self.apply_list_sort(scope, sort)
+    case normalize_list_sort(sort)
+    when "unlock_desc" then scope.by_unlock_desc
+    when "newest" then scope.newest_first
+    else scope.by_unlock_asc
+    end
+  end
+
+  def self.for_user_list(user, sort: LIST_SORT_DEFAULT)
+    apply_list_sort(user.leverage_photos.not_deleted.with_attached_censored_images, sort)
+  end
+
+  def self.uploaded_files(*values)
+    Array.wrap(values).flatten.select do |file|
+      file.respond_to?(:original_filename) && file.original_filename.present?
+    end
+  end
 
   def self.normalized_original_filename(name)
     base = File.basename(name.to_s.strip)
@@ -123,6 +152,10 @@ class LeveragePhoto < ApplicationRecord
     return original_image.attached? if draft?
 
     viewable_original?
+  end
+
+  def can_attach_censored?
+    !deleted?
   end
 
   def needs_censor?

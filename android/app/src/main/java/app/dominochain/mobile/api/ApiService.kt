@@ -599,6 +599,7 @@ data class LeveragePhotoResponse(
     val can_start_timer: Boolean = false,
     val can_add_time: Boolean = false,
     val can_censor: Boolean = false,
+    val can_attach_censored: Boolean = false,
     val has_original: Boolean = false,
     val has_censored: Boolean = false,
     val tlock_format: String = "full_image",

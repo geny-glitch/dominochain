@@ -1,0 +1,19 @@
+<%# locals: photo %>
+<% field_id = "lp-#{photo.id}-censored-upload" %>
+<%= form_with url: beta_leverage_photo_censor_submit_path(photo),
+      method: :post,
+      local: true,
+      multipart: true,
+      class: "ds-beta-leverage-censor-upload" do %>
+  <label class="ds-form-label" for="<%= field_id %>"><%= t("leverage_photo.censor.upload_label") %></label>
+  <p class="ds-form-hint" id="<%= field_id %>-hint"><%= t("leverage_photo.censor.upload_hint") %></p>
+  <input type="file"
+         name="censored_images[]"
+         id="<%= field_id %>"
+         class="ds-input"
+         accept="image/jpeg,image/png,image/webp,image/*"
+         multiple
+         required
+         aria-describedby="<%= field_id %>-hint">
+  <button type="submit" class="ds-btn ds-btn--secondary ds-btn--sm"><%= t("leverage_photo.censor.upload_submit") %></button>
+<% end %>

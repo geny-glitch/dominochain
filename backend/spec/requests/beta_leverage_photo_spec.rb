@@ -79,15 +79,28 @@ RSpec.describe BetaLeveragePhotoController, type: :request do
       expect(photo).not_to be_needs_censor
     end
 
-    it "forbids censor after timer start" do
+    it "appends a version made elsewhere on a locked photo" do
       photo = create(:leverage_photo, :active, user: user)
+      count = photo.censored_images.count
 
       post beta_leverage_photo_censor_submit_path(photo), params: {
-        censored_image: jpeg_upload("censored")
+        censored_images: [jpeg_upload("elsewhere")]
       }
 
       expect(response).to redirect_to(beta_leverage_photo_path(photo))
-      expect(flash[:alert]).to be_present
+      photo.reload
+      expect(photo.censored_images.count).to eq(count + 1)
+    end
+
+    it "shows an upload form on a locked photo without the original editor" do
+      photo = create(:leverage_photo, :active, user: user)
+
+      get beta_leverage_photo_censor_path(photo)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(I18n.t("leverage_photo.censor.upload_title"))
+      expect(response.body).to include(%(name="censored_images[]"))
+      expect(response.body).not_to include("data-image-editor")
     end
   end
 
@@ -386,6 +399,8 @@ RSpec.describe BetaLeveragePhotoController, type: :request do
       expect(response.body).to include("data-action=\"add-time-step\"")
       expect(response.body).to include("data-save-as-base")
       expect(response.body).not_to include("ds-beta-leverage-duration-shortcuts")
+      expect(response.body).to include(I18n.t("leverage_photo.censor.upload_label"))
+      expect(response.body).to include(%(name="censored_images[]"))
     end
 
     it "labels the next step from the saved base, not the last add" do
@@ -549,6 +564,30 @@ RSpec.describe BetaLeveragePhotoController, type: :request do
       expect(response.body).not_to include("teaser.jpg")
       expect(response.body).to include("🔒 28-09-2026 19:09")
       expect(response.body).not_to include("Locked until")
+    end
+
+    it "sorts by soonest unlock by default and can reverse" do
+      later = create(
+        :leverage_photo,
+        :active,
+        user: user,
+        original_filename: "later.jpg",
+        locked_until: 3.days.from_now
+      )
+      sooner = create(
+        :leverage_photo,
+        :active,
+        user: user,
+        original_filename: "sooner.jpg",
+        locked_until: 1.hour.from_now
+      )
+
+      get beta_actions_leverage_photo_path
+      expect(response.body).to include(I18n.t("leverage_photo.index.sort_unlock_soonest"))
+      expect(response.body.index("sooner.jpg")).to be < response.body.index("later.jpg")
+
+      get beta_actions_leverage_photo_path, params: { sort: "unlock_desc" }
+      expect(response.body.index("later.jpg")).to be < response.body.index("sooner.jpg")
     end
   end
 

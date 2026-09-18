@@ -10,13 +10,14 @@ module Api
     ]
     before_action :ensure_lockable_for_start!, only: %i[start]
     before_action :ensure_original_access!, only: %i[original]
-    before_action :ensure_can_censor!, only: %i[censor]
+    before_action :ensure_can_attach_censored!, only: %i[censor]
     before_action :ensure_active_or_unlocked!, only: %i[tlock_blob decrypt_payload]
     before_action :ensure_restorable!, only: %i[restore_original]
     before_action :ensure_active!, only: %i[add_time]
 
     def index
-      photos = current_user.leverage_photos.not_deleted.newest_first
+      sort = LeveragePhoto.normalize_list_sort(params[:sort])
+      photos = LeveragePhoto.apply_list_sort(current_user.leverage_photos.not_deleted, sort)
       photos.each { |photo| maybe_unlock!(photo) }
       render json: { photos: LeveragePhotoPayload.list_json(photos, helpers: self) }
     end
@@ -45,12 +46,13 @@ module Api
     end
 
     def censor
-      unless params[:censored_image].present?
+      files = LeveragePhoto.uploaded_files(params[:censored_image], params[:censored_images])
+      if files.empty?
         render json: { error: I18n.t("flash.beta.leverage_photo.censor_required") }, status: :unprocessable_entity
         return
       end
 
-      @photo.censored_images.attach(params[:censored_image])
+      files.each { |file| @photo.censored_images.attach(file) }
       @photo.save!
       @photo.assert_attachments!
       render json: LeveragePhotoPayload.detail_json(@photo, helpers: self)
@@ -199,8 +201,8 @@ module Api
       head :forbidden
     end
 
-    def ensure_can_censor!
-      return if @photo.can_censor?
+    def ensure_can_attach_censored!
+      return if @photo.can_attach_censored?
 
       render json: { error: I18n.t("flash.beta.leverage_photo.censor_unavailable") }, status: :unprocessable_entity
     end

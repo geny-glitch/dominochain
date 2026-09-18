@@ -162,6 +162,12 @@ select.ds-input {
   }
 }
 
+input[type="file"].ds-input,
+.ds-form-label:has(+ .ds-form-hint + input[type="file"]),
+.ds-form-label:has(+ input[type="file"]) {
+  cursor: pointer;
+}
+
 .ds-badge,
 .ds-status {
   display: inline-flex;

@@ -1,44 +1,68 @@
-<%= render "shared/image_editor",
-  form_url: beta_leverage_photo_censor_submit_path(@photo),
-  upload_url: beta_leverage_photo_censor_submit_path(@photo),
-  redirect_url: beta_leverage_photo_path(@photo),
-  back_path: beta_leverage_photo_path(@photo),
-  back_label: t("leverage_photo.censor.back"),
-  page_title: t("leverage_photo.censor.page_title"),
-  aspect_ratio: nil,
-  submit_mode: "leverage_censor",
-  preload_url: beta_leverage_photo_original_path(@photo),
-  i18n: {
-    step_choose: t("leverage_photo.upload.step_choose"),
-    step_crop: t("leverage_photo.upload.step_crop"),
-    step_edit: t("leverage_photo.upload.step_edit"),
-    choose_image: t("leverage_photo.upload.choose_image"),
-    crop_help: t("leverage_photo.censor.crop_help"),
-    crop_alt: t("leverage_photo.upload.crop_alt"),
-    change: t("leverage_photo.upload.change"),
-    next: t("leverage_photo.upload.next"),
-    tool_pixelate: t("leverage_photo.upload.tool_pixelate"),
-    tool_pixelate_title: t("leverage_photo.upload.tool_pixelate_title"),
-    tool_text: t("leverage_photo.upload.tool_text"),
-    tool_text_title: t("leverage_photo.upload.tool_text_title"),
-    tool_undo: t("leverage_photo.upload.tool_undo"),
-    tool_undo_title: t("leverage_photo.upload.tool_undo_title"),
-    font_title: t("leverage_photo.upload.font_title"),
-    align_aria: t("leverage_photo.upload.align_aria"),
-    align_left_title: t("leverage_photo.upload.align_left_title"),
-    align_center_title: t("leverage_photo.upload.align_center_title"),
-    align_right_title: t("leverage_photo.upload.align_right_title"),
-    color_title: t("leverage_photo.upload.color_title"),
-    brush_size: t("leverage_photo.upload.brush_size"),
-    pixel_size: t("leverage_photo.upload.pixel_size"),
-    editor_hint: t("leverage_photo.censor.editor_hint"),
-    censor_intro: t("leverage_photo.censor.intro"),
-    text_delete: t("leverage_photo.upload.text_delete"),
-    edit_back: t("leverage_photo.upload.edit_back"),
-    submit: t("leverage_photo.censor.submit"),
-    submitting: t("leverage_photo.upload.submitting"),
-    error: t("leverage_photo.upload.error"),
-    hint_text: t("leverage_photo.upload.hint_text"),
-    hint_pixelate: t("leverage_photo.upload.hint_pixelate")
-  }
-%>
+<% content_for :title, t("leverage_photo.censor.page_title") %>
+
+<% if @photo.can_censor? %>
+  <section class="ds-beta-section ds-beta-section--first">
+    <div class="ds-beta-control-card">
+      <h2 class="ds-section-title"><%= t("leverage_photo.censor.upload_title") %></h2>
+      <%= render "beta_leverage_photo/censored_upload_form", photo: @photo %>
+    </div>
+  </section>
+
+  <%= render "shared/image_editor",
+    form_url: beta_leverage_photo_censor_submit_path(@photo),
+    upload_url: beta_leverage_photo_censor_submit_path(@photo),
+    redirect_url: beta_leverage_photo_path(@photo),
+    back_path: beta_leverage_photo_path(@photo),
+    back_label: t("leverage_photo.censor.back"),
+    page_title: t("leverage_photo.censor.editor_title"),
+    aspect_ratio: nil,
+    submit_mode: "leverage_censor",
+    preload_url: beta_leverage_photo_original_path(@photo),
+    i18n: {
+      step_choose: t("leverage_photo.upload.step_choose"),
+      step_crop: t("leverage_photo.upload.step_crop"),
+      step_edit: t("leverage_photo.upload.step_edit"),
+      choose_image: t("leverage_photo.upload.choose_image"),
+      crop_help: t("leverage_photo.censor.crop_help"),
+      crop_alt: t("leverage_photo.upload.crop_alt"),
+      change: t("leverage_photo.upload.change"),
+      next: t("leverage_photo.upload.next"),
+      tool_pixelate: t("leverage_photo.upload.tool_pixelate"),
+      tool_pixelate_title: t("leverage_photo.upload.tool_pixelate_title"),
+      tool_text: t("leverage_photo.upload.tool_text"),
+      tool_text_title: t("leverage_photo.upload.tool_text_title"),
+      tool_undo: t("leverage_photo.upload.tool_undo"),
+      tool_undo_title: t("leverage_photo.upload.tool_undo_title"),
+      font_title: t("leverage_photo.upload.font_title"),
+      align_aria: t("leverage_photo.upload.align_aria"),
+      align_left_title: t("leverage_photo.upload.align_left_title"),
+      align_center_title: t("leverage_photo.upload.align_center_title"),
+      align_right_title: t("leverage_photo.upload.align_right_title"),
+      color_title: t("leverage_photo.upload.color_title"),
+      brush_size: t("leverage_photo.upload.brush_size"),
+      pixel_size: t("leverage_photo.upload.pixel_size"),
+      editor_hint: t("leverage_photo.censor.editor_hint"),
+      censor_intro: t("leverage_photo.censor.intro"),
+      text_delete: t("leverage_photo.upload.text_delete"),
+      edit_back: t("leverage_photo.upload.edit_back"),
+      submit: t("leverage_photo.censor.submit"),
+      submitting: t("leverage_photo.upload.submitting"),
+      error: t("leverage_photo.upload.error"),
+      hint_text: t("leverage_photo.upload.hint_text"),
+      hint_pixelate: t("leverage_photo.upload.hint_pixelate")
+    }
+  %>
+<% else %>
+  <header class="ds-beta-page-head">
+    <p class="ds-beta-page-lead" style="margin-bottom:0.35rem;">
+      <%= link_to t("leverage_photo.censor.back"), beta_leverage_photo_path(@photo), class: "ds-beta-home-muted" %>
+    </p>
+    <h1 class="ds-beta-page-title"><%= t("leverage_photo.censor.upload_title") %></h1>
+  </header>
+
+  <section class="ds-beta-section ds-beta-section--first">
+    <div class="ds-beta-control-card">
+      <%= render "beta_leverage_photo/censored_upload_form", photo: @photo %>
+    </div>
+  </section>
+<% end %>

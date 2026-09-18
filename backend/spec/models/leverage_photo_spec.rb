@@ -36,6 +36,19 @@ RSpec.describe LeveragePhoto, type: :model do
     expect(photo.censored_images.count).to eq(1)
     expect(photo).to be_ready_to_lock
     expect(photo).to be_can_censor
+    expect(photo).to be_can_attach_censored
+  end
+
+  it "sorts photos by unlock date with drafts last" do
+    later = create(:leverage_photo, :active, user: user, locked_until: 3.days.from_now)
+    sooner = create(:leverage_photo, :active, user: user, locked_until: 1.hour.from_now)
+    draft = create(:leverage_photo, :with_images, user: user)
+
+    ids = described_class.for_user_list(user, sort: "unlock_asc").map(&:id)
+    expect(ids).to eq([sooner.id, later.id, draft.id])
+
+    ids = described_class.for_user_list(user, sort: "unlock_desc").map(&:id)
+    expect(ids).to eq([later.id, sooner.id, draft.id])
   end
 
   it "sanctions by deleting original only" do

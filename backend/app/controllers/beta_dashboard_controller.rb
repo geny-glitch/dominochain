@@ -240,7 +240,8 @@ class BetaDashboardController < ApplicationController
   end
 
   def actions_leverage_photo
-    @photos = current_user.leverage_photos.not_deleted.with_attached_censored_images.newest_first
+    @list_sort = LeveragePhoto.normalize_list_sort(params[:sort])
+    @photos = LeveragePhoto.for_user_list(current_user, sort: @list_sort)
     @photos.each { |photo| photo.mark_unlocked! if photo.unlock_due? }
     @photo_count = @photos.size
     @recent_leverage_sanctions = recent_leverage_sanctions

@@ -3,9 +3,12 @@
 <header class="ds-beta-page-head ds-beta-page-head--compact">
   <div class="ds-beta-leverage-index-head">
     <h1 class="ds-beta-page-title"><%= t("leverage_photo.index.page_title") %></h1>
-    <%= render "beta_leverage_photo/photo_list_actions",
-          upload_label: t("leverage_photo.index.upload_cta"),
-          upload_path: beta_leverage_photo_upload_path %>
+    <div class="ds-beta-leverage-index-toolbar">
+      <%= render "beta_leverage_photo/list_sort", list_path: beta_leverage_photos_path %>
+      <%= render "beta_leverage_photo/photo_list_actions",
+            upload_label: t("leverage_photo.index.upload_cta"),
+            upload_path: beta_leverage_photo_upload_path %>
+    </div>
   </div>
 </header>
 

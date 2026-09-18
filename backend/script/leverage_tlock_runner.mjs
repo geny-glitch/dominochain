@@ -1,11 +1,17 @@
 #!/usr/bin/env node
 /**
  * Server-side tlock encrypt helper.
- * Loads the browser vendored IIFE with Node's require/crypto available.
+ *
+ * Loads the browser vendored IIFE, then encrypts a file in place without
+ * shuttling the payload through JSON/base64 or fetching drand chain info
+ * (the quicknet public key is already in defaultChainInfo).
  *
  * Usage:
- *   echo '{"bytes_base64":"...","locked_until_ms":123}' | node script/leverage_tlock_runner.mjs encrypt-bytes
- *   echo '{"armored":"...","locked_until_ms":123}' | node script/leverage_tlock_runner.mjs encrypt-outer
+ *   node script/leverage_tlock_runner.mjs encrypt-bytes <in> <out> <locked_until_ms>
+ *   node script/leverage_tlock_runner.mjs encrypt-outer <in> <out> <locked_until_ms>
+ *
+ * Writes the armored ciphertext to <out>. Stdout is a small JSON object
+ * with round and chain_hash.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -51,25 +57,35 @@ function loadTlock() {
   return sandbox.TlockJs;
 }
 
-async function readStdinJson() {
-  const chunks = [];
-  for await (const chunk of process.stdin) chunks.push(chunk);
-  const raw = Buffer.concat(chunks).toString("utf8").trim();
-  if (!raw) throw new Error("Empty stdin");
-  return JSON.parse(raw);
+// Encrypt only needs the scheme public key. Creating a fresh HttpCachingChain
+// would HTTP GET api.drand.sh/info on every lock (~1s+, and hangs when drand
+// is slow). defaultChainInfo is the same quicknet metadata baked into the client.
+function staticChainClient(api) {
+  const info = api.defaultChainInfo;
+  if (!info?.public_key || !info?.hash) {
+    throw new Error("defaultChainInfo missing");
+  }
+  return {
+    chain() {
+      return {
+        async info() {
+          return info;
+        }
+      };
+    }
+  };
 }
 
 async function encryptPayload(api, bytes, lockedUntilMs) {
-  const client = api.mainnetClient();
-  const chainInfo = api.defaultChainInfo || (await client.chain().info());
+  const chainInfo = api.defaultChainInfo;
   const round = api.roundAt(lockedUntilMs, chainInfo);
   if (!Number.isFinite(round) || round < 1) {
     throw new Error("Invalid drand round for selected duration");
   }
   const armored = await api.timelockEncrypt(
     round,
-    api.Buffer.from(bytes),
-    client
+    bytes,
+    staticChainClient(api)
   );
   return {
     armored,
@@ -80,28 +96,32 @@ async function encryptPayload(api, bytes, lockedUntilMs) {
 
 async function main() {
   const command = process.argv[2];
+  const inPath = process.argv[3];
+  const outPath = process.argv[4];
+  const lockedUntilMs = Number(process.argv[5]);
   if (!["encrypt-bytes", "encrypt-outer"].includes(command)) {
-    throw new Error("Usage: encrypt-bytes | encrypt-outer");
+    throw new Error("Usage: encrypt-bytes|encrypt-outer <in> <out> <locked_until_ms>");
   }
-
-  const input = await readStdinJson();
-  const lockedUntilMs = Number(input.locked_until_ms);
+  if (!inPath || !outPath) {
+    throw new Error("input and output paths required");
+  }
   if (!Number.isFinite(lockedUntilMs) || lockedUntilMs <= Date.now()) {
     throw new Error("locked_until_ms must be a future timestamp");
   }
 
-  const api = loadTlock();
-  let bytes;
-  if (command === "encrypt-bytes") {
-    if (!input.bytes_base64) throw new Error("bytes_base64 required");
-    bytes = Buffer.from(input.bytes_base64, "base64");
-  } else {
-    if (!input.armored) throw new Error("armored required");
-    bytes = Buffer.from(String(input.armored), "utf8");
-  }
+  const buf = fs.readFileSync(inPath);
+  if (buf.length === 0) throw new Error("empty input");
+  const bytes = command === "encrypt-outer"
+    ? buf
+    : new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength);
 
+  const api = loadTlock();
   const result = await encryptPayload(api, bytes, lockedUntilMs);
-  process.stdout.write(JSON.stringify(result));
+  fs.writeFileSync(outPath, result.armored, "utf8");
+  process.stdout.write(JSON.stringify({
+    round: result.round,
+    chain_hash: result.chain_hash
+  }));
 }
 
 main().catch((err) => {

@@ -6,17 +6,9 @@ RSpec.describe LeveragePhotos::StartTimerServer do
   let(:user) { create(:user, :beta) }
   let(:duration_seconds) { 3600 }
 
-  def stub_encrypt_bytes!(round: 111)
-    allow(LeveragePhotos::TlockCrypto).to receive(:encrypt_bytes).and_return(
-      armored: "-----BEGIN AGE ENCRYPTED FILE-----\nfresh\n-----END AGE ENCRYPTED FILE-----",
-      round: round,
-      chain_hash: LeveragePhoto::DEFAULT_DRAND_CHAIN_HASH
-    )
-  end
-
-  def stub_encrypt_outer_layer!(round: 222)
-    allow(LeveragePhotos::TlockCrypto).to receive(:encrypt_outer_layer).and_return(
-      armored: "-----BEGIN AGE ENCRYPTED FILE-----\nwrapped\n-----END AGE ENCRYPTED FILE-----",
+  def stub_encrypt_attachment!(round: 111, armored: "fresh")
+    allow(LeveragePhotos::TlockCrypto).to receive(:encrypt_attachment).and_return(
+      armored: "-----BEGIN AGE ENCRYPTED FILE-----\n#{armored}\n-----END AGE ENCRYPTED FILE-----",
       round: round,
       chain_hash: LeveragePhoto::DEFAULT_DRAND_CHAIN_HASH
     )
@@ -24,11 +16,15 @@ RSpec.describe LeveragePhotos::StartTimerServer do
 
   it "locks a draft photo using its plaintext original" do
     photo = create(:leverage_photo, :with_images, user: user)
-    stub_encrypt_bytes!
+    stub_encrypt_attachment!
 
     described_class.new(photo: photo, duration_seconds: duration_seconds).call!
 
-    expect(LeveragePhotos::TlockCrypto).to have_received(:encrypt_bytes)
+    expect(LeveragePhotos::TlockCrypto).to have_received(:encrypt_attachment).with(
+      photo.original_image,
+      kind_of(Time),
+      command: "encrypt-bytes"
+    )
     photo.reload
     expect(photo.status).to eq("active")
     expect(photo.tlock_layer_count).to eq(1)
@@ -38,11 +34,15 @@ RSpec.describe LeveragePhotos::StartTimerServer do
     photo = create(:leverage_photo, :unlocked, user: user)
     expect(photo.original_image).not_to be_attached
     expect(photo.tlock_blob).to be_attached
-    stub_encrypt_outer_layer!
+    stub_encrypt_attachment!(round: 222, armored: "wrapped")
 
     described_class.new(photo: photo, duration_seconds: duration_seconds).call!
 
-    expect(LeveragePhotos::TlockCrypto).to have_received(:encrypt_outer_layer)
+    expect(LeveragePhotos::TlockCrypto).to have_received(:encrypt_attachment).with(
+      photo.tlock_blob,
+      kind_of(Time),
+      command: "encrypt-outer"
+    )
     photo.reload
     expect(photo.status).to eq("active")
     expect(photo.tlock_layer_count).to eq(2)
@@ -51,7 +51,7 @@ RSpec.describe LeveragePhotos::StartTimerServer do
 
   it "increments the layer count when wrapping an unlocked photo that already had nested layers" do
     photo = create(:leverage_photo, :unlocked, user: user, tlock_layer_count: 3)
-    stub_encrypt_outer_layer!
+    stub_encrypt_attachment!(round: 222, armored: "wrapped")
 
     described_class.new(photo: photo, duration_seconds: duration_seconds).call!
 
@@ -66,11 +66,15 @@ RSpec.describe LeveragePhotos::StartTimerServer do
       filename: "original.jpg",
       content_type: "image/jpeg"
     )
-    stub_encrypt_bytes!
+    stub_encrypt_attachment!
 
     described_class.new(photo: photo, duration_seconds: duration_seconds).call!
 
-    expect(LeveragePhotos::TlockCrypto).to have_received(:encrypt_bytes)
+    expect(LeveragePhotos::TlockCrypto).to have_received(:encrypt_attachment).with(
+      photo.original_image,
+      kind_of(Time),
+      command: "encrypt-bytes"
+    )
     expect(photo.reload.tlock_layer_count).to eq(1)
   end
 

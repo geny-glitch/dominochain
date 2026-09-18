@@ -53,14 +53,27 @@ class LeveragePhotos::StartTimerServer
 
   def encrypt_for(locked_until)
     if @photo.original_image.attached?
-      [LeveragePhotos::TlockCrypto.encrypt_bytes(@photo.original_image.download, locked_until), 1]
+      [
+        LeveragePhotos::TlockCrypto.encrypt_attachment(
+          @photo.original_image,
+          locked_until,
+          command: "encrypt-bytes"
+        ),
+        1
+      ]
     else
       previous = [@photo.tlock_layer_count.to_i, 1].max
       next_count = previous + 1
       raise Error, "photo cannot be locked" if next_count > LeveragePhoto::MAX_PEEL_LAYERS
 
-      armored = @photo.tlock_blob.download.force_encoding("UTF-8")
-      [LeveragePhotos::TlockCrypto.encrypt_outer_layer(armored, locked_until), next_count]
+      [
+        LeveragePhotos::TlockCrypto.encrypt_attachment(
+          @photo.tlock_blob,
+          locked_until,
+          command: "encrypt-outer"
+        ),
+        next_count
+      ]
     end
   end
 end

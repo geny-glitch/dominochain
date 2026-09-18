@@ -19,8 +19,11 @@ class LeveragePhotos::AddTimeServer
       from = [base, Time.current].max
       locked_until = from + @added_seconds.seconds
 
-      current_armored = @photo.tlock_blob.download.force_encoding("UTF-8")
-      crypto = LeveragePhotos::TlockCrypto.encrypt_outer_layer(current_armored, locked_until)
+      crypto = LeveragePhotos::TlockCrypto.encrypt_attachment(
+        @photo.tlock_blob,
+        locked_until,
+        command: "encrypt-outer"
+      )
 
       blob = {
         io: StringIO.new(crypto[:armored]),

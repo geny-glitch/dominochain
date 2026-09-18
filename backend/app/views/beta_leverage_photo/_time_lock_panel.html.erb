@@ -11,35 +11,14 @@
   <h3 class="ds-beta-leverage-panel__title"><%= t("leverage_photo.show.time_lock_title") %></h3>
 
   <% if mode == :add_time %>
-    <% next_n = photo.next_step_n %>
-    <% base_label = photo.add_time_base? ? format_leverage_duration(photo.add_time_base_seconds) : format_leverage_duration(1.day.to_i) %>
     <p class="ds-beta-leverage-panel__countdown ds-beta-home-metric" data-countdown data-ready="<%= t("leverage_photo.show.ready") %>">—</p>
-    <%= render "beta_leverage_photo/duration_picker",
-          label: t("leverage_photo.show.add_duration"),
-          input_name: "add-minutes",
-          field_id: "#{id_prefix}-add-minutes",
+    <%= render "beta_leverage_photo/add_time_controls",
+          id_prefix: id_prefix,
           default_amount: add_amount,
-          default_unit: add_unit %>
-    <label class="ds-checkbox-label ds-beta-leverage-duration__base" for="<%= id_prefix %>-save-as-base">
-      <input
-        type="checkbox"
-        id="<%= id_prefix %>-save-as-base"
-        data-save-as-base>
-      <%= t("leverage_photo.show.save_as_base") %>
-    </label>
-    <div class="ds-beta-leverage-panel__actions">
-      <button type="button" class="ds-btn ds-btn--primary ds-btn--sm" data-action="add-time"><%= t("leverage_photo.show.add_time") %></button>
-      <button
-        type="button"
-        class="ds-btn ds-btn--secondary ds-btn--sm"
-        data-action="add-time-step"
-        data-base-seconds="<%= photo.add_time_base_seconds.to_i %>"
-        data-step-n="<%= photo.add_time_step_n.to_i %>"
-        data-base-label="<%= photo.add_time_base? ? format_leverage_duration(photo.add_time_base_seconds) : "" %>"
-        data-label-template="<%= t("leverage_photo.show.add_next_step", n: "%{n}", duration: "%{duration}") %>">
-        <%= t("leverage_photo.show.add_next_step", n: next_n, duration: base_label) %>
-      </button>
-    </div>
+          default_unit: add_unit,
+          stored_n: photo.add_time_step_n.to_i,
+          base_seconds: photo.add_time_base_seconds.to_i,
+          base_label: photo.add_time_base? ? format_leverage_duration(photo.add_time_base_seconds) : "" %>
   <% else %>
     <%= render "beta_leverage_photo/duration_picker",
           label: t("leverage_photo.show.duration"),

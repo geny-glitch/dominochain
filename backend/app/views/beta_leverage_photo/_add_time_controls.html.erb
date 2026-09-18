@@ -1,0 +1,34 @@
+<%# locals: id_prefix, default_amount, default_unit, stored_n, base_seconds, base_label %>
+<% default_amount = local_assigns.fetch(:default_amount, 1) %>
+<% default_unit = local_assigns.fetch(:default_unit, "days") %>
+<% stored_n = local_assigns.fetch(:stored_n, 0).to_i %>
+<% base_seconds = local_assigns.fetch(:base_seconds, 0).to_i %>
+<% base_label = local_assigns.fetch(:base_label, "").to_s %>
+<% next_n = stored_n + 1 %>
+<% next_duration_label = base_label.presence || format_leverage_duration(1.day.to_i) %>
+<%= render "beta_leverage_photo/duration_picker",
+      label: t("leverage_photo.show.add_duration"),
+      input_name: "add-minutes",
+      field_id: "#{id_prefix}-add-minutes",
+      default_amount: default_amount,
+      default_unit: default_unit %>
+<label class="ds-checkbox-label ds-beta-leverage-duration__base" for="<%= id_prefix %>-save-as-base">
+  <input
+    type="checkbox"
+    id="<%= id_prefix %>-save-as-base"
+    data-save-as-base>
+  <%= t("leverage_photo.show.save_as_base") %>
+</label>
+<div class="ds-beta-leverage-panel__actions">
+  <button type="button" class="ds-btn ds-btn--primary ds-btn--sm" data-action="add-time"><%= t("leverage_photo.show.add_time") %></button>
+  <button
+    type="button"
+    class="ds-btn ds-btn--secondary ds-btn--sm"
+    data-action="add-time-step"
+    data-base-seconds="<%= base_seconds %>"
+    data-step-n="<%= stored_n %>"
+    data-base-label="<%= base_label %>"
+    data-label-template="<%= t("leverage_photo.show.add_next_step", n: "%{n}", duration: "%{duration}") %>">
+    <%= t("leverage_photo.show.add_next_step", n: next_n, duration: next_duration_label) %>
+  </button>
+</div>

@@ -1764,6 +1764,36 @@
   }
 }
 
+.ds-beta-leverage-index-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $ds-space-sm;
+}
+
+.ds-beta-leverage-blind {
+  display: flex;
+  flex-direction: column;
+  gap: $ds-space-md;
+}
+
+.ds-beta-leverage-blind-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 16rem;
+  padding: $ds-space-lg;
+  border-radius: $ds-radius-sm;
+  background: var(--md-sys-color-surface-container-high, #{$ds-bg});
+  border: 1px dashed var(--md-sys-color-outline, #{$ds-border});
+}
+
+.ds-beta-leverage-blind-placeholder__text {
+  margin: 0;
+  text-align: center;
+  color: $ds-text-muted;
+}
+
 .ds-beta-page-head--compact {
   margin-bottom: $ds-space-lg;
 }
@@ -2219,6 +2249,10 @@
 
   &--standalone {
     margin-top: 0;
+  }
+
+  .button_to {
+    margin: 0;
   }
 }
 

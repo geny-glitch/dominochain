@@ -168,6 +168,9 @@ fr:
         not_found: "Photo de levier introuvable."
         wallpaper_set: "Fond d'écran mis à jour avec cette photo."
         wallpaper_no_image: "Cette photo n'a pas encore d'image utilisable en fond d'écran."
+        none_available: "Aucune photo à ouvrir pour l'instant."
+        blind_none_lockable: "Aucune photo ne peut recevoir de temps supplémentaire pour l'instant."
+        blind_need_pick: "Choisis d'abord une photo au hasard."
     pishock_debug:
       fill_username_api: "Renseigne le nom d'utilisateur et la clé API."
       step1_done: "Étape 1 exécutée."

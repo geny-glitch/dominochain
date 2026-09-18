@@ -168,6 +168,9 @@ es:
         not_found: "Foto de presión no encontrada."
         wallpaper_set: "Fondo de pantalla actualizado con esta foto."
         wallpaper_no_image: "Esta foto aún no tiene una imagen usable como fondo."
+        none_available: "Aún no hay fotos que abrir."
+        blind_none_lockable: "Ninguna foto puede recibir tiempo extra ahora."
+        blind_need_pick: "Elige primero una foto al azar."
     pishock_debug:
       fill_username_api: "Introduce el nombre de usuario y la clave API."
       step1_done: "Paso 1 completado."

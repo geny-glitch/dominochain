@@ -232,10 +232,16 @@
         if (!res.ok) throw new Error(data.error || "Restore failed");
       }
 
-      async function startTimer(durationSeconds) {
+      async function startTimer(durationSeconds, options) {
+        options = options || {};
         requireTlock();
         const lockedUntil = new Date(Date.now() + durationSeconds * 1000);
-        const originalBytes = await resolveOriginalBytes();
+        if (root.dataset.lockMode === "start") {
+          setStatus(statusEl?.dataset.fetchingOriginal || "Loading photo…");
+        }
+        const originalBytes = root.dataset.lockMode === "start"
+          ? await fetchBytes(root.dataset.originalUrl)
+          : await resolveOriginalBytes();
         setStatus(statusEl?.dataset.encrypting || "Encrypting…");
         const result = await encryptPayload(originalBytes, lockedUntil);
 
@@ -249,6 +255,12 @@
         formData.append("drand_chain_hash", result.chainHash || "");
         formData.append("duration_seconds", String(durationSeconds));
         formData.append("locked_until", lockedUntil.toISOString());
+        const startLayerCount = parseInt(root.dataset.startLayerCount || "1", 10);
+        if (Number.isFinite(startLayerCount) && startLayerCount >= 1) {
+          formData.append("tlock_layer_count", String(startLayerCount));
+        }
+        if (options.saveAsBase) formData.append("save_as_base", "true");
+        if (options.applyNextStep) formData.append("apply_next_step", "true");
 
         setStatus(statusEl?.dataset.uploading || "Uploading…");
         const res = await fetch(root.dataset.startUrl, {
@@ -380,7 +392,12 @@
           setStatus(statusEl?.dataset.adding || "Adding time…");
           try {
             const addedSeconds = readDurationSeconds("[data-add-minutes]", DAY_SECONDS);
-            await addTime(addedSeconds, { saveAsBase: saveAsBaseChecked() });
+            const options = { saveAsBase: saveAsBaseChecked() };
+            if (root.dataset.lockMode === "start") {
+              await startTimer(addedSeconds, options);
+            } else {
+              await addTime(addedSeconds, options);
+            }
             window.location.reload();
           } catch (err) {
             console.error("[leverage_photo] add_time failed", err);
@@ -407,7 +424,12 @@
             if (addedSeconds > MAX_SECONDS) {
               throw new Error(root.dataset.invalidMinutesMax || "Duration is too long.");
             }
-            await addTime(addedSeconds, { saveAsBase: resetBase, applyNextStep: true });
+            const options = { saveAsBase: resetBase, applyNextStep: true };
+            if (root.dataset.lockMode === "start") {
+              await startTimer(addedSeconds, options);
+            } else {
+              await addTime(addedSeconds, options);
+            }
             window.location.reload();
           } catch (err) {
             console.error("[leverage_photo] add_time_step failed", err);

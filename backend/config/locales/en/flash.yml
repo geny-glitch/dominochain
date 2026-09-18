@@ -168,6 +168,9 @@ en:
         not_found: "Leverage photo not found."
         wallpaper_set: "Wallpaper updated from this photo."
         wallpaper_no_image: "This photo has no image that can be used as wallpaper yet."
+        none_available: "No photos to open yet."
+        blind_none_lockable: "No photos can receive extra time right now."
+        blind_need_pick: "Pick a random photo first."
     pishock_debug:
       fill_username_api: "Enter username and API key."
       step1_done: "Step 1 completed."

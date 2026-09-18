@@ -51,6 +51,13 @@ get "beta/sources/vitrine", to: "beta_dashboard#sources_showcase", as: :beta_sou
   get "beta/leverage_photos", to: "beta_leverage_photo#index", as: :beta_leverage_photos
   get "beta/leverage_photos/upload", to: "beta_leverage_photo#upload_new", as: :beta_leverage_photo_upload
   post "beta/leverage_photos/upload", to: "beta_leverage_photo#upload", as: :beta_leverage_photo_upload_submit
+  get "beta/leverage_photos/random", to: "beta_leverage_photo#random", as: :beta_leverage_photo_random
+  get "beta/leverage_photos/blind", to: "beta_leverage_photo#blind", as: :beta_leverage_photo_blind
+  post "beta/leverage_photos/blind/pick", to: "beta_leverage_photo#blind_pick", as: :beta_leverage_photo_blind_pick
+  post "beta/leverage_photos/blind/lock", to: "beta_leverage_photo#blind_lock", as: :beta_leverage_photo_blind_lock
+  get "beta/leverage_photos/blind/payload", to: "beta_leverage_photo#blind_payload", as: :beta_leverage_photo_blind_payload
+  get "beta/leverage_photos/blind/preview", to: "beta_leverage_photo#blind_preview", as: :beta_leverage_photo_blind_preview
+  post "beta/leverage_photos/blind/reveal", to: "beta_leverage_photo#blind_reveal", as: :beta_leverage_photo_blind_reveal
   get "beta/leverage_photos/:id", to: "beta_leverage_photo#show", as: :beta_leverage_photo
   get "beta/leverage_photos/:id/original", to: "beta_leverage_photo#original", as: :beta_leverage_photo_original
   get "beta/leverage_photos/:id/censor", to: "beta_leverage_photo#censor_new", as: :beta_leverage_photo_censor

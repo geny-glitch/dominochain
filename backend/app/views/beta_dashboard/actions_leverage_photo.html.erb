@@ -24,7 +24,9 @@
 <section class="ds-beta-section">
   <div class="ds-beta-leverage-index-head">
     <h2 class="ds-section-title"><%= t("beta.actions_leverage_photo.photos_title") %></h2>
-    <%= link_to t("beta.actions_leverage_photo.upload"), beta_leverage_photo_upload_path, class: "ds-btn ds-btn--primary ds-btn--sm" %>
+    <%= render "beta_leverage_photo/photo_list_actions",
+          upload_label: t("beta.actions_leverage_photo.upload"),
+          upload_path: beta_leverage_photo_upload_path %>
   </div>
   <p class="ds-beta-home-muted" style="margin:0 0 1rem;">
     <%= t("beta.actions_leverage_photo.photo_count", count: @photo_count) %>

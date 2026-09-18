@@ -1,0 +1,103 @@
+<% content_for :title, t("leverage_photo.blind.title") %>
+<% revealed = ActiveModel::Type::Boolean.new.cast(@blind["revealed"]) %>
+<% added_seconds = @blind["added_seconds"].to_i %>
+<% base_seconds = @blind["base_seconds"].to_i %>
+<% stored_n = @blind["step_n"].to_i %>
+<% base_label = base_seconds.positive? ? format_leverage_duration(base_seconds) : "" %>
+<% lock_mode = @photo&.can_add_time? ? "add" : "start" %>
+<% start_layer_count = if @photo&.original_image&.attached?
+     1
+   else
+     [@photo&.tlock_layer_count.to_i, 1].max + 1
+   end %>
+
+<header class="ds-beta-page-head">
+  <p class="ds-beta-page-lead" style="margin-bottom:0.35rem;">
+    <%= link_to t("leverage_photo.blind.back_to_list"), beta_actions_leverage_photo_path, class: "ds-beta-home-muted" %>
+  </p>
+  <h1 class="ds-beta-page-title"><%= t("leverage_photo.blind.page_title") %></h1>
+  <p class="ds-beta-page-lead"><%= t("leverage_photo.blind.lead") %></p>
+</header>
+
+<section class="ds-beta-section ds-beta-section--first">
+  <div class="ds-beta-control-card ds-beta-leverage-blind"
+       <% if @photo && @photo.eligible_for_lock? %>
+       data-leverage-photo
+       data-lock-mode="<%= lock_mode %>"
+       data-start-layer-count="<%= start_layer_count %>"
+       data-original-url="<%= beta_leverage_photo_blind_payload_path %>"
+       data-tlock-url="<%= beta_leverage_photo_blind_payload_path %>"
+       data-start-url="<%= beta_leverage_photo_blind_lock_path %>"
+       data-add-time-url="<%= beta_leverage_photo_blind_lock_path %>"
+       <% if lock_mode == "add" %>
+       data-locked-until="<%= @photo.locked_until&.iso8601 %>"
+       data-layer-count="<%= @photo.tlock_layer_count %>"
+       <% end %>
+       data-max-peel-layers="<%= LeveragePhoto::MAX_PEEL_LAYERS %>"
+       data-invalid-minutes="<%= t("leverage_photo.show.invalid_minutes") %>"
+       data-invalid-minutes-max="<%= t("leverage_photo.show.invalid_minutes_max") %>"
+       <% end %>>
+    <div class="ds-beta-leverage-panel__actions ds-beta-leverage-panel__actions--standalone">
+      <%= button_to @photo ? t("leverage_photo.blind.pick_again") : t("leverage_photo.blind.pick"),
+            beta_leverage_photo_blind_pick_path,
+            method: :post,
+            class: "ds-btn ds-btn--secondary ds-btn--sm" %>
+      <% if @photo && !revealed %>
+        <%= button_to t("leverage_photo.blind.reveal"),
+              beta_leverage_photo_blind_reveal_path,
+              method: :post,
+              class: "ds-btn ds-btn--secondary ds-btn--sm" %>
+      <% end %>
+    </div>
+
+    <% if @photo %>
+      <p class="ds-beta-home-muted"><%= t("leverage_photo.blind.selected") %></p>
+
+      <div class="ds-beta-leverage-hero">
+        <% if revealed %>
+          <%= image_tag beta_leverage_photo_blind_preview_path,
+                alt: t("leverage_photo.blind.photo_alt"),
+                class: "ds-beta-leverage-hero__img" %>
+        <% else %>
+          <div class="ds-beta-leverage-blind-placeholder">
+            <p class="ds-beta-leverage-blind-placeholder__text"><%= t("leverage_photo.blind.placeholder") %></p>
+          </div>
+        <% end %>
+      </div>
+
+      <p class="ds-beta-control-text">
+        <% if added_seconds.positive? %>
+          <%= t("leverage_photo.blind.added_this_round", duration: format_leverage_duration(added_seconds)) %>
+        <% else %>
+          <%= t("leverage_photo.blind.added_none") %>
+        <% end %>
+      </p>
+
+      <% if @photo.eligible_for_lock? %>
+        <section class="ds-beta-leverage-panel ds-beta-leverage-panel--time-lock">
+          <h3 class="ds-beta-leverage-panel__title"><%= t("leverage_photo.show.add_time") %></h3>
+          <%= render "beta_leverage_photo/add_time_controls",
+                id_prefix: "lp-blind",
+                default_amount: @add_amount,
+                default_unit: @add_unit,
+                stored_n: stored_n,
+                base_seconds: base_seconds,
+                base_label: base_label %>
+        </section>
+      <% else %>
+        <p class="ds-beta-control-text"><%= t("leverage_photo.blind.unavailable") %></p>
+      <% end %>
+    <% end %>
+
+    <p class="ds-beta-home-muted ds-beta-leverage-crypto-status" data-crypto-status
+       data-starting="<%= t("leverage_photo.show.status_starting") %>"
+       data-adding="<%= t("leverage_photo.show.status_adding") %>"
+       data-fetching-original="<%= t("leverage_photo.show.status_fetching_original") %>"
+       data-fetching-blob="<%= t("leverage_photo.show.status_fetching_blob") %>"
+       data-encrypting="<%= t("leverage_photo.show.status_encrypting") %>"
+       data-uploading="<%= t("leverage_photo.show.status_uploading") %>"
+       aria-live="polite"></p>
+  </div>
+</section>
+
+<%= render "beta_leverage_photo/crypto_script" if @photo && @photo.eligible_for_lock? %>

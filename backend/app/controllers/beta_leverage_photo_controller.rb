@@ -196,6 +196,147 @@ class BetaLeveragePhotoController < ApplicationController
     redirect_to beta_actions_leverage_photo_path, notice: t("flash.beta.leverage_photo.deleted")
   end
 
+  def random
+    photo = LeveragePhotos::PickRandom.any(user: current_user)
+    if photo.nil?
+      redirect_to beta_actions_leverage_photo_path, alert: t("flash.beta.leverage_photo.none_available")
+      return
+    end
+
+    maybe_unlock!(photo)
+    redirect_to beta_leverage_photo_path(photo)
+  end
+
+  def blind
+    @photo = current_blind_photo
+    maybe_unlock!(@photo) if @photo
+    @blind = blind_state
+    base_seconds = @blind["base_seconds"].to_i
+    if base_seconds.positive?
+      @add_amount, @add_unit = LeveragePhoto.duration_parts(base_seconds)
+    else
+      @add_amount = 1
+      @add_unit = "days"
+    end
+  end
+
+  def blind_pick
+    photo = LeveragePhotos::PickRandom.lockable(user: current_user, exclude_id: blind_state["photo_id"])
+    if photo.nil?
+      redirect_to beta_leverage_photo_blind_path, alert: t("flash.beta.leverage_photo.blind_none_lockable")
+      return
+    end
+
+    maybe_unlock!(photo)
+    write_blind_state!(
+      "photo_id" => photo.id,
+      "added_seconds" => 0,
+      "revealed" => false,
+      "base_seconds" => 0,
+      "step_n" => 0
+    )
+    redirect_to beta_leverage_photo_blind_path
+  end
+
+  def blind_lock
+    photo = current_blind_photo
+    if photo.nil?
+      respond_to do |format|
+        format.json { render json: { error: t("flash.beta.leverage_photo.blind_need_pick") }, status: :unprocessable_entity }
+        format.html { redirect_to beta_leverage_photo_blind_path, alert: t("flash.beta.leverage_photo.blind_need_pick") }
+      end
+      return
+    end
+
+    maybe_unlock!(photo)
+    added_seconds = params[:added_seconds].presence&.to_i || params[:duration_seconds].to_i
+    save_as_base = ActiveModel::Type::Boolean.new.cast(params[:save_as_base])
+    apply_next_step = ActiveModel::Type::Boolean.new.cast(params[:apply_next_step])
+
+    if photo.can_add_time?
+      locked_until = Time.zone.parse(params.require(:locked_until).to_s)
+      LeveragePhotos::AddTime.new(
+        photo: photo,
+        tlock_blob: params.require(:tlock_blob),
+        drand_round: params.require(:drand_round),
+        locked_until: locked_until,
+        added_seconds: added_seconds,
+        save_as_base: save_as_base,
+        apply_next_step: apply_next_step
+      ).call!
+    elsif photo.can_start_timer?
+      locked_until = Time.zone.parse(params[:locked_until].to_s)
+      locked_until ||= Time.current + added_seconds.seconds if added_seconds.positive?
+      layer_count = params[:tlock_layer_count].presence&.to_i || 1
+      LeveragePhotos::StartTimer.new(
+        photo: photo,
+        tlock_blob: params.require(:tlock_blob),
+        drand_round: params.require(:drand_round),
+        locked_until: locked_until,
+        duration_seconds: added_seconds,
+        chain_hash: params[:drand_chain_hash],
+        tlock_layer_count: layer_count
+      ).call!
+    else
+      raise LeveragePhotos::AddTime::Error, "cannot add time"
+    end
+
+    record_blind_add!(added_seconds, save_as_base: save_as_base, apply_next_step: apply_next_step)
+
+    respond_to do |format|
+      format.json { render json: { status: "ok" } }
+      format.html { redirect_to beta_leverage_photo_blind_path }
+    end
+  rescue LeveragePhotos::StartTimer::Error, LeveragePhotos::AddTime::Error, ActionController::ParameterMissing => e
+    respond_to do |format|
+      format.json { render json: { error: e.message }, status: :unprocessable_entity }
+      format.html { redirect_to beta_leverage_photo_blind_path, alert: e.message }
+    end
+  end
+
+  def blind_payload
+    photo = current_blind_photo
+    if photo.nil?
+      head :not_found
+      return
+    end
+
+    maybe_unlock!(photo)
+    if photo.original_image.attached? && !photo.active?
+      send_blob(photo.original_image.blob, disposition: "inline", filename: photo.download_filename)
+    else
+      @photo = photo
+      send_tlock_blob!
+    end
+  end
+
+  def blind_preview
+    photo = current_blind_photo
+    unless photo && blind_revealed?
+      head :forbidden
+      return
+    end
+
+    preview = photo.preferred_censored_attachment
+    unless preview.present?
+      head :not_found
+      return
+    end
+
+    send_blob(preview.blob, disposition: "inline")
+  end
+
+  def blind_reveal
+    photo = current_blind_photo
+    if photo.nil?
+      redirect_to beta_leverage_photo_blind_path, alert: t("flash.beta.leverage_photo.blind_need_pick")
+      return
+    end
+
+    write_blind_state!("revealed" => true)
+    redirect_to beta_leverage_photo_blind_path
+  end
+
   def set_as_wallpaper
     variant = params[:variant].presence&.to_sym || :display
     LeveragePhotos::ApplyAsWallpaper.new(
@@ -326,5 +467,42 @@ class BetaLeveragePhotoController < ApplicationController
         disposition: disposition,
         filename: filename || blob.filename.to_s
     end
+  end
+
+  BLIND_SESSION_KEY = :leverage_blind_game
+
+  def blind_state
+    session[BLIND_SESSION_KEY] || {}
+  end
+
+  def write_blind_state!(attrs)
+    session[BLIND_SESSION_KEY] = blind_state.stringify_keys.merge(attrs.stringify_keys)
+  end
+
+  def current_blind_photo
+    id = blind_state["photo_id"]
+    return nil if id.blank?
+
+    current_user.leverage_photos.not_deleted.find_by(id: id)
+  end
+
+  def blind_revealed?
+    ActiveModel::Type::Boolean.new.cast(blind_state["revealed"])
+  end
+
+  def record_blind_add!(added_seconds, save_as_base:, apply_next_step:)
+    added = added_seconds.to_i
+    return if added <= 0
+
+    next_state = {
+      "added_seconds" => blind_state["added_seconds"].to_i + added
+    }
+    if save_as_base || (apply_next_step && blind_state["base_seconds"].to_i <= 0)
+      next_state["base_seconds"] = added
+      next_state["step_n"] = 1
+    elsif apply_next_step
+      next_state["step_n"] = blind_state["step_n"].to_i + 1
+    end
+    write_blind_state!(next_state)
   end
 end

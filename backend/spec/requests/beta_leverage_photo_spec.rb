@@ -387,6 +387,132 @@ RSpec.describe BetaLeveragePhotoController, type: :request do
     end
   end
 
+  describe "GET /beta/leverage_photos/random" do
+    it "opens a random photo" do
+      photo = create(:leverage_photo, :with_images, user: user)
+
+      get beta_leverage_photo_random_path
+
+      expect(response).to redirect_to(beta_leverage_photo_path(photo))
+    end
+
+    it "alerts when there are no photos" do
+      get beta_leverage_photo_random_path
+
+      expect(response).to redirect_to(beta_actions_leverage_photo_path)
+      expect(flash[:alert]).to eq(I18n.t("flash.beta.leverage_photo.none_available"))
+    end
+  end
+
+  describe "blind add" do
+    it "links random open and blind add from the photos page" do
+      get beta_actions_leverage_photo_path
+
+      expect(response.body).to include(I18n.t("leverage_photo.index.random"))
+      expect(response.body).to include(I18n.t("leverage_photo.blind.title"))
+      expect(response.body).to include(beta_leverage_photo_random_path)
+      expect(response.body).to include(beta_leverage_photo_blind_path)
+    end
+
+    it "keeps the same photo across lock submissions and records session time" do
+      photo = create(:leverage_photo, :with_images, user: user)
+      locked_until = 2.hours.from_now
+
+      post beta_leverage_photo_blind_pick_path
+      expect(session[:leverage_blind_game]["photo_id"]).to eq(photo.id)
+
+      post beta_leverage_photo_blind_lock_path,
+        params: {
+          tlock_blob: tlock_upload("AGE"),
+          drand_round: 99_001,
+          duration_seconds: 2.hours.to_i,
+          locked_until: locked_until.iso8601,
+          drand_chain_hash: LeveragePhoto::DEFAULT_DRAND_CHAIN_HASH,
+          save_as_base: true
+        },
+        headers: { "Accept" => "application/json" }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body).to eq("status" => "ok")
+      expect(response.parsed_body).not_to have_key("locked_until")
+      expect(session[:leverage_blind_game]["photo_id"]).to eq(photo.id)
+      expect(session[:leverage_blind_game]["added_seconds"]).to eq(2.hours.to_i)
+      expect(photo.reload).to be_active
+    end
+
+    it "extends an already locked photo without showing lock status" do
+      photo = create(
+        :leverage_photo,
+        :active,
+        user: user,
+        original_filename: "secret-vacation.jpg",
+        locked_until: Time.zone.local(2026, 12, 1, 12, 0, 0)
+      )
+      new_until = photo.locked_until + 3.hours
+
+      post beta_leverage_photo_blind_pick_path
+      get beta_leverage_photo_blind_path
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(I18n.t("leverage_photo.blind.placeholder"))
+      expect(response.body).to include(I18n.t("leverage_photo.show.add_time"))
+      expect(response.body).to include("data-save-as-base")
+      expect(response.body).to include("data-action=\"add-time-step\"")
+      expect(response.body).not_to include(photo.original_filename)
+      expect(response.body).not_to include(I18n.t("leverage_photo.status.active"))
+      expect(response.body).not_to include(I18n.t("leverage_photo.show.time_history.title"))
+      expect(response.body).not_to include("ds-beta-leverage-panel__countdown")
+      expect(response.body).not_to include(I18n.l(photo.locked_until, format: :lock_until))
+
+      post beta_leverage_photo_blind_lock_path,
+        params: {
+          tlock_blob: tlock_upload("OUTER"),
+          drand_round: 200_000,
+          added_seconds: 3.hours.to_i,
+          locked_until: new_until.iso8601
+        },
+        headers: { "Accept" => "application/json" }
+
+      expect(response).to have_http_status(:ok)
+      expect(photo.reload.tlock_layer_count).to eq(2)
+      expect(session[:leverage_blind_game]["added_seconds"]).to eq(3.hours.to_i)
+
+      get beta_leverage_photo_blind_path
+      expect(response.body).to include(I18n.t("leverage_photo.blind.added_this_round", duration: "3 hours"))
+      expect(response.body).not_to include(I18n.t("leverage_photo.status.active"))
+    end
+
+    it "hides the preview until reveal and never serves the original there" do
+      photo = create(:leverage_photo, :active, user: user)
+
+      post beta_leverage_photo_blind_pick_path
+      get beta_leverage_photo_blind_preview_path
+      expect(response).to have_http_status(:forbidden)
+
+      post beta_leverage_photo_blind_reveal_path
+      get beta_leverage_photo_blind_path
+      expect(response.body).to include(beta_leverage_photo_blind_preview_path)
+      expect(response.body).not_to include(beta_leverage_photo_original_path(photo))
+
+      get beta_leverage_photo_blind_preview_path
+      expect(response).to have_http_status(:ok)
+    end
+
+    it "requires a picked photo before locking" do
+      post beta_leverage_photo_blind_lock_path,
+        params: {
+          tlock_blob: tlock_upload("AGE"),
+          drand_round: 99_001,
+          duration_seconds: 3600,
+          locked_until: 1.hour.from_now.iso8601
+        },
+        headers: { "Accept" => "application/json" }
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.parsed_body["error"]).to eq(I18n.t("flash.beta.leverage_photo.blind_need_pick"))
+    end
+  end
+
   describe "GET /beta/actions/leverage_photo" do
     it "uses the higher-definition censored preview and a compact lock date" do
       photo = create(:leverage_photo, :active, user: user, locked_until: Time.zone.local(2026, 9, 28, 19, 9, 43))

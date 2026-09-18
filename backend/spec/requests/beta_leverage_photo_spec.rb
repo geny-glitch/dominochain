@@ -463,6 +463,7 @@ RSpec.describe BetaLeveragePhotoController, type: :request do
       expect(response.body).not_to include(I18n.t("leverage_photo.show.time_history.title"))
       expect(response.body).not_to include("ds-beta-leverage-panel__countdown")
       expect(response.body).not_to include(I18n.l(photo.locked_until, format: :lock_until))
+      expect(response.body).not_to include(beta_leverage_photo_path(photo))
 
       post beta_leverage_photo_blind_lock_path,
         params: {
@@ -492,6 +493,8 @@ RSpec.describe BetaLeveragePhotoController, type: :request do
       post beta_leverage_photo_blind_reveal_path
       get beta_leverage_photo_blind_path
       expect(response.body).to include(beta_leverage_photo_blind_preview_path)
+      expect(response.body).to include(beta_leverage_photo_path(photo))
+      expect(response.body).to include(I18n.t("leverage_photo.blind.open_photo"))
       expect(response.body).not_to include(beta_leverage_photo_original_path(photo))
 
       get beta_leverage_photo_blind_preview_path

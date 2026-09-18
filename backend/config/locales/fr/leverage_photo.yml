@@ -95,6 +95,7 @@ fr:
       pick_again: "En tirer une autre"
       selected: "Une photo est sélectionnée pour cette manche."
       reveal: "Révéler la photo"
+      open_photo: "Ouvrir la photo"
       placeholder: "Cachée jusqu'à ce que tu la révèles."
       photo_alt: "Photo sélectionnée"
       added_this_round: "Temps ajouté pendant cette manche : %{duration}"

@@ -47,6 +47,10 @@
               beta_leverage_photo_blind_reveal_path,
               method: :post,
               class: "ds-btn ds-btn--secondary ds-btn--sm" %>
+      <% elsif @photo && revealed %>
+        <%= link_to t("leverage_photo.blind.open_photo"),
+              beta_leverage_photo_path(@photo),
+              class: "ds-btn ds-btn--secondary ds-btn--sm" %>
       <% end %>
     </div>
 

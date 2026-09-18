@@ -95,6 +95,7 @@ en:
       pick_again: "Pick another"
       selected: "A photo is selected for this round."
       reveal: "Reveal photo"
+      open_photo: "Open photo"
       placeholder: "Hidden until you reveal it."
       photo_alt: "Selected photo"
       added_this_round: "Time added this round: %{duration}"

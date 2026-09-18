@@ -95,6 +95,7 @@ es:
       pick_again: "Elegir otra"
       selected: "Hay una foto seleccionada para esta ronda."
       reveal: "Revelar la foto"
+      open_photo: "Abrir la foto"
       placeholder: "Oculta hasta que la reveles."
       photo_alt: "Foto seleccionada"
       added_this_round: "Tiempo añadido en esta ronda: %{duration}"

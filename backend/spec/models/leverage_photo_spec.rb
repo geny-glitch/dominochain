@@ -16,11 +16,11 @@ RSpec.describe LeveragePhoto, type: :model do
     expect(described_class.normalized_original_filename("")).to eq("photo.jpg")
   end
 
-  it "marks unlock due photos" do
-    photo = create(:leverage_photo, :active, user: user, locked_until: 1.minute.ago)
-    expect(photo.unlock_due?).to be(true)
-    photo.mark_unlocked!
-    expect(photo).to be_unlocked
+  it "defaults tlock_format to full_image so existing locks keep peeling the whole blob" do
+    photo = create(:leverage_photo, :unlocked, user: user)
+    expect(photo.tlock_format).to eq(described_class::TLOCK_FORMAT_FULL_IMAGE)
+    expect(photo).to be_full_image_lock
+    expect(photo).to be_needs_legacy_client_peel
   end
 
   it "allows re-locking after unlock" do
@@ -62,6 +62,33 @@ RSpec.describe LeveragePhoto, type: :model do
     expect(photo.reload.original_image).to be_attached
     expect(photo.tlock_blob).not_to be_attached
     expect(photo.original_image.download).to eq("restored-bytes")
+  end
+
+  it "does not treat an envelope key payload as a restored original" do
+    photo = create(:leverage_photo, :unlocked, user: user)
+    photo.encrypted_original.attach(
+      io: StringIO.new("aes-bytes"),
+      filename: "original.bin",
+      content_type: "application/octet-stream"
+    )
+    key = {
+      v: 1,
+      photo_id: photo.id,
+      alg: "aes-256-gcm",
+      k: "abc",
+      ciphertext_sha256: "d" * 64
+    }.to_json
+    file = Rack::Test::UploadedFile.new(
+      StringIO.new(key),
+      "image/jpeg",
+      true,
+      original_filename: "photo.jpg"
+    )
+
+    expect { photo.persist_restored_original!(file) }.to raise_error(ArgumentError, /not an image/)
+    expect(photo.reload.encrypted_original).to be_attached
+    expect(photo.tlock_blob).to be_attached
+    expect(photo).not_to be_viewable_original
   end
 
   it "can_delete_original? requires at least one censored version" do

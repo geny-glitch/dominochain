@@ -145,6 +145,7 @@ es:
       delete_original: "Eliminar el original"
       delete_original_confirm: "¿Eliminar el original definitivamente? Las versiones censuradas se quedan."
       restore_original: "Restaurar original"
+      original_unavailable: "El original no está disponible. Las versiones censuradas siguen aquí."
       original_label: "Original"
       sanctioned_hint: "Se eliminó el original. Las versiones censuradas siguen aquí."
       delete: "Eliminar definitivamente"

@@ -3,9 +3,11 @@
 class LeveragePhotos::AddTimeServer
   class Error < StandardError; end
 
-  def initialize(photo:, added_seconds:)
+  def initialize(photo:, added_seconds:, save_as_base: false, apply_next_step: false)
     @photo = photo
     @added_seconds = added_seconds.to_i
+    @save_as_base = save_as_base
+    @apply_next_step = apply_next_step
   end
 
   def call!
@@ -36,7 +38,9 @@ class LeveragePhotos::AddTimeServer
         tlock_blob: blob,
         drand_round: crypto[:round],
         locked_until: locked_until,
-        added_seconds: @added_seconds
+        added_seconds: @added_seconds,
+        save_as_base: @save_as_base,
+        apply_next_step: @apply_next_step
       ).call!
     end
   rescue LeveragePhotos::AddTime::Error, LeveragePhotos::TlockCrypto::Error => e

@@ -145,6 +145,7 @@ en:
       delete_original: "Delete original"
       delete_original_confirm: "Permanently delete the original? Censored versions will stay."
       restore_original: "Restore original"
+      original_unavailable: "The original isn't available. Censored versions are still here."
       original_label: "Original"
       sanctioned_hint: "The original was removed. Censored versions are still here."
       delete: "Delete permanently"

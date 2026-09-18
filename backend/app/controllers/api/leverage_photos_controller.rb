@@ -60,16 +60,10 @@ module Api
 
     def start
       duration_seconds = params[:duration_seconds].to_i
-      locked_until = Time.zone.parse(params[:locked_until].to_s)
-      locked_until ||= Time.current + duration_seconds.seconds if duration_seconds.positive?
 
-      LeveragePhotos::StartTimer.new(
+      LeveragePhotos::StartTimerServer.new(
         photo: @photo,
-        tlock_blob: params.require(:tlock_blob),
-        drand_round: params.require(:drand_round),
-        locked_until: locked_until,
-        duration_seconds: duration_seconds,
-        chain_hash: params[:drand_chain_hash]
+        duration_seconds: duration_seconds
       ).call!
 
       render json: {
@@ -77,21 +71,17 @@ module Api
         locked_until: @photo.reload.locked_until.iso8601,
         photo: LeveragePhotoPayload.detail_json(@photo, helpers: self)
       }
-    rescue LeveragePhotos::StartTimer::Error, ActionController::ParameterMissing => e
+    rescue LeveragePhotos::StartTimerServer::Error => e
       render json: { error: e.message }, status: :unprocessable_entity
     end
 
     def add_time
-      locked_until = Time.zone.parse(params.require(:locked_until).to_s)
       added_seconds = params.require(:added_seconds).to_i
       save_as_base = ActiveModel::Type::Boolean.new.cast(params[:save_as_base])
       apply_next_step = ActiveModel::Type::Boolean.new.cast(params[:apply_next_step])
 
-      LeveragePhotos::AddTime.new(
+      LeveragePhotos::AddTimeServer.new(
         photo: @photo,
-        tlock_blob: params.require(:tlock_blob),
-        drand_round: params.require(:drand_round),
-        locked_until: locked_until,
         added_seconds: added_seconds,
         save_as_base: save_as_base,
         apply_next_step: apply_next_step
@@ -103,7 +93,7 @@ module Api
         layers: @photo.tlock_layer_count,
         photo: LeveragePhotoPayload.detail_json(@photo, helpers: self)
       }
-    rescue LeveragePhotos::AddTime::Error, ActionController::ParameterMissing => e
+    rescue LeveragePhotos::AddTimeServer::Error, ActionController::ParameterMissing => e
       render json: { error: e.message }, status: :unprocessable_entity
     end
 
@@ -132,19 +122,32 @@ module Api
     end
 
     def restore_original
-      unless params[:original_image].present?
+      if @photo.original_image.attached?
+        render json: {
+          status: "unlocked",
+          restored: true,
+          photo: LeveragePhotoPayload.detail_json(@photo.reload, helpers: self)
+        }
+        return
+      end
+
+      if params[:original_image].present?
+        @photo.persist_restored_original!(params[:original_image])
+      elsif @photo.envelope_lock?
+        LeveragePhotos::Envelope.open!(@photo)
+      else
         render json: { error: I18n.t("flash.beta.leverage_photo.images_required") }, status: :unprocessable_entity
         return
       end
 
-      @photo.persist_restored_original!(params[:original_image])
       render json: {
         status: "unlocked",
         restored: true,
         photo: LeveragePhotoPayload.detail_json(@photo.reload, helpers: self)
       }
-    rescue ActiveRecord::RecordInvalid => e
-      render json: { error: e.record.errors.full_messages.to_sentence }, status: :unprocessable_entity
+    rescue ActiveRecord::RecordInvalid, LeveragePhotos::Envelope::Error, LeveragePhotos::TlockCrypto::Error, ArgumentError => e
+      message = e.is_a?(ActiveRecord::RecordInvalid) ? e.record.errors.full_messages.to_sentence : I18n.t("flash.beta.leverage_photo.restore_failed")
+      render json: { error: message }, status: :unprocessable_entity
     end
 
     def set_as_wallpaper
@@ -180,14 +183,18 @@ module Api
     end
 
     def ensure_original_access!
-      return if @photo.draft? || (@photo.unlocked? && @photo.original_image.attached?)
+      return if @photo.draft? || (@photo.unlocked? && @photo.viewable_original?)
 
       head :forbidden
     end
 
     def ensure_restorable!
       maybe_unlock!(@photo)
-      return if @photo.unlocked? && @photo.tlock_blob.attached? && !@photo.original_image.attached?
+      return if @photo.unlocked? && (
+        @photo.original_image.attached? ||
+        @photo.tlock_blob.attached? ||
+        (@photo.envelope_lock? && @photo.encrypted_original.attached?)
+      )
 
       head :forbidden
     end
@@ -219,9 +226,7 @@ module Api
     end
 
     def maybe_unlock!(photo = @photo)
-      return unless photo&.unlock_due?
-
-      photo.mark_unlocked!
+      LeveragePhotos::UnlockPhoto.call!(photo)
     end
 
     def create_draft_photo!(original_image:, teaser_image:, original_filename:, censored_image: nil)

@@ -78,31 +78,24 @@ RSpec.describe "Api::LeveragePhotos", type: :request do
   end
 
   describe "POST /api/leverage_photos/:id/start" do
-    def tlock_upload(content)
-      file = Tempfile.new(["layer", ".tlock"])
-      file.write(content)
-      file.rewind
-      Rack::Test::UploadedFile.new(file.path, "text/plain", false, original_filename: "layer.tlock")
-    end
-
     it "starts the timer" do
       photo = create(:leverage_photo, :with_images, user: user)
-      locked_until = 2.hours.from_now
+      allow(LeveragePhotos::TlockCrypto).to receive(:encrypt_bytes).and_return(
+        armored: "AGE-KEY",
+        round: 99_001,
+        chain_hash: LeveragePhoto::DEFAULT_DRAND_CHAIN_HASH
+      )
 
       post "/api/leverage_photos/#{photo.id}/start",
-        params: {
-          tlock_blob: tlock_upload("AGE"),
-          drand_round: 99_001,
-          locked_until: locked_until.iso8601,
-          duration_seconds: 7200,
-          drand_chain_hash: LeveragePhoto::DEFAULT_DRAND_CHAIN_HASH
-        },
+        params: { duration_seconds: 7200 },
         headers: auth_headers
 
       expect(response).to have_http_status(:ok)
       body = JSON.parse(response.body)
       expect(body["status"]).to eq("active")
       expect(photo.reload.status).to eq("active")
+      expect(photo.tlock_format).to eq("envelope")
+      expect(body.dig("photo", "tlock_format")).to eq("envelope")
     end
   end
 end

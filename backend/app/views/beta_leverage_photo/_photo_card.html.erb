@@ -14,6 +14,7 @@
        data-restore-url="<%= beta_leverage_photo_restore_original_path(photo) %>"
        data-original-filename="<%= photo.download_filename %>"
        data-photo-status="<%= photo.status %>"
+       data-tlock-format="<%= photo.tlock_format %>"
        data-has-original="<%= photo.original_image.attached? ? "true" : "false" %>"
        data-locked-until="<%= photo.locked_until&.iso8601 %>"
        data-layer-count="<%= photo.tlock_layer_count %>"
@@ -28,14 +29,15 @@
     </div>
 
     <% preferred_censored = photo.preferred_censored_attachment %>
-    <% hero = if photo.original_image.attached? && !photo.active?
+    <% has_viewable_original = photo.viewable_original? %>
+    <% hero = if has_viewable_original && !photo.active?
          photo.original_image
        else
          preferred_censored
        end %>
     <% if hero.present? %>
       <div class="ds-beta-leverage-hero">
-        <% if photo.original_image.attached? && !photo.active? %>
+        <% if has_viewable_original && !photo.active? %>
           <p class="ds-beta-home-muted"><%= t("leverage_photo.show.original_label") %></p>
           <%= image_tag url_for(hero), alt: t("leverage_photo.show.original_alt"), class: "ds-beta-leverage-hero__img" %>
         <% else %>
@@ -64,15 +66,17 @@
 
     <% if photo.unlocked? %>
       <section class="ds-beta-leverage-panel">
-        <% unless photo.original_image.attached? %>
+        <% if has_viewable_original %>
+          <div class="ds-beta-leverage-panel__actions">
+            <%= link_to t("leverage_photo.show.download_original"), beta_leverage_photo_original_path(photo), class: "ds-btn ds-btn--secondary ds-btn--sm", download: photo.download_filename %>
+          </div>
+        <% elsif photo.tlock_blob.attached? || photo.encrypted_original.attached? %>
           <div class="ds-beta-leverage-panel__actions">
             <button type="button" class="ds-btn ds-btn--secondary ds-btn--sm" data-action="decrypt"><%= t("leverage_photo.show.restore_original") %></button>
           </div>
           <img data-decrypted-image hidden alt="<%= t("leverage_photo.show.original_alt") %>" class="ds-beta-leverage-reminders__img ds-beta-leverage-reminders__img--original" />
         <% else %>
-          <div class="ds-beta-leverage-panel__actions">
-            <%= link_to t("leverage_photo.show.download_original"), beta_leverage_photo_original_path(photo), class: "ds-btn ds-btn--secondary ds-btn--sm", download: photo.download_filename %>
-          </div>
+          <p class="ds-beta-control-text"><%= t("leverage_photo.show.original_unavailable") %></p>
         <% end %>
       </section>
       <%= render "beta_leverage_photo/time_lock_panel", photo: photo, id_prefix: id_prefix, mode: :relock %>

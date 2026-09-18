@@ -24,6 +24,10 @@ class LeveragePhotos::TlockCrypto
     new.encrypt_attachment(attachment, locked_until, command: command)
   end
 
+  def self.decrypt_attachment(attachment)
+    new.decrypt_attachment(attachment)
+  end
+
   def encrypt_bytes(bytes, locked_until)
     with_input_file(bytes.to_s) do |in_path|
       encrypt_from_path("encrypt-bytes", in_path, locked_until)
@@ -44,6 +48,14 @@ class LeveragePhotos::TlockCrypto
     end
   end
 
+  def decrypt_attachment(attachment)
+    raise Error, "attachment missing" unless attachment&.attached?
+
+    attachment.open do |file|
+      decrypt_from_path(file.path)
+    end
+  end
+
   private
 
   def locked_until_ms(locked_until)
@@ -60,6 +72,24 @@ class LeveragePhotos::TlockCrypto
       in_path = File.join(dir, "payload.bin")
       File.binwrite(in_path, data)
       yield in_path
+    end
+  end
+
+  def decrypt_from_path(in_path)
+    raise Error, "node runner missing" unless File.exist?(RUNNER)
+
+    Dir.mktmpdir("tlock-out-") do |dir|
+      out_path = File.join(dir, "payload.bin")
+      stdout, stderr, status = run_decrypt_with_retries(in_path, out_path)
+
+      unless status&.success?
+        detail = stderr.to_s.strip.presence || stdout.to_s.strip.presence || "unknown error"
+        raise Error, "tlock decryption failed: #{detail.truncate(500)}"
+      end
+
+      raise Error, "empty decrypted output" unless File.exist?(out_path) && File.size(out_path).positive?
+
+      File.binread(out_path)
     end
   end
 
@@ -96,19 +126,31 @@ class LeveragePhotos::TlockCrypto
   # comparisons). Retry once before giving up so a slow moment doesn't turn into
   # a permanently failed sanction.
   def run_with_retries(command, in_path, out_path, locked_until_ms)
+    run_node_with_retries(
+      ["node", RUNNER, command, in_path, out_path, locked_until_ms.to_s],
+      timeout_message: "tlock encryption timed out"
+    )
+  end
+
+  def run_decrypt_with_retries(in_path, out_path)
+    run_node_with_retries(
+      ["node", RUNNER, "decrypt-bytes", in_path, out_path],
+      timeout_message: "tlock decryption timed out"
+    )
+  end
+
+  def run_node_with_retries(argv, timeout_message:)
     attempt = 0
     begin
       attempt += 1
       stdout = stderr = status = nil
       Timeout.timeout(DEFAULT_TIMEOUT) do
-        stdout, stderr, status = Open3.capture3(
-          "node", RUNNER, command, in_path, out_path, locked_until_ms.to_s
-        )
+        stdout, stderr, status = Open3.capture3(*argv)
       end
       [stdout, stderr, status]
     rescue Timeout::Error
       retry if attempt < MAX_ATTEMPTS
-      raise Error, "tlock encryption timed out"
+      raise Error, timeout_message
     rescue Errno::ENOENT
       raise Error, "node is not installed"
     end

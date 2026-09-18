@@ -99,23 +99,17 @@ class BetaLeveragePhotoController < ApplicationController
 
   def start
     duration_seconds = params[:duration_seconds].to_i
-    locked_until = Time.zone.parse(params[:locked_until].to_s)
-    locked_until ||= Time.current + duration_seconds.seconds if duration_seconds.positive?
 
-    LeveragePhotos::StartTimer.new(
+    LeveragePhotos::StartTimerServer.new(
       photo: @photo,
-      tlock_blob: params.require(:tlock_blob),
-      drand_round: params.require(:drand_round),
-      locked_until: locked_until,
-      duration_seconds: duration_seconds,
-      chain_hash: params[:drand_chain_hash]
+      duration_seconds: duration_seconds
     ).call!
 
     respond_to do |format|
       format.json { render json: { status: "active", locked_until: @photo.reload.locked_until.iso8601 } }
       format.html { redirect_to beta_leverage_photo_path(@photo), notice: t("flash.beta.leverage_photo.timer_started") }
     end
-  rescue LeveragePhotos::StartTimer::Error, ActionController::ParameterMissing => e
+  rescue LeveragePhotos::StartTimerServer::Error => e
     respond_to do |format|
       format.json { render json: { error: e.message }, status: :unprocessable_entity }
       format.html { redirect_to beta_leverage_photo_path(@photo), alert: e.message }
@@ -123,16 +117,12 @@ class BetaLeveragePhotoController < ApplicationController
   end
 
   def add_time
-    locked_until = Time.zone.parse(params.require(:locked_until).to_s)
     added_seconds = params.require(:added_seconds).to_i
     save_as_base = ActiveModel::Type::Boolean.new.cast(params[:save_as_base])
     apply_next_step = ActiveModel::Type::Boolean.new.cast(params[:apply_next_step])
 
-    LeveragePhotos::AddTime.new(
+    LeveragePhotos::AddTimeServer.new(
       photo: @photo,
-      tlock_blob: params.require(:tlock_blob),
-      drand_round: params.require(:drand_round),
-      locked_until: locked_until,
       added_seconds: added_seconds,
       save_as_base: save_as_base,
       apply_next_step: apply_next_step
@@ -142,7 +132,7 @@ class BetaLeveragePhotoController < ApplicationController
       format.json { render json: { status: "active", locked_until: @photo.reload.locked_until.iso8601, layers: @photo.tlock_layer_count } }
       format.html { redirect_to beta_leverage_photo_path(@photo), notice: t("flash.beta.leverage_photo.time_added") }
     end
-  rescue LeveragePhotos::AddTime::Error, ActionController::ParameterMissing => e
+  rescue LeveragePhotos::AddTimeServer::Error, ActionController::ParameterMissing => e
     respond_to do |format|
       format.json { render json: { error: e.message }, status: :unprocessable_entity }
       format.html { redirect_to beta_leverage_photo_path(@photo), alert: e.message }
@@ -165,7 +155,19 @@ class BetaLeveragePhotoController < ApplicationController
   end
 
   def restore_original
-    unless params[:original_image].present?
+    if @photo.original_image.attached?
+      respond_to do |format|
+        format.json { render json: { status: "unlocked", restored: true } }
+        format.html { redirect_to beta_leverage_photo_path(@photo), notice: t("flash.beta.leverage_photo.restored") }
+      end
+      return
+    end
+
+    if params[:original_image].present?
+      @photo.persist_restored_original!(params[:original_image])
+    elsif @photo.envelope_lock?
+      LeveragePhotos::Envelope.open!(@photo)
+    else
       respond_to do |format|
         format.json { render json: { error: t("flash.beta.leverage_photo.images_required") }, status: :unprocessable_entity }
         format.html { redirect_to beta_leverage_photo_path(@photo), alert: t("flash.beta.leverage_photo.images_required") }
@@ -173,16 +175,15 @@ class BetaLeveragePhotoController < ApplicationController
       return
     end
 
-    @photo.persist_restored_original!(params[:original_image])
-
     respond_to do |format|
       format.json { render json: { status: "unlocked", restored: true } }
       format.html { redirect_to beta_leverage_photo_path(@photo), notice: t("flash.beta.leverage_photo.restored") }
     end
-  rescue ActiveRecord::RecordInvalid => e
+  rescue ActiveRecord::RecordInvalid, LeveragePhotos::Envelope::Error, LeveragePhotos::TlockCrypto::Error, ArgumentError => e
+    message = e.is_a?(ActiveRecord::RecordInvalid) ? e.record.errors.full_messages.to_sentence : t("flash.beta.leverage_photo.restore_failed")
     respond_to do |format|
-      format.json { render json: { error: e.record.errors.full_messages.to_sentence }, status: :unprocessable_entity }
-      format.html { redirect_to beta_leverage_photo_path(@photo), alert: e.record.errors.full_messages.to_sentence }
+      format.json { render json: { error: message }, status: :unprocessable_entity }
+      format.html { redirect_to beta_leverage_photo_path(@photo), alert: message }
     end
   end
 
@@ -254,31 +255,19 @@ class BetaLeveragePhotoController < ApplicationController
     apply_next_step = ActiveModel::Type::Boolean.new.cast(params[:apply_next_step])
 
     if photo.can_add_time?
-      locked_until = Time.zone.parse(params.require(:locked_until).to_s)
-      LeveragePhotos::AddTime.new(
+      LeveragePhotos::AddTimeServer.new(
         photo: photo,
-        tlock_blob: params.require(:tlock_blob),
-        drand_round: params.require(:drand_round),
-        locked_until: locked_until,
         added_seconds: added_seconds,
         save_as_base: save_as_base,
         apply_next_step: apply_next_step
       ).call!
     elsif photo.can_start_timer?
-      locked_until = Time.zone.parse(params[:locked_until].to_s)
-      locked_until ||= Time.current + added_seconds.seconds if added_seconds.positive?
-      layer_count = params[:tlock_layer_count].presence&.to_i || 1
-      LeveragePhotos::StartTimer.new(
+      LeveragePhotos::StartTimerServer.new(
         photo: photo,
-        tlock_blob: params.require(:tlock_blob),
-        drand_round: params.require(:drand_round),
-        locked_until: locked_until,
-        duration_seconds: added_seconds,
-        chain_hash: params[:drand_chain_hash],
-        tlock_layer_count: layer_count
+        duration_seconds: added_seconds
       ).call!
     else
-      raise LeveragePhotos::AddTime::Error, "cannot add time"
+      raise LeveragePhotos::AddTimeServer::Error, "cannot add time"
     end
 
     record_blind_add!(added_seconds, save_as_base: save_as_base, apply_next_step: apply_next_step)
@@ -287,7 +276,7 @@ class BetaLeveragePhotoController < ApplicationController
       format.json { render json: { status: "ok" } }
       format.html { redirect_to beta_leverage_photo_blind_path }
     end
-  rescue LeveragePhotos::StartTimer::Error, LeveragePhotos::AddTime::Error, ActionController::ParameterMissing => e
+  rescue LeveragePhotos::StartTimerServer::Error, LeveragePhotos::AddTimeServer::Error => e
     respond_to do |format|
       format.json { render json: { error: e.message }, status: :unprocessable_entity }
       format.html { redirect_to beta_leverage_photo_blind_path, alert: e.message }
@@ -385,14 +374,18 @@ class BetaLeveragePhotoController < ApplicationController
   end
 
   def ensure_original_access!
-    return if @photo.draft? || (@photo.unlocked? && @photo.original_image.attached?)
+    return if @photo.draft? || (@photo.unlocked? && @photo.viewable_original?)
 
     head :forbidden
   end
 
   def ensure_restorable!
     maybe_unlock!(@photo)
-    return if @photo.unlocked? && @photo.tlock_blob.attached? && !@photo.original_image.attached?
+    return if @photo.unlocked? && (
+      @photo.original_image.attached? ||
+      @photo.tlock_blob.attached? ||
+      (@photo.envelope_lock? && @photo.encrypted_original.attached?)
+    )
 
     head :forbidden
   end
@@ -430,9 +423,7 @@ class BetaLeveragePhotoController < ApplicationController
   end
 
   def maybe_unlock!(photo = @photo)
-    return unless photo&.unlock_due?
-
-    photo.mark_unlocked!
+    LeveragePhotos::UnlockPhoto.call!(photo)
   end
 
   def create_draft_photo!(original_image:, teaser_image:, original_filename:, censored_image: nil)

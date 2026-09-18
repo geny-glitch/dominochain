@@ -2,6 +2,9 @@
 
 class LeveragePhoto < ApplicationRecord
   STATUSES = %w[draft active unlocked sanctioned deleted].freeze
+  TLOCK_FORMAT_FULL_IMAGE = "full_image"
+  TLOCK_FORMAT_ENVELOPE = "envelope"
+  TLOCK_FORMATS = [TLOCK_FORMAT_FULL_IMAGE, TLOCK_FORMAT_ENVELOPE].freeze
   MAX_TLOCK_LAYERS = 20
   # Restore peels until plaintext, not until tlock_layer_count. The recorded
   # count can lag the real onion (server relock wraps without resetting it).
@@ -27,8 +30,10 @@ class LeveragePhoto < ApplicationRecord
   has_one_attached :original_image
   has_many_attached :censored_images
   has_one_attached :tlock_blob
+  has_one_attached :encrypted_original
 
   validates :status, inclusion: { in: STATUSES }
+  validates :tlock_format, inclusion: { in: TLOCK_FORMATS }
   validate :attachments_match_status, on: :strict
 
   scope :not_deleted, -> { where.not(status: "deleted") }
@@ -69,12 +74,44 @@ class LeveragePhoto < ApplicationRecord
     status == "deleted"
   end
 
+  def envelope_lock?
+    tlock_format == TLOCK_FORMAT_ENVELOPE
+  end
+
+  def full_image_lock?
+    tlock_format == TLOCK_FORMAT_FULL_IMAGE
+  end
+
+  def needs_legacy_client_peel?
+    unlocked? && full_image_lock? && tlock_blob.attached? && !viewable_original?
+  end
+
+  def viewable_original?
+    return false unless original_image.attached?
+
+    original_image.open do |file|
+      !self.class.envelope_key_payload?(file.read(64))
+    end
+  rescue ActiveStorage::FileNotFoundError
+    false
+  end
+
+  def self.image_magic?(bytes)
+    head = bytes.to_s.byteslice(0, 12).to_s.b
+    head.start_with?("\xFF\xD8\xFF".b) || head.start_with?("\x89PNG".b)
+  end
+
+  def self.envelope_key_payload?(bytes)
+    text = bytes.to_s.lstrip
+    text.start_with?("{") && text.include?('"alg":"aes-256-gcm"')
+  end
+
   def ready_to_lock?
     draft? && original_image.attached? && censored_images.attached?
   end
 
   def ready_to_relock?
-    unlocked? && censored_images.attached? && (original_image.attached? || tlock_blob.attached?)
+    unlocked? && censored_images.attached? && (viewable_original? || tlock_blob.attached?)
   end
 
   def can_start_timer?
@@ -82,7 +119,10 @@ class LeveragePhoto < ApplicationRecord
   end
 
   def can_censor?
-    (draft? || unlocked?) && original_image.attached?
+    return false unless draft? || unlocked?
+    return original_image.attached? if draft?
+
+    viewable_original?
   end
 
   def needs_censor?
@@ -137,9 +177,13 @@ class LeveragePhoto < ApplicationRecord
   end
 
   def persist_restored_original!(uploaded_original)
+    bytes, attachable = read_restored_original(uploaded_original)
+    raise ArgumentError, "original is not an image" if self.class.envelope_key_payload?(bytes)
+
     filename = download_filename
     tlock_blob.purge if tlock_blob.attached?
-    original_image.attach(uploaded_original)
+    encrypted_original.purge if encrypted_original.attached?
+    original_image.attach(attachable)
     original_image.blob.update!(filename: filename) if original_image.attached?
     save!
     assert_attachments!
@@ -151,6 +195,7 @@ class LeveragePhoto < ApplicationRecord
 
     original_image.purge if original_image.attached?
     tlock_blob.purge if tlock_blob.attached?
+    encrypted_original.purge if encrypted_original.attached?
     leverage_photo_extensions.destroy_all
     update!(
       status: "sanctioned",
@@ -158,6 +203,7 @@ class LeveragePhoto < ApplicationRecord
       drand_rounds: [],
       tlock_layer_count: 0,
       drand_chain_hash: nil,
+      tlock_format: TLOCK_FORMAT_FULL_IMAGE,
       initial_duration_seconds: nil,
       add_time_base_seconds: nil,
       add_time_step_n: 0
@@ -238,7 +284,7 @@ class LeveragePhoto < ApplicationRecord
   # Original when available, otherwise preferred censored.
   # May return Attached::One or ActiveStorage::Attachment — use .present?, not .attached?.
   def wallpaper_display_attachment
-    if original_image.attached?
+    if viewable_original?
       original_image
     else
       preferred_censored_attachment
@@ -254,12 +300,14 @@ class LeveragePhoto < ApplicationRecord
     original_image.purge if original_image.attached?
     censored_images.purge if censored_images.attached?
     tlock_blob.purge if tlock_blob.attached?
+    encrypted_original.purge if encrypted_original.attached?
     update!(
       status: "deleted",
       locked_until: nil,
       drand_rounds: [],
       tlock_layer_count: 0,
       drand_chain_hash: nil,
+      tlock_format: TLOCK_FORMAT_FULL_IMAGE,
       initial_duration_seconds: nil,
       add_time_base_seconds: nil,
       add_time_step_n: 0,
@@ -273,6 +321,23 @@ class LeveragePhoto < ApplicationRecord
 
   private
 
+  def read_restored_original(uploaded_original)
+    if uploaded_original.is_a?(Hash) && uploaded_original[:io]
+      io = uploaded_original[:io]
+      io.rewind if io.respond_to?(:rewind)
+      bytes = io.read
+      io.rewind if io.respond_to?(:rewind)
+      [bytes, uploaded_original]
+    elsif uploaded_original.respond_to?(:read)
+      uploaded_original.rewind if uploaded_original.respond_to?(:rewind)
+      bytes = uploaded_original.read
+      uploaded_original.rewind if uploaded_original.respond_to?(:rewind)
+      [bytes, uploaded_original]
+    else
+      raise ArgumentError, "original missing"
+    end
+  end
+
   def attachments_match_status
     case status
     when "draft"
@@ -282,14 +347,23 @@ class LeveragePhoto < ApplicationRecord
       errors.add(:original_image, "must be purged while locked") if original_image.attached?
       errors.add(:tlock_blob, :blank) unless tlock_blob.attached?
       errors.add(:censored_images, :blank) unless censored_images.attached?
+      if envelope_lock?
+        errors.add(:encrypted_original, :blank) unless encrypted_original.attached?
+      elsif encrypted_original.attached?
+        errors.add(:encrypted_original, "must be absent for full-image locks")
+      end
     when "unlocked"
       errors.add(:censored_images, :blank) unless censored_images.attached?
       unless original_image.attached? || tlock_blob.attached?
         errors.add(:base, "must have original or locked payload while unlocked")
       end
+      if envelope_lock? && tlock_blob.attached? && !original_image.attached? && !encrypted_original.attached?
+        errors.add(:encrypted_original, :blank)
+      end
     when "sanctioned"
       errors.add(:original_image, "must be purged after sanction delete") if original_image.attached?
       errors.add(:tlock_blob, "must be purged after sanction delete") if tlock_blob.attached?
+      errors.add(:encrypted_original, "must be purged after sanction delete") if encrypted_original.attached?
       errors.add(:censored_images, :blank) unless censored_images.attached?
     end
   end

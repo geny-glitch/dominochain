@@ -19,8 +19,9 @@ module LeveragePhotoPayload
       can_start_timer: photo.can_start_timer?,
       can_add_time: photo.can_add_time?,
       can_censor: photo.can_censor?,
-      has_original: photo.original_image.attached?,
+      has_original: photo.viewable_original?,
       has_censored: photo.censored_images.attached?,
+      tlock_format: photo.tlock_format,
       # Back-compat for Android clients that still read the old singular fields.
       has_teaser: photo.censored_images.attached?,
       teaser_url: attachment_url(thumbnail, helpers: helpers),

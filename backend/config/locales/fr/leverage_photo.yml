@@ -145,6 +145,7 @@ fr:
       delete_original: "Supprimer l'originale"
       delete_original_confirm: "Supprimer l'originale définitivement ? Les versions censurées restent."
       restore_original: "Restaurer l'originale"
+      original_unavailable: "L'originale n'est pas disponible. Les versions censurées sont toujours là."
       original_label: "Originale"
       sanctioned_hint: "L'originale a été supprimée. Les versions censurées sont toujours là."
       delete: "Supprimer définitivement"

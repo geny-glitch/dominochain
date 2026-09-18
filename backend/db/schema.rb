@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_09_17_140000) do
+ActiveRecord::Schema[7.2].define(version: 2026_09_18_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -364,6 +364,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_09_17_140000) do
     t.string "original_filename"
     t.integer "add_time_base_seconds"
     t.integer "add_time_step_n", default: 0, null: false
+    t.string "tlock_format", default: "full_image", null: false
     t.index ["locked_until"], name: "index_leverage_photos_on_locked_until"
     t.index ["status"], name: "index_leverage_photos_on_status"
     t.index ["user_id"], name: "index_leverage_photos_on_user_id"

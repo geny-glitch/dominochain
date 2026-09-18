@@ -83,7 +83,7 @@ class LeveragePhotoDetailActivity : AppCompatActivity() {
         binding.leverageAddTimeButton.isEnabled = p.can_add_time
         binding.leverageSetTeaserWallpaper.isEnabled = p.has_teaser && p.wallpaper_ready
         binding.leverageSetCensoredWallpaper.isEnabled = p.has_censored && p.wallpaper_ready
-        binding.leverageDecryptButton.isEnabled = p.status == "unlocked" || p.status == "active"
+        binding.leverageDecryptButton.isEnabled = p.status == "unlocked" && !p.has_original
         startCountdown(p.locked_until)
     }
 
@@ -133,25 +133,9 @@ class LeveragePhotoDetailActivity : AppCompatActivity() {
         binding.leverageCryptoStatus.setText(R.string.leverage_securing)
         lifecycleScope.launch {
             try {
-                val result = withContext(Dispatchers.IO) {
-                    val bridge = tlockBridge ?: throw IllegalStateException("Crypto unavailable")
-                    if (!bridge.ensureReady()) throw IllegalStateException("Crypto library failed to load")
-                    val originalBytes = repository.downloadOriginal(photoId).getOrThrow()
-                    val lockedUntilMs = System.currentTimeMillis() + minutes * 60_000L
-                    val encrypted = bridge.encryptBytes(originalBytes, lockedUntilMs)
-                    val tlockFile = File(cacheDir, "layer_${System.currentTimeMillis()}.tlock")
-                    tlockFile.writeText(encrypted.armored)
-                    Triple(encrypted, tlockFile, lockedUntilMs)
-                }
-                val (encrypted, tlockFile, lockedUntilMs) = result
-                val lockedUntilIso = Instant.ofEpochMilli(lockedUntilMs).toString()
                 repository.startTimer(
                     id = photoId,
-                    tlockFile = tlockFile,
-                    drandRound = encrypted.round,
-                    lockedUntilIso = lockedUntilIso,
-                    durationSeconds = minutes * 60,
-                    chainHash = encrypted.chainHash
+                    durationSeconds = minutes * 60
                 ).onSuccess {
                     Toast.makeText(this@LeveragePhotoDetailActivity, R.string.leverage_timer_started, Toast.LENGTH_SHORT).show()
                     it.photo?.let { applyPhoto(it) } ?: loadPhoto()
@@ -173,31 +157,13 @@ class LeveragePhotoDetailActivity : AppCompatActivity() {
             Toast.makeText(this, R.string.leverage_invalid_duration, Toast.LENGTH_SHORT).show()
             return
         }
-        val current = photo ?: return
+        if (photo == null) return
         binding.leverageAddTimeButton.isEnabled = false
         binding.leverageCryptoStatus.setText(R.string.leverage_securing)
         lifecycleScope.launch {
             try {
-                val result = withContext(Dispatchers.IO) {
-                    val bridge = tlockBridge ?: throw IllegalStateException("Crypto unavailable")
-                    if (!bridge.ensureReady()) throw IllegalStateException("Crypto library failed to load")
-                    val currentArmored = String(repository.downloadTlockBlob(photoId).getOrThrow(), Charsets.UTF_8)
-                    val baseMs = current.locked_until?.let {
-                        runCatching { Instant.parse(it).toEpochMilli() }.getOrNull()
-                    } ?: System.currentTimeMillis()
-                    val fromMs = maxOf(baseMs, System.currentTimeMillis())
-                    val lockedUntilMs = fromMs + minutes * 60_000L
-                    val encrypted = bridge.encryptOuter(currentArmored, lockedUntilMs)
-                    val tlockFile = File(cacheDir, "layer_${System.currentTimeMillis()}.tlock")
-                    tlockFile.writeText(encrypted.armored)
-                    Triple(encrypted, tlockFile, lockedUntilMs)
-                }
-                val (encrypted, tlockFile, lockedUntilMs) = result
                 repository.addTime(
                     id = photoId,
-                    tlockFile = tlockFile,
-                    drandRound = encrypted.round,
-                    lockedUntilIso = Instant.ofEpochMilli(lockedUntilMs).toString(),
                     addedSeconds = minutes * 60
                 ).onSuccess {
                     Toast.makeText(this@LeveragePhotoDetailActivity, R.string.leverage_time_added, Toast.LENGTH_SHORT).show()
@@ -234,6 +200,11 @@ class LeveragePhotoDetailActivity : AppCompatActivity() {
         lifecycleScope.launch {
             try {
                 withContext(Dispatchers.IO) {
+                    if (photo?.has_original == true) return@withContext
+                    if (photo?.tlock_format == "envelope") {
+                        repository.restoreOriginal(photoId).getOrThrow()
+                        return@withContext
+                    }
                     val bridge = tlockBridge ?: throw IllegalStateException("Crypto unavailable")
                     if (!bridge.ensureReady()) throw IllegalStateException("Crypto library failed to load")
                     val armored = String(repository.downloadDecryptPayload(photoId).getOrThrow(), Charsets.UTF_8)
@@ -254,7 +225,7 @@ class LeveragePhotoDetailActivity : AppCompatActivity() {
                 Toast.makeText(this@LeveragePhotoDetailActivity, message, Toast.LENGTH_LONG).show()
             } finally {
                 binding.leverageCryptoStatus.text = ""
-                binding.leverageDecryptButton.isEnabled = true
+                binding.leverageDecryptButton.isEnabled = photo?.status == "unlocked" && photo?.has_original != true
             }
         }
     }

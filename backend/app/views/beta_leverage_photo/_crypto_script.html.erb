@@ -234,35 +234,12 @@
 
       async function startTimer(durationSeconds, options) {
         options = options || {};
-        requireTlock();
-        const lockedUntil = new Date(Date.now() + durationSeconds * 1000);
-        if (root.dataset.lockMode === "start") {
-          setStatus(statusEl?.dataset.fetchingOriginal || "Loading photo…");
-        }
-        const originalBytes = root.dataset.lockMode === "start"
-          ? await fetchBytes(root.dataset.originalUrl)
-          : await resolveOriginalBytes();
-        setStatus(statusEl?.dataset.encrypting || "Encrypting…");
-        const result = await encryptPayload(originalBytes, lockedUntil);
-
         const formData = new FormData();
-        formData.append(
-          "tlock_blob",
-          new Blob([result.armored], { type: "text/plain" }),
-          "layer.tlock"
-        );
-        formData.append("drand_round", String(result.round));
-        formData.append("drand_chain_hash", result.chainHash || "");
         formData.append("duration_seconds", String(durationSeconds));
-        formData.append("locked_until", lockedUntil.toISOString());
-        const startLayerCount = parseInt(root.dataset.startLayerCount || "1", 10);
-        if (Number.isFinite(startLayerCount) && startLayerCount >= 1) {
-          formData.append("tlock_layer_count", String(startLayerCount));
-        }
         if (options.saveAsBase) formData.append("save_as_base", "true");
         if (options.applyNextStep) formData.append("apply_next_step", "true");
 
-        setStatus(statusEl?.dataset.uploading || "Uploading…");
+        setStatus(statusEl?.dataset.encrypting || "Securing your photo…");
         const res = await fetch(root.dataset.startUrl, {
           method: "POST",
           body: formData,
@@ -279,31 +256,12 @@
 
       async function addTime(addedSeconds, options) {
         options = options || {};
-        requireTlock();
-        const base = root.dataset.lockedUntil
-          ? new Date(root.dataset.lockedUntil)
-          : new Date();
-        const from = base.getTime() > Date.now() ? base : new Date();
-        const lockedUntil = new Date(from.getTime() + addedSeconds * 1000);
-
-        setStatus(statusEl?.dataset.fetchingBlob || "Fetching lock blob…");
-        const currentArmored = await fetchText(root.dataset.tlockUrl);
-        setStatus(statusEl?.dataset.encrypting || "Encrypting…");
-        const result = await encryptPayload(currentArmored, lockedUntil);
-
         const formData = new FormData();
-        formData.append(
-          "tlock_blob",
-          new Blob([result.armored], { type: "text/plain" }),
-          "layer.tlock"
-        );
-        formData.append("drand_round", String(result.round));
         formData.append("added_seconds", String(addedSeconds));
-        formData.append("locked_until", lockedUntil.toISOString());
         if (options.saveAsBase) formData.append("save_as_base", "true");
         if (options.applyNextStep) formData.append("apply_next_step", "true");
 
-        setStatus(statusEl?.dataset.uploading || "Uploading…");
+        setStatus(statusEl?.dataset.encrypting || "Securing your photo…");
         const res = await fetch(root.dataset.addTimeUrl, {
           method: "POST",
           body: formData,
@@ -319,10 +277,43 @@
       }
 
       async function decryptAndDisplay() {
+        if (root.dataset.tlockFormat === "envelope") {
+          if (!root.dataset.restoreUrl) throw new Error("Restore failed");
+          setStatus(statusEl?.dataset.peeling || "Unlocking…");
+          const res = await fetch(root.dataset.restoreUrl, {
+            method: "POST",
+            credentials: "same-origin",
+            headers: {
+              "X-CSRF-Token": csrfToken(),
+              Accept: "application/json"
+            }
+          });
+          const data = await res.json().catch(function () { return {}; });
+          if (!res.ok) throw new Error(data.error || statusEl?.dataset.peelError || "Restore failed");
+          window.location.reload();
+          return;
+        }
+
         requireTlock();
         setStatus(statusEl?.dataset.peeling || "Unlocking…");
         const armored = await fetchText(root.dataset.decryptUrl);
         const peeled = await peelLayers(armored);
+        const peeledText = bytesToUtf8(peeled.bytes).trimStart();
+        if (peeledText.indexOf("{") === 0 && peeledText.indexOf("aes-256-gcm") !== -1) {
+          if (!root.dataset.restoreUrl) throw new Error(statusEl?.dataset.peelError || "Restore failed");
+          const res = await fetch(root.dataset.restoreUrl, {
+            method: "POST",
+            credentials: "same-origin",
+            headers: {
+              "X-CSRF-Token": csrfToken(),
+              Accept: "application/json"
+            }
+          });
+          const data = await res.json().catch(function () { return {}; });
+          if (!res.ok) throw new Error(data.error || statusEl?.dataset.peelError || "Restore failed");
+          window.location.reload();
+          return;
+        }
         await persistRestoredOriginal(peeled.bytes);
         window.location.reload();
       }

@@ -23,6 +23,7 @@ class LeveragePhotos::CropToProgress
 
     @photo.original_image.purge if @photo.original_image.attached?
     @photo.tlock_blob.purge if @photo.tlock_blob.attached?
+    @photo.encrypted_original.purge if @photo.encrypted_original.attached?
     @photo.leverage_photo_extensions.destroy_all
 
     @photo.censored_images.attach(
@@ -37,6 +38,7 @@ class LeveragePhotos::CropToProgress
       drand_rounds: [],
       tlock_layer_count: 0,
       drand_chain_hash: nil,
+      tlock_format: LeveragePhoto::TLOCK_FORMAT_FULL_IMAGE,
       initial_duration_seconds: nil,
       add_time_base_seconds: nil,
       add_time_step_n: 0

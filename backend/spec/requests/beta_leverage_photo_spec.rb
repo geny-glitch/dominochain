@@ -13,13 +13,6 @@ RSpec.describe BetaLeveragePhotoController, type: :request do
     Rack::Test::UploadedFile.new(file.path, "image/jpeg", true, original_filename: "#{name}.jpg")
   end
 
-  def tlock_upload(content)
-    file = Tempfile.new(["layer", ".tlock"])
-    file.write(content)
-    file.rewind
-    Rack::Test::UploadedFile.new(file.path, "text/plain", false, original_filename: "layer.tlock")
-  end
-
   before do
     sign_in user
     stub_beta_catalog_feature_flags("beta_action_leverage_photo" => true)
@@ -131,6 +124,24 @@ RSpec.describe BetaLeveragePhotoController, type: :request do
       get beta_leverage_photo_original_path(photo)
       expect(response).to have_http_status(:ok)
     end
+
+    it "does not serve an envelope key stored as the original" do
+      photo = create(:leverage_photo, :unlocked, user: user)
+      photo.tlock_blob.purge
+      photo.original_image.attach(
+        io: StringIO.new('{"v":1,"photo_id":15,"alg":"aes-256-gcm","k":"x"}'),
+        filename: "photo.jpg",
+        content_type: "image/jpeg"
+      )
+
+      get beta_leverage_photo_path(photo)
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Censored versions are still here")
+      expect(response.body).not_to include(">#{I18n.t("leverage_photo.show.download_original")}<")
+
+      get beta_leverage_photo_original_path(photo)
+      expect(response).to have_http_status(:forbidden)
+    end
   end
 
   describe "POST /beta/leverage_photos/:id/restore_original" do
@@ -145,6 +156,26 @@ RSpec.describe BetaLeveragePhotoController, type: :request do
       photo.reload
       expect(photo.original_image).to be_attached
       expect(photo.tlock_blob).not_to be_attached
+    end
+
+    it "restores an envelope lock from the server without an uploaded original" do
+      photo = create(:leverage_photo, :with_images, user: user)
+      captured = {}
+      allow(LeveragePhotos::TlockCrypto).to receive(:encrypt_bytes) do |bytes, _|
+        captured[:payload] = bytes
+        { armored: "AGE-KEY", round: 11, chain_hash: LeveragePhoto::DEFAULT_DRAND_CHAIN_HASH }
+      end
+      LeveragePhotos::StartTimerServer.new(photo: photo, duration_seconds: 3600).call!
+      photo.update!(status: "unlocked", locked_until: 1.minute.ago)
+      allow(LeveragePhotos::TlockCrypto).to receive(:decrypt_attachment).and_return(captured[:payload])
+
+      post beta_leverage_photo_restore_original_path(photo)
+
+      expect(response).to redirect_to(beta_leverage_photo_path(photo))
+      photo.reload
+      expect(photo.original_image.download).to eq("fake-original")
+      expect(photo.tlock_blob).not_to be_attached
+      expect(photo.encrypted_original).not_to be_attached
     end
   end
 
@@ -174,18 +205,25 @@ RSpec.describe BetaLeveragePhotoController, type: :request do
   end
 
   describe "POST /beta/leverage_photos/:id/start" do
+    def stub_server_lock!(round: 99_001, wrap_round: 88_888)
+      allow(LeveragePhotos::TlockCrypto).to receive(:encrypt_bytes).and_return(
+        armored: "AGE-KEY",
+        round: round,
+        chain_hash: LeveragePhoto::DEFAULT_DRAND_CHAIN_HASH
+      )
+      allow(LeveragePhotos::TlockCrypto).to receive(:encrypt_attachment).and_return(
+        armored: "WRAPPED",
+        round: wrap_round,
+        chain_hash: LeveragePhoto::DEFAULT_DRAND_CHAIN_HASH
+      )
+    end
+
     it "activates photo, stores tlock blob, and purges original" do
       photo = create(:leverage_photo, :with_images, user: user)
-      locked_until = 2.hours.from_now
+      stub_server_lock!
 
       post beta_leverage_photo_start_path(photo),
-        params: {
-          tlock_blob: tlock_upload("AGE"),
-          drand_round: 99_001,
-          duration_seconds: 2.hours.to_i,
-          locked_until: locked_until.iso8601,
-          drand_chain_hash: LeveragePhoto::DEFAULT_DRAND_CHAIN_HASH
-        },
+        params: { duration_seconds: 2.hours.to_i },
         headers: { "Accept" => "application/json" }
 
       expect(response).to have_http_status(:ok)
@@ -193,6 +231,8 @@ RSpec.describe BetaLeveragePhotoController, type: :request do
       expect(photo).to be_active
       expect(photo.original_image).not_to be_attached
       expect(photo.tlock_blob).to be_attached
+      expect(photo.encrypted_original).to be_attached
+      expect(photo.tlock_format).to eq("envelope")
       expect(photo.drand_rounds).to eq([99_001])
       expect(photo.tlock_layer_count).to eq(1)
     end
@@ -205,16 +245,10 @@ RSpec.describe BetaLeveragePhotoController, type: :request do
         locked_until_after: 1.day.from_now + 1.hour,
         drand_round_added: 12_346
       )
-      locked_until = 2.hours.from_now
+      stub_server_lock!(wrap_round: 88_888)
 
       post beta_leverage_photo_start_path(photo),
-        params: {
-          tlock_blob: tlock_upload("NEW-AGE"),
-          drand_round: 88_888,
-          duration_seconds: 2.hours.to_i,
-          locked_until: locked_until.iso8601,
-          drand_chain_hash: LeveragePhoto::DEFAULT_DRAND_CHAIN_HASH
-        },
+        params: { duration_seconds: 2.hours.to_i },
         headers: { "Accept" => "application/json" }
 
       expect(response).to have_http_status(:ok)
@@ -222,9 +256,10 @@ RSpec.describe BetaLeveragePhotoController, type: :request do
       expect(photo).to be_active
       expect(photo.original_image).not_to be_attached
       expect(photo.tlock_blob).to be_attached
-      expect(photo.tlock_blob.download).to eq("NEW-AGE")
+      expect(photo.tlock_blob.download).to eq("WRAPPED")
+      expect(photo.tlock_format).to eq("full_image")
       expect(photo.drand_rounds).to eq([88_888])
-      expect(photo.tlock_layer_count).to eq(1)
+      expect(photo.tlock_layer_count).to eq(2)
       expect(photo.leverage_photo_extensions.count).to eq(0)
     end
 
@@ -232,12 +267,7 @@ RSpec.describe BetaLeveragePhotoController, type: :request do
       photo = create(:leverage_photo, :active, user: user)
 
       post beta_leverage_photo_start_path(photo),
-        params: {
-          tlock_blob: tlock_upload("AGE"),
-          drand_round: 99_001,
-          duration_seconds: 2.hours.to_i,
-          locked_until: 2.hours.from_now.iso8601
-        },
+        params: { duration_seconds: 2.hours.to_i },
         headers: { "Accept" => "application/json" }
 
       expect(response).to have_http_status(:forbidden)
@@ -245,17 +275,20 @@ RSpec.describe BetaLeveragePhotoController, type: :request do
   end
 
   describe "POST /beta/leverage_photos/:id/add_time" do
+    def stub_wrap!(round:)
+      allow(LeveragePhotos::TlockCrypto).to receive(:encrypt_attachment).and_return(
+        armored: "OUTER",
+        round: round,
+        chain_hash: LeveragePhoto::DEFAULT_DRAND_CHAIN_HASH
+      )
+    end
+
     it "nests a new tlock layer" do
       photo = create(:leverage_photo, :active, user: user)
-      new_until = photo.locked_until + 3.hours
+      stub_wrap!(round: 200_000)
 
       post beta_leverage_photo_add_time_path(photo),
-        params: {
-          tlock_blob: tlock_upload("OUTER"),
-          drand_round: 200_000,
-          added_seconds: 3.hours.to_i,
-          locked_until: new_until.iso8601
-        },
+        params: { added_seconds: 3.hours.to_i },
         headers: { "Accept" => "application/json" }
 
       expect(response).to have_http_status(:ok)
@@ -267,14 +300,11 @@ RSpec.describe BetaLeveragePhotoController, type: :request do
 
     it "saves the current duration as the add-time base" do
       photo = create(:leverage_photo, :active, user: user)
-      new_until = photo.locked_until + 3.days
+      stub_wrap!(round: 200_001)
 
       post beta_leverage_photo_add_time_path(photo),
         params: {
-          tlock_blob: tlock_upload("OUTER"),
-          drand_round: 200_001,
           added_seconds: 3.days.to_i,
-          locked_until: new_until.iso8601,
           save_as_base: true,
           apply_next_step: true
         },
@@ -288,14 +318,11 @@ RSpec.describe BetaLeveragePhotoController, type: :request do
 
     it "increments the stored multiplier on the next step" do
       photo = create(:leverage_photo, :active, user: user, add_time_base_seconds: 3.days.to_i, add_time_step_n: 1)
-      new_until = photo.locked_until + 6.days
+      stub_wrap!(round: 200_002)
 
       post beta_leverage_photo_add_time_path(photo),
         params: {
-          tlock_blob: tlock_upload("OUTER"),
-          drand_round: 200_002,
           added_seconds: 6.days.to_i,
-          locked_until: new_until.iso8601,
           apply_next_step: true
         },
         headers: { "Accept" => "application/json" }
@@ -416,18 +443,18 @@ RSpec.describe BetaLeveragePhotoController, type: :request do
 
     it "keeps the same photo across lock submissions and records session time" do
       photo = create(:leverage_photo, :with_images, user: user)
-      locked_until = 2.hours.from_now
+      allow(LeveragePhotos::TlockCrypto).to receive(:encrypt_bytes).and_return(
+        armored: "AGE-KEY",
+        round: 99_001,
+        chain_hash: LeveragePhoto::DEFAULT_DRAND_CHAIN_HASH
+      )
 
       post beta_leverage_photo_blind_pick_path
       expect(session[:leverage_blind_game]["photo_id"]).to eq(photo.id)
 
       post beta_leverage_photo_blind_lock_path,
         params: {
-          tlock_blob: tlock_upload("AGE"),
-          drand_round: 99_001,
           duration_seconds: 2.hours.to_i,
-          locked_until: locked_until.iso8601,
-          drand_chain_hash: LeveragePhoto::DEFAULT_DRAND_CHAIN_HASH,
           save_as_base: true
         },
         headers: { "Accept" => "application/json" }
@@ -448,7 +475,6 @@ RSpec.describe BetaLeveragePhotoController, type: :request do
         original_filename: "secret-vacation.jpg",
         locked_until: Time.zone.local(2026, 12, 1, 12, 0, 0)
       )
-      new_until = photo.locked_until + 3.hours
 
       post beta_leverage_photo_blind_pick_path
       get beta_leverage_photo_blind_path
@@ -465,13 +491,14 @@ RSpec.describe BetaLeveragePhotoController, type: :request do
       expect(response.body).not_to include(I18n.l(photo.locked_until, format: :lock_until))
       expect(response.body).not_to include(beta_leverage_photo_path(photo))
 
+      allow(LeveragePhotos::TlockCrypto).to receive(:encrypt_attachment).and_return(
+        armored: "OUTER",
+        round: 200_000,
+        chain_hash: LeveragePhoto::DEFAULT_DRAND_CHAIN_HASH
+      )
+
       post beta_leverage_photo_blind_lock_path,
-        params: {
-          tlock_blob: tlock_upload("OUTER"),
-          drand_round: 200_000,
-          added_seconds: 3.hours.to_i,
-          locked_until: new_until.iso8601
-        },
+        params: { added_seconds: 3.hours.to_i },
         headers: { "Accept" => "application/json" }
 
       expect(response).to have_http_status(:ok)
@@ -503,12 +530,7 @@ RSpec.describe BetaLeveragePhotoController, type: :request do
 
     it "requires a picked photo before locking" do
       post beta_leverage_photo_blind_lock_path,
-        params: {
-          tlock_blob: tlock_upload("AGE"),
-          drand_round: 99_001,
-          duration_seconds: 3600,
-          locked_until: 1.hour.from_now.iso8601
-        },
+        params: { duration_seconds: 3600 },
         headers: { "Accept" => "application/json" }
 
       expect(response).to have_http_status(:unprocessable_entity)

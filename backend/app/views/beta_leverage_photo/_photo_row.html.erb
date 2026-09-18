@@ -18,6 +18,7 @@
      data-restore-url="<%= beta_leverage_photo_restore_original_path(photo) %>"
      data-original-filename="<%= photo.download_filename %>"
      data-photo-status="<%= photo.status %>"
+     data-tlock-format="<%= photo.tlock_format %>"
      data-has-original="<%= photo.original_image.attached? ? "true" : "false" %>"
      data-locked-until="<%= photo.locked_until&.iso8601 %>"
      data-layer-count="<%= photo.tlock_layer_count %>"
@@ -100,7 +101,7 @@
       </button>
     <% end %>
 
-    <% if photo.unlocked? %>
+    <% if photo.unlocked? && !photo.viewable_original? && (photo.tlock_blob.attached? || photo.encrypted_original.attached?) %>
       <button
         type="button"
         class="ds-btn ds-btn--secondary ds-btn--icon ds-btn--sm"

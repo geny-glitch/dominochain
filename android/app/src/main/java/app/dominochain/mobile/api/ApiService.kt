@@ -344,20 +344,13 @@ interface ApiService {
     @POST("api/leverage_photos/{id}/start")
     suspend fun startLeveragePhotoTimer(
         @Path("id") id: Long,
-        @Part tlock_blob: MultipartBody.Part,
-        @Part("drand_round") drandRound: RequestBody,
-        @Part("locked_until") lockedUntil: RequestBody,
-        @Part("duration_seconds") durationSeconds: RequestBody,
-        @Part("drand_chain_hash") chainHash: RequestBody?
+        @Part("duration_seconds") durationSeconds: RequestBody
     ): Response<LeveragePhotoTimerResponse>
 
     @Multipart
     @POST("api/leverage_photos/{id}/add_time")
     suspend fun addLeveragePhotoTime(
         @Path("id") id: Long,
-        @Part tlock_blob: MultipartBody.Part,
-        @Part("drand_round") drandRound: RequestBody,
-        @Part("locked_until") lockedUntil: RequestBody,
         @Part("added_seconds") addedSeconds: RequestBody
     ): Response<LeveragePhotoTimerResponse>
 
@@ -374,7 +367,7 @@ interface ApiService {
     @POST("api/leverage_photos/{id}/restore_original")
     suspend fun restoreLeveragePhotoOriginal(
         @Path("id") id: Long,
-        @Part original_image: MultipartBody.Part
+        @Part original_image: MultipartBody.Part?
     ): Response<LeveragePhotoTimerResponse>
 
     @POST("api/leverage_photos/{id}/set_as_wallpaper")
@@ -608,6 +601,7 @@ data class LeveragePhotoResponse(
     val can_censor: Boolean = false,
     val has_original: Boolean = false,
     val has_censored: Boolean = false,
+    val tlock_format: String = "full_image",
     val has_teaser: Boolean = false,
     val teaser_url: String? = null,
     val censored_url: String? = null,

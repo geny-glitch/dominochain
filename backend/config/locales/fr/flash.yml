@@ -163,6 +163,7 @@ fr:
         time_added: "Temps ajouté."
         deleted: "Photo de levier définitivement supprimée."
         restored: "Originale enregistrée. Elle restera disponible sur cette page."
+        restore_failed: "Impossible de restaurer l'originale. Réessayez."
         original_deleted: "Originale supprimée. Les versions censurées restent."
         original_delete_unavailable: "Ajoute d'abord une version censurée, ou l'originale est déjà supprimée."
         not_found: "Photo de levier introuvable."

@@ -133,20 +133,12 @@ class LeveragePhotoRepository {
 
     suspend fun startTimer(
         id: Long,
-        tlockFile: File,
-        drandRound: Long,
-        lockedUntilIso: String,
-        durationSeconds: Int,
-        chainHash: String?
+        durationSeconds: Int
     ): Result<LeveragePhotoTimerResponse> {
         return try {
             val response = api.startLeveragePhotoTimer(
                 id,
-                textPart("tlock_blob", tlockFile),
-                drandRound.toString().toRequestBody("text/plain".toMediaType()),
-                lockedUntilIso.toRequestBody("text/plain".toMediaType()),
-                durationSeconds.toString().toRequestBody("text/plain".toMediaType()),
-                chainHash?.toRequestBody("text/plain".toMediaType())
+                durationSeconds.toString().toRequestBody("text/plain".toMediaType())
             )
             if (response.isSuccessful) {
                 response.body()?.let { Result.success(it) }
@@ -161,17 +153,11 @@ class LeveragePhotoRepository {
 
     suspend fun addTime(
         id: Long,
-        tlockFile: File,
-        drandRound: Long,
-        lockedUntilIso: String,
         addedSeconds: Int
     ): Result<LeveragePhotoTimerResponse> {
         return try {
             val response = api.addLeveragePhotoTime(
                 id,
-                textPart("tlock_blob", tlockFile),
-                drandRound.toString().toRequestBody("text/plain".toMediaType()),
-                lockedUntilIso.toRequestBody("text/plain".toMediaType()),
                 addedSeconds.toString().toRequestBody("text/plain".toMediaType())
             )
             if (response.isSuccessful) {
@@ -191,9 +177,12 @@ class LeveragePhotoRepository {
 
     suspend fun downloadDecryptPayload(id: Long): Result<ByteArray> = downloadBytes { api.getLeveragePhotoDecryptPayload(id) }
 
-    suspend fun restoreOriginal(id: Long, original: File): Result<LeveragePhotoTimerResponse> {
+    suspend fun restoreOriginal(id: Long, original: File? = null): Result<LeveragePhotoTimerResponse> {
         return try {
-            val response = api.restoreLeveragePhotoOriginal(id, part("original_image", original))
+            val response = api.restoreLeveragePhotoOriginal(
+                id,
+                original?.let { part("original_image", it) }
+            )
             if (response.isSuccessful) {
                 response.body()?.let { Result.success(it) }
                     ?: Result.failure(Exception("Empty response"))
@@ -212,10 +201,6 @@ class LeveragePhotoRepository {
     private fun part(name: String, file: File): MultipartBody.Part {
         val mime = WallpaperRepository.mimeFor(file)
         return MultipartBody.Part.createFormData(name, file.name, file.asRequestBody(mime.toMediaType()))
-    }
-
-    private fun textPart(name: String, file: File): MultipartBody.Part {
-        return MultipartBody.Part.createFormData(name, file.name, file.asRequestBody("text/plain".toMediaType()))
     }
 
     private suspend fun downloadBytes(block: suspend () -> retrofit2.Response<ResponseBody>): Result<ByteArray> {

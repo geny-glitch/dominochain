@@ -31,7 +31,9 @@ RSpec.describe BetaEvents::Actions::LeveragePhotoLockFromEvent do
     photo.reload
     expect(photo).to be_active
     expect(photo.tlock_blob).to be_attached
+    expect(photo.encrypted_original).to be_attached
     expect(photo.original_image).not_to be_attached
+    expect(photo.tlock_format).to eq(LeveragePhoto::TLOCK_FORMAT_ENVELOPE)
     expect(context.leverage_photo_id).to eq(photo.id)
   end
 

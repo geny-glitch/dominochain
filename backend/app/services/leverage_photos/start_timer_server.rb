@@ -19,7 +19,7 @@ class LeveragePhotos::StartTimerServer
       )
 
       locked_until = Time.current + @duration_seconds.seconds
-      crypto, layer_count = encrypt_for(locked_until)
+      crypto, layer_count, tlock_format, encrypted_original = encrypt_for(locked_until)
 
       blob = {
         io: StringIO.new(crypto[:armored]),
@@ -34,10 +34,12 @@ class LeveragePhotos::StartTimerServer
         locked_until: locked_until,
         duration_seconds: @duration_seconds,
         chain_hash: crypto[:chain_hash],
-        tlock_layer_count: layer_count
+        tlock_layer_count: layer_count,
+        tlock_format: tlock_format,
+        encrypted_original: encrypted_original
       ).call!
     end
-  rescue LeveragePhotos::StartTimer::Error, LeveragePhotos::TlockCrypto::Error => e
+  rescue LeveragePhotos::StartTimer::Error, LeveragePhotos::TlockCrypto::Error, LeveragePhotos::Envelope::Error => e
     raise Error, e.message
   end
 
@@ -48,20 +50,25 @@ class LeveragePhotos::StartTimerServer
   # its still-attached armored tlock_blob with a fresh outer layer instead,
   # the same technique AddTimeServer uses to extend an active lock.
   def source_available?
-    @photo.original_image.attached? || @photo.tlock_blob.attached?
+    @photo.viewable_original? || @photo.tlock_blob.attached?
   end
 
   def encrypt_for(locked_until)
-    if @photo.original_image.attached?
+    if @photo.viewable_original?
+      packed, crypto = LeveragePhotos::Envelope.new(@photo).build(locked_until)
       [
-        LeveragePhotos::TlockCrypto.encrypt_attachment(
-          @photo.original_image,
-          locked_until,
-          command: "encrypt-bytes"
-        ),
-        1
+        crypto,
+        1,
+        LeveragePhoto::TLOCK_FORMAT_ENVELOPE,
+        {
+          io: StringIO.new(packed),
+          filename: "original.bin",
+          content_type: "application/octet-stream"
+        }
       ]
     else
+      raise Error, "no source image available to lock" unless @photo.tlock_blob.attached?
+
       previous = [@photo.tlock_layer_count.to_i, 1].max
       next_count = previous + 1
       raise Error, "photo cannot be locked" if next_count > LeveragePhoto::MAX_PEEL_LAYERS
@@ -72,7 +79,9 @@ class LeveragePhotos::StartTimerServer
           locked_until,
           command: "encrypt-outer"
         ),
-        next_count
+        next_count,
+        @photo.tlock_format.presence || LeveragePhoto::TLOCK_FORMAT_FULL_IMAGE,
+        nil
       ]
     end
   end

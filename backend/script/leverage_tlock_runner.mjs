@@ -1,17 +1,19 @@
 #!/usr/bin/env node
 /**
- * Server-side tlock encrypt helper.
+ * Server-side tlock encrypt/decrypt helper.
  *
- * Loads the browser vendored IIFE, then encrypts a file in place without
- * shuttling the payload through JSON/base64 or fetching drand chain info
- * (the quicknet public key is already in defaultChainInfo).
+ * Loads the browser vendored IIFE, then encrypts or peels a file in place
+ * without shuttling the payload through JSON/base64. Encrypt uses the
+ * quicknet public key already in defaultChainInfo (no drand HTTP). Decrypt
+ * uses mainnetClient so it can fetch beacons after the round.
  *
  * Usage:
  *   node script/leverage_tlock_runner.mjs encrypt-bytes <in> <out> <locked_until_ms>
  *   node script/leverage_tlock_runner.mjs encrypt-outer <in> <out> <locked_until_ms>
+ *   node script/leverage_tlock_runner.mjs decrypt-bytes <in> <out>
  *
- * Writes the armored ciphertext to <out>. Stdout is a small JSON object
- * with round and chain_hash.
+ * Encrypt writes armored ciphertext to <out> and prints JSON {round, chain_hash}.
+ * Decrypt writes the peeled payload bytes to <out>.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -76,6 +78,10 @@ function staticChainClient(api) {
   };
 }
 
+function isArmoredAge(text) {
+  return typeof text === "string" && text.trimStart().indexOf("-----BEGIN AGE ENCRYPTED FILE-----") === 0;
+}
+
 async function encryptPayload(api, bytes, lockedUntilMs) {
   const chainInfo = api.defaultChainInfo;
   const round = api.roundAt(lockedUntilMs, chainInfo);
@@ -94,17 +100,48 @@ async function encryptPayload(api, bytes, lockedUntilMs) {
   };
 }
 
+async function peelLayers(api, outerArmored) {
+  const client = api.mainnetClient();
+  let payload = outerArmored;
+  let layersPeeled = 0;
+  const max = 64;
+  while (layersPeeled < max) {
+    const decrypted = await api.timelockDecrypt(payload, client);
+    layersPeeled += 1;
+    const buf = Buffer.from(decrypted);
+    const asText = buf.toString("utf8");
+    if (isArmoredAge(asText)) {
+      payload = asText;
+      continue;
+    }
+    return buf;
+  }
+  throw new Error("RESTORE_LAYER_LIMIT");
+}
+
 async function main() {
   const command = process.argv[2];
   const inPath = process.argv[3];
   const outPath = process.argv[4];
-  const lockedUntilMs = Number(process.argv[5]);
-  if (!["encrypt-bytes", "encrypt-outer"].includes(command)) {
-    throw new Error("Usage: encrypt-bytes|encrypt-outer <in> <out> <locked_until_ms>");
+  if (!["encrypt-bytes", "encrypt-outer", "decrypt-bytes"].includes(command)) {
+    throw new Error("Usage: encrypt-bytes|encrypt-outer <in> <out> <locked_until_ms> OR decrypt-bytes <in> <out>");
   }
   if (!inPath || !outPath) {
     throw new Error("input and output paths required");
   }
+
+  const api = loadTlock();
+
+  if (command === "decrypt-bytes") {
+    const armored = fs.readFileSync(inPath, "utf8");
+    if (!armored.trim()) throw new Error("empty input");
+    const peeled = await peelLayers(api, armored);
+    fs.writeFileSync(outPath, peeled);
+    process.stdout.write(JSON.stringify({ ok: true }));
+    return;
+  }
+
+  const lockedUntilMs = Number(process.argv[5]);
   if (!Number.isFinite(lockedUntilMs) || lockedUntilMs <= Date.now()) {
     throw new Error("locked_until_ms must be a future timestamp");
   }
@@ -115,7 +152,6 @@ async function main() {
     ? buf
     : new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength);
 
-  const api = loadTlock();
   const result = await encryptPayload(api, bytes, lockedUntilMs);
   fs.writeFileSync(outPath, result.armored, "utf8");
   process.stdout.write(JSON.stringify({

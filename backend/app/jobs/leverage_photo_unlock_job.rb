@@ -7,7 +7,7 @@ class LeveragePhotoUnlockJob < ApplicationJob
     reference_time = reference_time_iso8601.present? ? Time.zone.parse(reference_time_iso8601) : Time.current
 
     LeveragePhoto.due_for_unlock(reference_time).find_each do |photo|
-      photo.mark_unlocked!
+      LeveragePhotos::UnlockPhoto.call!(photo)
       Rails.logger.info("[LeveragePhotoUnlock] photo=#{photo.id} user=#{photo.user_id} unlocked")
     rescue StandardError => e
       Rails.logger.warn(

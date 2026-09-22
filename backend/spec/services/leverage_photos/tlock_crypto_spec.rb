@@ -44,6 +44,26 @@ RSpec.describe LeveragePhotos::TlockCrypto do
     expect(result[:armored]).to include("BEGIN AGE")
   end
 
+  it "peels nested age layers with a fresh node process per layer" do
+    layer = 0
+    allow(Open3).to receive(:capture3) do |*_args|
+      out_path = _args.last
+      layer += 1
+      if layer == 1
+        File.write(out_path, "-----BEGIN AGE ENCRYPTED FILE-----\ninner\n-----END AGE ENCRYPTED FILE-----")
+      else
+        File.binwrite(out_path, "fake-original")
+      end
+      ['{"ok":true}', "", instance_double(Process::Status, success?: true)]
+    end
+    allow(Timeout).to receive(:timeout).and_yield
+
+    result = described_class.decrypt_bytes("-----BEGIN AGE ENCRYPTED FILE-----\nouter\n-----END AGE ENCRYPTED FILE-----")
+
+    expect(layer).to eq(2)
+    expect(result).to eq("fake-original")
+  end
+
   it "does not leak node heap dumps in the raised error" do
     locked_until = 1.hour.from_now
     dump = "<--- Last few GCs ---> FATAL ERROR: JavaScript heap out of memory"

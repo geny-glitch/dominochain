@@ -45,6 +45,25 @@ RSpec.describe LeveragePhotos::Envelope do
     expect(Digest::SHA256.hexdigest(photo.encrypted_original.download)).to eq(payload["ciphertext_sha256"])
   end
 
+  it "seals an existing full-image tlock onion as the envelope ciphertext" do
+    photo.original_image.purge
+    photo.tlock_blob.attach(
+      io: StringIO.new("-----BEGIN AGE ENCRYPTED FILE-----\nlegacy\n-----END AGE ENCRYPTED FILE-----"),
+      filename: "layer.tlock",
+      content_type: "text/plain"
+    )
+    captured = {}
+    stub_encrypt_bytes!(captured)
+
+    packed, crypto = described_class.new(photo).wrap_existing_blob(1.hour.from_now)
+
+    expect(crypto[:round]).to eq(42_001)
+    expect(packed.bytesize).to be > 16
+    payload = JSON.parse(captured[:payload])
+    expect(payload["photo_id"]).to eq(photo.id)
+    expect(Digest::SHA256.hexdigest(packed)).to eq(payload["ciphertext_sha256"])
+  end
+
   it "restores the original after peeling the envelope key" do
     captured = {}
     stub_encrypt_bytes!(captured)
@@ -73,5 +92,33 @@ RSpec.describe LeveragePhotos::Envelope do
     unlock_without_original!(captured[:payload])
 
     expect { described_class.open!(photo) }.to raise_error(described_class::Error, /mismatch/)
+  end
+
+  it "server-peels a converted full-image onion after opening the envelope" do
+    onion = "-----BEGIN AGE ENCRYPTED FILE-----\nlegacy\n-----END AGE ENCRYPTED FILE-----"
+    photo.original_image.purge
+    photo.tlock_blob.attach(
+      io: StringIO.new(onion),
+      filename: "layer.tlock",
+      content_type: "text/plain"
+    )
+    captured = {}
+    stub_encrypt_bytes!(captured)
+    packed, = described_class.new(photo).wrap_existing_blob(1.hour.from_now)
+    photo.encrypted_original.attach(
+      io: StringIO.new(packed),
+      filename: "original.bin",
+      content_type: "application/octet-stream"
+    )
+    unlock_without_original!(captured[:payload])
+    allow(LeveragePhotos::TlockCrypto).to receive(:decrypt_bytes).and_return("fake-original")
+
+    described_class.open!(photo)
+
+    expect(LeveragePhotos::TlockCrypto).to have_received(:decrypt_bytes)
+    photo.reload
+    expect(photo.original_image.download).to eq("fake-original")
+    expect(photo.tlock_blob).not_to be_attached
+    expect(photo.encrypted_original).not_to be_attached
   end
 end

@@ -201,9 +201,11 @@ class LeveragePhotoDetailActivity : AppCompatActivity() {
             try {
                 withContext(Dispatchers.IO) {
                     if (photo?.has_original == true) return@withContext
+                    val restoreResult = repository.restoreOriginal(photoId)
+                    photo = restoreResult.getOrNull()?.photo ?: photo
+                    if (photo?.has_original == true || restoreResult.getOrNull()?.restored == true) return@withContext
                     if (photo?.tlock_format == "envelope") {
-                        repository.restoreOriginal(photoId).getOrThrow()
-                        return@withContext
+                        throw restoreResult.exceptionOrNull() ?: IllegalStateException("Restore failed")
                     }
                     val bridge = tlockBridge ?: throw IllegalStateException("Crypto unavailable")
                     if (!bridge.ensureReady()) throw IllegalStateException("Crypto library failed to load")

@@ -136,19 +136,17 @@ module Api
 
       if params[:original_image].present?
         @photo.persist_restored_original!(params[:original_image])
-      elsif @photo.envelope_lock?
-        LeveragePhotos::Envelope.open!(@photo)
       else
-        render json: { error: I18n.t("flash.beta.leverage_photo.images_required") }, status: :unprocessable_entity
-        return
+        LeveragePhotos::RestorePayload.call!(@photo)
       end
 
+      @photo.reload
       render json: {
         status: "unlocked",
-        restored: true,
-        photo: LeveragePhotoPayload.detail_json(@photo.reload, helpers: self)
+        restored: @photo.viewable_original?,
+        photo: LeveragePhotoPayload.detail_json(@photo, helpers: self)
       }
-    rescue ActiveRecord::RecordInvalid, LeveragePhotos::Envelope::Error, LeveragePhotos::TlockCrypto::Error, ArgumentError => e
+    rescue ActiveRecord::RecordInvalid, LeveragePhotos::Envelope::Error, LeveragePhotos::TlockCrypto::Error, LeveragePhotos::RestorePayload::Error, ArgumentError => e
       message = e.is_a?(ActiveRecord::RecordInvalid) ? e.record.errors.full_messages.to_sentence : I18n.t("flash.beta.leverage_photo.restore_failed")
       render json: { error: message }, status: :unprocessable_entity
     end

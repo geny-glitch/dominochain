@@ -73,20 +73,34 @@ class LeveragePhotos::StartTimerServer
     else
       raise Error, "no source image available to lock" unless @photo.tlock_blob.attached?
 
-      previous = [@photo.tlock_layer_count.to_i, 1].max
-      next_count = previous + 1
-      raise Error, "photo cannot be locked" if next_count > LeveragePhoto::MAX_PEEL_LAYERS
+      if @photo.envelope_lock?
+        previous = [@photo.tlock_layer_count.to_i, 1].max
+        next_count = previous + 1
+        raise Error, "photo cannot be locked" if next_count > LeveragePhoto::MAX_PEEL_LAYERS
 
-      [
-        LeveragePhotos::TlockCrypto.encrypt_attachment(
-          @photo.tlock_blob,
-          locked_until,
-          command: "encrypt-outer"
-        ),
-        next_count,
-        @photo.tlock_format.presence || LeveragePhoto::TLOCK_FORMAT_FULL_IMAGE,
-        nil
-      ]
+        [
+          LeveragePhotos::TlockCrypto.encrypt_attachment(
+            @photo.tlock_blob,
+            locked_until,
+            command: "encrypt-outer"
+          ),
+          next_count,
+          LeveragePhoto::TLOCK_FORMAT_ENVELOPE,
+          nil
+        ]
+      else
+        packed, crypto = LeveragePhotos::Envelope.new(@photo).wrap_existing_blob(locked_until)
+        [
+          crypto,
+          1,
+          LeveragePhoto::TLOCK_FORMAT_ENVELOPE,
+          {
+            io: StringIO.new(packed),
+            filename: "original.bin",
+            content_type: "application/octet-stream"
+          }
+        ]
+      end
     end
   end
 end

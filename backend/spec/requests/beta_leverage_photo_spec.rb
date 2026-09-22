@@ -289,10 +289,11 @@ RSpec.describe BetaLeveragePhotoController, type: :request do
       expect(photo).to be_active
       expect(photo.original_image).not_to be_attached
       expect(photo.tlock_blob).to be_attached
-      expect(photo.tlock_blob.download).to eq("WRAPPED")
-      expect(photo.tlock_format).to eq("full_image")
-      expect(photo.drand_rounds).to eq([88_888])
-      expect(photo.tlock_layer_count).to eq(2)
+      expect(photo.tlock_blob.download).to eq("AGE-KEY")
+      expect(photo.tlock_format).to eq("envelope")
+      expect(photo.encrypted_original).to be_attached
+      expect(photo.drand_rounds).to eq([99_001])
+      expect(photo.tlock_layer_count).to eq(1)
       expect(photo.leverage_photo_extensions.count).to eq(0)
     end
 
@@ -309,6 +310,11 @@ RSpec.describe BetaLeveragePhotoController, type: :request do
 
   describe "POST /beta/leverage_photos/:id/add_time" do
     def stub_wrap!(round:)
+      allow(LeveragePhotos::TlockCrypto).to receive(:encrypt_bytes).and_return(
+        armored: "AGE-KEY",
+        round: round,
+        chain_hash: LeveragePhoto::DEFAULT_DRAND_CHAIN_HASH
+      )
       allow(LeveragePhotos::TlockCrypto).to receive(:encrypt_attachment).and_return(
         armored: "OUTER",
         round: round,
@@ -326,7 +332,9 @@ RSpec.describe BetaLeveragePhotoController, type: :request do
 
       expect(response).to have_http_status(:ok)
       photo.reload
-      expect(photo.tlock_layer_count).to eq(2)
+      expect(photo.tlock_layer_count).to eq(1)
+      expect(photo.tlock_format).to eq("envelope")
+      expect(photo.encrypted_original).to be_attached
       expect(photo.drand_rounds).to eq([12_345, 200_000])
       expect(photo.leverage_photo_extensions.count).to eq(1)
     end
@@ -526,6 +534,11 @@ RSpec.describe BetaLeveragePhotoController, type: :request do
       expect(response.body).not_to include(I18n.l(photo.locked_until, format: :lock_until))
       expect(response.body).not_to include(beta_leverage_photo_path(photo))
 
+      allow(LeveragePhotos::TlockCrypto).to receive(:encrypt_bytes).and_return(
+        armored: "AGE-KEY",
+        round: 200_000,
+        chain_hash: LeveragePhoto::DEFAULT_DRAND_CHAIN_HASH
+      )
       allow(LeveragePhotos::TlockCrypto).to receive(:encrypt_attachment).and_return(
         armored: "OUTER",
         round: 200_000,
@@ -537,7 +550,7 @@ RSpec.describe BetaLeveragePhotoController, type: :request do
         headers: { "Accept" => "application/json" }
 
       expect(response).to have_http_status(:ok)
-      expect(photo.reload.tlock_layer_count).to eq(2)
+      expect(photo.reload.tlock_layer_count).to eq(1)
       expect(session[:leverage_blind_game]["added_seconds"]).to eq(3.hours.to_i)
 
       get beta_leverage_photo_blind_path

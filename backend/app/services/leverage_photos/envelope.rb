@@ -5,8 +5,10 @@ require "digest"
 require "json"
 require "openssl"
 
-# Envelope lock: AES-GCM the original, tlock only the key (bound to photo_id + hash).
-# Existing full_image locks keep tlock_format "full_image" and peel the whole blob.
+# Envelope lock: AES-GCM a payload, tlock only the key (bound to photo_id + hash).
+# New locks AES the JPEG. Legacy full_image locks convert on extend/relock by AES
+# of the existing tlock onion. Unlock peels the key, AES-unwraps, then peels any
+# leftover onion one Node process per layer so the JPEG is restored on the server.
 class LeveragePhotos::Envelope
   class Error < StandardError; end
 
@@ -40,8 +42,29 @@ class LeveragePhotos::Envelope
     plaintext = @photo.original_image.download
     raise Error, "original missing" if plaintext.blank?
 
+    build_from_bytes(plaintext, locked_until)
+  end
+
+  # AES-GCM the current full-image tlock onion and tlock only the key, so later
+  # extends wrap a tiny payload instead of re-tlocking the whole JPEG.
+  def wrap_existing_blob(locked_until)
+    raise Error, "locked payload missing" unless @photo.tlock_blob.attached?
+
+    ciphertext = @photo.tlock_blob.download
+    raise Error, "locked payload missing" if ciphertext.blank?
+
+    build_from_bytes(ciphertext, locked_until)
+  end
+
+  def build_from_bytes(plaintext, locked_until)
+    raise Error, "payload missing" if plaintext.blank?
+
     key = SecureRandom.random_bytes(KEY_LEN)
     packed = encrypt_aes(plaintext, key, aad: @photo.id.to_s)
+    unless decrypt_aes(packed, key, aad: @photo.id.to_s) == plaintext
+      raise Error, "could not seal original"
+    end
+
     digest = Digest::SHA256.hexdigest(packed)
 
     payload = {
@@ -69,6 +92,9 @@ class LeveragePhotos::Envelope
       Base64.strict_decode64(payload.fetch("k")),
       aad: @photo.id.to_s
     )
+    if LeveragePhotos::TlockCrypto.age_armored?(plaintext)
+      plaintext = LeveragePhotos::TlockCrypto.decrypt_bytes(plaintext)
+    end
 
     @photo.persist_restored_original!(
       io: StringIO.new(plaintext),

@@ -30,6 +30,14 @@ RSpec.describe LeveragePhoto, type: :model do
     expect(photo).not_to be_eligible_for_start
   end
 
+  it "lets a full-image lock add time even at the recorded layer cap so it can convert to envelope" do
+    photo = create(:leverage_photo, :active, user: user, tlock_layer_count: described_class::MAX_TLOCK_LAYERS)
+    expect(photo).to be_can_add_time
+
+    photo.update!(tlock_format: described_class::TLOCK_FORMAT_ENVELOPE)
+    expect(photo).not_to be_can_add_time
+  end
+
   it "allows draft with only a preview censored version" do
     photo = create(:leverage_photo, :without_censor, user: user)
     expect(photo).not_to be_needs_censor

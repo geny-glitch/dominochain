@@ -224,7 +224,10 @@ class LeveragePhoto < ApplicationRecord
   end
 
   def can_add_time?
-    active? && tlock_blob.attached? && tlock_layer_count < MAX_TLOCK_LAYERS
+    return false unless active? && tlock_blob.attached?
+    return true if full_image_lock?
+
+    tlock_layer_count < MAX_TLOCK_LAYERS
   end
 
   def eligible_for_start?

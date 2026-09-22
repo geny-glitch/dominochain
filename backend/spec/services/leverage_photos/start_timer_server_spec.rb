@@ -43,30 +43,27 @@ RSpec.describe LeveragePhotos::StartTimerServer do
     expect(photo.original_image).not_to be_attached
     expect(photo.tlock_blob).to be_attached
     expect(photo.tlock_format).to eq(LeveragePhoto::TLOCK_FORMAT_FULL_IMAGE)
-    stub_encrypt_attachment!(round: 222, armored: "wrapped")
+    stub_encrypt_bytes!(round: 222, armored: "key")
 
     described_class.new(photo: photo, duration_seconds: duration_seconds).call!
 
-    expect(LeveragePhotos::TlockCrypto).to have_received(:encrypt_attachment).with(
-      photo.tlock_blob,
-      kind_of(Time),
-      command: "encrypt-outer"
-    )
+    expect(LeveragePhotos::TlockCrypto).to have_received(:encrypt_bytes)
     photo.reload
     expect(photo.status).to eq("active")
-    expect(photo.tlock_format).to eq(LeveragePhoto::TLOCK_FORMAT_FULL_IMAGE)
-    expect(photo.tlock_layer_count).to eq(2)
-    expect(photo.encrypted_original).not_to be_attached
+    expect(photo.tlock_format).to eq(LeveragePhoto::TLOCK_FORMAT_ENVELOPE)
+    expect(photo.tlock_layer_count).to eq(1)
+    expect(photo.encrypted_original).to be_attached
     expect(photo.locked_until).to be_within(5.seconds).of(Time.current + duration_seconds.seconds)
   end
 
-  it "increments the layer count when wrapping an unlocked photo that already had nested layers" do
+  it "resets the layer count when converting an unlocked full-image lock to an envelope" do
     photo = create(:leverage_photo, :unlocked, user: user, tlock_layer_count: 3)
-    stub_encrypt_attachment!(round: 222, armored: "wrapped")
+    stub_encrypt_bytes!(round: 222, armored: "key")
 
     described_class.new(photo: photo, duration_seconds: duration_seconds).call!
 
-    expect(photo.reload.tlock_layer_count).to eq(4)
+    expect(photo.reload.tlock_layer_count).to eq(1)
+    expect(photo.tlock_format).to eq(LeveragePhoto::TLOCK_FORMAT_ENVELOPE)
   end
 
   it "starts a fresh envelope when an unlocked photo has its original back" do
@@ -88,27 +85,23 @@ RSpec.describe LeveragePhotos::StartTimerServer do
     expect(photo.encrypted_original).to be_attached
   end
 
-  it "keeps wrapping a full-image tlock when a non-image original is also attached" do
+  it "converts a full-image tlock to an envelope when a non-image original is also attached" do
     photo = create(:leverage_photo, :unlocked, user: user)
     photo.original_image.attach(
       io: StringIO.new('{"v":1,"photo_id":1,"alg":"aes-256-gcm","k":"x"}'),
       filename: "photo.jpg",
       content_type: "image/jpeg"
     )
-    stub_encrypt_attachment!(round: 333, armored: "wrapped-legacy")
-    allow(LeveragePhotos::TlockCrypto).to receive(:encrypt_bytes)
+    stub_encrypt_bytes!(round: 333, armored: "key")
+    allow(LeveragePhotos::TlockCrypto).to receive(:encrypt_attachment)
 
     described_class.new(photo: photo, duration_seconds: duration_seconds).call!
 
-    expect(LeveragePhotos::TlockCrypto).not_to have_received(:encrypt_bytes)
-    expect(LeveragePhotos::TlockCrypto).to have_received(:encrypt_attachment).with(
-      anything,
-      kind_of(Time),
-      command: "encrypt-outer"
-    )
+    expect(LeveragePhotos::TlockCrypto).to have_received(:encrypt_bytes)
+    expect(LeveragePhotos::TlockCrypto).not_to have_received(:encrypt_attachment)
     photo.reload
-    expect(photo.tlock_format).to eq(LeveragePhoto::TLOCK_FORMAT_FULL_IMAGE)
-    expect(photo.encrypted_original).not_to be_attached
+    expect(photo.tlock_format).to eq(LeveragePhoto::TLOCK_FORMAT_ENVELOPE)
+    expect(photo.encrypted_original).to be_attached
     expect(photo.original_image).not_to be_attached
   end
 

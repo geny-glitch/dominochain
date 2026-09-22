@@ -277,8 +277,7 @@
       }
 
       async function decryptAndDisplay() {
-        if (root.dataset.tlockFormat === "envelope") {
-          if (!root.dataset.restoreUrl) throw new Error("Restore failed");
+        if (root.dataset.restoreUrl && root.dataset.photoStatus === "unlocked" && root.dataset.hasOriginal !== "true") {
           setStatus(statusEl?.dataset.peeling || "Unlocking…");
           const res = await fetch(root.dataset.restoreUrl, {
             method: "POST",
@@ -289,9 +288,13 @@
             }
           });
           const data = await res.json().catch(function () { return {}; });
-          if (!res.ok) throw new Error(data.error || statusEl?.dataset.peelError || "Restore failed");
-          window.location.reload();
-          return;
+          if (res.ok && data.restored) {
+            window.location.reload();
+            return;
+          }
+          if (!res.ok && root.dataset.tlockFormat === "envelope") {
+            throw new Error(data.error || statusEl?.dataset.peelError || "Restore failed");
+          }
         }
 
         requireTlock();

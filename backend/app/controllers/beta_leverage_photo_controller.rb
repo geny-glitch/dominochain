@@ -169,21 +169,20 @@ class BetaLeveragePhotoController < ApplicationController
 
     if params[:original_image].present?
       @photo.persist_restored_original!(params[:original_image])
-    elsif @photo.envelope_lock?
-      LeveragePhotos::Envelope.open!(@photo)
     else
-      respond_to do |format|
-        format.json { render json: { error: t("flash.beta.leverage_photo.images_required") }, status: :unprocessable_entity }
-        format.html { redirect_to beta_leverage_photo_path(@photo), alert: t("flash.beta.leverage_photo.images_required") }
-      end
-      return
+      LeveragePhotos::RestorePayload.call!(@photo)
     end
 
+    @photo.reload
+    restored = @photo.viewable_original?
     respond_to do |format|
-      format.json { render json: { status: "unlocked", restored: true } }
-      format.html { redirect_to beta_leverage_photo_path(@photo), notice: t("flash.beta.leverage_photo.restored") }
+      format.json { render json: { status: "unlocked", restored: restored } }
+      format.html do
+        redirect_to beta_leverage_photo_path(@photo),
+          notice: restored ? t("flash.beta.leverage_photo.restored") : nil
+      end
     end
-  rescue ActiveRecord::RecordInvalid, LeveragePhotos::Envelope::Error, LeveragePhotos::TlockCrypto::Error, ArgumentError => e
+  rescue ActiveRecord::RecordInvalid, LeveragePhotos::Envelope::Error, LeveragePhotos::TlockCrypto::Error, LeveragePhotos::RestorePayload::Error, ArgumentError => e
     message = e.is_a?(ActiveRecord::RecordInvalid) ? e.record.errors.full_messages.to_sentence : t("flash.beta.leverage_photo.restore_failed")
     respond_to do |format|
       format.json { render json: { error: message }, status: :unprocessable_entity }

@@ -12,10 +12,12 @@
  * Usage:
  *   node script/leverage_tlock_runner.mjs encrypt-bytes <in> <out> <locked_until_ms>
  *   node script/leverage_tlock_runner.mjs encrypt-outer <in> <out> <locked_until_ms>
+ *   node script/leverage_tlock_runner.mjs decrypt-once <in> <out>
  *   node script/leverage_tlock_runner.mjs decrypt-bytes <in> <out>
  *
  * Encrypt writes armored ciphertext to <out> and prints JSON {round, chain_hash}.
- * Decrypt writes the peeled payload bytes to <out>.
+ * decrypt-once peels a single age layer (Ruby loops this so each layer gets a
+ * fresh Node heap). decrypt-bytes peels until plaintext in one process.
  */
 import fs from "node:fs";
 import {
@@ -75,15 +77,18 @@ async function encryptPayload(bytes, lockedUntilMs) {
   };
 }
 
+async function peelOnce(armored) {
+  const decrypted = await timelockDecrypt(armored, mainnetClient());
+  return Buffer.from(decrypted);
+}
+
 async function peelLayers(outerArmored) {
-  const client = mainnetClient();
   let payload = outerArmored;
   let layersPeeled = 0;
   const max = 64;
   while (layersPeeled < max) {
-    const decrypted = await timelockDecrypt(payload, client);
+    const buf = await peelOnce(payload);
     layersPeeled += 1;
-    const buf = Buffer.from(decrypted);
     const asText = buf.toString("utf8");
     if (isArmoredAge(asText)) {
       payload = asText;
@@ -98,11 +103,20 @@ async function main() {
   const command = process.argv[2];
   const inPath = process.argv[3];
   const outPath = process.argv[4];
-  if (!["encrypt-bytes", "encrypt-outer", "decrypt-bytes"].includes(command)) {
-    throw new Error("Usage: encrypt-bytes|encrypt-outer <in> <out> <locked_until_ms> OR decrypt-bytes <in> <out>");
+  if (!["encrypt-bytes", "encrypt-outer", "decrypt-bytes", "decrypt-once"].includes(command)) {
+    throw new Error("Usage: encrypt-bytes|encrypt-outer <in> <out> <locked_until_ms> OR decrypt-once|decrypt-bytes <in> <out>");
   }
   if (!inPath || !outPath) {
     throw new Error("input and output paths required");
+  }
+
+  if (command === "decrypt-once") {
+    const armored = readInput(inPath).toString("utf8");
+    if (!armored.trim()) throw new Error("empty input");
+    const peeled = await peelOnce(armored);
+    fs.writeFileSync(outPath, peeled);
+    process.stdout.write(JSON.stringify({ ok: true }));
+    return;
   }
 
   if (command === "decrypt-bytes") {

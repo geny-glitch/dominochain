@@ -7,7 +7,8 @@ import {
   type PluginConfiguration,
   type WebSocketConnection as WebSocketConnectionType,
 } from "@pury-fi/plugin-sdk/websocket";
-import { bgAddTime, bgGetShowcaseSettings, bgPishockShock } from "../shared/bg-api.js";
+import { bgAddTime, bgPishockShock } from "../shared/bg-api.js";
+import { acquireShowcaseConfig } from "../shared/showcase-config-poller.js";
 import {
   analyzeScan,
   defaultPishockLevelSettings,
@@ -121,19 +122,6 @@ function mergeRemoteConfig(remote: {
     shockLevelPerLabel,
     pishockLevelSettings,
   };
-}
-
-async function fetchConfig(
-  baseUrl: string,
-  pluginToken: string,
-  fallback: PluginConfigShape,
-): Promise<PluginConfigShape> {
-  const res = await bgGetShowcaseSettings(baseUrl, pluginToken);
-  if (!res.ok) {
-    console.warn("showcase_settings:", res.error);
-    return fallback;
-  }
-  return mergeRemoteConfig(res.settings);
 }
 
 async function ensureIntents(connection: WebSocketConnectionType) {
@@ -269,8 +257,7 @@ async function runPuryFiConnection(
     connection.open();
   });
 
-  // Le client envoie « ready » très tôt : même problème que pour open() si on
-  // attend fetchConfig avant d’écouter.
+  // Ready can arrive immediately after open(); register the listener first.
   const readyPromise = new Promise<void>((resolve, reject) => {
     connection.once("message", "ready", (payload) => {
       const res = connection.handleReadyMessage(payload);
@@ -287,30 +274,33 @@ async function runPuryFiConnection(
     });
   });
 
-  let config = mergeRemoteConfig({});
-  const configPromise = fetchConfig(
+  const configHandlePromise = acquireShowcaseConfig({
     baseUrl,
     pluginToken,
-    config,
-  ).then((c) => {
-    config = c;
+    mergeRemoteConfig,
   });
+  let configHandle: Awaited<typeof configHandlePromise>;
+  try {
+    [, configHandle] = await Promise.all([readyPromise, configHandlePromise]);
+  } catch (err) {
+    const handle = await configHandlePromise.then(
+      (h) => h,
+      () => null,
+    );
+    handle?.release();
+    throw err;
+  }
+  const config = () => configHandle.config();
+  let released = false;
+  const releaseOnce = () => {
+    if (released) return;
+    released = true;
+    configHandle.release();
+  };
+  connection.once("close", releaseOnce);
 
-  await Promise.all([readyPromise, configPromise]);
-
-  setInterval(() => {
-    fetchConfig(baseUrl, pluginToken, config)
-      .then((c) => {
-        config = c;
-        if (puryfiLogPluginPayload()) {
-          void pushPluginUiConfiguration(connection, config);
-        }
-      })
-      .catch(() => {
-        /* garde la config précédente */
-      });
-  }, 10_000);
-
+  let pluginConfigLogInterval: ReturnType<typeof setInterval> | null = null;
+  try {
   await connection.sendMessage("setPluginManifest", {
     manifest: {
       name: "Domino Chain PuryFi WebSocket",
@@ -322,7 +312,7 @@ async function runPuryFiConnection(
   });
 
   // Schéma côté PuryFi : {} en prod ; en PURYFI_LOG_PLUGIN_PAYLOAD, snapshot dashboard pour que getPluginConfiguration ne soit pas vide.
-  await pushPluginUiConfiguration(connection, config);
+  await pushPluginUiConfiguration(connection, config());
 
   await ensureIntents(connection);
 
@@ -333,11 +323,11 @@ async function runPuryFiConnection(
 
   if (puryfiLogPluginPayload()) {
     await logGetPluginConfigurationDebug(connection);
-    const pluginConfigLogInterval = setInterval(() => {
+    pluginConfigLogInterval = setInterval(() => {
       void logGetPluginConfigurationDebug(connection);
     }, 60_000);
     connection.once("close", () => {
-      clearInterval(pluginConfigLogInterval);
+      if (pluginConfigLogInterval) clearInterval(pluginConfigLogInterval);
     });
   }
 
@@ -349,7 +339,7 @@ async function runPuryFiConnection(
     const { objects } = payload;
     const result = analyzeScan(
       objects.map((o) => ({ label: o.label, score: o.score })),
-      config,
+      config(),
     );
 
     if (result.totalSeconds < 1 && !result.shock) return;
@@ -391,6 +381,11 @@ async function runPuryFiConnection(
   });
 
   console.log("Domino Chain PuryFi WebSocket ready — listening for media scans.");
+  } catch (err) {
+    if (pluginConfigLogInterval) clearInterval(pluginConfigLogInterval);
+    releaseOnce();
+    throw err;
+  }
 }
 
 function main() {

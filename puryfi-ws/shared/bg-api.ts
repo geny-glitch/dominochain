@@ -47,27 +47,31 @@ export async function bgGetShowcaseSettings(
   pluginToken: string,
 ): Promise<{ ok: true; settings: BgShowcaseSettings } | { ok: false; error: string }> {
   const url = `${normalizeBase(baseUrl)}/api/showcase_settings`;
-  const res = await fetch(url, {
-    headers: { Authorization: `Bearer ${pluginToken}` },
-  });
-  const data = (await res.json().catch(() => ({}))) as BgShowcaseSettings & {
-    error?: string;
-  };
-  if (!res.ok) {
-    return {
-      ok: false,
-      error: data.error || res.statusText || `HTTP ${res.status}`,
+  try {
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${pluginToken}` },
+      signal: AbortSignal.timeout(8_000),
+    });
+    const data = (await res.json().catch(() => ({}))) as BgShowcaseSettings & {
+      error?: string;
     };
+    if (!res.ok) {
+      const detail = data.error || res.statusText || "empty body";
+      return { ok: false, error: `HTTP ${res.status} ${detail}` };
+    }
+    return {
+      ok: true,
+      settings: {
+        puryfi_min_score: data.puryfi_min_score,
+        puryfi_seconds_per_label: data.puryfi_seconds_per_label,
+        puryfi_shock_level_per_label: data.puryfi_shock_level_per_label,
+        puryfi_pishock_level_settings: data.puryfi_pishock_level_settings,
+      },
+    };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return { ok: false, error: message };
   }
-  return {
-    ok: true,
-    settings: {
-      puryfi_min_score: data.puryfi_min_score,
-      puryfi_seconds_per_label: data.puryfi_seconds_per_label,
-      puryfi_shock_level_per_label: data.puryfi_shock_level_per_label,
-      puryfi_pishock_level_settings: data.puryfi_pishock_level_settings,
-    },
-  };
 }
 
 export async function bgAddTime(

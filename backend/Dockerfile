@@ -6,6 +6,11 @@
 
 # Make sure RUBY_VERSION matches the Ruby version in .ruby-version
 ARG RUBY_VERSION=3.3.4
+FROM docker.io/library/node:22-alpine AS node_deps
+WORKDIR /npm
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
+
 FROM docker.io/library/ruby:$RUBY_VERSION-slim AS base
 
 # Rails app lives here
@@ -54,6 +59,9 @@ FROM base
 # Copy built artifacts: gems, application
 COPY --from=build "${BUNDLE_PATH}" "${BUNDLE_PATH}"
 COPY --from=build /rails /rails
+COPY --from=node_deps /npm/node_modules /rails/node_modules
+COPY --from=node_deps /npm/package.json /rails/package.json
+COPY --from=node_deps /npm/package-lock.json /rails/package-lock.json
 
 # Run and own only the runtime files as a non-root user for security
 RUN groupadd --system --gid 1000 rails && \

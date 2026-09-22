@@ -40,7 +40,10 @@ class LeveragePhotos::StartTimerServer
         encrypted_original: encrypted_original
       ).call!
     end
-  rescue LeveragePhotos::StartTimer::Error, LeveragePhotos::TlockCrypto::Error, LeveragePhotos::Envelope::Error => e
+  rescue LeveragePhotos::TlockCrypto::Error, LeveragePhotos::Envelope::Error => e
+    Rails.logger.error("[StartTimerServer] #{e.class}: #{e.message}")
+    raise Error, I18n.t("flash.beta.leverage_photo.secure_failed")
+  rescue LeveragePhotos::StartTimer::Error => e
     raise Error, e.message
   end
 

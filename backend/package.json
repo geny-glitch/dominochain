@@ -1,15 +1,13 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "description": "This README would normally document whatever steps are necessary to get the application up and running.",
-  "main": "index.js",
-  "directories": {
-    "lib": "lib"
-  },
+  "private": true,
+  "type": "module",
+  "description": "Node helpers for the Rails backend (tlock runner).",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC"
+  "dependencies": {
+    "tlock-js": "0.9.0"
+  }
 }

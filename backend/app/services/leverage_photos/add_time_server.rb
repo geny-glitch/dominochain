@@ -48,7 +48,10 @@ class LeveragePhotos::AddTimeServer
         apply_next_step: @apply_next_step
       ).call!
     end
-  rescue LeveragePhotos::AddTime::Error, LeveragePhotos::TlockCrypto::Error => e
+  rescue LeveragePhotos::TlockCrypto::Error => e
+    Rails.logger.error("[AddTimeServer] #{e.class}: #{e.message}")
+    raise Error, I18n.t("flash.beta.leverage_photo.secure_failed")
+  rescue LeveragePhotos::AddTime::Error => e
     raise Error, e.message
   end
 end

@@ -11,6 +11,8 @@ class LeveragePhotos::TlockCrypto
   RUNNER = Rails.root.join("script/leverage_tlock_runner.mjs").to_s
   DEFAULT_TIMEOUT = 90
   MAX_ATTEMPTS = 2
+  MAX_INPUT_BYTES = 48.megabytes
+  NODE_HEAP_MB = 512
 
   def self.encrypt_bytes(bytes, locked_until)
     new.encrypt_bytes(bytes, locked_until)
@@ -83,8 +85,7 @@ class LeveragePhotos::TlockCrypto
       stdout, stderr, status = run_decrypt_with_retries(in_path, out_path)
 
       unless status&.success?
-        detail = stderr.to_s.strip.presence || stdout.to_s.strip.presence || "unknown error"
-        raise Error, "tlock decryption failed: #{detail.truncate(500)}"
+        raise_runner_failure("tlock decryption failed", stdout, stderr)
       end
 
       raise Error, "empty decrypted output" unless File.exist?(out_path) && File.size(out_path).positive?
@@ -101,8 +102,7 @@ class LeveragePhotos::TlockCrypto
       stdout, stderr, status = run_with_retries(command, in_path, out_path, locked_until_ms(locked_until))
 
       unless status&.success?
-        detail = stderr.to_s.strip.presence || stdout.to_s.strip.presence || "unknown error"
-        raise Error, "tlock encryption failed: #{detail.truncate(500)}"
+        raise_runner_failure("tlock encryption failed", stdout, stderr)
       end
 
       armored = File.exist?(out_path) ? File.read(out_path) : ""
@@ -140,12 +140,18 @@ class LeveragePhotos::TlockCrypto
   end
 
   def run_node_with_retries(argv, timeout_message:)
+    in_path = argv[3]
+    if in_path.present? && File.exist?(in_path)
+      size = File.size(in_path)
+      raise Error, "tlock input too large" if size > MAX_INPUT_BYTES
+    end
+
     attempt = 0
     begin
       attempt += 1
       stdout = stderr = status = nil
       Timeout.timeout(DEFAULT_TIMEOUT) do
-        stdout, stderr, status = Open3.capture3(*argv)
+        stdout, stderr, status = Open3.capture3(node_env, *argv)
       end
       [stdout, stderr, status]
     rescue Timeout::Error
@@ -154,5 +160,19 @@ class LeveragePhotos::TlockCrypto
     rescue Errno::ENOENT
       raise Error, "node is not installed"
     end
+  end
+
+  def node_env
+    options = ENV["NODE_OPTIONS"].to_s
+    unless options.include?("max-old-space-size")
+      options = [options, "--max-old-space-size=#{NODE_HEAP_MB}"].reject(&:blank?).join(" ")
+    end
+    ENV.to_h.merge("NODE_OPTIONS" => options)
+  end
+
+  def raise_runner_failure(prefix, stdout, stderr)
+    detail = stderr.to_s.strip.presence || stdout.to_s.strip.presence || "unknown error"
+    Rails.logger.error("[TlockCrypto] #{prefix}: #{detail.truncate(2000)}")
+    raise Error, prefix
   end
 end

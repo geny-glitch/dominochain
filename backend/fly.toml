@@ -44,10 +44,10 @@ console_command = '/rails/bin/rails console'
 
 [[vm]]
   processes = ['app']
-  memory = '1gb'
+  memory = '2gb'
   cpu_kind = 'shared'
   cpus = 1
-  memory_mb = 1024
+  memory_mb = 2048
 
 [[vm]]
   processes = ['worker']

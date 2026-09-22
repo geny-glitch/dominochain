@@ -164,6 +164,7 @@ es:
         deleted: "Foto de presión eliminada definitivamente."
         restored: "Original guardado. Seguirá disponible en esta página."
         restore_failed: "No se pudo restaurar el original. Inténtalo de nuevo."
+        secure_failed: "No se pudo bloquear esta foto. Inténtalo de nuevo."
         original_deleted: "Original eliminado. Las versiones censuradas siguen aquí."
         original_delete_unavailable: "Añade primero una versión censurada, o el original ya no está."
         not_found: "Foto de presión no encontrada."

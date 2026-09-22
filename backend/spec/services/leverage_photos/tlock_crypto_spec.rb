@@ -27,7 +27,8 @@ RSpec.describe LeveragePhotos::TlockCrypto do
   it "retries once after a transient timeout before succeeding" do
     locked_until = 1.hour.from_now
     call_count = 0
-    allow(Open3).to receive(:capture3) do |*_cmd, out_path, _ms|
+    allow(Open3).to receive(:capture3) do |*_args|
+      out_path = _args[-2]
       call_count += 1
       raise Timeout::Error if call_count == 1
 
@@ -41,6 +42,19 @@ RSpec.describe LeveragePhotos::TlockCrypto do
     expect(call_count).to eq(2)
     expect(result[:round]).to eq(1)
     expect(result[:armored]).to include("BEGIN AGE")
+  end
+
+  it "does not leak node heap dumps in the raised error" do
+    locked_until = 1.hour.from_now
+    dump = "<--- Last few GCs ---> FATAL ERROR: JavaScript heap out of memory"
+    allow(Open3).to receive(:capture3).and_return(
+      ["", dump, instance_double(Process::Status, success?: false)]
+    )
+    allow(Timeout).to receive(:timeout).and_yield
+
+    expect do
+      described_class.encrypt_bytes("hello-photo", locked_until)
+    end.to raise_error(described_class::Error, "tlock encryption failed")
   end
 
   it "raises after exhausting all retry attempts" do

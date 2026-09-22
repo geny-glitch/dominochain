@@ -2,10 +2,12 @@
 /**
  * Server-side tlock encrypt/decrypt helper.
  *
- * Loads the browser vendored IIFE, then encrypts or peels a file in place
- * without shuttling the payload through JSON/base64. Encrypt uses the
- * quicknet public key already in defaultChainInfo (no drand HTTP). Decrypt
- * uses mainnetClient so it can fetch beacons after the round.
+ * Uses the Node tlock-js package (native Buffer) rather than the browser
+ * vendor IIFE. The IIFE's Buffer polyfill copies large payloads as JS
+ * numbers and OOMs around the default ~512MB heap.
+ *
+ * Encrypt uses the quicknet public key in defaultChainInfo (no drand HTTP).
+ * Decrypt uses mainnetClient so it can fetch beacons after the round.
  *
  * Usage:
  *   node script/leverage_tlock_runner.mjs encrypt-bytes <in> <out> <locked_until_ms>
@@ -16,54 +18,18 @@
  * Decrypt writes the peeled payload bytes to <out>.
  */
 import fs from "node:fs";
-import path from "node:path";
-import vm from "node:vm";
-import { createRequire } from "node:module";
-import { webcrypto } from "node:crypto";
-import { fileURLToPath } from "node:url";
+import {
+  defaultChainInfo,
+  mainnetClient,
+  roundAt,
+  timelockDecrypt,
+  timelockEncrypt
+} from "tlock-js";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const vendorPath = path.resolve(__dirname, "../public/vendor/tlock-js.js");
-const nodeRequire = createRequire(import.meta.url);
+const MAX_INPUT_BYTES = 48 * 1024 * 1024;
 
-function loadTlock() {
-  const code = fs.readFileSync(vendorPath, "utf8");
-  const sandbox = {
-    console,
-    setTimeout,
-    clearTimeout,
-    setInterval,
-    clearInterval,
-    fetch: globalThis.fetch,
-    URL,
-    URLSearchParams,
-    TextEncoder,
-    TextDecoder,
-    Buffer,
-    atob: (s) => Buffer.from(s, "base64").toString("binary"),
-    btoa: (s) => Buffer.from(s, "binary").toString("base64"),
-    crypto: globalThis.crypto || webcrypto,
-    require: nodeRequire,
-    process,
-    global: {},
-    module: { exports: {} },
-    exports: {}
-  };
-  sandbox.global = sandbox;
-  sandbox.globalThis = sandbox;
-  vm.createContext(sandbox);
-  vm.runInContext(code, sandbox);
-  if (!sandbox.TlockJs || typeof sandbox.TlockJs.timelockEncrypt !== "function") {
-    throw new Error("Failed to load TlockJs from vendor bundle");
-  }
-  return sandbox.TlockJs;
-}
-
-// Encrypt only needs the scheme public key. Creating a fresh HttpCachingChain
-// would HTTP GET api.drand.sh/info on every lock (~1s+, and hangs when drand
-// is slow). defaultChainInfo is the same quicknet metadata baked into the client.
-function staticChainClient(api) {
-  const info = api.defaultChainInfo;
+function staticChainClient() {
+  const info = defaultChainInfo;
   if (!info?.public_key || !info?.hash) {
     throw new Error("defaultChainInfo missing");
   }
@@ -82,16 +48,25 @@ function isArmoredAge(text) {
   return typeof text === "string" && text.trimStart().indexOf("-----BEGIN AGE ENCRYPTED FILE-----") === 0;
 }
 
-async function encryptPayload(api, bytes, lockedUntilMs) {
-  const chainInfo = api.defaultChainInfo;
-  const round = api.roundAt(lockedUntilMs, chainInfo);
+function readInput(inPath) {
+  const st = fs.statSync(inPath);
+  if (st.size === 0) throw new Error("empty input");
+  if (st.size > MAX_INPUT_BYTES) {
+    throw new Error(`input too large (${st.size} bytes)`);
+  }
+  return fs.readFileSync(inPath);
+}
+
+async function encryptPayload(bytes, lockedUntilMs) {
+  const chainInfo = defaultChainInfo;
+  const round = roundAt(lockedUntilMs, chainInfo);
   if (!Number.isFinite(round) || round < 1) {
     throw new Error("Invalid drand round for selected duration");
   }
-  const armored = await api.timelockEncrypt(
+  const armored = await timelockEncrypt(
     round,
     bytes,
-    staticChainClient(api)
+    staticChainClient()
   );
   return {
     armored,
@@ -100,13 +75,13 @@ async function encryptPayload(api, bytes, lockedUntilMs) {
   };
 }
 
-async function peelLayers(api, outerArmored) {
-  const client = api.mainnetClient();
+async function peelLayers(outerArmored) {
+  const client = mainnetClient();
   let payload = outerArmored;
   let layersPeeled = 0;
   const max = 64;
   while (layersPeeled < max) {
-    const decrypted = await api.timelockDecrypt(payload, client);
+    const decrypted = await timelockDecrypt(payload, client);
     layersPeeled += 1;
     const buf = Buffer.from(decrypted);
     const asText = buf.toString("utf8");
@@ -130,12 +105,10 @@ async function main() {
     throw new Error("input and output paths required");
   }
 
-  const api = loadTlock();
-
   if (command === "decrypt-bytes") {
-    const armored = fs.readFileSync(inPath, "utf8");
+    const armored = readInput(inPath).toString("utf8");
     if (!armored.trim()) throw new Error("empty input");
-    const peeled = await peelLayers(api, armored);
+    const peeled = await peelLayers(armored);
     fs.writeFileSync(outPath, peeled);
     process.stdout.write(JSON.stringify({ ok: true }));
     return;
@@ -146,13 +119,9 @@ async function main() {
     throw new Error("locked_until_ms must be a future timestamp");
   }
 
-  const buf = fs.readFileSync(inPath);
-  if (buf.length === 0) throw new Error("empty input");
-  const bytes = command === "encrypt-outer"
-    ? buf
-    : new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength);
-
-  const result = await encryptPayload(api, bytes, lockedUntilMs);
+  const buf = readInput(inPath);
+  const bytes = Buffer.from(buf);
+  const result = await encryptPayload(bytes, lockedUntilMs);
   fs.writeFileSync(outPath, result.armored, "utf8");
   process.stdout.write(JSON.stringify({
     round: result.round,
@@ -161,6 +130,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  process.stderr.write(String(err && err.stack ? err.stack : err) + "\n");
+  process.stderr.write(String(err && err.message ? err.message : err) + "\n");
   process.exit(1);
 });

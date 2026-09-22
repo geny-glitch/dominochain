@@ -1,0 +1,103 @@
+<%# locals: photo %>
+<% id_prefix = "lp-#{photo.id}" %>
+<% has_viewable_original = photo.viewable_original? %>
+<% preferred_censored = photo.preferred_censored_attachment %>
+<% hero = if has_viewable_original && !photo.active?
+     photo.original_image
+   else
+     preferred_censored
+   end %>
+
+<div class="ds-beta-leverage-member"
+     data-leverage-photo
+     data-original-url="<%= beta_leverage_photo_original_path(photo) %>"
+     data-tlock-url="<%= beta_leverage_photo_tlock_blob_path(photo) %>"
+     data-decrypt-url="<%= beta_leverage_photo_decrypt_payload_path(photo) %>"
+     data-restore-url="<%= beta_leverage_photo_restore_original_path(photo) %>"
+     data-original-filename="<%= photo.download_filename %>"
+     data-photo-status="<%= photo.status %>"
+     data-tlock-format="<%= photo.tlock_format %>"
+     data-has-original="<%= photo.original_image.attached? ? "true" : "false" %>"
+     data-locked-until="<%= photo.locked_until&.iso8601 %>"
+     data-layer-count="<%= photo.tlock_layer_count %>"
+     data-max-peel-layers="<%= LeveragePhoto::MAX_PEEL_LAYERS %>"
+     data-invalid-minutes="<%= t("leverage_photo.show.invalid_minutes") %>"
+     data-invalid-minutes-max="<%= t("leverage_photo.show.invalid_minutes_max") %>">
+  <div class="ds-beta-home-card-head">
+    <h3 class="ds-section-title"><%= photo.download_filename %></h3>
+    <span class="ds-beta-home-pill <%= photo.active? ? "ds-beta-home-pill--on" : "" %>">
+      <%= t("leverage_photo.status.#{photo.status}") %>
+    </span>
+  </div>
+
+  <% if hero.present? %>
+    <div class="ds-beta-leverage-hero">
+      <% if has_viewable_original && !photo.active? %>
+        <p class="ds-beta-home-muted"><%= t("leverage_photo.show.original_label") %></p>
+        <%= image_tag url_for(hero), alt: t("leverage_photo.show.original_alt"), class: "ds-beta-leverage-hero__img" %>
+      <% else %>
+        <p class="ds-beta-home-muted"><%= t("leverage_photo.show.censored_label") %></p>
+        <%= image_tag url_for(hero), alt: t("leverage_photo.show.censored_alt"), class: "ds-beta-leverage-hero__img" %>
+      <% end %>
+    </div>
+  <% end %>
+
+  <% if photo.censored_images.attached? %>
+    <div class="ds-beta-leverage-reminders ds-beta-leverage-reminders--thumbs">
+      <% photo.censored_images.each_with_index do |image, index| %>
+        <div class="ds-beta-leverage-reminders__item">
+          <p class="ds-beta-home-muted"><%= t("leverage_photo.show.censored_version_label", n: index + 1) %></p>
+          <%= image_tag url_for(image), alt: t("leverage_photo.show.censored_alt"), class: "ds-beta-leverage-reminders__img" %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <% if photo.can_censor? %>
+    <div class="ds-beta-leverage-panel__actions ds-beta-leverage-panel__actions--standalone">
+      <%= link_to t("leverage_photo.show.add_censor"), beta_leverage_photo_censor_path(photo), class: "ds-btn ds-btn--secondary ds-btn--sm" %>
+    </div>
+  <% end %>
+
+  <% if photo.can_attach_censored? %>
+    <%= render "beta_leverage_photo/censored_upload_form", photo: photo %>
+  <% end %>
+
+  <% if photo.unlocked? %>
+    <section class="ds-beta-leverage-panel">
+      <% if has_viewable_original %>
+        <div class="ds-beta-leverage-panel__actions">
+          <%= link_to t("leverage_photo.show.download_original"), beta_leverage_photo_original_path(photo), class: "ds-btn ds-btn--secondary ds-btn--sm", download: photo.download_filename %>
+        </div>
+      <% elsif photo.tlock_blob.attached? || photo.encrypted_original.attached? %>
+        <div class="ds-beta-leverage-panel__actions">
+          <button type="button" class="ds-btn ds-btn--secondary ds-btn--sm" data-action="decrypt"><%= t("leverage_photo.show.restore_original") %></button>
+        </div>
+        <img data-decrypted-image hidden alt="<%= t("leverage_photo.show.original_alt") %>" class="ds-beta-leverage-reminders__img ds-beta-leverage-reminders__img--original" />
+      <% else %>
+        <p class="ds-beta-control-text"><%= t("leverage_photo.show.original_unavailable") %></p>
+      <% end %>
+    </section>
+  <% elsif photo.sanctioned? %>
+    <p class="ds-beta-control-text"><%= t("leverage_photo.show.sanctioned_hint") %></p>
+  <% end %>
+
+  <%= render "beta_leverage_photo/wallpaper_panel", photo: photo %>
+
+  <% unless photo.deleted? %>
+    <%= render "beta_leverage_photo/danger_zone", photo: photo %>
+  <% end %>
+
+  <p class="ds-beta-home-muted ds-beta-leverage-crypto-status" data-crypto-status
+     data-starting="<%= t("leverage_photo.show.status_starting") %>"
+     data-adding="<%= t("leverage_photo.show.status_adding") %>"
+     data-peeling="<%= t("leverage_photo.show.status_peeling") %>"
+     data-loading-crypto="<%= t("leverage_photo.show.status_loading_crypto") %>"
+     data-crypto-load-error="<%= t("leverage_photo.show.status_crypto_load_error") %>"
+     data-peel-error="<%= t("leverage_photo.show.status_peel_error") %>"
+     data-fetching-original="<%= t("leverage_photo.show.status_fetching_original") %>"
+     data-fetching-blob="<%= t("leverage_photo.show.status_fetching_blob") %>"
+     data-encrypting="<%= t("leverage_photo.show.status_encrypting") %>"
+     data-uploading="<%= t("leverage_photo.show.status_uploading") %>"
+     aria-live="polite"></p>
+</div>

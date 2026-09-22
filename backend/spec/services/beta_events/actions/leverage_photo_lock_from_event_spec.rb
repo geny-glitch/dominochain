@@ -57,7 +57,9 @@ RSpec.describe BetaEvents::Actions::LeveragePhotoLockFromEvent do
 
     described_class.new.call(context)
 
-    expect(LeveragePhotos::AddTimeServer).to have_received(:new).with(photo: photo, added_seconds: 1800)
+    expect(LeveragePhotos::AddTimeServer).to have_received(:new).with(
+      hash_including(photo: photo, added_seconds: 1800)
+    )
     expect(context.leverage_photo_id).to eq(photo.id)
   end
 end

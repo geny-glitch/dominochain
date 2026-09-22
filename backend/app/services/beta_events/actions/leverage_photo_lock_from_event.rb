@@ -15,19 +15,17 @@ module BetaEvents
         )
         raise ActionExecutionStopped.new(:no_eligible_photo) if photo.nil?
 
-        if photo.can_add_time?
-          LeveragePhotos::AddTimeServer.new(photo: photo, added_seconds: seconds).call!
-        elsif photo.can_start_timer?
-          LeveragePhotos::StartTimerServer.new(photo: photo, duration_seconds: seconds).call!
+        if photo.can_add_time? || photo.bundle_can_add_time?
+          LeveragePhotos::LockBundle.add_time!(photo: photo, added_seconds: seconds)
+        elsif photo.can_start_timer? || photo.bundle_can_start_timer?
+          LeveragePhotos::LockBundle.start!(photo: photo, duration_seconds: seconds)
         else
           raise ActionExecutionStopped.new(:no_eligible_photo)
         end
 
         context.leverage_photo_id = photo.id
-      rescue LeveragePhotos::StartTimerServer::Error => e
+      rescue LeveragePhotos::LockBundle::Error => e
         raise ActionExecutionStopped.new(:leverage_start_failed, e.message.to_s.truncate(500))
-      rescue LeveragePhotos::AddTimeServer::Error => e
-        raise ActionExecutionStopped.new(:leverage_add_time_failed, e.message.to_s.truncate(500))
       end
     end
   end

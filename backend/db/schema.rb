@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_09_18_120000) do
+ActiveRecord::Schema[7.2].define(version: 2026_09_18_143000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -340,6 +340,13 @@ ActiveRecord::Schema[7.2].define(version: 2026_09_18_120000) do
     t.index ["url"], name: "index_influencer_images_on_url", unique: true
   end
 
+  create_table "leverage_photo_bundles", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_leverage_photo_bundles_on_user_id"
+  end
+
   create_table "leverage_photo_extensions", force: :cascade do |t|
     t.bigint "leverage_photo_id", null: false
     t.integer "added_seconds", null: false
@@ -365,6 +372,10 @@ ActiveRecord::Schema[7.2].define(version: 2026_09_18_120000) do
     t.integer "add_time_base_seconds"
     t.integer "add_time_step_n", default: 0, null: false
     t.string "tlock_format", default: "full_image", null: false
+    t.bigint "bundle_id", null: false
+    t.integer "position", default: 0, null: false
+    t.index ["bundle_id", "position"], name: "index_leverage_photos_on_bundle_id_and_position"
+    t.index ["bundle_id"], name: "index_leverage_photos_on_bundle_id"
     t.index ["locked_until"], name: "index_leverage_photos_on_locked_until"
     t.index ["status"], name: "index_leverage_photos_on_status"
     t.index ["user_id"], name: "index_leverage_photos_on_user_id"
@@ -888,7 +899,9 @@ ActiveRecord::Schema[7.2].define(version: 2026_09_18_120000) do
   add_foreign_key "gaze_sessions", "users"
   add_foreign_key "gaze_targets", "users"
   add_foreign_key "gaze_violations", "gaze_sessions"
+  add_foreign_key "leverage_photo_bundles", "users"
   add_foreign_key "leverage_photo_extensions", "leverage_photos"
+  add_foreign_key "leverage_photos", "leverage_photo_bundles", column: "bundle_id"
   add_foreign_key "leverage_photos", "users"
   add_foreign_key "proof_of_completions", "tasks"
   add_foreign_key "punishments", "tasks"

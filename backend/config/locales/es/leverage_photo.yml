@@ -31,7 +31,7 @@ es:
       step_edit: "Censurar"
       choose_image: "Elegir una imagen"
       choose_images: "Elegir una o varias imágenes"
-      choose_help: "Elige una o varias fotos. Cada una se guarda al momento con una vista previa pequeña. Puedes añadir más versiones censuradas más tarde desde la página de la foto."
+      choose_help: "Elige una o varias fotos. Juntas se guardan como un lote con un solo temporizador. Puedes añadir más versiones censuradas más tarde en cada foto."
       crop_help: "Recorta el recordatorio censurado (proporción libre). El original no se modifica."
       crop_alt: "Recorte"
       change: "Cambiar"
@@ -180,9 +180,13 @@ es:
       status_fetching_blob: "Cargando foto bloqueada…"
       status_encrypting: "Asegurando tu foto…"
       status_uploading: "Guardando…"
+    bundle:
+      photo_count:
+        one: "%{count} foto"
+        other: "%{count} fotos"
     how_it_works:
       intro: "Time vault guarda fotos personales detrás de un bloqueo temporal que tú controlas."
-      step_upload: "Sube una o más fotos — los originales siguen disponibles hasta que inicies el temporizador."
+      step_upload: "Sube una foto o varias a la vez: un solo temporizador cubre todo el lote."
       step_teaser: "Cada foto recibe al menos una vista previa censurada que puedes ampliar."
       step_lock: "Inicia un temporizador cuando quieras — el original deja de estar disponible hasta el desbloqueo."
       step_scenarios: "Configura escenarios para añadir tiempo o aplicar consecuencias automáticamente."

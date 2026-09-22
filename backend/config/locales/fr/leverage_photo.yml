@@ -31,7 +31,7 @@ fr:
       step_edit: "Censurer"
       choose_image: "Choisir une image"
       choose_images: "Choisir une ou plusieurs images"
-      choose_help: "Choisis une ou plusieurs photos. Chacune est enregistrée tout de suite avec un petit aperçu. Tu pourras ajouter d'autres versions censurées plus tard depuis la page photo."
+      choose_help: "Choisis une ou plusieurs photos. Ensemble, elles forment un bundle avec un seul timer. Tu pourras ajouter d'autres versions censurées plus tard sur chaque photo."
       crop_help: "Recadrez le rappel censuré (ratio libre). L’originale reste intacte."
       crop_alt: "Recadrage"
       change: "Changer"
@@ -180,9 +180,13 @@ fr:
       status_fetching_blob: "Chargement de la photo verrouillée…"
       status_encrypting: "Sécurisation de la photo…"
       status_uploading: "Enregistrement…"
+    bundle:
+      photo_count:
+        one: "%{count} photo"
+        other: "%{count} photos"
     how_it_works:
       intro: "Time vault stocke des photos personnelles derrière un verrou temporel que tu contrôles."
-      step_upload: "Upload une ou plusieurs photos — les originales restent disponibles tant que tu n'as pas démarré le timer."
+      step_upload: "Upload une photo ou plusieurs d’un coup — un seul timer couvre tout le bundle."
       step_teaser: "Chaque photo reçoit au moins un aperçu censuré que tu peux enrichir."
       step_lock: "Démarre un timer quand tu es prêt·e — l'originale devient indisponible jusqu'au déblocage."
       step_scenarios: "Configure des scénarios pour ajouter du temps ou appliquer des conséquences automatiquement."

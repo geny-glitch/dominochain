@@ -12,16 +12,30 @@
   <div class="<%= grid_class %>">
     <% display_photos.each do |photo| %>
       <%= link_to beta_leverage_photo_path(photo), class: "ds-beta-leverage-grid__item" do %>
-        <% preview = photo.preferred_censored_attachment %>
-        <% if preview.present? %>
-          <%= image_tag url_for(preview),
-                alt: "",
-                class: "ds-beta-leverage-grid__thumb" %>
+        <% mates = photo.bundle_mates %>
+        <% if mates.size > 1 %>
+          <div class="ds-beta-leverage-mosaic" aria-hidden="true">
+            <% photo.mosaic_photos.each do |mate| %>
+              <% preview = mate.preferred_censored_attachment %>
+              <% if preview.present? %>
+                <%= image_tag url_for(preview), alt: "", class: "ds-beta-leverage-mosaic__thumb" %>
+              <% else %>
+                <div class="ds-beta-leverage-mosaic__thumb ds-beta-leverage-grid__thumb--empty"></div>
+              <% end %>
+            <% end %>
+          </div>
         <% else %>
-          <div class="ds-beta-leverage-grid__thumb ds-beta-leverage-grid__thumb--empty" aria-hidden="true"></div>
+          <% preview = photo.preferred_censored_attachment %>
+          <% if preview.present? %>
+            <%= image_tag url_for(preview),
+                  alt: "",
+                  class: "ds-beta-leverage-grid__thumb" %>
+          <% else %>
+            <div class="ds-beta-leverage-grid__thumb ds-beta-leverage-grid__thumb--empty" aria-hidden="true"></div>
+          <% end %>
         <% end %>
         <span class="ds-beta-leverage-grid__meta">
-          <span class="ds-beta-leverage-grid__name" title="<%= photo.download_filename %>"><%= photo.download_filename %></span>
+          <span class="ds-beta-leverage-grid__name" title="<%= photo.bundle_display_name %>"><%= photo.bundle_display_name %></span>
           <span class="ds-beta-home-pill ds-beta-leverage-grid__pill <%= photo.active? ? "ds-beta-home-pill--on" : "" %>">
             <%= t("leverage_photo.status.#{photo.status}") %>
           </span>

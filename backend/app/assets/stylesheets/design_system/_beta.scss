@@ -2119,6 +2119,38 @@
   }
 }
 
+.ds-beta-leverage-mosaic {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  width: 100%;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: var(--md-sys-shape-corner-medium, #{$ds-radius-md});
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.ds-beta-leverage-mosaic__thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  min-height: 0;
+}
+
+.ds-beta-leverage-members {
+  display: flex;
+  flex-direction: column;
+  gap: $ds-space-md;
+  margin-top: $ds-space-md;
+}
+
+.ds-beta-leverage-member {
+  padding: $ds-space-md;
+  border-radius: var(--md-sys-shape-corner-large, #{$ds-radius-lg});
+  background: var(--md-sys-color-surface-container-high, #{$ds-bg});
+  border: 1px solid var(--md-sys-color-outline, #{$ds-border});
+}
+
 .ds-beta-leverage-grid__thumb {
   width: 100%;
   aspect-ratio: 1;

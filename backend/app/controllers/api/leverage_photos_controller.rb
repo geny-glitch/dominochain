@@ -37,7 +37,8 @@ module Api
         original_image: params[:original_image],
         teaser_image: params[:teaser_image],
         censored_image: params[:censored_image],
-        original_filename: params[:original_filename]
+        original_filename: params[:original_filename],
+        bundle: find_upload_bundle
       )
 
       render json: LeveragePhotoPayload.detail_json(photo, helpers: self), status: :created
@@ -63,17 +64,17 @@ module Api
     def start
       duration_seconds = params[:duration_seconds].to_i
 
-      LeveragePhotos::StartTimerServer.new(
+      LeveragePhotos::LockBundle.start!(
         photo: @photo,
         duration_seconds: duration_seconds
-      ).call!
+      )
 
       render json: {
         status: "active",
         locked_until: @photo.reload.locked_until.iso8601,
         photo: LeveragePhotoPayload.detail_json(@photo, helpers: self)
       }
-    rescue LeveragePhotos::StartTimerServer::Error => e
+    rescue LeveragePhotos::LockBundle::Error => e
       render json: { error: e.message }, status: :unprocessable_entity
     end
 
@@ -82,12 +83,12 @@ module Api
       save_as_base = ActiveModel::Type::Boolean.new.cast(params[:save_as_base])
       apply_next_step = ActiveModel::Type::Boolean.new.cast(params[:apply_next_step])
 
-      LeveragePhotos::AddTimeServer.new(
+      LeveragePhotos::LockBundle.add_time!(
         photo: @photo,
         added_seconds: added_seconds,
         save_as_base: save_as_base,
         apply_next_step: apply_next_step
-      ).call!
+      )
 
       render json: {
         status: "active",
@@ -95,7 +96,7 @@ module Api
         layers: @photo.tlock_layer_count,
         photo: LeveragePhotoPayload.detail_json(@photo, helpers: self)
       }
-    rescue LeveragePhotos::AddTimeServer::Error, ActionController::ParameterMissing => e
+    rescue LeveragePhotos::LockBundle::Error, ActionController::ParameterMissing => e
       render json: { error: e.message }, status: :unprocessable_entity
     end
 
@@ -208,14 +209,15 @@ module Api
     end
 
     def ensure_lockable_for_start!
-      return if @photo.can_start_timer?
+      return if @photo.bundle_can_start_timer?
 
       head :forbidden
     end
 
     def ensure_active!
       maybe_unlock!(@photo)
-      return if @photo.active?
+      @photo.bundle_mates.each { |photo| maybe_unlock!(photo) }
+      return if @photo.bundle_can_add_time?
 
       head :forbidden
     end
@@ -231,12 +233,16 @@ module Api
       LeveragePhotos::UnlockPhoto.call!(photo)
     end
 
-    def create_draft_photo!(original_image:, teaser_image:, original_filename:, censored_image: nil)
+    def create_draft_photo!(original_image:, teaser_image:, original_filename:, censored_image: nil, bundle: nil)
       filename = LeveragePhoto.normalized_original_filename(
         original_filename.presence || original_image.original_filename
       )
 
       photo = current_user.leverage_photos.build(status: "draft", original_filename: filename)
+      if bundle
+        photo.bundle = bundle
+        photo.position = bundle.leverage_photos.maximum(:position).to_i + 1
+      end
       photo.original_image.attach(original_image)
       photo.censored_images.attach(censored_image) if censored_image.present?
       photo.censored_images.attach(teaser_image) if teaser_image.present?
@@ -244,6 +250,12 @@ module Api
       photo.original_image.blob.update!(filename: filename) if photo.original_image.attached?
       photo.assert_attachments!
       photo
+    end
+
+    def find_upload_bundle
+      return if params[:bundle_id].blank?
+
+      current_user.leverage_photo_bundles.find_by(id: params[:bundle_id])
     end
 
     def send_tlock_blob!

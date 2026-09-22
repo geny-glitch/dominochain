@@ -39,8 +39,10 @@ class BetaDashboardController < ApplicationController
     @cigarettes_today = current_user.cigarette_entries.for_day(Date.current).sum(:count)
     @cigarettes_avg_30d = average_cigarettes_last_30_days
     @recent_time_events = current_user.chaster_time_events.recent.limit(6)
-    @leverage_photos = current_user.leverage_photos.not_deleted.with_attached_censored_images.newest_first
-    @leverage_photos.each { |photo| photo.mark_unlocked! if photo.unlock_due? }
+    @leverage_photos = LeveragePhoto.for_user_list(current_user, sort: "newest")
+    @leverage_photos.each do |photo|
+      photo.bundle_mates.each { |mate| mate.mark_unlocked! if mate.unlock_due? }
+    end
   end
 
   def scenarios
@@ -242,7 +244,9 @@ class BetaDashboardController < ApplicationController
   def actions_leverage_photo
     @list_sort = LeveragePhoto.normalize_list_sort(params[:sort])
     @photos = LeveragePhoto.for_user_list(current_user, sort: @list_sort)
-    @photos.each { |photo| photo.mark_unlocked! if photo.unlock_due? }
+    @photos.each do |photo|
+      photo.bundle_mates.each { |mate| mate.mark_unlocked! if mate.unlock_due? }
+    end
     @photo_count = @photos.size
     @recent_leverage_sanctions = recent_leverage_sanctions
   end

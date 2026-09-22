@@ -36,6 +36,26 @@ RSpec.describe BetaLeveragePhotoController, type: :request do
       expect(photo.censored_images.count).to eq(2)
     end
 
+    it "groups several uploads into one bundle" do
+      post beta_leverage_photo_upload_submit_path, params: {
+        original_image: jpeg_upload("one"),
+        teaser_image: jpeg_upload("teaser"),
+        original_filename: "one.jpg"
+      }
+      first = user.leverage_photos.not_deleted.last
+
+      post beta_leverage_photo_upload_submit_path, params: {
+        original_image: jpeg_upload("two"),
+        teaser_image: jpeg_upload("teaser2"),
+        original_filename: "two.jpg",
+        bundle_id: first.bundle_id
+      }
+
+      expect(user.leverage_photos.not_deleted.count).to eq(2)
+      expect(user.leverage_photos.not_deleted.pluck(:bundle_id).uniq.size).to eq(1)
+      expect(LeveragePhoto.for_user_list(user).size).to eq(1)
+    end
+
     it "allows multiple photos per user" do
       create(:leverage_photo, :with_images, user: user, original_filename: "one.jpg")
 

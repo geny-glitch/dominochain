@@ -24,6 +24,7 @@ class LeveragePhoto < ApplicationRecord
   DEFAULT_DRAND_CHAIN_HASH = "52db9ba70e0cc0f6eaf7803dd07447a1f5477735fd3f661792ba94600c84e971"
 
   belongs_to :user
+  belongs_to :bundle, class_name: "LeveragePhotoBundle", inverse_of: :leverage_photos
   has_many :leverage_photo_extensions, dependent: :destroy
   has_many :wallpapers, dependent: :nullify
 
@@ -35,6 +36,8 @@ class LeveragePhoto < ApplicationRecord
   validates :status, inclusion: { in: STATUSES }
   validates :tlock_format, inclusion: { in: TLOCK_FORMATS }
   validate :attachments_match_status, on: :strict
+
+  before_validation :ensure_bundle, on: :create
 
   LIST_SORT_DEFAULT = "unlock_asc"
   LIST_SORT_KEYS = %w[unlock_asc unlock_desc newest].freeze
@@ -61,7 +64,25 @@ class LeveragePhoto < ApplicationRecord
   end
 
   def self.for_user_list(user, sort: LIST_SORT_DEFAULT)
-    apply_list_sort(user.leverage_photos.not_deleted.with_attached_censored_images, sort)
+    photos = user.leverage_photos.not_deleted.with_attached_censored_images.includes(:bundle)
+    grouped = photos.group_by { |photo| photo.bundle_id || photo.id }
+    covers = grouped.map do |_key, members|
+      cover = members.min_by { |photo| [photo.position.to_i, photo.id] }
+      cover.instance_variable_set(
+        :@bundle_mates,
+        members.sort_by { |photo| [photo.position.to_i, photo.id] }
+      )
+      cover
+    end
+
+    case normalize_list_sort(sort)
+    when "unlock_desc"
+      covers.sort_by { |photo| [photo.locked_until ? 0 : 1, -(photo.locked_until || Time.zone.at(0)).to_i, -photo.created_at.to_i] }
+    when "newest"
+      covers.sort_by { |photo| -photo.bundle_mates.map(&:created_at).max.to_i }
+    else
+      covers.sort_by { |photo| [photo.locked_until ? 0 : 1, photo.locked_until || Time.zone.at(0), photo.created_at] }
+    end
   end
 
   def self.uploaded_files(*values)
@@ -81,6 +102,46 @@ class LeveragePhoto < ApplicationRecord
 
   def download_filename
     original_filename.presence || "photo.jpg"
+  end
+
+  def bundle_mates
+    return @bundle_mates if defined?(@bundle_mates) && @bundle_mates
+
+    if bundle
+      bundle.leverage_photos.not_deleted.order(:position, :id).to_a
+    else
+      [self]
+    end
+  end
+
+  def bundle_lock_targets
+    bundle_mates.reject { |photo| photo.deleted? || photo.sanctioned? }
+  end
+
+  def bundle_can_start_timer?
+    targets = bundle_lock_targets
+    targets.any? && targets.all?(&:can_start_timer?)
+  end
+
+  def bundle_can_add_time?
+    targets = bundle_lock_targets
+    targets.any? && targets.all?(&:can_add_time?)
+  end
+
+  def timer_photo
+    mates = bundle_mates
+    mates.find(&:active?) || mates.find(&:unlocked?) || mates.find(&:draft?) || mates.first
+  end
+
+  def bundle_display_name
+    mates = bundle_mates
+    return download_filename if mates.size <= 1
+
+    I18n.t("leverage_photo.bundle.photo_count", count: mates.size)
+  end
+
+  def mosaic_photos
+    bundle_mates.first(4)
   end
 
   def draft?
@@ -353,6 +414,13 @@ class LeveragePhoto < ApplicationRecord
   end
 
   private
+
+  def ensure_bundle
+    return if bundle.present? || user.blank?
+
+    self.bundle = user.leverage_photo_bundles.build
+    self.position ||= 0
+  end
 
   def read_restored_original(uploaded_original)
     if uploaded_original.is_a?(Hash) && uploaded_original[:io]

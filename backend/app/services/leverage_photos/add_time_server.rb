@@ -3,11 +3,12 @@
 class LeveragePhotos::AddTimeServer
   class Error < StandardError; end
 
-  def initialize(photo:, added_seconds:, save_as_base: false, apply_next_step: false)
+  def initialize(photo:, added_seconds:, save_as_base: false, apply_next_step: false, locked_until: nil)
     @photo = photo
     @added_seconds = added_seconds.to_i
     @save_as_base = save_as_base
     @apply_next_step = apply_next_step
+    @locked_until = locked_until
   end
 
   def call!
@@ -17,9 +18,13 @@ class LeveragePhotos::AddTimeServer
     @photo.with_lock do
       raise Error, "cannot add time" unless @photo.can_add_time?
 
-      base = @photo.locked_until.presence || Time.current
-      from = [base, Time.current].max
-      locked_until = from + @added_seconds.seconds
+      locked_until =
+        if @locked_until.present?
+          @locked_until
+        else
+          base = @photo.locked_until.presence || Time.current
+          [base, Time.current].max + @added_seconds.seconds
+        end
 
       crypto = LeveragePhotos::TlockCrypto.encrypt_attachment(
         @photo.tlock_blob,

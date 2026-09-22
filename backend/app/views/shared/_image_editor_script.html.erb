@@ -90,7 +90,7 @@
       return data;
     }
 
-    async function uploadDraftFromFile(file, censoredCanvas) {
+    async function uploadDraftFromFile(file, censoredCanvas, bundleId) {
       if (!file) throw new Error("missing original file");
       const originalCanvas = await fileToCanvas(file);
       const teaserBlob = await canvasToBlob(buildTeaserCanvas(originalCanvas), "image/jpeg", 0.8);
@@ -99,6 +99,7 @@
       formData.append("original_filename", originalName);
       formData.append("original_image", file, originalName);
       formData.append("teaser_image", teaserBlob, "teaser.jpg");
+      if (bundleId) formData.append("bundle_id", String(bundleId));
       if (censoredCanvas) {
         const censoredBlob = await canvasToBlob(censoredCanvas, "image/jpeg", 0.9);
         formData.append("censored_image", censoredBlob, "censored.jpg");
@@ -116,13 +117,15 @@
         batchStatus.textContent = labelBatchUploading.replace("%{current}", "0").replace("%{total}", String(list.length));
       }
       let lastUrl = betaPageUrl;
+      let bundleId = null;
       for (let i = 0; i < list.length; i++) {
         if (batchStatus) {
           batchStatus.textContent = labelBatchUploading
             .replace("%{current}", String(i + 1))
             .replace("%{total}", String(list.length));
         }
-        const data = await uploadDraftFromFile(list[i], null);
+        const data = await uploadDraftFromFile(list[i], null, bundleId);
+        if (data.bundle_id) bundleId = data.bundle_id;
         if (data.url) lastUrl = data.url;
       }
       window.location.href = lastUrl;

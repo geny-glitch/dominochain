@@ -3,9 +3,10 @@
 class LeveragePhotos::StartTimerServer
   class Error < StandardError; end
 
-  def initialize(photo:, duration_seconds:)
+  def initialize(photo:, duration_seconds:, locked_until: nil)
     @photo = photo
     @duration_seconds = duration_seconds.to_i
+    @locked_until = locked_until
   end
 
   def call!
@@ -18,7 +19,7 @@ class LeveragePhotos::StartTimerServer
         LeveragePhoto::MAX_DURATION_SECONDS
       )
 
-      locked_until = Time.current + @duration_seconds.seconds
+      locked_until = @locked_until.presence || (Time.current + @duration_seconds.seconds)
       crypto, layer_count, tlock_format, encrypted_original = encrypt_for(locked_until)
 
       blob = {

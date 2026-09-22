@@ -20,11 +20,11 @@ class BetaLeveragePhotoController < ApplicationController
   def index
     @list_sort = LeveragePhoto.normalize_list_sort(params[:sort])
     @photos = LeveragePhoto.for_user_list(current_user, sort: @list_sort)
-    @photos.each { |photo| maybe_unlock!(photo) }
+    @photos.each { |photo| photo.bundle_mates.each { |mate| maybe_unlock!(mate) } }
   end
 
   def show
-    maybe_unlock!(@photo)
+    @photo.bundle_mates.each { |photo| maybe_unlock!(photo) }
   end
 
   def upload_new
@@ -43,14 +43,16 @@ class BetaLeveragePhotoController < ApplicationController
       original_image: params[:original_image],
       teaser_image: params[:teaser_image],
       censored_image: params[:censored_image],
-      original_filename: params[:original_filename]
+      original_filename: params[:original_filename],
+      bundle: find_upload_bundle
     )
 
     respond_to do |format|
       format.json do
         render json: {
           id: photo.id,
-          url: beta_leverage_photo_path(photo),
+          bundle_id: photo.bundle_id,
+          url: beta_leverage_photo_path(photo.bundle_mates.first || photo),
           censored: photo.censored_images.attached?
         }
       end
@@ -102,16 +104,16 @@ class BetaLeveragePhotoController < ApplicationController
   def start
     duration_seconds = params[:duration_seconds].to_i
 
-    LeveragePhotos::StartTimerServer.new(
+    LeveragePhotos::LockBundle.start!(
       photo: @photo,
       duration_seconds: duration_seconds
-    ).call!
+    )
 
     respond_to do |format|
       format.json { render json: { status: "active", locked_until: @photo.reload.locked_until.iso8601 } }
       format.html { redirect_to beta_leverage_photo_path(@photo), notice: t("flash.beta.leverage_photo.timer_started") }
     end
-  rescue LeveragePhotos::StartTimerServer::Error => e
+  rescue LeveragePhotos::LockBundle::Error => e
     respond_to do |format|
       format.json { render json: { error: e.message }, status: :unprocessable_entity }
       format.html { redirect_to beta_leverage_photo_path(@photo), alert: e.message }
@@ -123,18 +125,18 @@ class BetaLeveragePhotoController < ApplicationController
     save_as_base = ActiveModel::Type::Boolean.new.cast(params[:save_as_base])
     apply_next_step = ActiveModel::Type::Boolean.new.cast(params[:apply_next_step])
 
-    LeveragePhotos::AddTimeServer.new(
+    LeveragePhotos::LockBundle.add_time!(
       photo: @photo,
       added_seconds: added_seconds,
       save_as_base: save_as_base,
       apply_next_step: apply_next_step
-    ).call!
+    )
 
     respond_to do |format|
       format.json { render json: { status: "active", locked_until: @photo.reload.locked_until.iso8601, layers: @photo.tlock_layer_count } }
       format.html { redirect_to beta_leverage_photo_path(@photo), notice: t("flash.beta.leverage_photo.time_added") }
     end
-  rescue LeveragePhotos::AddTimeServer::Error, ActionController::ParameterMissing => e
+  rescue LeveragePhotos::LockBundle::Error, ActionController::ParameterMissing => e
     respond_to do |format|
       format.json { render json: { error: e.message }, status: :unprocessable_entity }
       format.html { redirect_to beta_leverage_photo_path(@photo), alert: e.message }
@@ -256,20 +258,20 @@ class BetaLeveragePhotoController < ApplicationController
     save_as_base = ActiveModel::Type::Boolean.new.cast(params[:save_as_base])
     apply_next_step = ActiveModel::Type::Boolean.new.cast(params[:apply_next_step])
 
-    if photo.can_add_time?
-      LeveragePhotos::AddTimeServer.new(
+    if photo.can_add_time? || photo.bundle_can_add_time?
+      LeveragePhotos::LockBundle.add_time!(
         photo: photo,
         added_seconds: added_seconds,
         save_as_base: save_as_base,
         apply_next_step: apply_next_step
-      ).call!
-    elsif photo.can_start_timer?
-      LeveragePhotos::StartTimerServer.new(
+      )
+    elsif photo.can_start_timer? || photo.bundle_can_start_timer?
+      LeveragePhotos::LockBundle.start!(
         photo: photo,
         duration_seconds: added_seconds
-      ).call!
+      )
     else
-      raise LeveragePhotos::AddTimeServer::Error, "cannot add time"
+      raise LeveragePhotos::LockBundle::Error, "cannot add time"
     end
 
     record_blind_add!(added_seconds, save_as_base: save_as_base, apply_next_step: apply_next_step)
@@ -278,7 +280,7 @@ class BetaLeveragePhotoController < ApplicationController
       format.json { render json: { status: "ok" } }
       format.html { redirect_to beta_leverage_photo_blind_path }
     end
-  rescue LeveragePhotos::StartTimerServer::Error, LeveragePhotos::AddTimeServer::Error => e
+  rescue LeveragePhotos::LockBundle::Error => e
     respond_to do |format|
       format.json { render json: { error: e.message }, status: :unprocessable_entity }
       format.html { redirect_to beta_leverage_photo_blind_path, alert: e.message }
@@ -409,14 +411,15 @@ class BetaLeveragePhotoController < ApplicationController
   end
 
   def ensure_lockable_for_start!
-    return if @photo.can_start_timer?
+    return if @photo.bundle_can_start_timer?
 
     head :forbidden
   end
 
   def ensure_active!
     maybe_unlock!(@photo)
-    return if @photo.active?
+    @photo.bundle_mates.each { |photo| maybe_unlock!(photo) }
+    return if @photo.bundle_can_add_time?
 
     head :forbidden
   end
@@ -432,12 +435,16 @@ class BetaLeveragePhotoController < ApplicationController
     LeveragePhotos::UnlockPhoto.call!(photo)
   end
 
-  def create_draft_photo!(original_image:, teaser_image:, original_filename:, censored_image: nil)
+  def create_draft_photo!(original_image:, teaser_image:, original_filename:, censored_image: nil, bundle: nil)
     filename = LeveragePhoto.normalized_original_filename(
       original_filename.presence || original_image.original_filename
     )
 
     photo = current_user.leverage_photos.build(status: "draft", original_filename: filename)
+    if bundle
+      photo.bundle = bundle
+      photo.position = bundle.leverage_photos.maximum(:position).to_i + 1
+    end
     photo.original_image.attach(original_image)
     # Optional full reminder first, then auto preview — both become censored versions.
     photo.censored_images.attach(censored_image) if censored_image.present?
@@ -446,6 +453,12 @@ class BetaLeveragePhotoController < ApplicationController
     photo.original_image.blob.update!(filename: filename) if photo.original_image.attached?
     photo.assert_attachments!
     photo
+  end
+
+  def find_upload_bundle
+    return if params[:bundle_id].blank?
+
+    current_user.leverage_photo_bundles.find_by(id: params[:bundle_id])
   end
 
   def send_tlock_blob!

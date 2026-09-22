@@ -134,8 +134,7 @@ RSpec.describe StravaGoalEvaluator do
       expect(check.status).to eq("failed")
       expect(check.chaster_applied).to be true
       expect(LeveragePhotos::StartTimerServer).to have_received(:new).with(
-        photo: photo,
-        duration_seconds: 1.hour.to_i
+        hash_including(photo: photo, duration_seconds: 1.hour.to_i)
       )
       expect(check.details["sanctions_applied"]).to include(
         hash_including("action" => "leverage_photo_lock", "status" => "ok")

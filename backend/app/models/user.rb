@@ -35,6 +35,7 @@ class User < ApplicationRecord
   has_one :puzzle_config, dependent: :destroy
   has_many :puzzle_sessions, dependent: :destroy
   has_many :leverage_photos, dependent: :destroy
+  has_many :leverage_photo_bundles, dependent: :destroy
 
   validates :nickname, presence: true, uniqueness: true
   validates :nickname, format: { with: /\A[a-zA-Z0-9_]+\z/, message: :invalid_nickname_format }

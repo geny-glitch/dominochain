@@ -31,7 +31,7 @@ en:
       step_edit: "Censor"
       choose_image: "Choose an image"
       choose_images: "Choose one or more images"
-      choose_help: "Pick one or more photos. Each is saved immediately with a small preview. You can add more censored versions later from the photo page."
+      choose_help: "Pick one or more photos. Chosen together, they are saved as one bundle with a shared timer. You can add more censored versions later from each photo."
       crop_help: "Crop the censored reminder (free aspect ratio). The original stays unchanged."
       crop_alt: "Crop"
       change: "Change"
@@ -180,9 +180,13 @@ en:
       status_fetching_blob: "Loading locked photo…"
       status_encrypting: "Securing your photo…"
       status_uploading: "Saving…"
+    bundle:
+      photo_count:
+        one: "%{count} photo"
+        other: "%{count} photos"
     how_it_works:
       intro: "Time vault stores personal photos behind a timed lock you control."
-      step_upload: "Upload one or more photos — originals stay available until you start the timer."
+      step_upload: "Upload one photo or several at once — a shared timer covers the whole bundle."
       step_teaser: "Each photo gets at least one censored preview you can build on."
       step_lock: "Start a timer when you are ready — the original becomes unavailable until unlock."
       step_scenarios: "Configure scenarios to add time or apply consequences automatically."

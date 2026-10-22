@@ -6,7 +6,7 @@ require "json"
 require "uri"
 
 # PiShock Public API v1 (OpenAPI): https://api.pishock.com/swagger/index.html
-# Operate: POST /Shockers/{ShockerId} with X-PiShock-Api-Key + X-PiShock-Username.
+# Operate: POST /Shockers/OperateById/{ShockerId} with X-PiShock-Api-Key + X-PiShock-Username.
 class PishockService
   API_BASE = "https://api.pishock.com"
   APP_NAME = "BG_showcase"
@@ -78,7 +78,7 @@ class PishockService
     :error
   end
 
-  # Resolves shocker id for POST /Shockers/{ShockerId}: match share code in GET /Share/GetShared,
+  # Resolves shocker id for OperateById: match share code in GET /Share/GetShared,
   # or PUT /Share to claim codes, or a single owned shocker from GET /Shockers.
   def resolve_shocker_id!
     code = normalized_share_code
@@ -169,7 +169,7 @@ class PishockService
     }
     payload["Intensity"] = intensity unless intensity.nil?
 
-    res, body = http_post("/Shockers/#{CGI.escapeURIComponent(shocker_id.to_s)}", payload)
+    res, body = http_post("/Shockers/OperateById/#{CGI.escapeURIComponent(shocker_id.to_s)}", payload)
     return :ok if res.is_a?(Net::HTTPSuccess)
 
     log_operate_failure(res, body)
@@ -249,7 +249,7 @@ class PishockService
         ""
       end
     snippet = body.present? ? body.truncate(300) : "(vide)"
-    Rails.logger.warn("[PishockService] POST /Shockers status=#{res.code} body=#{snippet}#{hint}")
+    Rails.logger.warn("[PishockService] POST /Shockers/OperateById status=#{res.code} body=#{snippet}#{hint}")
   end
 
   def normalized_share_code

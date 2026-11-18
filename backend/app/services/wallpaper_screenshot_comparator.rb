@@ -30,12 +30,14 @@ class WallpaperScreenshotComparator
   PATCH_SEARCH_TILE = 40
   PATCH_SEARCH_MAX_TILES = 12
 
-  def initialize(wallpaper:, device:, timer: nil, screenshot:, algorithm: nil)
+  def initialize(wallpaper:, device:, timer: nil, screenshot:, algorithm: nil, reference_image: nil, reference_blob: nil)
     @screenshot = screenshot
     @wallpaper = wallpaper
     @device = device
     @timer = timer
     @algorithm = algorithm || AppSetting.wallpaper_verification_algorithm
+    @reference_image = reference_image
+    @reference_blob = reference_blob
   end
 
   def compare
@@ -85,6 +87,17 @@ class WallpaperScreenshotComparator
   end
 
   def load_wallpaper_reference
+    if @reference_image
+      return materialize_image(downscale_if_large(@reference_image))
+    end
+
+    if @reference_blob
+      return @reference_blob.open do |file|
+        image = Vips::Image.new_from_file(file.path, access: :sequential)
+        materialize_image(downscale_if_large(image))
+      end
+    end
+
     ImagePreviewVariant.open_processed_preview(@wallpaper.image.blob) do |file|
       image = Vips::Image.new_from_file(file.path, access: :sequential)
       materialize_image(downscale_if_large(image))

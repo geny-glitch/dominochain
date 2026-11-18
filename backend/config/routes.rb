@@ -113,6 +113,7 @@ get "beta/sources/vitrine", to: "beta_dashboard#sources_showcase", as: :beta_sou
   get "watch/:nickname/upload", to: "public_boss#upload_new", as: :public_boss_upload_new
   post "watch/:nickname/screenshot_request", to: "public_boss#screenshot_request", as: :public_boss_screenshot_request
   post "watch/:nickname/wallpapers/:wallpaper_id/set_current", to: "public_boss#set_current", as: :public_boss_set_current
+  post "watch/:nickname/rotation", to: "public_boss#update_rotation", as: :public_boss_rotation
   post "watch/:nickname", to: "public_boss#upload", as: :public_boss_upload
 
   # Public PiShock control page (no authentication)
@@ -279,6 +280,7 @@ get "beta/sources/vitrine", to: "beta_dashboard#sources_showcase", as: :beta_sou
   post "w/:nickname/control/accept", to: "controls#accept_from_link_submit", as: :control_accept_from_link_submit
   post "w/:nickname", to: "wallpaper#upload", as: :wallpaper_upload_submit
   post "w/:nickname/wallpapers/:wallpaper_id/set_current", to: "wallpaper#set_current", as: :wallpaper_set_current
+  post "w/:nickname/rotation", to: "wallpaper#update_rotation", as: :wallpaper_rotation
   delete "w/:nickname/wallpapers/:wallpaper_id", to: "wallpaper#destroy", as: :wallpaper_destroy
   delete "w/:nickname/applications/:id", to: "wallpaper#destroy_application", as: :wallpaper_destroy_application
   delete "w/:nickname/devices/:device_id", to: "wallpaper#destroy_device", as: :wallpaper_destroy_device

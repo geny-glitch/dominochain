@@ -17,9 +17,11 @@
   </td>
 
   <td class="ds-wallpaper-pairs-table__thumb-cell">
-    <% if wallpaper&.image&.attached? %>
-      <%= link_to url_for(wallpaper.preview_image), target: "_blank", rel: "noopener", class: "ds-wallpaper-pairs-table__thumb-link" do %>
-        <%= image_tag wallpaper.preview_image, alt: t("admin_wallpaper_pairs.reference_label"), loading: "lazy", class: "ds-wallpaper-pairs-table__thumb" %>
+    <% reference_image = screenshot.rotation_reference if screenshot.rotation_reference.attached? %>
+    <% reference_image ||= wallpaper.preview_image if wallpaper&.image&.attached? %>
+    <% if reference_image %>
+      <%= link_to url_for(reference_image), target: "_blank", rel: "noopener", class: "ds-wallpaper-pairs-table__thumb-link" do %>
+        <%= image_tag reference_image, alt: t("admin_wallpaper_pairs.reference_label"), loading: "lazy", class: "ds-wallpaper-pairs-table__thumb" %>
       <% end %>
     <% end %>
   </td>

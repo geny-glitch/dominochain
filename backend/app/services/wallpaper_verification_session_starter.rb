@@ -35,6 +35,7 @@ class WallpaperVerificationSessionStarter
     end
 
     trigger_initial_check!(device, config, reference_time)
+    FcmService.send_background_changed_notifications(device: device)
     session
   end
 

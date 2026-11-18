@@ -10,6 +10,7 @@ class BgApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+        WallpaperRotator.resume(this)
         if (BuildConfig.SENTRY_DSN.isNotEmpty()) {
             SentryAndroid.init(this) { options ->
                 options.dsn = BuildConfig.SENTRY_DSN

@@ -209,6 +209,11 @@ en:
       device_not_found: "Device not found."
       device_deleted: "Device deleted."
       wallpaper_set_current: "Wallpaper set as current background."
+      rotation_saved: "The background will change on its own."
+      rotation_disabled: "The background stays on one photo."
+      rotation_need_two: "Pick at least two photos."
+      rotation_too_many: "Pick up to 24 photos."
+      rotation_invalid_interval: "Use a time between 10 seconds and 24 hours."
     tasks:
       deadline_required: "Deadline is required."
       created: "Task created. A notification was sent."

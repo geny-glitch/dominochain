@@ -1,0 +1,67 @@
+<% playlist = @wallpaper_playlist %>
+<% if playlist && playlist.interval_seconds >= 60 && (playlist.interval_seconds % 60).zero? %>
+  <% interval_amount = playlist.interval_seconds / 60 %>
+  <% interval_unit = "minutes" %>
+<% else %>
+  <% interval_amount = playlist&.interval_seconds || 30 %>
+  <% interval_unit = "seconds" %>
+<% end %>
+<% selected_ids = playlist&.items&.map(&:wallpaper_id) || [] %>
+<% collages_on = playlist ? playlist.collages_enabled? : true %>
+
+<section class="ds-history" id="wallpaper-rotation">
+  <h2 class="ds-section-title"><%= t("wallpaper.rotation_title") %></h2>
+  <% if playlist&.active? %>
+    <p class="ds-text-muted"><%= playlist.change_every_label %></p>
+  <% end %>
+
+  <% if @rotation_wallpapers.size < 2 %>
+    <p class="ds-text-muted"><%= t("wallpaper.rotation_need_two_hint") %></p>
+  <% else %>
+    <%= form_with url: boss_wallpaper_rotation_path(@nickname, device_id: @device_id), method: :post, class: "ds-rotation-form" do %>
+      <input type="hidden" name="enabled" value="0">
+      <label class="ds-checkbox-label" for="rotation-enabled">
+        <input type="checkbox" id="rotation-enabled" name="enabled" value="1" <%= "checked" if playlist&.enabled? %>>
+        <%= t("wallpaper.rotation_enable") %>
+      </label>
+
+      <div class="ds-rotation-interval">
+        <div class="ds-rotation-interval-field">
+          <label class="ds-form-label" for="rotation-interval"><%= t("wallpaper.rotation_interval") %></label>
+          <input class="ds-input" type="number" id="rotation-interval" name="interval" min="1" max="1440" step="1" required inputmode="numeric" value="<%= interval_amount %>" aria-describedby="rotation-interval-hint">
+        </div>
+        <div class="ds-rotation-interval-field">
+          <label class="ds-form-label" for="rotation-interval-unit"><%= t("wallpaper.rotation_unit") %></label>
+          <select class="ds-input" id="rotation-interval-unit" name="interval_unit">
+            <option value="seconds" <%= "selected" if interval_unit == "seconds" %>><%= t("wallpaper.rotation_unit_seconds") %></option>
+            <option value="minutes" <%= "selected" if interval_unit == "minutes" %>><%= t("wallpaper.rotation_unit_minutes") %></option>
+          </select>
+        </div>
+      </div>
+      <p class="ds-form-hint" id="rotation-interval-hint"><%= t("wallpaper.rotation_interval_hint") %></p>
+
+      <input type="hidden" name="collages" value="0">
+      <label class="ds-checkbox-label" for="rotation-collages">
+        <input type="checkbox" id="rotation-collages" name="collages" value="1" <%= "checked" if collages_on %> aria-describedby="rotation-collages-hint">
+        <%= t("wallpaper.rotation_collages") %>
+      </label>
+      <p class="ds-form-hint" id="rotation-collages-hint"><%= t("wallpaper.rotation_collages_hint") %></p>
+
+      <fieldset class="ds-rotation-picks-fieldset">
+        <legend class="ds-form-label"><%= t("wallpaper.rotation_pick") %></legend>
+        <ul class="ds-rotation-picks">
+          <% @rotation_wallpapers.each do |wallpaper| %>
+            <li class="ds-rotation-pick">
+              <label class="ds-checkbox-label" for="rotation-photo-<%= wallpaper.id %>">
+                <input type="checkbox" id="rotation-photo-<%= wallpaper.id %>" name="wallpaper_ids[]" value="<%= wallpaper.id %>" <%= "checked" if selected_ids.include?(wallpaper.id) %>>
+                <%= image_tag wallpaper.preview_image, alt: t("wallpaper.rotation_include"), style: "aspect-ratio: #{device_ratio};" %>
+              </label>
+            </li>
+          <% end %>
+        </ul>
+      </fieldset>
+
+      <button type="submit" class="ds-btn ds-btn--primary"><%= t("wallpaper.rotation_save") %></button>
+    <% end %>
+  <% end %>
+</section>

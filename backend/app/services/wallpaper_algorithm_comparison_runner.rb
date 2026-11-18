@@ -18,7 +18,8 @@ class WallpaperAlgorithmComparisonRunner
     raise ArgumentError, "Screenshot has no wallpaper" unless @wallpaper&.image&.attached?
     raise ArgumentError, "Screenshot image missing" unless @screenshot.image.attached?
 
-    ensure_previews_ready!
+    reference_blob = @screenshot.rotation_reference.attached? ? @screenshot.rotation_reference.blob : nil
+    ensure_previews_ready!(reference_blob: reference_blob)
 
     result = nil
     Timeout.timeout(COMPARE_TIMEOUT) do
@@ -26,7 +27,8 @@ class WallpaperAlgorithmComparisonRunner
         screenshot: @screenshot,
         wallpaper: @wallpaper,
         device: @device,
-        algorithm: @algorithm
+        algorithm: @algorithm,
+        reference_blob: reference_blob
       ).compare
     end
 
@@ -43,15 +45,16 @@ class WallpaperAlgorithmComparisonRunner
 
   private
 
-  def ensure_previews_ready!
-    [@screenshot.image.blob, @wallpaper.image.blob].each do |blob|
+  def ensure_previews_ready!(reference_blob:)
+    blobs = [@screenshot.image.blob]
+    blobs << @wallpaper.image.blob unless reference_blob
+    blobs.each do |blob|
       next if ImagePreviewVariant.preview_variant_processed?(blob)
 
       ImagePreviewVariant.preview_variant_for(blob).processed
     end
 
-    ready = ImagePreviewVariant.preview_variant_processed?(@screenshot.image.blob) &&
-            ImagePreviewVariant.preview_variant_processed?(@wallpaper.image.blob)
+    ready = blobs.all? { |blob| ImagePreviewVariant.preview_variant_processed?(blob) }
     raise PreviewNotReady, "Image previews are not ready yet" unless ready
   end
 end

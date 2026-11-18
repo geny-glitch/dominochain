@@ -103,7 +103,24 @@ data class ChangePasswordRequest(
 
 data class WallpaperResponse(
     val url: String,
-    val updated_at: String
+    val updated_at: String,
+    val rotation: WallpaperRotationPayload? = null
+)
+
+data class WallpaperRotationPayload(
+    val enabled: Boolean,
+    val interval_seconds: Int,
+    val collages: Boolean,
+    val anchor_at: String,
+    val revision: String,
+    val canvas_width: Int,
+    val canvas_height: Int,
+    val images: List<WallpaperRotationImage>
+)
+
+data class WallpaperRotationImage(
+    val id: Long,
+    val url: String
 )
 
 data class WallpaperItemResponse(

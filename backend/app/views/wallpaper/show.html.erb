@@ -110,6 +110,9 @@
             </div>
             <div class="ds-wallpaper-meta">
               <span><%= t("wallpaper.chosen_wallpaper_at", datetime: l(current_application.applied_at, format: :short)) %></span>
+              <% if @wallpaper_playlist&.active? %>
+                <span><%= @wallpaper_playlist.change_every_label %></span>
+              <% end %>
             </div>
           <% else %>
             <p class="ds-boss-preview-placeholder"><%= t("wallpaper.no_wallpaper") %></p>
@@ -214,6 +217,10 @@
           <p class="ds-text-muted" style="font-size: 0.8rem;"><%= t("wallpaper.no_screenshots_yet") %></p>
         <% end %>
       </section>
+
+      <% if boss_actions_enabled && !wallpaper_change_locked %>
+        <%= render "wallpaper/rotation_form", device_ratio: device_ratio %>
+      <% end %>
 
       <%# Historique des fonds d'écran choisis %>
       <section class="ds-history">

@@ -2,6 +2,7 @@ class Device < ApplicationRecord
   belongs_to :user, optional: true
 
   has_many :wallpapers, dependent: :destroy
+  has_one :wallpaper_playlist, dependent: :destroy
   has_many :wallpaper_applications, dependent: :destroy
   has_many :device_screenshots, dependent: :destroy
   has_many :wallpaper_compliance_checks, dependent: :destroy

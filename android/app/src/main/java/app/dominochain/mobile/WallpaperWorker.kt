@@ -79,9 +79,24 @@ class WallpaperWorker(
                 }
 
                 val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                val rotation = wallpaper.rotation
+                if (rotation != null && rotation.enabled && rotation.images.size >= 2) {
+                    val installed = WallpaperRotator.install(context, rotation)
+                    if (!installed) {
+                        Log.e(TAG, "Failed to install wallpaper rotation")
+                        return@withContext SyncResult.Failed
+                    }
+                    prefs.edit().putString(KEY_LAST_WALLPAPER_UPDATED_AT, wallpaper.updated_at).apply()
+                    Log.d(TAG, "Wallpaper rotation installed (${rotation.images.size} photos, every ${rotation.interval_seconds}s)")
+                    return@withContext SyncResult.Success
+                }
+
+                val wasRotating = WallpaperRotator.isActive(context)
+                if (wasRotating) WallpaperRotator.clear(context)
+
                 val lastUpdated = prefs.getString(KEY_LAST_WALLPAPER_UPDATED_AT, null)
                 val unchanged = lastUpdated == wallpaper.updated_at
-                if (unchanged && !forceRefresh) {
+                if (unchanged && !forceRefresh && !wasRotating) {
                     Log.d(TAG, "Wallpaper unchanged (updated_at=$lastUpdated), skipping")
                     return@withContext SyncResult.Success
                 }

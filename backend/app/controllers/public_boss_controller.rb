@@ -4,7 +4,7 @@ class PublicBossController < ApplicationController
   include WallpaperBossOperations
 
   before_action :load_public_boss_context
-  before_action :require_public_boss_device!, only: [ :upload_new, :screenshot_request, :upload, :set_current ]
+  before_action :require_public_boss_device!, only: [ :upload_new, :screenshot_request, :upload, :set_current, :update_rotation ]
 
   def show
     load_boss_dashboard_data if @device
@@ -36,6 +36,20 @@ class PublicBossController < ApplicationController
   rescue ActiveRecord::ConnectionNotEstablished, ActiveRecord::ConnectionFailed, PG::ConnectionBad
     redirect_to public_boss_upload_new_path(@nickname, device_id: @device_id),
                 alert: t("flash.wallpaper.upload_failed_try_again")
+  end
+
+  def update_rotation
+    playlist = save_wallpaper_rotation!
+    notice = playlist.enabled? ? t("flash.wallpaper.rotation_saved") : t("flash.wallpaper.rotation_disabled")
+    redirect_to public_boss_path(@nickname, device_id: @device_id), notice: notice
+  rescue WallpaperRotations::Save::NeedTwoPhotos
+    redirect_to public_boss_path(@nickname, device_id: @device_id), alert: t("flash.wallpaper.rotation_need_two")
+  rescue WallpaperRotations::Save::TooManyPhotos
+    redirect_to public_boss_path(@nickname, device_id: @device_id), alert: t("flash.wallpaper.rotation_too_many")
+  rescue WallpaperRotations::Save::InvalidInterval
+    redirect_to public_boss_path(@nickname, device_id: @device_id), alert: t("flash.wallpaper.rotation_invalid_interval")
+  rescue WallpaperVerificationSessionGuard::LockedError
+    redirect_to public_boss_path(@nickname, device_id: @device_id), alert: t("flash.beta.wallpaper.verification_session_locked")
   end
 
   def set_current
@@ -78,6 +92,7 @@ class PublicBossController < ApplicationController
     @screenshots = @device.device_screenshots
       .includes(image_attachment: { blob: { variant_records: { image_attachment: :blob } } })
       .order(captured_at: :desc)
+    load_wallpaper_rotation!
     @latest_screenshot = @screenshots.first
   end
 end

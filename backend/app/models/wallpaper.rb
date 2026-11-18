@@ -4,6 +4,7 @@ class Wallpaper < ApplicationRecord
   belongs_to :device
   belongs_to :leverage_photo, optional: true
   has_many :wallpaper_applications, dependent: :destroy
+  has_many :wallpaper_playlist_items, dependent: :destroy
   has_many :device_screenshots, dependent: :nullify
   has_one_attached :image do |attachable|
     ImagePreviewVariant::AttachmentConfig.call(attachable)

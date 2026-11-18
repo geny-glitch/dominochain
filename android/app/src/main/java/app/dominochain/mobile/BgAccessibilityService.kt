@@ -29,6 +29,7 @@ class BgAccessibilityService : AccessibilityService() {
         super.onServiceConnected()
         instance = this
         Log.d(TAG, "Accessibility service connected")
+        WallpaperRotator.resume(applicationContext)
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {}

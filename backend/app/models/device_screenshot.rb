@@ -11,6 +11,8 @@ class DeviceScreenshot < ApplicationRecord
   has_one_attached :image do |attachable|
     ImagePreviewVariant::AttachmentConfig.call(attachable)
   end
+  # Rendered multi-photo background used as the comparison reference for that capture.
+  has_one_attached :rotation_reference
 
   VERIFICATION_STATUSES = %w[pending verified mismatch inconclusive skipped].freeze
   INCONCLUSIVE_REASONS = %w[

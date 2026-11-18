@@ -52,7 +52,9 @@ class WallpaperVerificationJob < ApplicationJob
     device = screenshot.device
     user = device.user
     snapshot = user ? WallpaperEnforcementSnapshot.for(user) : nil
-    wallpaper = snapshot&.locked_wallpaper || device.current_wallpaper
+    locked_wallpaper = snapshot&.locked_wallpaper
+    rotation_frame = locked_wallpaper ? nil : WallpaperRotations::Frame.for(device: device, at: screenshot.captured_at)
+    wallpaper = locked_wallpaper || rotation_frame&.primary_wallpaper || device.current_wallpaper
     unless wallpaper&.image&.attached?
       timer.measure(:persist) do
         update_screenshot!(screenshot, wallpaper_id: nil, verification_status: "skipped")
@@ -62,7 +64,7 @@ class WallpaperVerificationJob < ApplicationJob
     end
 
     latest_application = device.wallpaper_applications.recent.first
-    if latest_application && screenshot.captured_at < latest_application.applied_at
+    if rotation_frame.nil? && latest_application && screenshot.captured_at < latest_application.applied_at
       timer.measure(:persist) do
         mark_inconclusive!(
           screenshot,
@@ -79,13 +81,32 @@ class WallpaperVerificationJob < ApplicationJob
       return
     end
 
-    ready = timer.measure(:variants_ready_check) do
-      previews_ready?(screenshot, wallpaper)
-    end
+    reference_image = nil
+    if rotation_frame&.collage?
+      ready = timer.measure(:variants_ready_check) do
+        ImagePreviewVariant.preview_variant_processed?(screenshot.image.blob)
+      end
+      unless ready
+        defer_verification(screenshot_id, screenshot, wallpaper, timer, defer_attempt)
+        return
+      end
 
-    unless ready
-      defer_verification(screenshot_id, screenshot, wallpaper, timer, defer_attempt)
-      return
+      reference_image = timer.measure(:render_collage) { rotation_frame.render }
+      jpeg = rotation_frame.to_jpeg(reference_image)
+      screenshot.rotation_reference.attach(
+        io: StringIO.new(jpeg),
+        filename: "rotation-frame-#{screenshot.id}.jpg",
+        content_type: "image/jpeg"
+      )
+    else
+      ready = timer.measure(:variants_ready_check) do
+        previews_ready?(screenshot, wallpaper)
+      end
+
+      unless ready
+        defer_verification(screenshot_id, screenshot, wallpaper, timer, defer_attempt)
+        return
+      end
     end
 
     ActiveRecord::Base.connection_handler.clear_active_connections!(:all)
@@ -96,7 +117,8 @@ class WallpaperVerificationJob < ApplicationJob
         screenshot: screenshot,
         wallpaper: wallpaper,
         device: device,
-        timer: timer
+        timer: timer,
+        reference_image: reference_image
       ).compare
     end
 

@@ -27,6 +27,14 @@ module Api
 
     def wallpaper
       device = Device.find_by!(device_id: params[:id])
+      playlist = WallpaperPlaylist
+        .includes(items: { wallpaper: { image_attachment: :blob } })
+        .find_by(device_id: device.id)
+      if playlist&.active? && !device.user&.wallpaper_verification_session_locked?
+        render json: wallpaper_rotation_json(device, playlist)
+        return
+      end
+
       wallpaper = device.current_wallpaper
 
       if wallpaper&.image&.attached?
@@ -220,6 +228,34 @@ module Api
         }
       }
       json
+    end
+
+    def wallpaper_image_url(device, wallpaper)
+      if device.screen_width.present? && device.screen_height.present?
+        polymorphic_url(wallpaper.variant_for(device))
+      else
+        polymorphic_url(wallpaper.image)
+      end
+    end
+
+    def wallpaper_rotation_json(device, playlist)
+      width, height = WallpaperRotations::Collage.canvas_size(device.screen_width, device.screen_height)
+      images = playlist.ordered_wallpapers
+      frame = WallpaperRotations::Frame.new(playlist, Time.current)
+      {
+        url: wallpaper_image_url(device, frame.primary_wallpaper),
+        updated_at: playlist.updated_at.iso8601,
+        rotation: {
+          enabled: true,
+          interval_seconds: playlist.interval_seconds,
+          collages: playlist.collages_enabled,
+          anchor_at: playlist.anchor_at.iso8601,
+          revision: playlist.updated_at.iso8601,
+          canvas_width: width,
+          canvas_height: height,
+          images: images.map { |wallpaper| { id: wallpaper.id, url: wallpaper_image_url(device, wallpaper) } }
+        }
+      }
     end
 
     def wallpaper_upload_url(nickname)

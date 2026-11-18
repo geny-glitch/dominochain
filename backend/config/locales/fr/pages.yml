@@ -16,6 +16,7 @@ fr:
     heading: "Dashboard Boss"
     controlled_betas: "Betas contrôlés"
     manage: "Gérer"
+    zap_program: "Programme de zaps"
     release: "Libérer"
     release_confirm: "Libérer ce beta ?"
     requests_title: "Demandes en attente"

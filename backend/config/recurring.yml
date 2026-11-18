@@ -29,6 +29,10 @@ production:
     class: WallpaperScheduledCheckJob
     schedule: "* * * * *"
 
+  zap_schedule_ticks:
+    class: ZapScheduleTickJob
+    schedule: "* * * * *"
+
   leverage_photo_unlocks:
     class: LeveragePhotoUnlockJob
     schedule: "* * * * *"

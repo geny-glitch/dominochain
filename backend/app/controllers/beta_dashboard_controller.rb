@@ -458,6 +458,7 @@ class BetaDashboardController < ApplicationController
   def update_public_pishock
     enabled = checkbox_param_bool(:public_pishock_enabled)
     current_user.update!(public_pishock_enabled: enabled)
+    ZapProgram.disarm_public_for_beta!(current_user) unless enabled
     PosthogProductAnalytics.configured_action(current_user, name: "pishock")
     if enabled
       redirect_to beta_actions_pishock_path,
@@ -480,6 +481,9 @@ class BetaDashboardController < ApplicationController
       attrs[:pishock_intensity_factor] = p[:pishock_intensity_factor].to_f.clamp(0.01, 100)
     end
     current_user.update!(attrs) if attrs.any?
+    if attrs.key?(:pishock_enabled) && !current_user.pishock_enabled?
+      ZapProgram.disarm_all_for_beta!(current_user)
+    end
     PosthogProductAnalytics.configured_action(current_user, name: "pishock") if attrs.any?
     redirect_to beta_actions_pishock_path, notice: t("flash.beta.pishock_saved")
   rescue ActiveRecord::RecordInvalid => e

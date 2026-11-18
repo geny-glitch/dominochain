@@ -1,0 +1,338 @@
+<%#
+  Locals:
+  - program
+  - slots
+  - editing_slot (optional)
+  - beta
+  - paths (hash of URLs / lambdas)
+  - compact (optional boolean)
+%>
+<% compact = local_assigns.fetch(:compact, false) %>
+<% editing_slot = local_assigns[:editing_slot] %>
+<% slots = local_assigns.fetch(:slots, program.zap_slots.to_a) %>
+<% paths = local_assigns.fetch(:paths) %>
+
+<section class="zap-program <%= "zap-program--compact" if compact %>" data-zap-program-editor>
+  <header class="zap-program__header">
+    <div>
+      <h2 class="zap-program__title"><%= t("zap_program.editor.title") %></h2>
+      <p class="zap-program__timezone">
+        <%= t("zap_program.editor.timezone_hint", zone: beta.effective_time_zone) %>
+      </p>
+    </div>
+    <div class="zap-program__arm">
+      <% if program.armed? %>
+        <%= button_to t("zap_program.editor.disarm"), paths[:disarm], method: :post, class: "ds-btn ds-btn--ghost ds-btn--sm" %>
+        <span class="zap-program__armed-badge"><%= t("zap_program.editor.armed") %></span>
+      <% else %>
+        <%= button_to t("zap_program.editor.arm"), paths[:arm], method: :post, class: "ds-btn ds-btn--primary ds-btn--sm" %>
+        <span class="zap-program__armed-badge zap-program__armed-badge--off"><%= t("zap_program.editor.disarmed") %></span>
+      <% end %>
+    </div>
+  </header>
+
+  <% if slots.empty? && editing_slot.blank? %>
+    <div class="zap-program__starters">
+      <p class="zap-program__starters-lead"><%= t("zap_program.editor.starters_lead") %></p>
+      <div class="zap-program__starter-list">
+        <%= button_to t("zap_program.starters.morning"), paths[:starter].call("morning"), method: :post, class: "ds-btn ds-btn--secondary ds-btn--sm" %>
+        <%= button_to t("zap_program.starters.day_roulette"), paths[:starter].call("day_roulette"), method: :post, class: "ds-btn ds-btn--secondary ds-btn--sm" %>
+        <%= button_to t("zap_program.starters.evening_burst"), paths[:starter].call("evening_burst"), method: :post, class: "ds-btn ds-btn--secondary ds-btn--sm" %>
+      </div>
+    </div>
+  <% else %>
+    <ul class="zap-program__slots">
+      <% slots.each do |slot| %>
+        <li class="zap-program__slot <%= "zap-program__slot--done" if slot.once_done? %> <%= "zap-program__slot--editing" if editing_slot&.id == slot.id %>">
+          <div class="zap-program__slot-main">
+            <%= link_to zap_slot_summary(slot), paths[:edit].call(slot), class: "zap-program__slot-summary" %>
+            <% if slot.once_done? %>
+              <span class="zap-program__slot-done"><%= t("zap_program.editor.once_done") %></span>
+            <% end %>
+          </div>
+          <div class="zap-program__slot-actions">
+            <%= button_to t("zap_program.editor.try"), paths[:try_slot].call(slot), method: :post, class: "ds-btn ds-btn--secondary ds-btn--sm" %>
+            <%= button_to t("zap_program.editor.delete"), paths[:destroy_slot].call(slot), method: :delete, form: { data: { turbo_confirm: t("zap_program.editor.delete_confirm") } }, class: "ds-btn ds-btn--ghost ds-btn--sm" %>
+          </div>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+
+  <% form_slot = editing_slot || ZapSlot.new(
+       schedule_kind: "daily",
+       time_of_day_minutes: 8 * 60,
+       pattern_kind: "single",
+       intensity: 40,
+       duration: 2
+     ) %>
+  <% form_url = editing_slot ? paths[:update_slot].call(editing_slot) : paths[:create_slot] %>
+  <% form_method = editing_slot ? :patch : :post %>
+
+  <div class="zap-program__form-wrap">
+    <h3 class="zap-program__form-title">
+      <%= editing_slot ? t("zap_program.editor.edit_moment") : t("zap_program.editor.add_moment") %>
+    </h3>
+    <p class="zap-program__live" data-zap-live aria-live="polite"></p>
+
+    <%= form_with url: form_url, method: form_method, local: true, class: "zap-program__form ds-form", data: { zap_form: true, turbo: false } do %>
+      <fieldset class="zap-program__fieldset">
+        <legend class="ds-form-label"><%= t("zap_program.editor.when_legend") %></legend>
+        <div class="zap-program__radio-row">
+          <% %w[daily once interval].each do |kind| %>
+            <label class="ds-radio-label">
+              <%= radio_button_tag "zap_slot[schedule_kind]", kind, form_slot.schedule_kind == kind, data: { zap_schedule: kind } %>
+              <%= t("zap_program.schedule.#{kind}") %>
+            </label>
+          <% end %>
+        </div>
+
+        <div class="zap-program__schedule-panel" data-zap-schedule-panel="daily">
+          <div class="ds-form-group">
+            <%= label_tag "zap_slot_time_of_day", t("zap_program.editor.time_of_day"), class: "ds-form-label" %>
+            <%= time_field_tag "zap_slot[time_of_day]", zap_format_minutes(form_slot.time_of_day_minutes.presence || 8 * 60), class: "ds-input", id: "zap_slot_time_of_day", data: { zap_field: true } %>
+          </div>
+        </div>
+
+        <div class="zap-program__schedule-panel" data-zap-schedule-panel="once" hidden>
+          <div class="ds-form-group">
+            <%= label_tag "zap_slot_fires_at", t("zap_program.editor.fires_at"), class: "ds-form-label" %>
+            <%= datetime_local_field_tag "zap_slot[fires_at]", editing_slot ? zap_fires_at_local_value(form_slot, beta) : nil, class: "ds-input", id: "zap_slot_fires_at", data: { zap_field: true } %>
+          </div>
+        </div>
+
+        <div class="zap-program__schedule-panel" data-zap-schedule-panel="interval" hidden>
+          <div class="ds-form-group">
+            <%= label_tag "zap_slot_interval_minutes", t("zap_program.editor.interval_minutes"), class: "ds-form-label" %>
+            <%= number_field_tag "zap_slot[interval_minutes]", form_slot.interval_minutes.presence || 45, min: ZapSlot::MIN_INTERVAL_MINUTES, max: ZapSlot::MAX_INTERVAL_MINUTES, class: "ds-input", id: "zap_slot_interval_minutes", data: { zap_field: true } %>
+          </div>
+          <div class="ds-form-group">
+            <label class="ds-checkbox-label">
+              <%= check_box_tag "zap_slot[window_enabled]", "1", form_slot.window_start_minutes.present?, id: "zap_slot_window_enabled", data: { zap_window_toggle: true } %>
+              <%= t("zap_program.editor.window_enabled") %>
+            </label>
+          </div>
+          <div class="zap-program__window-fields" data-zap-window-fields <%= "hidden" unless form_slot.window_start_minutes.present? %>>
+            <div class="ds-form-group">
+              <%= label_tag "zap_slot_window_start", t("zap_program.editor.window_start"), class: "ds-form-label" %>
+              <%= time_field_tag "zap_slot[window_start]", zap_format_minutes(form_slot.window_start_minutes.presence || 10 * 60), class: "ds-input", id: "zap_slot_window_start", data: { zap_field: true } %>
+            </div>
+            <div class="ds-form-group">
+              <%= label_tag "zap_slot_window_end", t("zap_program.editor.window_end"), class: "ds-form-label" %>
+              <%= time_field_tag "zap_slot[window_end]", zap_format_minutes(form_slot.window_end_minutes.presence || 20 * 60), class: "ds-input", id: "zap_slot_window_end", data: { zap_field: true } %>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="zap-program__fieldset">
+        <legend class="ds-form-label"><%= t("zap_program.editor.what_legend") %></legend>
+        <div class="zap-program__pattern-cards">
+          <% %w[single roulette burst].each do |kind| %>
+            <label class="zap-program__pattern-card">
+              <%= radio_button_tag "zap_slot[pattern_kind]", kind, form_slot.pattern_kind == kind, data: { zap_pattern: kind } %>
+              <span class="zap-program__pattern-card-title"><%= t("zap_program.pattern.#{kind}") %></span>
+              <span class="zap-program__pattern-card-hint"><%= t("zap_program.pattern.#{kind}_hint") %></span>
+            </label>
+          <% end %>
+        </div>
+
+        <div class="ds-form-group">
+          <%= label_tag "zap_slot_duration", t("zap_program.editor.duration"), class: "ds-form-label" %>
+          <%= number_field_tag "zap_slot[duration]", form_slot.duration.presence || 2, min: 1, max: 5, class: "ds-input", id: "zap_slot_duration", data: { zap_field: true } %>
+        </div>
+
+        <div class="zap-program__pattern-panel" data-zap-pattern-panel="single">
+          <div class="ds-form-group">
+            <%= label_tag "zap_slot_intensity_single", t("zap_program.editor.intensity"), class: "ds-form-label" %>
+            <%= number_field_tag "zap_slot[intensity]", form_slot.intensity.presence || 40, min: 1, max: 100, class: "ds-input", id: "zap_slot_intensity_single", data: { zap_field: true, zap_intensity: true } %>
+          </div>
+        </div>
+
+        <div class="zap-program__pattern-panel" data-zap-pattern-panel="roulette" hidden>
+          <div class="ds-form-group">
+            <%= label_tag "zap_slot_count_roulette", t("zap_program.editor.count"), class: "ds-form-label" %>
+            <%= number_field_tag "zap_slot[count]", form_slot.count.presence || 4, min: 2, max: 8, class: "ds-input", id: "zap_slot_count_roulette", data: { zap_field: true, zap_count: true } %>
+          </div>
+          <div class="ds-form-group">
+            <%= label_tag "zap_slot_intensity_min", t("zap_program.editor.intensity_min"), class: "ds-form-label" %>
+            <%= number_field_tag "zap_slot[intensity_min]", form_slot.intensity_min.presence || 15, min: 1, max: 100, class: "ds-input", id: "zap_slot_intensity_min", data: { zap_field: true } %>
+          </div>
+          <div class="ds-form-group">
+            <%= label_tag "zap_slot_intensity_max", t("zap_program.editor.intensity_max"), class: "ds-form-label" %>
+            <%= number_field_tag "zap_slot[intensity_max]", form_slot.intensity_max.presence || 80, min: 1, max: 100, class: "ds-input", id: "zap_slot_intensity_max", data: { zap_field: true } %>
+          </div>
+        </div>
+
+        <div class="zap-program__pattern-panel" data-zap-pattern-panel="burst" hidden>
+          <div class="ds-form-group">
+            <%= label_tag "zap_slot_count_burst", t("zap_program.editor.count"), class: "ds-form-label" %>
+            <%= number_field_tag "zap_slot[count]", form_slot.count.presence || 5, min: 2, max: 8, class: "ds-input", id: "zap_slot_count_burst", data: { zap_field: true, zap_count_burst: true } %>
+          </div>
+          <div class="ds-form-group">
+            <%= label_tag "zap_slot_intensity_burst", t("zap_program.editor.intensity"), class: "ds-form-label" %>
+            <%= number_field_tag "zap_slot[intensity]", form_slot.intensity.presence || 50, min: 1, max: 100, class: "ds-input", id: "zap_slot_intensity_burst", data: { zap_field: true, zap_intensity_burst: true } %>
+          </div>
+          <div class="ds-form-group">
+            <%= label_tag "zap_slot_gap_seconds", t("zap_program.editor.gap_seconds"), class: "ds-form-label" %>
+            <%= number_field_tag "zap_slot[gap_seconds]", form_slot.gap_seconds.presence || 2, min: 2, max: 5, class: "ds-input", id: "zap_slot_gap_seconds", data: { zap_field: true } %>
+          </div>
+        </div>
+      </fieldset>
+
+      <div class="zap-program__form-actions">
+        <%= submit_tag editing_slot ? t("zap_program.editor.save") : t("zap_program.editor.add"), class: "ds-btn ds-btn--primary" %>
+        <% if editing_slot %>
+          <%= link_to t("zap_program.editor.cancel_edit"), paths[:show], class: "ds-btn ds-btn--ghost" %>
+        <% end %>
+      </div>
+    <% end %>
+
+    <%= form_with url: paths[:try_ephemeral], method: :post, local: true, class: "zap-program__try-form", data: { zap_try_form: true, turbo: false } do %>
+      <div data-zap-try-fields></div>
+      <%= submit_tag t("zap_program.editor.zap_now"), class: "ds-btn ds-btn--secondary" %>
+    <% end %>
+  </div>
+</section>
+
+<script type="application/json" id="zap-program-i18n"><%= raw json_escape({
+  daily: t("zap_program.summary.daily", time: "%{time}"),
+  once: t("zap_program.summary.once", datetime: "%{datetime}"),
+  interval: t("zap_program.summary.interval", minutes: "%{minutes}"),
+  interval_window: t("zap_program.summary.interval_window", minutes: "%{minutes}", start: "%{start}", finish: "%{finish}"),
+  single: t("zap_program.summary.single", intensity: "%{intensity}", duration: "%{duration}"),
+  roulette: t("zap_program.summary.roulette", count: "%{count}", min: "%{min}", max: "%{max}", duration: "%{duration}"),
+  burst: t("zap_program.summary.burst", count: "%{count}", intensity: "%{intensity}", duration: "%{duration}", gap: "%{gap}")
+}.to_json) %></script>
+
+<script>
+  (function () {
+    var root = document.querySelector("[data-zap-program-editor]");
+    if (!root) return;
+    var form = root.querySelector("[data-zap-form]");
+    var tryForm = root.querySelector("[data-zap-try-form]");
+    var live = root.querySelector("[data-zap-live]");
+    var i18n = {};
+    try {
+      i18n = JSON.parse(document.getElementById("zap-program-i18n").textContent || "{}");
+    } catch (e) {
+      i18n = {};
+    }
+
+    function selectedValue(name) {
+      var el = form.querySelector('input[name="' + name + '"]:checked');
+      return el ? el.value : null;
+    }
+
+    function panel(attr, value) {
+      root.querySelectorAll("[" + attr + "]").forEach(function (node) {
+        node.hidden = node.getAttribute(attr) !== value;
+      });
+    }
+
+    function syncPanels() {
+      var schedule = selectedValue("zap_slot[schedule_kind]") || "daily";
+      var pattern = selectedValue("zap_slot[pattern_kind]") || "single";
+      panel("data-zap-schedule-panel", schedule);
+      panel("data-zap-pattern-panel", pattern);
+
+      var windowToggle = form.querySelector("[data-zap-window-toggle]");
+      var windowFields = form.querySelector("[data-zap-window-fields]");
+      if (windowToggle && windowFields) {
+        windowFields.hidden = !windowToggle.checked;
+      }
+
+      // Disable inputs in hidden panels so only active fields submit.
+      form.querySelectorAll("[data-zap-schedule-panel], [data-zap-pattern-panel]").forEach(function (node) {
+        node.querySelectorAll("input, select, textarea").forEach(function (input) {
+          if (input.dataset.zapWindowToggle !== undefined) return;
+          input.disabled = !!node.hidden || (windowFields && windowFields.contains(input) && windowFields.hidden);
+        });
+      });
+
+      updateLive();
+      syncTryFields();
+    }
+
+    function val(id, fallback) {
+      var el = form.querySelector("#" + id);
+      if (!el || el.disabled) return fallback;
+      return el.value || fallback;
+    }
+
+    function fill(template, vars) {
+      return Object.keys(vars).reduce(function (text, key) {
+        return text.split("%{" + key + "}").join(vars[key]);
+      }, template || "");
+    }
+
+    function updateLive() {
+      if (!live) return;
+      var schedule = selectedValue("zap_slot[schedule_kind]") || "daily";
+      var pattern = selectedValue("zap_slot[pattern_kind]") || "single";
+      var whenText = "";
+      if (schedule === "daily") {
+        whenText = fill(i18n.daily, { time: val("zap_slot_time_of_day", "08:00") });
+      } else if (schedule === "once") {
+        whenText = fill(i18n.once, { datetime: val("zap_slot_fires_at", "…") });
+      } else {
+        var minutes = val("zap_slot_interval_minutes", "45");
+        var windowToggle = form.querySelector("[data-zap-window-toggle]");
+        if (windowToggle && windowToggle.checked) {
+          whenText = fill(i18n.interval_window, {
+            minutes: minutes,
+            start: val("zap_slot_window_start", "10:00"),
+            finish: val("zap_slot_window_end", "20:00")
+          });
+        } else {
+          whenText = fill(i18n.interval, { minutes: minutes });
+        }
+      }
+
+      var whatText = "";
+      var duration = val("zap_slot_duration", "1");
+      if (pattern === "single") {
+        whatText = fill(i18n.single, {
+          intensity: val("zap_slot_intensity_single", "40"),
+          duration: duration
+        });
+      } else if (pattern === "roulette") {
+        whatText = fill(i18n.roulette, {
+          count: val("zap_slot_count_roulette", "4"),
+          min: val("zap_slot_intensity_min", "15"),
+          max: val("zap_slot_intensity_max", "80"),
+          duration: duration
+        });
+      } else {
+        whatText = fill(i18n.burst, {
+          count: val("zap_slot_count_burst", "5"),
+          intensity: val("zap_slot_intensity_burst", "50"),
+          duration: duration,
+          gap: val("zap_slot_gap_seconds", "2")
+        });
+      }
+      live.textContent = whenText + " — " + whatText;
+    }
+
+    function syncTryFields() {
+      if (!tryForm) return;
+      var holder = tryForm.querySelector("[data-zap-try-fields]");
+      if (!holder) return;
+      holder.innerHTML = "";
+      form.querySelectorAll("input").forEach(function (input) {
+        if (input.disabled) return;
+        if (!input.name || input.name.indexOf("zap_slot") !== 0) return;
+        if ((input.type === "radio" || input.type === "checkbox") && !input.checked) return;
+        var clone = document.createElement("input");
+        clone.type = "hidden";
+        clone.name = input.name;
+        clone.value = input.value;
+        holder.appendChild(clone);
+      });
+    }
+
+    form.addEventListener("change", syncPanels);
+    form.addEventListener("input", updateLive);
+    syncPanels();
+  })();
+</script>

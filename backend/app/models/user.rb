@@ -36,6 +36,7 @@ class User < ApplicationRecord
   has_many :puzzle_sessions, dependent: :destroy
   has_many :leverage_photos, dependent: :destroy
   has_many :leverage_photo_bundles, dependent: :destroy
+  has_many :zap_programs, foreign_key: :beta_id, dependent: :destroy, inverse_of: :beta
 
   validates :nickname, presence: true, uniqueness: true
   validates :nickname, format: { with: /\A[a-zA-Z0-9_]+\z/, message: :invalid_nickname_format }

@@ -1,0 +1,16 @@
+<% content_for :title, t("zap_program.boss.title", nickname: @beta.nickname) %>
+
+<div class="ds-page">
+  <div class="ds-container">
+    <p><%= link_to t("zap_program.boss.back"), dashboard_path, class: "ds-inline-link" %></p>
+    <h1><%= t("zap_program.boss.heading", nickname: @beta.nickname) %></h1>
+    <p class="ds-beta-control-hint"><%= t("zap_program.boss.lead") %></p>
+
+    <%= render "zap_programs/editor",
+      program: @zap_program,
+      slots: @zap_slots,
+      editing_slot: @editing_slot,
+      beta: @zap_beta,
+      paths: @zap_program_paths %>
+  </div>
+</div>

@@ -41,7 +41,9 @@ class ControlsController < ApplicationController
 
   def release
     control = current_user.controls.accepted.find(params[:control_id])
-    beta_nickname = control.beta.nickname
+    beta = control.beta
+    beta_nickname = beta.nickname
+    ZapProgram.disarm_boss_for_beta!(beta)
     control.destroy!
     PostHog.capture(
       distinct_id: current_user.posthog_distinct_id,

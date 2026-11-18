@@ -79,3 +79,21 @@
         <% end %>
       </div>
     </section>
+
+    <% armed_programs = current_user.zap_programs.select(&:armed?) %>
+    <% if armed_programs.any? %>
+      <section class="ds-beta-section">
+        <h2 class="ds-section-title"><%= t("zap_program.beta.section_title") %></h2>
+        <div class="ds-beta-control-card">
+          <p class="ds-beta-control-hint"><%= t("zap_program.beta.section_hint") %></p>
+          <ul class="zap-program__beta-list">
+            <% armed_programs.each do |program| %>
+              <li class="zap-program__beta-item">
+                <span><%= zap_program_source_label(program) %></span>
+                <%= button_to t("zap_program.beta.stop"), beta_zap_program_disarm_path(program), method: :post, class: "ds-btn ds-btn--ghost ds-btn--sm" %>
+              </li>
+            <% end %>
+          </ul>
+        </div>
+      </section>
+    <% end %>

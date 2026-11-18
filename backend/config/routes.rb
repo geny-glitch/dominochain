@@ -20,6 +20,15 @@ Rails.application.routes.draw do
   end
 
   get "dashboard", to: "dashboard#show", as: :dashboard
+  get "dashboard/betas/:nickname/zap_program", to: "boss_zap_programs#show", as: :boss_zap_program
+  post "dashboard/betas/:nickname/zap_program/arm", to: "boss_zap_programs#arm", as: :boss_zap_program_arm
+  post "dashboard/betas/:nickname/zap_program/disarm", to: "boss_zap_programs#disarm", as: :boss_zap_program_disarm
+  post "dashboard/betas/:nickname/zap_program/slots", to: "boss_zap_programs#create_slot", as: :boss_zap_program_slots
+  patch "dashboard/betas/:nickname/zap_program/slots/:slot_id", to: "boss_zap_programs#update_slot", as: :boss_zap_program_slot
+  delete "dashboard/betas/:nickname/zap_program/slots/:slot_id", to: "boss_zap_programs#destroy_slot", as: :boss_zap_program_slot_destroy
+  post "dashboard/betas/:nickname/zap_program/slots/:slot_id/try", to: "boss_zap_programs#try_slot", as: :boss_zap_program_slot_try
+  post "dashboard/betas/:nickname/zap_program/try", to: "boss_zap_programs#try_ephemeral", as: :boss_zap_program_try
+  post "dashboard/betas/:nickname/zap_program/starters/:starter", to: "boss_zap_programs#add_starter", as: :boss_zap_program_starter
   get "beta", to: "beta_dashboard#home", as: :beta_dashboard
   get "beta/scenarios", to: "beta_dashboard#scenarios", as: :beta_scenarios
   post "beta/scenarios", to: "beta_dashboard#create_scenario", as: :beta_scenarios_create
@@ -109,6 +118,16 @@ get "beta/sources/vitrine", to: "beta_dashboard#sources_showcase", as: :beta_sou
   # Public PiShock control page (no authentication)
   get "zap/:nickname", to: "public_pishock#show", as: :public_pishock
   post "zap/:nickname", to: "public_pishock#shock", as: :public_pishock_shock
+  post "zap/:nickname/program/arm", to: "public_zap_programs#arm", as: :public_zap_program_arm
+  post "zap/:nickname/program/disarm", to: "public_zap_programs#disarm", as: :public_zap_program_disarm
+  post "zap/:nickname/program/slots", to: "public_zap_programs#create_slot", as: :public_zap_program_slots
+  patch "zap/:nickname/program/slots/:slot_id", to: "public_zap_programs#update_slot", as: :public_zap_program_slot
+  delete "zap/:nickname/program/slots/:slot_id", to: "public_zap_programs#destroy_slot", as: :public_zap_program_slot_destroy
+  post "zap/:nickname/program/slots/:slot_id/try", to: "public_zap_programs#try_slot", as: :public_zap_program_slot_try
+  post "zap/:nickname/program/try", to: "public_zap_programs#try_ephemeral", as: :public_zap_program_try
+  post "zap/:nickname/program/starters/:starter", to: "public_zap_programs#add_starter", as: :public_zap_program_starter
+
+  post "beta/zap_programs/:id/disarm", to: "beta_zap_programs#disarm", as: :beta_zap_program_disarm
 
   # Vitrine du beta (page publique)
   get "showcase/:nickname", to: "showcase#show", as: :showcase

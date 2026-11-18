@@ -33,6 +33,7 @@ class AdminController < ApplicationController
 
   def release_control
     control = Control.find(params[:control_id])
+    ZapProgram.disarm_boss_for_beta!(control.beta)
     control.destroy!
     redirect_to admin_path, notice: t("flash.admin.beta_released", nickname: control.beta.nickname)
   rescue ActiveRecord::RecordNotFound

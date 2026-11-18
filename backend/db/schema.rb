@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_09_18_143000) do
+ActiveRecord::Schema[7.2].define(version: 2026_11_12_170000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -872,6 +872,45 @@ ActiveRecord::Schema[7.2].define(version: 2026_09_18_143000) do
     t.index ["leverage_photo_id"], name: "index_wallpapers_on_leverage_photo_id"
   end
 
+  create_table "zap_programs", force: :cascade do |t|
+    t.bigint "beta_id", null: false
+    t.string "source", null: false
+    t.bigint "boss_id"
+    t.boolean "armed", default: false, null: false
+    t.integer "generation", default: 0, null: false
+    t.datetime "busy_until"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["beta_id", "source"], name: "index_zap_programs_on_beta_id_and_source", unique: true
+    t.index ["beta_id"], name: "index_zap_programs_on_beta_id"
+    t.index ["boss_id"], name: "index_zap_programs_on_boss_id"
+  end
+
+  create_table "zap_slots", force: :cascade do |t|
+    t.bigint "zap_program_id", null: false
+    t.string "schedule_kind", null: false
+    t.integer "time_of_day_minutes"
+    t.datetime "fires_at"
+    t.integer "interval_minutes"
+    t.integer "window_start_minutes"
+    t.integer "window_end_minutes"
+    t.string "pattern_kind", null: false
+    t.integer "intensity"
+    t.integer "intensity_min"
+    t.integer "intensity_max"
+    t.integer "duration", null: false
+    t.integer "count"
+    t.integer "gap_seconds"
+    t.date "last_fired_on"
+    t.datetime "last_fired_at"
+    t.datetime "fired_at"
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["zap_program_id", "position"], name: "index_zap_slots_on_zap_program_id_and_position"
+    t.index ["zap_program_id"], name: "index_zap_slots_on_zap_program_id"
+  end
+
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "chaster_locks", "users"
@@ -938,4 +977,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_09_18_143000) do
   add_foreign_key "wallpaper_verification_sessions", "wallpapers"
   add_foreign_key "wallpapers", "devices"
   add_foreign_key "wallpapers", "leverage_photos"
+  add_foreign_key "zap_programs", "users", column: "beta_id"
+  add_foreign_key "zap_programs", "users", column: "boss_id"
+  add_foreign_key "zap_slots", "zap_programs"
 end

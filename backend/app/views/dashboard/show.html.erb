@@ -10,6 +10,9 @@
             <li>
               <%= control.beta.nickname %>
               <%= link_to t("dashboard.manage"), wallpaper_upload_path(control.beta.nickname), class: "ds-btn ds-btn--primary ds-btn--sm" %>
+              <% if control.beta.pishock_enabled? && BetaCatalog.new(control.beta).action_enabled?("pishock") %>
+                <%= link_to t("dashboard.zap_program"), boss_zap_program_path(control.beta.nickname), class: "ds-btn ds-btn--secondary ds-btn--sm" %>
+              <% end %>
               <%= button_to t("dashboard.release"), control_release_path(control_id: control.id), method: :post, form: { data: { turbo_confirm: t("dashboard.release_confirm") } }, class: "ds-btn ds-btn--ghost ds-btn--sm" %>
             </li>
           <% end %>

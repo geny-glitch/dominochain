@@ -16,6 +16,7 @@ en:
     heading: "Boss dashboard"
     controlled_betas: "Controlled betas"
     manage: "Manage"
+    zap_program: "Zap program"
     release: "Release"
     release_confirm: "Release this beta?"
     requests_title: "Pending requests"

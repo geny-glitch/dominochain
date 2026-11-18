@@ -4,6 +4,13 @@ class PublicPishockController < ApplicationController
   before_action :load_public_pishock_context
 
   def show
+    if @beta.pishock_enabled? && BetaCatalog.new(@beta).action_enabled?("pishock")
+      @zap_program = ZapProgram.find_or_create_for!(beta: @beta, source: "public")
+      @zap_beta = @beta
+      @zap_slots = @zap_program.zap_slots.to_a
+      @editing_slot = @zap_slots.find { |s| s.id.to_s == params[:edit].to_s }
+      @zap_program_paths = public_zap_program_paths(@beta.nickname)
+    end
   end
 
   def shock
@@ -46,4 +53,20 @@ class PublicPishockController < ApplicationController
       )
     end
   end
+
+  def public_zap_program_paths(nickname)
+    {
+      arm: public_zap_program_arm_path(nickname),
+      disarm: public_zap_program_disarm_path(nickname),
+      create_slot: public_zap_program_slots_path(nickname),
+      update_slot: ->(slot) { public_zap_program_slot_path(nickname, slot) },
+      destroy_slot: ->(slot) { public_zap_program_slot_destroy_path(nickname, slot) },
+      try_slot: ->(slot) { public_zap_program_slot_try_path(nickname, slot) },
+      try_ephemeral: public_zap_program_try_path(nickname),
+      starter: ->(key) { public_zap_program_starter_path(nickname, key) },
+      edit: ->(slot) { public_pishock_path(nickname, edit: slot.id) },
+      show: public_pishock_path(nickname)
+    }
+  end
+  helper_method :public_zap_program_paths
 end

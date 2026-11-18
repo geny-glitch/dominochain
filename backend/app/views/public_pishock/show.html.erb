@@ -61,6 +61,16 @@
 
       <%= submit_tag t("public_pishock.cta"), id: "public-pishock-submit", class: "ds-btn ds-btn--primary public-pishock-cta" %>
     <% end %>
+
+    <% if @zap_program.present? %>
+      <%= render "zap_programs/editor",
+        program: @zap_program,
+        slots: @zap_slots,
+        editing_slot: @editing_slot,
+        beta: @zap_beta,
+        paths: @zap_program_paths,
+        compact: true %>
+    <% end %>
   </div>
 </div>
 

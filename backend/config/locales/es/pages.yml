@@ -16,6 +16,7 @@ es:
     heading: "Panel boss"
     controlled_betas: "Betas controlados"
     manage: "Gestionar"
+    zap_program: "Programa de zaps"
     release: "Liberar"
     release_confirm: "¿Liberar a este beta?"
     requests_title: "Solicitudes pendientes"

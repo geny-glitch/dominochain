@@ -1,0 +1,175 @@
+.zap-program {
+  margin-top: 2rem;
+  padding: 1.25rem;
+  border: 1px solid var(--ds-border, #ddd);
+  border-radius: 12px;
+  background: var(--ds-surface, #fff);
+}
+
+.zap-program--compact {
+  margin-top: 2.5rem;
+}
+
+.zap-program__header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.zap-program__title {
+  margin: 0 0 0.25rem;
+  font-size: 1.25rem;
+}
+
+.zap-program__timezone {
+  margin: 0;
+  color: var(--ds-muted, #666);
+  font-size: 0.9rem;
+}
+
+.zap-program__arm {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.zap-program__armed-badge {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #0a7a3e;
+}
+
+.zap-program__armed-badge--off {
+  color: var(--ds-muted, #666);
+}
+
+.zap-program__starters-lead,
+.zap-program__form-title,
+.zap-program__live {
+  margin: 0 0 0.75rem;
+}
+
+.zap-program__live {
+  min-height: 1.4em;
+  font-weight: 600;
+}
+
+.zap-program__starter-list,
+.zap-program__slot-actions,
+.zap-program__form-actions,
+.zap-program__radio-row,
+.zap-program__pattern-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.zap-program__slots {
+  list-style: none;
+  margin: 0 0 1.25rem;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.zap-program__slot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  border: 1px solid var(--ds-border, #ddd);
+  border-radius: 8px;
+}
+
+.zap-program__slot--editing {
+  border-color: var(--ds-focus, #3b82f6);
+}
+
+.zap-program__slot--done {
+  opacity: 0.72;
+}
+
+.zap-program__slot-summary {
+  color: inherit;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.zap-program__slot-summary:hover {
+  text-decoration: underline;
+}
+
+.zap-program__slot-done {
+  display: inline-block;
+  margin-left: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--ds-muted, #666);
+}
+
+.zap-program__fieldset {
+  border: 0;
+  margin: 0 0 1rem;
+  padding: 0;
+}
+
+.zap-program__pattern-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 9rem;
+  padding: 0.75rem;
+  border: 1px solid var(--ds-border, #ddd);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.zap-program__pattern-card:has(input:checked) {
+  border-color: var(--ds-focus, #3b82f6);
+  box-shadow: 0 0 0 1px var(--ds-focus, #3b82f6);
+}
+
+.zap-program__pattern-card-title {
+  font-weight: 600;
+}
+
+.zap-program__pattern-card-hint {
+  font-size: 0.85rem;
+  color: var(--ds-muted, #666);
+}
+
+.zap-program__try-form {
+  margin-top: 0.75rem;
+}
+
+.zap-program__beta-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.zap-program__beta-item {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.zap-program__window-fields {
+  display: grid;
+  gap: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .zap-program__window-fields {
+    grid-template-columns: 1fr 1fr;
+  }
+}

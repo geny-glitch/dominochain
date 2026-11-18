@@ -465,8 +465,8 @@ fr:
         beta_self: "Choisi par toi"
       upload_title: "Fond d'écran — %{nickname}"
       upload_heading: "Choisir un fond d'écran"
-      upload_lead: "Envoie une image pour l'appliquer comme fond d'écran."
-      upload_label: "Fichier image"
+      upload_lead: "Envoie une photo, ou plusieurs pour qu'elles se relaient."
+      upload_label: "Photos"
       upload_submit: "Appliquer le fond d'écran"
       back_to_source: "Retour à la source fond d'écran"
       sanction:

@@ -131,6 +131,69 @@
       window.location.href = lastUrl;
     }
 
+    function coverCropCanvas(sourceCanvas) {
+      if (Number.isNaN(aspectRatio) || aspectRatio <= 0) return sourceCanvas;
+      const sourceWidth = sourceCanvas.width;
+      const sourceHeight = sourceCanvas.height;
+      if (!sourceWidth || !sourceHeight) return sourceCanvas;
+      const sourceRatio = sourceWidth / sourceHeight;
+      let cropX = 0;
+      let cropY = 0;
+      let cropWidth = sourceWidth;
+      let cropHeight = sourceHeight;
+      if (sourceRatio > aspectRatio) {
+        cropWidth = sourceHeight * aspectRatio;
+        cropX = (sourceWidth - cropWidth) / 2;
+      } else {
+        cropHeight = sourceWidth / aspectRatio;
+        cropY = (sourceHeight - cropHeight) / 2;
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(2, Math.round(cropWidth));
+      canvas.height = Math.max(2, Math.round(cropHeight));
+      canvas.getContext("2d").drawImage(
+        sourceCanvas,
+        cropX, cropY, cropWidth, cropHeight,
+        0, 0, canvas.width, canvas.height
+      );
+      return canvas;
+    }
+
+    async function uploadWallpaperBatch(files) {
+      const list = Array.prototype.slice.call(files).filter(function(file) {
+        return file && file.type && file.type.startsWith("image/");
+      });
+      if (list.length === 0) return;
+      if (batchStatus) {
+        batchStatus.style.display = "";
+        batchStatus.textContent = labelBatchUploading
+          .replace("%{current}", "1")
+          .replace("%{total}", String(list.length));
+      }
+      const formData = new FormData();
+      const token = csrfToken();
+      if (token) formData.append("authenticity_token", token);
+      for (let i = 0; i < list.length; i++) {
+        const source = await fileToCanvas(list[i]);
+        const cropped = coverCropCanvas(source);
+        const blob = await canvasToBlob(cropped, "image/jpeg", 0.9);
+        const name = list[i].name || ("wallpaper-" + (i + 1) + ".jpg");
+        formData.append("images[]", blob, name);
+      }
+      const res = await fetch(uploadUrl, {
+        method: "POST",
+        body: formData,
+        credentials: "same-origin",
+        headers: { "X-CSRF-Token": token || "", "Accept": "text/html" },
+        redirect: "follow"
+      });
+      if (res.ok || res.redirected) {
+        window.location.href = res.url || betaPageUrl;
+        return;
+      }
+      throw new Error("upload failed");
+    }
+
     function initCropper() {
       if (cropper) cropper.destroy();
       const cropperOpts = {
@@ -171,6 +234,19 @@
         if (submitMode === "leverage_upload") {
           uploadImmediate(files).catch(function(err) {
             console.error("[image_editor] upload failed", err);
+            if (batchStatus) {
+              batchStatus.style.display = "";
+              batchStatus.textContent = labelError;
+            } else {
+              alert(labelError);
+            }
+            input.value = "";
+          });
+          return;
+        }
+        if (submitMode === "wallpaper" && allowMulti && files.length > 1) {
+          uploadWallpaperBatch(files).catch(function(err) {
+            console.error("[image_editor] wallpaper batch failed", err);
             if (batchStatus) {
               batchStatus.style.display = "";
               batchStatus.textContent = labelError;

@@ -37,6 +37,8 @@ module Api
           [ :unprocessable_entity, I18n.t("flash.beta.wallpaper.no_device") ]
         when "image_required"
           [ :unprocessable_entity, I18n.t("flash.wallpaper.select_image") ]
+        when "too_many"
+          [ :unprocessable_entity, I18n.t("flash.wallpaper.rotation_too_many") ]
         else
           [ :unprocessable_entity, code ]
         end

@@ -209,6 +209,7 @@ en:
       device_not_found: "Device not found."
       device_deleted: "Device deleted."
       wallpaper_set_current: "Wallpaper set as current background."
+      uploaded_many: "Those photos will take turns as the background."
       rotation_saved: "The background will change on its own."
       rotation_disabled: "The background stays on one photo."
       rotation_need_two: "Pick at least two photos."

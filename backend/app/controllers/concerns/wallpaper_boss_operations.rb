@@ -5,6 +5,75 @@ module WallpaperBossOperations
 
   private
 
+  def submit_wallpaper_images!
+    images = uploaded_wallpaper_images
+    raise ActionController::ParameterMissing, :image if images.empty?
+    raise WallpaperRotations::Save::TooManyPhotos if images.size > WallpaperRotations::Schedule::MAX_PHOTOS
+
+    if images.size > 1
+      apply_wallpaper_uploads!(images)
+      :many
+    else
+      apply_wallpaper_upload!(images.first)
+      :one
+    end
+  end
+
+  def uploaded_wallpaper_images
+    raw = params[:images]
+    list = case raw
+           when nil then []
+           when ActionDispatch::Http::UploadedFile then [raw]
+           else Array(raw)
+           end
+    list = [params[:image]] if list.blank? && params[:image].present?
+    list.flatten.compact.select { |file| file.respond_to?(:tempfile) }
+  end
+
+  def apply_wallpaper_uploads!(images)
+    WallpaperVerificationSessionGuard.ensure_change_allowed!(@beta)
+
+    devices = [@device] + @beta.devices.where.not(id: @device.id).to_a
+    created_by_device = nil
+    ActiveRecord::Base.transaction do
+      created_by_device = Hash.new { |groups, device_id| groups[device_id] = [] }
+      images.each do |image|
+        first = @device.wallpapers.create!(image: image)
+        @device.wallpaper_applications.create!(wallpaper: first, applied_at: Time.current, applied_by: "boss")
+        created_by_device[@device.id] << first
+
+        devices.drop(1).each do |other|
+          copy = other.wallpapers.new
+          copy.image.attach(first.image.blob)
+          copy.save!
+          other.wallpaper_applications.create!(wallpaper: copy, applied_at: Time.current, applied_by: "boss")
+          created_by_device[other.id] << copy
+        end
+      end
+    end
+
+    devices.each do |device|
+      enable_uploaded_rotation!(device, created_by_device[device.id])
+    end
+    @wallpaper = created_by_device[@device.id].last
+    reset_wallpaper_enforcement_state!
+  end
+
+  def enable_uploaded_rotation!(device, wallpapers)
+    existing = device.wallpaper_playlist
+    interval = existing&.interval_seconds.to_i
+    unless interval.between?(WallpaperRotations::Schedule::MIN_INTERVAL_SECONDS, WallpaperRotations::Schedule::MAX_INTERVAL_SECONDS)
+      interval = 30
+    end
+    WallpaperRotations::Save.new(
+      device: device,
+      enabled: true,
+      interval_seconds: interval,
+      collages_enabled: existing.nil? ? true : existing.collages_enabled,
+      wallpaper_ids: wallpapers.map(&:id)
+    ).call
+  end
+
   def apply_wallpaper_upload!(image_param)
     WallpaperVerificationSessionGuard.ensure_change_allowed!(@beta)
 

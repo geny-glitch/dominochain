@@ -465,8 +465,8 @@ es:
         beta_self: "Elegido por ti"
       upload_title: "Fondo — %{nickname}"
       upload_heading: "Elegir fondo"
-      upload_lead: "Sube una imagen para aplicarla como fondo de pantalla."
-      upload_label: "Archivo de imagen"
+      upload_lead: "Sube una foto, o varias para que se turnen."
+      upload_label: "Fotos"
       upload_submit: "Aplicar fondo"
       back_to_source: "Volver a la fuente fondo"
       sanction:

@@ -18,13 +18,19 @@ class BetaWallpaperController < ApplicationController
   def create
     return if block_wallpaper_change_during_verification_session!
 
+    images = Array(params[:images]).flatten.compact
+    images = [params.require(:image)] if images.empty?
+    images = images.select { |file| file.respond_to?(:tempfile) }
+    raise ActionController::ParameterMissing, :image if images.empty?
+
     Wallpapers::UploadForUser.new(
       user: current_user,
-      image: params.require(:image),
+      images: images,
       applied_by: "beta_self"
     ).call!
 
-    redirect_to beta_sources_wallpaper_path, notice: t("flash.beta.wallpaper.uploaded")
+    notice = images.size > 1 ? t("flash.wallpaper.uploaded_many") : t("flash.beta.wallpaper.uploaded")
+    redirect_to beta_sources_wallpaper_path, notice: notice
   rescue ActionController::ParameterMissing
     redirect_to beta_wallpaper_upload_path, alert: t("flash.wallpaper.select_image")
   rescue Wallpapers::UploadForUser::Error => e
@@ -36,6 +42,8 @@ class BetaWallpaperController < ApplicationController
         t("flash.beta.wallpaper.verification_session_locked")
       when "no_device"
         t("flash.beta.wallpaper.no_device")
+      when "too_many"
+        t("flash.wallpaper.rotation_too_many")
       else
         t("flash.wallpaper.select_image")
       end

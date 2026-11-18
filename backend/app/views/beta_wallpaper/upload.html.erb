@@ -12,8 +12,13 @@
     <% else %>
       <%= form_with url: beta_wallpaper_create_path, method: :post, local: true, multipart: true, class: "ds-form" do %>
         <div class="ds-form-group">
-          <%= label_tag :image, t("beta.wallpaper_source.upload_label"), class: "ds-form-label" %>
-          <%= file_field_tag :image, accept: "image/*", required: true, class: "ds-input" %>
+          <%= label_tag "wallpaper-images", t("beta.wallpaper_source.upload_label"), class: "ds-form-label" %>
+          <%= file_field_tag "images[]",
+                id: "wallpaper-images",
+                accept: "image/*",
+                multiple: true,
+                required: true,
+                class: "ds-input" %>
         </div>
         <%= submit_tag t("beta.wallpaper_source.upload_submit"), class: "ds-btn ds-btn--primary" %>
       <% end %>

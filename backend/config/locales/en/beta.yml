@@ -465,8 +465,8 @@ en:
         beta_self: "Set by you"
       upload_title: "Wallpaper — %{nickname}"
       upload_heading: "Choose wallpaper"
-      upload_lead: "Upload an image to set as your device wallpaper."
-      upload_label: "Image file"
+      upload_lead: "Upload one photo, or several so they take turns."
+      upload_label: "Photos"
       upload_submit: "Apply wallpaper"
       back_to_source: "Back to wallpaper source"
       sanction:

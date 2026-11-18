@@ -209,6 +209,7 @@ es:
       device_not_found: "Dispositivo no encontrado."
       device_deleted: "Dispositivo eliminado."
       wallpaper_set_current: "Fondo establecido como fondo actual."
+      uploaded_many: "Esas fotos se van a turnar como fondo."
       rotation_saved: "El fondo va a cambiar solo."
       rotation_disabled: "El fondo se queda en una sola foto."
       rotation_need_two: "Elige al menos dos fotos."

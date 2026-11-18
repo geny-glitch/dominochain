@@ -209,6 +209,7 @@ fr:
       device_not_found: "Appareil non trouvé."
       device_deleted: "Appareil supprimé."
       wallpaper_set_current: "Fond d'écran défini comme fond actuel."
+      uploaded_many: "Ces photos vont se relayer comme fond."
       rotation_saved: "Le fond va changer tout seul."
       rotation_disabled: "Le fond reste sur une seule photo."
       rotation_need_two: "Choisis au moins deux photos."

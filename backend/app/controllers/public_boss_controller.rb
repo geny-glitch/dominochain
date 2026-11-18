@@ -27,10 +27,13 @@ class PublicBossController < ApplicationController
   end
 
   def upload
-    apply_wallpaper_upload!(params.require(:image))
-    redirect_to public_boss_path(@nickname, device_id: @device_id), notice: t("flash.wallpaper.uploaded")
+    kind = submit_wallpaper_images!
+    notice = kind == :many ? t("flash.wallpaper.uploaded_many") : t("flash.wallpaper.uploaded")
+    redirect_to public_boss_path(@nickname, device_id: @device_id), notice: notice
   rescue WallpaperVerificationSessionGuard::LockedError
     redirect_to public_boss_path(@nickname, device_id: @device_id), alert: t("flash.beta.wallpaper.verification_session_locked")
+  rescue WallpaperRotations::Save::TooManyPhotos
+    redirect_to public_boss_upload_new_path(@nickname, device_id: @device_id), alert: t("flash.wallpaper.rotation_too_many")
   rescue ActionController::ParameterMissing
     redirect_to public_boss_upload_new_path(@nickname, device_id: @device_id), alert: t("flash.wallpaper.select_image")
   rescue ActiveRecord::ConnectionNotEstablished, ActiveRecord::ConnectionFailed, PG::ConnectionBad
